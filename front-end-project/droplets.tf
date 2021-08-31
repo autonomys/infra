@@ -5,7 +5,7 @@ data "digitalocean_ssh_key" "ssh_key" {
 resource "digitalocean_droplet" "polkascan" {
 
   image  = "ubuntu-20-04-x64"
-  name   = data.external.droplet_name.result.name + "-polkascan"
+  name   = join("-", [data.external.droplet_name.result.name, "polkascan"])
   region = "nyc1"
   size   = "s-2vcpu-4gb"
   /* ssh_keys = [
@@ -16,7 +16,7 @@ resource "digitalocean_droplet" "polkascan" {
 resource "digitalocean_droplet" "polkadot-apps" {
 
   image  = "ubuntu-20-04-x64"
-  name   = data.external.droplet_name.result.name + "-polkadot-apps"
+  name   = join("-", [data.external.droplet_name.result.name, "polkadot-apps"])
   region = "nyc1"
   size   = "s-2vcpu-4gb"
   /* ssh_keys = [
