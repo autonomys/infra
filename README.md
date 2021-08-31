@@ -32,10 +32,14 @@ Start by defining your personal access token as environment variables, so you wo
 
 You can find your API token in your DigitalOcean Control Panel. (https://cloud.digitalocean.com/account/security)
 
+Go to the project root directory and init terraform to download libs and resources.
+
 ```
 terraform init
 
 ```
+
+With this, you are ready to run the plan and apply command.
 
 ## front-end-project
 
