@@ -1,11 +1,16 @@
 # terraform-do-droplets
 
+- For internal use, in case you need to use terraform, here is a template, currently not used. 
+
+- 1 project.
+- 2 droplets.
+
 Structure:
 
 ```
 .
 └── tf/
-    ├── front-end-project
+    ├── testnet-resources
         ├── versions.tf
         ├── variables.tf
         ├── provider.tf
@@ -32,7 +37,7 @@ Start by defining your personal access token as environment variables, so you wo
 
 You can find your API token in your DigitalOcean Control Panel. (https://cloud.digitalocean.com/account/security)
 
-Go to the project root directory and init terraform to download libs and resources.
+In the **testnet-resources** directory, run the following commands to init terraform:
 
 ```
 terraform init
@@ -41,28 +46,28 @@ terraform init
 
 With this, you are ready to run the plan and apply command.
 
-## front-end-project
+## testnet-resources
 
-Go to the front-end-project directory and run the following commands:
+First, go to the **testnet-resources** directory and run the following commands:
 
-Run the plan command with the variable values passed in to see what steps Terraform would take to deploy your project:
+Run the plan command with the variable values passed in to see what steps Terraform would take to deploy your project.
 
 ```
-    terraform plan -var "do_token=${DO_PAT}" -var "ssh_key_name=${DO_SSH_KEY_NAME}"
+    terraform plan -var "do_token=${DO_PAT}" -var "ssh_key_name=${DO_SSH_KEY_NAME}" -out current-plan.tfplan
 ```
 
 The Run the apply command with the variable values passed by environment and allow Terraform deploy your project:
 
 ```
-    terraform apply -var "do_token=${DO_PAT}" -var "ssh_key_name=${DO_SSH_KEY_NAME}"
+    terraform apply "current-plan.tfplan" 
 ```
 
 This will create:
 
     - A droplet for polkascan project.
     - A droplet for polkadotjs project.
-    - A project named dev-front-end
-    - Move droplets to the dev-front-end project.
+    - A project named testnet-resources
+    - Move droplets to the testnet-resources project.
 
 # Infraestructure as code.
 
