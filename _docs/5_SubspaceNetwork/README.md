@@ -142,7 +142,7 @@ server {
 sudo service nginx restart
 ```
 
-### Node 16 for relayer backend. (On stable version this must be a docker image)
+### Node 16 for relayer backend.
 
 ```
 curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
