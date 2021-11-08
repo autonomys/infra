@@ -1,12 +1,14 @@
 # General Considerations and "Rules".
 
-A compilation of "rules" to discuss and confirm with the team. Things like auth method to droplets, resources naming format, terraform, deployment requests, deployment policies, deployment administrators, ci/cd and versioning... Maybe basic but not less important things that has been mentioned some times in meets and at some point we need to discuss and define and stop acumulating.
+Basic but not less important considerations.
 
 ## Resource definitions.
 
 We use terraform to deploy resources using main branch, to keep track of the last changes.
 
 - Droplet naming: The resource names are defined in the terraform files. Follow the convention as the naming scripts handle the full string to be used.
+
+- Droplet region: Follow the region used in the terraform files. As we share some resources (Like downloaded blocks data for relayer archive), we need to use the same region, this way we can copy data with scp really fast.
 
 ### Authentication.
 
@@ -26,4 +28,3 @@ _Feel free to add another best practices for users and authentication._
 ### Droplet system settings.
 
 - Use ubuntu 20.04 LTS, or latest LTS ubuntu version.
-- Follow the regions indicated by the convention of the team. **(SFO3)**

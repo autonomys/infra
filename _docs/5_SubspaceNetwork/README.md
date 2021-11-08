@@ -145,17 +145,10 @@ sudo service nginx restart
 ### Node 16 for relayer backend. (On stable version this must be a docker image)
 
 ```
-mkdir /home/relayer-backend && cd /home/relayer-backend
 curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
 sudo bash nodesource_setup.sh
 sudo apt-get install -y nodejs
 sudo apt-get install -y build-essential
-```
-
-#### PM2 global install.
-
-```
-npm i -g pm2
 ```
 
 ### Network images.
@@ -216,7 +209,7 @@ docker run -d --init \
         --rpc-methods Unsafe \
         --base-path /var/subspace \
         --ws-external \
-        --bootnodes /ip4/165.232.145.171/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
+        --bootnodes /ip4/BOOTNODE_IP_OR_DNS/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
         --telemetry-url "wss://telemetry.polkadot.io/submit/ 1"
 ```
 
@@ -255,81 +248,6 @@ docker run -d --init \
     docker logs subspace-node-public  -f
 ```
 
-### Relayer backend.
-
-- Get the latest relayer version and build it.
-
-```
-cd /home/relayer-backend
-git clone https://github.com/subspace/subspace-relayer.git && cd subspace-relayer/backend
-npm i
-npm run build
-```
-
-#### Start relayer backend in "local mode"
-
-- Copy the last blocks to your mounted **VOLUME_NAME**.
-- This data is available over **165.232.157.230**.
-- Need to generate keys on the current droplet and add the public key to **165.232.157.230**.
-- Then copy the data. Replace **VOLUME_NAME**.
-
-```
-scp -r root@165.232.157.230:/mnt/volume_sfo3_03/Kusama-archives /mnt/VOLUME_NAME
-cd /home/relayer-backend/subspace-relayer/backend/src/config
-sudo nano archives.json
-
-```
-
-- Paste the following config to get parachain archives. Replace **VOLUME_NAME**.
-
-```
-[
-  {
-    "url": "wss://kusama-rpc.polkadot.io",
-    "path": "/mnt/VOLUME_NAME/Kusama-archives/kusama-archive-2021-oct-23/"
-  }
-]
-
-```
-
-- Run the relayer backend to import the blocks.
-
-```
-pm2 start /home/relayer-backend/subspace-relayer/backend/dist/index.js --name relayer-backend
-pm2 logs relayer-backend
-```
-
-#### Start relayer backend in "live mode"
-
-- After the "local mode" import is completed.
-
-```
-pm2 stop relayer-backend
-pm2 start /home/relayer-backend/subspace-relayer/backend/dist/index.js --name relayer-backend
-pm2 logs relayer-backend
-```
-
-### Datadog for remote logging.
-
-- This will start datadog with auto discovery sending docker logs to datadog. Replace DD_API_KEY.
-
-```
-
-    docker run -d --name datadog-agent \
-    -e DD_API_KEY=9999999999999999999999999999999 \
-    -e DD_LOGS_ENABLED=true \
-    -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true \
-    -e DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent" \
-    -v /var/run/docker.sock:/var/run/docker.sock:ro \
-    -v /proc/:/host/proc/:ro \
-    -v /opt/datadog-agent/run:/opt/datadog-agent/run:rw \
-    -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
-    datadog/agent:latest
-
-```
-
-- Check log status, https://app.datadoghq.com/logs
-
 ### TODO: Full Network Reset.
 
 - For **development** and **testing**, you can reset the network to its initial state.
@@ -337,7 +255,3 @@ pm2 logs relayer-backend
 ### TODO: Runtime Upgrade.
 
 - In case of chain version spec upgrade, _add instructions to upgrade the chain version_.
-
-```
-
-```

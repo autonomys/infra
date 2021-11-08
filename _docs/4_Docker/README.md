@@ -7,13 +7,32 @@ Latest Subspace images are available in [Subspace Docker Hub](https://hub.docker
 - https://hub.docker.com/r/subspacelabs/subspace-farmer
 - https://hub.docker.com/r/subspacelabs/subspace-node
 
-- TODO: relayer backend.
+## Relayer backend
 
-## Datadog.
+### Download full chain from genesis.
 
-This simple configuration will allow us to connect to the datadog agent from the running containers and send logs to the datadog service.
+Follow the instructions to run the download tool:
+
+- https://github.com/subspace/subspace-relayer/blob/main/backend/relayer-download.md
+
+### "local mode"
+
+Follow the instructions to run over a docker container:
+
+- https://github.com/subspace/subspace-relayer/blob/main/backend/relayer-archive.md
+
+### "live mode"
+
+Follow the instructions to run over a docker container:
+
+- https://github.com/subspace/subspace-relayer/blob/main/backend/relayer-live.md
+
+### Datadog for remote logging.
+
+- This will start datadog with auto discovery sending docker logs to datadog. Replace DD_API_KEY.
 
 ```
+
     docker run -d --name datadog-agent \
     -e DD_API_KEY=9999999999999999999999999999999 \
     -e DD_LOGS_ENABLED=true \
@@ -24,4 +43,7 @@ This simple configuration will allow us to connect to the datadog agent from the
     -v /opt/datadog-agent/run:/opt/datadog-agent/run:rw \
     -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
     datadog/agent:latest
+
 ```
+
+- Check log status, https://app.datadoghq.com/logs
