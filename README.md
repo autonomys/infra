@@ -1,4 +1,4 @@
-# Subspace Infraestructure.
+# Subspace Infrastructure.
 
 This docs are for internal purposes, this project declares infrastructure over DigitalOcean using Terraform.
 
