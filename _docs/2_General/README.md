@@ -1,18 +1,16 @@
-# General Considerations and "Rules".
-
-Basic but not less important considerations.
+# General Considerations.
 
 ## Resource definitions.
 
-We use terraform to deploy resources using main branch, to keep track of the last changes.
+We use Terraform to deploy resources using the main branch and keep track of the last changes.
 
-- Droplet naming: The resource names are defined in the terraform files. Follow the convention as the naming scripts handle the full string to be used.
+- Naming: Resource names follow a simple format. Just be aware of this to have a consistent and easy way to identify them.
 
-- Droplet region: Follow the region used in the terraform files. As we share some resources (Like downloaded blocks data for relayer archive), we need to use the same region, this way we can copy data with scp really fast.
+- Region: Usually will set the same region for all resources in the same environment.
 
-### Authentication.
+## Admin considerations.
 
-All our Droplet resources declaration must share this minimial settings:
+Droplets must share this minimial settings, as an Admin or Owner you are responsible for the security of the resources. This are normal considerations but just to be clear.
 
 - Do not use root user.
 - Sudo user for aministrator.
@@ -27,4 +25,4 @@ _Feel free to add another best practices for users and authentication._
 
 ### Droplet system settings.
 
-- Use ubuntu 20.04 LTS, or latest LTS ubuntu version.
+- Use Ubuntu 20.04 LTS, or latest LTS version.
