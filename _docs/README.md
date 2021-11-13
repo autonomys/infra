@@ -1,7 +1,5 @@
 # Overview
 
-Compilation of resources related to the current state of the subspace network.
-
 - 1. [Cloudflare](./1_Cloudflare/README.md)
 
   - DNS and uses.
@@ -22,7 +20,6 @@ Compilation of resources related to the current state of the subspace network.
 - 4. [Docker](./4_Docker/README.md)
 
   - Subspace.
-  - Relayer.
   - Datadog.
 
 - 5. [Launch a Subspace Network environment.](./5_SubspaceNetwork/README.md)

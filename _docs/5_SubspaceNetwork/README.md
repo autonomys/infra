@@ -1,49 +1,35 @@
 # Subspace Network environment.
 
-A network is a collection of nodes and apps.
-You can launch it following the next steps.
-
-The current available Subspace Network version follow the Aries milestone.
-
-A list of network minimal resources.
+A network is a collection of nodes and apps. You can launch it following the next steps.
 
 - Cloudflare resources.
 
-  - _Network DNS_. (Optional for development or non public environments)
-  - _Network CDN_. (If you need to deploy an app on a CDN, like the relayer front end)
-
-- Subspace Apps.
-
-  - Subspace Relayer Frontend
-  - _Polkadot Apps._
+  - _Network DNS_. (Optional for development)
+  - _Network CDN_. (To deploy an app using Cloudflare workers, like the relayer front end)
 
 - DigitalOcean resources.
 
-  - Project / environment.
+  - Wrap all **ENV** resources over a DigitalOcean project.
 
     - aries-**ENV**
 
-  - Single Droplet.
+  - Use a single Droplet to launch a new **ENV**.
 
     - Subspace Bootnode.
     - Subspace Public RPC.
     - Subspace Farmer.
     - Subspace Relayer Backend.
 
-  - Volumes.
-
-    - Parachains data from genesis block.
+  - Volume attached to a single Droplet **ENV**.
+    - Will contain relayer archive and farmer plot.
 
 ## Droplet apps.
 
-**This do not cover CI/CD, we are asuming that you have a CI/CD system in place and at this point target network releases are already available trougth our Docker Hub repository.**
+The following instructions contain the minimal dependencies and steps to launch a network and its apps.
 
-To start, we must declare the full workflow of launching a network and its apps.
-This way can have a clear understanding for all team members or users that needs to run a network, for local, dev, test, staging, production we need to have a consistent workflow to ensure the network will run as expected, with the correct versions, dependencies, and resources.
+### Docker setup.
 
-After the network is deployed following terraform instructions, we can install the apps.
-
-### Docker.
+To run our docker images and Datadog agent integration.
 
 ```
 sudo apt-get update
@@ -54,15 +40,17 @@ apt-cache policy docker-ce
 sudo apt install -y docker-ce
 ```
 
-### Nginx to expose public rpc.
+### Nginx setup.
+
+To expose the public RPC node over a secure WebSocket connection.
 
 ```
 sudo apt-get install -y nginx
 ```
 
-### Certbot for secure web socket certificates.
+### Certbot setup.
 
-- Update snap, install certbot
+To generate an SSL certificate for the public RPC node.
 
 ```
 sudo snap install core
@@ -72,10 +60,7 @@ snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-- Generate certificates only.
-  **!! Need the domain RPC_PUBLIC_NAME created in cloudflare with target the droplet IP_ADDRESS and nginx serving over 80 port !!**
-
-Follow instructions, cerbot will ask for some information, add your email to renewal notifications and set the domain to generate certificates.
+Following [certbot instructions](https://certbot.eff.org/lets-encrypt/ubuntufocal-nginx). We need a subdomain mapped to the Droplet IP_ADDRESS and a running nginx with an open port 80.
 
 ```
 sudo certbot certonly --nginx
@@ -86,13 +71,13 @@ sudo certbot certonly --nginx
 # Key is saved at:         /etc/letsencrypt/live/RPC_PUBLIC_NAME.subspace.network/privkey.pem
 ```
 
-- Create a config file for nginx and set the key directories.
+Finally, create a config file for nginx and set the key directories.
 
 ```
 sudo nano /etc/nginx/conf.d/RPC_PUBLIC_NAME.conf
 ```
 
-- Replace IP_ADDRESS and RPC_PUBLIC_NAME with the correct values and save in the **/etc/nginx/conf.d/RPC_PUBLIC_NAME.conf** file.
+Replace IP_ADDRESS and RPC_PUBLIC_NAME with the correct values and save in the **/etc/nginx/conf.d/RPC_PUBLIC_NAME.conf** file.
 
 ```
 server {
@@ -136,13 +121,13 @@ server {
 
 ```
 
-- Finally, restart the nginx service.
+Restart the nginx service to load the config file.
 
 ```
 sudo service nginx restart
 ```
 
-### Node 16 for relayer backend.
+### Node JS setup.
 
 ```
 curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
@@ -153,16 +138,28 @@ sudo apt-get install -y build-essential
 
 ### Network images.
 
-- All pre requisites are installed, we can start the network. Get the latest version from our Docker Hub repository.
+Pull from Docker repository.
+
+Latest images:
 
 ```
-docker pull subspacelabs/subspace-node
-docker pull subspacelabs/subspace-farmer
+docker pull subspacelabs/subspace-node:latest
+docker pull subspacelabs/subspace-farmer:latest
 ```
 
-#### Start subspace-node (bootnode)
+Development images:
 
-- Create network, volume, start subspace-node.
+```
+docker pull subspacelabs/subspace-node:dev
+docker pull subspacelabs/subspace-farmer:dev
+```
+
+#### Start bootnode.
+
+_Be aware of the image tag you need. (latest or dev)_
+
+Create the network and volume.
+Start subspace-node.
 
 ```
 docker network create subspace
@@ -182,15 +179,18 @@ docker run -d --init \
         --node-key 0000000000000000000000000000000000000000000000000000000000000001
 ```
 
-- Check if subspace-node is running.
+Check the logs.
 
 ```
     docker logs subspace-node  -f
 ```
 
-#### Start subspace-node-public. (public-rpc)
+#### Start public rpc node.
 
-- Create volume, subspace-node-public, check and replace BOOTNODE_IP_OR_DNS.
+_Be aware of the image tag you need. (latest or dev)_
+
+Create volume.
+Check and replace BOOTNODE_IP.
 
 ```
 docker volume create subspace-node-public
@@ -209,19 +209,21 @@ docker run -d --init \
         --rpc-methods Unsafe \
         --base-path /var/subspace \
         --ws-external \
-        --bootnodes /ip4/BOOTNODE_IP_OR_DNS/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
+        --bootnodes /ip4/BOOTNODE_IP/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
         --telemetry-url "wss://telemetry.polkadot.io/submit/ 1"
 ```
 
-- Check if subspace-node-public is running.
+Check the logs.
 
 ```
     docker logs subspace-node-public  -f
 ```
 
-#### Start subspace-farmer
+#### Start farmer.
 
-- Create volume, run subspace-farmer.
+_Be aware of the image tag you need. (latest or dev)_
+
+Create volume.
 
 ```
 docker volume create subspace-farmer
@@ -236,13 +238,13 @@ docker run -d --init \
         --ws-server ws://subspace-node-public:9944
 ```
 
-- Check if subspace-farmer is running.
+Check the logs.
 
 ```
     docker logs subspace-farmer  -f
 ```
 
-- Check if network is producing blocks.
+Check if network is producing blocks.
 
 ```
     docker logs subspace-node-public  -f
