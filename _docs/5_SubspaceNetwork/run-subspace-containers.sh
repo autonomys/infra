@@ -147,8 +147,8 @@ menu() {
     -----------------------------------------------------
     $(ColorGreen '1)') REMOVE and RUN dev containers.
     $(ColorGreen '2)') REMOVE and RUN latest containers.
-    $(ColorBlue '3)') STOP  RUNING NETWORK - TODO: broken network on restart
-    $(ColorBlue '4)') START EXISTIG NETWORK - TODO: broken network on restart
+    $(ColorBlue '3)') STOP  RUNNING NETWORK - TODO: broken network on restart
+    $(ColorBlue '4)') START EXISTING NETWORK - TODO: broken network on restart
     $(ColorRed '5)') PURGE (NETWORK STATE WILL BE LOST)
     $(ColorBlue '6)') Subspace-node-public logs -f
     $(ColorBlue '7)') RUN Datadog agent container.

@@ -218,7 +218,7 @@ docker run -d --init \
 
      `--bootnodes /ip4/$BOOTNODE_IP/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \`
 
-   - Or you can use this command to **inspect** the runing bootnode (**subspace-node**) container and export the **BOOTNODE_IP**.
+   - Or you can use this command to **inspect** the running bootnode (**subspace-node**) container and export the **BOOTNODE_IP**.
 
    ```bash
    export BOOTNODE_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' subspace-node)
@@ -303,7 +303,7 @@ You can also run the following bash scripts to start the network, will be useful
 
   1. REMOVE and RUN dev containers.
   2. REMOVE and RUN latest containers.
-  3. STOP RUNING NETWORK 
+  3. STOP RUNNING NETWORK 
   4. START EXISTING NETWORK 
   5. PURGE (NETWORK STATE WILL BE LOST)
   6. Subspace-node-public logs -f
