@@ -37,7 +37,7 @@ sudo apt install -y apt-transport-https ca-certificates curl software-properties
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 apt-cache policy docker-ce
-sudo apt install -y docker-ce
+sudo apt install -y docker-ce docker-compose
 ```
 
 ### Nginx setup.
@@ -45,7 +45,7 @@ sudo apt install -y docker-ce
 To expose the public RPC node over a secure WebSocket connection.
 
 ```bash
-sudo apt-get install -y nginx
+apt-get install -y nginx
 ```
 
 ### Certbot setup.
@@ -53,17 +53,17 @@ sudo apt-get install -y nginx
 To generate an SSL certificate for the public RPC node.
 
 ```bash
-sudo snap install core
-sudo snap refresh core
-sudo apt-get remove certbot
+snap install core
+snap refresh core
+apt-get remove certbot
 snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
 Following [certbot instructions](https://certbot.eff.org/lets-encrypt/ubuntufocal-nginx). We need a **subdomain (RPC_PUBLIC_NAME)** mapped to the Droplet **IP_ADDRESS** and a running **nginx** with an **open port 80**.
 
 ```bash
-sudo certbot certonly --nginx
+certbot certonly --nginx
 ```
 
 Success operation output.
@@ -127,188 +127,53 @@ server {
 Restart the nginx service to load the config file.
 
 ```bash
-sudo service nginx restart
+service nginx restart
 ```
 
 ### Start the network.
 
-1. Run docker containers.
-
-#### Get Network images.
-
-Pull from Docker hub.
-
-- Latest images:
-
-```
-docker pull subspacelabs/subspace-node:latest
-docker pull subspacelabs/subspace-farmer:latest
-```
-
-- Development images:
-
-```
-docker pull subspacelabs/subspace-node:dev
-docker pull subspacelabs/subspace-farmer:dev
-```
-
-#### Create network.
-
-All network containers need a shared network.
-
-```
-docker network create subspace
-```
-
-#### Set _subspacelabs_ images tag.
-
-Docker will always use **latest** images if it not specified.
-
-In the **next steps**, we will run containers from **subspacelabs/image:tag** with `docker run` command, for each container be aware of the tag used.
-
-- Check the image line and replace **$DOCKER_TAG_ENV** for your needs (dev or latest):
-
-  - Nodes: `subspacelabs/subspace-node$DOCKER_TAG_ENV` to `subspacelabs/subspace-node:dev`
-  - Farmer: `subspacelabs/subspace-farmer$DOCKER_TAG_ENV` to `subspacelabs/subspace-farmer:dev`
-
-- Or you can export **DOCKER_TAG_ENV** as you need. This also help to run ensure consistency.
-
+In order to start the network you can create a simple setup with Docker Compose:
 ```bash
-    export DOCKER_TAG_ENV=":dev"
-    ## OR
-    export DOCKER_TAG_ENV=":latest"
+mkdir testnet
+cd testnet
+touch docker-compose.yml
 ```
 
-- If you dont do anything, the following steps will run **latest** images.
+Sample [docker-compose.yml](docker-compose.yml) can be used as a reference with following tweaks required:
+* `/path/to/*` in all cases needs to be replaced with real paths owned by `nobody:nogroup`
+* `GENERATED_BOOTSTRAP_NODE_ID_HERE` and `GENERATED_NODE_KEY_HERE` should be replaced with actual values.
+  First time can be generated with following command (please retain values across testnets that are supposed to be
+  identical):
+  ```bash
+  docker run --rm -it subspacelabs/subspace-node key generate-node-key
+  ```
 
-#### Start bootnode.
-
-1. Create bootnode volume.
-2. Start bootnode.
-
+Now pull fresh images and spin up the network:
 ```bash
-docker volume create subspace-node
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-node \
-    --mount source=subspace-node,target=/var/subspace \
-    --publish 0.0.0.0:30333:30333 \
-    --restart on-failure \
-    subspacelabs/subspace-node$DOCKER_TAG_ENV \
-        --chain testnet \
-        --validator \
-        --base-path /var/subspace \
-        --telemetry-url "wss://telemetry.polkadot.io/submit/ 1" \
-        --node-key 0000000000000000000000000000000000000000000000000000000000000001
+docker-compose pull
+docker-compose up -d
 ```
 
-3. Check the logs.
+Typical commands like `docker-compose restart`, `docker-compose logs --tail=100 -f` can be used to manage this setup,
+see [Docker Compose docs](https://docs.docker.com/compose/reference/) for details.
 
-```
-    docker logs subspace-node -f
-```
-
-#### Start public rpc node.
-
-1. Create node volume.
-2. Configure **rpc node** to connect with **bootnode**.
-
-   - Replace **$BOOTNODE_IP** with the bootnode address.
-
-     `--bootnodes /ip4/$BOOTNODE_IP/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \`
-
-   - Or you can use this command to **inspect** the running bootnode (**subspace-node**) container and export the **BOOTNODE_IP**.
-
-   ```bash
-   export BOOTNODE_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' subspace-node)
-   ```
-
-3. Start rpc node.
-
-```bash
-docker volume create subspace-node-public
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-node-public \
-    --mount source=subspace-node-public,target=/var/subspace \
-    --publish 0.0.0.0:9944:9944 \
-    --publish 0.0.0.0:9933:9933 \
-    --restart on-failure \
-    subspacelabs/subspace-node$DOCKER_TAG_ENV \
-        --chain testnet \
-        --validator \
-        --rpc-cors all \
-        --rpc-methods Unsafe \
-        --base-path /var/subspace \
-        --ws-external \
-        --bootnodes /ip4/$BOOTNODE_IP/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
-        --telemetry-url "wss://telemetry.polkadot.io/submit/ 1"
-```
-
-3. Check the logs.
-
-```
-docker logs subspace-node-public  -f
-```
-
-#### Start farmer.
-
-1. Create farmer volume.
-2. Start farmer.
-
-```bash
-docker volume create subspace-farmer
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-farmer \
-    --mount source=subspace-farmer,target=/var/subspace \
-    --restart on-failure \
-    subspacelabs/subspace-farmer$DOCKER_TAG_ENV \
-        farm \
-        --ws-server ws://subspace-node-public:9944
-```
-
-3. Check the logs.
-
-```
-docker logs subspace-farmer  -f
-```
-
-#### Validate the network.
-
-Check if network is producing blocks.
-
-```
-    docker logs subspace-node-public  -f
-```
+Depending on setup you might want to use `:dev` tag of the image instead of `:latest` (implied if not specified).
 
 ### Stop containers and remove.
 
-For **development** and **testing** purposes, you can reset the network to its initial state, this will **stop** and **delete** all docker **containers** and **volumes** with a name starting with `subspace-`.
-
+For **development** and **testing** purposes, you might want to reset the network to its initial state:
 ```bash
-    docker stop $(docker ps --filter name=subspace- -aq)
-    docker container rm $(docker ps --filter name=subspace- -aq)
-    docker volume rm $(docker volume ls --filter name=subspace- -q)
+# Shut everything down
+docker-compose down
+# Clean directories
+rm -rf /path/to/bootstrap-node/*
+rm -rf /path/to/public-rpc-node/*
+rm -rf /path/to/farmer-data/*
+# Pull fresh images
+docker-compose pull
+# Start everything back up
+docker-compose up -d
 ```
-
-### Run from scripts. (For dev and testing)
-
-You can also run the following bash scripts to start the network, will be useful for **development** and **testing** purposes.
-
-- [run-subspace-containers.sh](./run-subspace-containers.sh)
-
-  1. REMOVE and RUN dev containers.
-  2. REMOVE and RUN latest containers.
-  3. STOP RUNNING NETWORK 
-  4. START EXISTING NETWORK 
-  5. PURGE (NETWORK STATE WILL BE LOST)
-  6. Subspace-node-public logs -f
-  7. RUN Datadog agent container.
-  8. Docker ps - show running containers status.
 
 ### TODO: Runtime Upgrade.
 
