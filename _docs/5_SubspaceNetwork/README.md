@@ -1,4 +1,4 @@
-# Subspace Network environment.
+# Subspace Network environment
 
 A network is a collection of nodes and apps. You can launch it following the next steps.
 
@@ -23,11 +23,11 @@ A network is a collection of nodes and apps. You can launch it following the nex
   - Volume attached to a single Droplet **ENV**.
     - Will contain relayer archive and farmer plot.
 
-## System requirements.
+## System requirements
 
 The following instructions contain the minimal requirements to run Docker images for a Subspace Network.
 
-### Docker setup.
+### Docker setup
 
 To run our docker images and Datadog agent integration.
 
@@ -40,7 +40,7 @@ apt-cache policy docker-ce
 sudo apt install -y docker-ce docker-compose
 ```
 
-### Nginx setup.
+### Nginx setup
 
 To expose the public RPC node over a secure WebSocket connection.
 
@@ -48,7 +48,7 @@ To expose the public RPC node over a secure WebSocket connection.
 apt-get install -y nginx
 ```
 
-### Certbot setup.
+### Certbot setup
 
 To generate an SSL certificate for the public RPC node.
 
@@ -121,7 +121,7 @@ Restart the nginx service to load the config file.
 service nginx restart
 ```
 
-### Start the network.
+### Start the network
 
 In order to start the network you can create a simple setup with Docker Compose:
 ```bash
@@ -130,7 +130,7 @@ cd testnet
 touch docker-compose.yml
 ```
 
-Sample [docker-compose.yml](docker-compose.yml) can be used as a reference with following tweaks required:
+Sample [docker-compose.yml](node-docker-compose.yml) can be used as a reference with following tweaks required:
 * `/path/to/*` in all cases needs to be replaced with real paths owned by `nobody:nogroup`
 * `GENERATED_BOOTSTRAP_NODE_ID_HERE` and `GENERATED_NODE_KEY_HERE` should be replaced with actual values.
   First time can be generated with following command (please retain values across testnets that are supposed to be
@@ -150,7 +150,7 @@ see [Docker Compose docs](https://docs.docker.com/compose/reference/) for detail
 
 Depending on setup you might want to use `:dev` tag of the image instead of `:latest` (implied if not specified).
 
-### Stop containers and remove.
+### Stop containers and remove
 
 For **development** and **testing** purposes, you might want to reset the network to its initial state:
 ```bash
@@ -166,6 +166,53 @@ docker-compose pull
 docker-compose up -d
 ```
 
-### TODO: Runtime Upgrade.
+### TODO: Runtime Upgrade
 
 - In case of chain version spec upgrade, _add instructions to upgrade the chain version_.
+
+
+### Start relayer
+
+In order to start relayer you can create a simple setup with Docker Compose:
+```bash
+mkdir relayer
+cd relayer
+touch docker-compose.yml
+# For config
+mkdir config
+touch config/config.json
+```
+
+Sample [docker-compose.yml](relayer-docker-compose.yml) can be used as a reference with following tweaks required:
+* `/path/to/archives` should point to directory where downloaded archives are stored (if there are any)
+* `/path/to/config` should point to directory that contains `config.json` as described in
+  [relayer's readme](https://github.com/subspace/subspace-relayer/blob/main/backend/README.md) and make sure to account
+  for directory with archives to be mounted to `/archives` inside of the container and use public RPC endpoint for
+  target chain
+
+Now fund accounts and create necessary feeds on the network (only needs to be done once after network restart):
+```bash
+docker pull subspacelabs/subspace-relayer
+# Fund accounts from config using account whose seed is specified in `FUNDS_ACCOUNT_SEED`
+docker run --rm -it \
+    -e CHAIN_CONFIG_PATH="/config.json" \
+    -e FUNDS_ACCOUNT_SEED="" \
+    --volume /path/to/config/config.json:/config.json:ro \
+    subspacelabs/subspace-relayer \
+    fund-accounts
+# Create feeds (in case created feed is different from one in the config you might have to update the config)
+docker run --rm -it \
+    -e CHAIN_CONFIG_PATH="/config.json" \
+    --volume /path/to/config/config.json:/config.json:ro \
+    subspacelabs/subspace-relayer \
+    create-feeds
+```
+
+Now pull fresh image and spin up the relayer:
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+Typical commands like `docker-compose restart`, `docker-compose logs --tail=100 -f` can be used to manage this setup,
+see [Docker Compose docs](https://docs.docker.com/compose/reference/) for details.
