@@ -6,6 +6,7 @@ Subspace images are available in [Subspace Docker Hub](https://hub.docker.com/u/
 
 - https://hub.docker.com/r/subspacelabs/subspace-farmer
 - https://hub.docker.com/r/subspacelabs/subspace-node
+- https://hub.docker.com/r/subspacelabs/subspace-relayer
 
 ## Datadog agent.
 
