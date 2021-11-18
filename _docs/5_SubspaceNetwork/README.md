@@ -1,4 +1,4 @@
-# Subspace Network environment.
+# Subspace Network environment
 
 A network is a collection of nodes and apps. You can launch it following the next steps.
 
@@ -23,237 +23,196 @@ A network is a collection of nodes and apps. You can launch it following the nex
   - Volume attached to a single Droplet **ENV**.
     - Will contain relayer archive and farmer plot.
 
-## Droplet apps.
+## System requirements
 
-The following instructions contain the minimal dependencies and steps to launch a network and its apps.
+The following instructions contain the minimal requirements to run Docker images for a Subspace Network.
 
-### Docker setup.
+### Docker setup
 
 To run our docker images and Datadog agent integration.
 
-```
+```bash
 sudo apt-get update
-sudo apt install apt-transport-https ca-certificates curl software-properties-common
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 apt-cache policy docker-ce
-sudo apt install -y docker-ce
+sudo apt install -y docker-ce docker-compose
 ```
 
-### Nginx setup.
+### Nginx setup
 
 To expose the public RPC node over a secure WebSocket connection.
 
-```
-sudo apt-get install -y nginx
+```bash
+apt-get install -y nginx
 ```
 
-### Certbot setup.
+### Certbot setup
 
 To generate an SSL certificate for the public RPC node.
 
-```
-sudo snap install core
-sudo snap refresh core
-sudo apt-get remove certbot
+```bash
+snap install core
+snap refresh core
+apt-get remove certbot
 snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-Following [certbot instructions](https://certbot.eff.org/lets-encrypt/ubuntufocal-nginx). We need a subdomain mapped to the Droplet IP_ADDRESS and a running nginx with an open port 80.
+Following [certbot instructions](https://certbot.eff.org/lets-encrypt/ubuntufocal-nginx). We need a **subdomain (RPC_PUBLIC_NAME)** mapped to the Droplet **IP_ADDRESS** and a running **nginx** with an **open port 80**.
+
+```bash
+certbot certonly --nginx
+```
+
+Success operation output.
 
 ```
-sudo certbot certonly --nginx
-
-# Success operation must log.
-# Successfully received certificate.
-# Certificate is saved at: /etc/letsencrypt/live/RPC_PUBLIC_NAME.network/fullchain.pem
-# Key is saved at:         /etc/letsencrypt/live/RPC_PUBLIC_NAME.subspace.network/privkey.pem
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/RPC_PUBLIC_NAME.network/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/RPC_PUBLIC_NAME.subspace.network/privkey.pem
 ```
 
 Finally, create a config file for nginx and set the key directories.
 
-```
-sudo nano /etc/nginx/conf.d/RPC_PUBLIC_NAME.conf
-```
-
-Replace IP_ADDRESS and RPC_PUBLIC_NAME with the correct values and save in the **/etc/nginx/conf.d/RPC_PUBLIC_NAME.conf** file.
-
+Replace **RPC_PUBLIC_NAME** in the following config sample with the correct values and save in the **/etc/nginx/sites-enabled/RPC_PUBLIC_NAME.conf** file.
 ```
 server {
+  listen [::]:443 ssl http2 ipv6only=on;
+  listen 443 ssl http2;
 
-        server_name IP_ADDRESS;
+  ssl_certificate /etc/letsencrypt/live/RPC_PUBLIC_NAME/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/RPC_PUBLIC_NAME/privkey.pem;
 
-        root /var/www/html;
-        index index.html;
+  ssl_session_cache shared:cache_nginx_SSL:1m;
+  ssl_session_timeout 1440m;
 
-        location / {
-          try_files $uri $uri/ =404;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
 
-          proxy_buffering off;
-          proxy_pass http://localhost:9944;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header Host $host;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  ssl_ciphers "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS";
 
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection "upgrade";
-        }
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-        listen [::]:443 ssl ipv6only=on;
-        listen 443 ssl;
+  root /var/www/html;
+  index index.html;
 
-        ssl_certificate /etc/letsencrypt/live/RPC_PUBLIC_NAME/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/RPC_PUBLIC_NAME/privkey.pem;
+  location / {
+    try_files $uri $uri/ =404;
 
-        ssl_session_cache shared:cache_nginx_SSL:1m;
-        ssl_session_timeout 1440m;
+    proxy_buffering off;
+    proxy_pass http://localhost:9944;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-        ssl_prefer_server_ciphers on;
-
-        ssl_ciphers "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS";
-
-        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
 }
 
 ```
 
 Restart the nginx service to load the config file.
 
-```
-sudo service nginx restart
-```
-
-### Node JS setup.
-
-```
-curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
-sudo bash nodesource_setup.sh
-sudo apt-get install -y nodejs
-sudo apt-get install -y build-essential
+```bash
+service nginx restart
 ```
 
-### Network images.
+### Start the network
 
-Pull from Docker repository.
-
-Latest images:
-
-```
-docker pull subspacelabs/subspace-node:latest
-docker pull subspacelabs/subspace-farmer:latest
+In order to start the network you can create a simple setup with Docker Compose:
+```bash
+mkdir testnet
+cd testnet
+touch docker-compose.yml
 ```
 
-Development images:
+Sample [docker-compose.yml](node-docker-compose.yml) can be used as a reference with following tweaks required:
+* `/path/to/*` in all cases needs to be replaced with real paths owned by `nobody:nogroup`
+* `GENERATED_BOOTSTRAP_NODE_ID_HERE` and `GENERATED_NODE_KEY_HERE` should be replaced with actual values.
+  First time can be generated with following command (please retain values across testnets that are supposed to be
+  identical):
+  ```bash
+  docker run --rm -it subspacelabs/subspace-node key generate-node-key
+  ```
 
-```
-docker pull subspacelabs/subspace-node:dev
-docker pull subspacelabs/subspace-farmer:dev
-```
-
-#### Start bootnode.
-
-_Be aware of the image tag you need. (latest or dev)_
-
-Create the network and volume.
-Start subspace-node.
-
-```
-docker network create subspace
-docker volume create subspace-node
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-node \
-    --mount source=subspace-node,target=/var/subspace \
-    --publish 0.0.0.0:30333:30333 \
-    --restart on-failure \
-    subspacelabs/subspace-node \
-        --chain testnet \
-        --validator \
-        --base-path /var/subspace \
-        --telemetry-url "wss://telemetry.polkadot.io/submit/ 1" \
-        --node-key 0000000000000000000000000000000000000000000000000000000000000001
+Now pull fresh images and spin up the network:
+```bash
+docker-compose pull
+docker-compose up -d
 ```
 
-Check the logs.
+Typical commands like `docker-compose restart`, `docker-compose logs --tail=100 -f` can be used to manage this setup,
+see [Docker Compose docs](https://docs.docker.com/compose/reference/) for details.
 
-```
-    docker logs subspace-node  -f
-```
+Depending on setup you might want to use `:dev` tag of the image instead of `:latest` (implied if not specified).
 
-#### Start public rpc node.
+### Stop containers and remove
 
-_Be aware of the image tag you need. (latest or dev)_
-
-Create volume.
-Check and replace BOOTNODE_IP.
-
-```
-docker volume create subspace-node-public
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-node-public \
-    --mount source=subspace-node-public,target=/var/subspace \
-    --publish 0.0.0.0:9944:9944 \
-    --publish 0.0.0.0:9933:9933 \
-    --restart on-failure \
-    subspacelabs/subspace-node \
-        --chain testnet \
-        --validator \
-        --rpc-cors all \
-        --rpc-methods Unsafe \
-        --base-path /var/subspace \
-        --ws-external \
-        --bootnodes /ip4/BOOTNODE_IP/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
-        --telemetry-url "wss://telemetry.polkadot.io/submit/ 1"
+For **development** and **testing** purposes, you might want to reset the network to its initial state:
+```bash
+# Shut everything down
+docker-compose down
+# Clean directories
+rm -rf /path/to/bootstrap-node/*
+rm -rf /path/to/public-rpc-node/*
+rm -rf /path/to/farmer-data/*
+# Pull fresh images
+docker-compose pull
+# Start everything back up
+docker-compose up -d
 ```
 
-Check the logs.
-
-```
-    docker logs subspace-node-public  -f
-```
-
-#### Start farmer.
-
-_Be aware of the image tag you need. (latest or dev)_
-
-Create volume.
-
-```
-docker volume create subspace-farmer
-
-docker run -d --init \
-    --net subspace \
-    --name subspace-farmer \
-    --mount source=subspace-farmer,target=/var/subspace \
-    --restart on-failure \
-    subspacelabs/subspace-farmer \
-        farm \
-        --ws-server ws://subspace-node-public:9944
-```
-
-Check the logs.
-
-```
-    docker logs subspace-farmer  -f
-```
-
-Check if network is producing blocks.
-
-```
-    docker logs subspace-node-public  -f
-```
-
-### TODO: Full Network Reset.
-
-- For **development** and **testing**, you can reset the network to its initial state.
-
-### TODO: Runtime Upgrade.
+### TODO: Runtime Upgrade
 
 - In case of chain version spec upgrade, _add instructions to upgrade the chain version_.
+
+
+### Start relayer
+
+In order to start relayer you can create a simple setup with Docker Compose:
+```bash
+mkdir relayer
+cd relayer
+touch docker-compose.yml
+# For config
+mkdir config
+touch config/config.json
+```
+
+Sample [docker-compose.yml](relayer-docker-compose.yml) can be used as a reference with following tweaks required:
+* `/path/to/archives` should point to directory where downloaded archives are stored (if there are any)
+* `/path/to/config` should point to directory that contains `config.json` as described in
+  [relayer's readme](https://github.com/subspace/subspace-relayer/blob/main/backend/README.md) and make sure to account
+  for directory with archives to be mounted to `/archives` inside of the container and use public RPC endpoint for
+  target chain
+
+Now fund accounts and create necessary feeds on the network (only needs to be done once after network restart):
+```bash
+docker pull subspacelabs/subspace-relayer
+# Fund accounts from config using account whose seed is specified in `FUNDS_ACCOUNT_SEED`
+docker run --rm -it \
+    -e CHAIN_CONFIG_PATH="/config.json" \
+    -e FUNDS_ACCOUNT_SEED="" \
+    --volume /path/to/config/config.json:/config.json:ro \
+    subspacelabs/subspace-relayer \
+    fund-accounts
+# Create feeds (in case created feed is different from one in the config you might have to update the config)
+docker run --rm -it \
+    -e CHAIN_CONFIG_PATH="/config.json" \
+    --volume /path/to/config/config.json:/config.json:ro \
+    subspacelabs/subspace-relayer \
+    create-feeds
+```
+
+Now pull fresh image and spin up the relayer:
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+Typical commands like `docker-compose restart`, `docker-compose logs --tail=100 -f` can be used to manage this setup,
+see [Docker Compose docs](https://docs.docker.com/compose/reference/) for details.

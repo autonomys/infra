@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  relayer:
+    image: subspacelabs/subspace-relayer
+    volumes:
+      - /path/to/config:/config:ro
+      - /path/to/archives:/archives:ro
+    restart: unless-stopped
+    environment:
+      CHAIN_CONFIG_PATH: /config/config.json
