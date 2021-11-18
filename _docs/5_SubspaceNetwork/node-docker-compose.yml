@@ -16,6 +16,7 @@ services:
       "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--node-key", "GENERATED_NODE_KEY_HERE",
       # Following 3 lines are for farmer connection
+      "--rpc-cors", "all",
       "--rpc-methods", "Unsafe",
       "--ws-external",
       "--validator",
