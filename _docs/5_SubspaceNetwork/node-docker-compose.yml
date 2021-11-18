@@ -13,6 +13,7 @@ services:
       "--wasm-execution", "compiled",
       "--execution", "wasm",
       "--pruning", "archive",
+      "--pool-kbytes", "51200",
       "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--node-key", "GENERATED_NODE_KEY_HERE",
       # Following 3 lines are for farmer connection
@@ -36,6 +37,7 @@ services:
       "--wasm-execution", "compiled",
       "--execution", "wasm",
       "--pruning", "archive",
+      "--pool-kbytes", "51200",
       "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--bootnodes", "/dns/bootstrap-node/tcp/30333/p2p/GENERATED_BOOTSTRAP_NODE_ID_HERE",
       "--rpc-cors", "all",
