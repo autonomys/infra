@@ -52,5 +52,5 @@ services:
     restart: unless-stopped
     command: [
       "farm",
-      "--ws-server", "ws://bootstrap-node:9944",
+      "--node-rpc-url", "ws://bootstrap-node:9944",
     ]
