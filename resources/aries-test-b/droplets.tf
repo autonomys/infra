@@ -1,6 +1,6 @@
-resource "digitalocean_droplet" "aries-dev-nodes-farmer-relayer" {
+resource "digitalocean_droplet" "aries-test-b-nodes-farmer-relayer" {
   image  = "ubuntu-20-04-x64"
-  name   = "aries-dev-nodes-farmer-relayer"
+  name   = "aries-test-nodes-farmer-relayer-b-16112021"
   region = "sfo3"
   size   = "c-8"
   ssh_keys = [

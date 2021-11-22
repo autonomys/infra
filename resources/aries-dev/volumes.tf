@@ -1,9 +1,8 @@
-
 # DEVELOPMENT
 resource "digitalocean_volume" "aries-dev-relayer-volume" {
   region                  = "sfo3"
-  name                    = "aries-dev-relayer-data-250gb"
-  size                    = 400
+  name                    = "aries-dev-relayer-volume"
+  size                    = 1000
   initial_filesystem_type = "ext4"
   description             = "Extra volume for relayer data initial imports."
 }
