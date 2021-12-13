@@ -1,9 +1,9 @@
 resource "digitalocean_volume" "aries-test-b-volume" {
-  region                  = "sfo3"
-  name                    = "aries-test-relayer-data-b"
-  size                    = 400
+  region                  = "nyc3"
+  name                    = "aries-test-b-volume"
+  size                    = 1100
   initial_filesystem_type = "ext4"
-  description             = "Extra volume for relayer data initial imports."
+  description             = "Extra volume for aries test b."
 }
 
 resource "digitalocean_volume_attachment" "aries-test-b-volume" {
