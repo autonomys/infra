@@ -23,3 +23,7 @@
 - Bootstrap and public RPC nodes.
 - Farmer.
 - Relayer.
+
+6. [Block archives](./6_BlockArchives/README.md)
+- Create chain archive.
+- Update archives.
