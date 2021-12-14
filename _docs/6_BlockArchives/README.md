@@ -9,12 +9,13 @@ In order to keep existing archives up-to-date you can create a simple setup with
 mkdir update-archives
 cd update-archives
 touch docker-compose.yml
+touch .env
 ```
 
-Sample [docker-compose.yml](docker-compose.yml) can be used as a reference.
+Sample [docker-compose.yml](docker-compose.yml) and [.env](.env) can be used as a reference.
 
 Pull fresh image and start containers:
 ```bash
 docker-compose pull
-ONFINALITY_API_KEY="" docker-compose up -d
+docker-compose up -d
 ```
