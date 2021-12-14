@@ -1,0 +1,200 @@
+version: "3.7"
+
+services:
+  polkadot:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/polkadot-archives/polkadot:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://polkadot.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  kusama:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/kusama:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://kusama.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  statemine:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/statemine:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://statemine.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  karura:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/karura:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://karura.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  bifrost:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/bifrost:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://bifrost-parachain.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  khala:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/khala:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://khala.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  shiden:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/shiden:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://shiden.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  moonriver:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/moonriver:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://moonriver.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  calamari:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/calamari:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://calamari.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  kilt-spiritnet:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/kilt-spiritnet:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://spiritnet.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  basilisk:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/basilisk:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://basilisk.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  altair:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/altair:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://altair.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  parallel-heiko:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/parallel-heiko:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://parallel-heiko.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  kintsugi-btc:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/kintsugi-btc:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://kintsugi.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  bit.country-pioneer:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/bit.country-pioneer:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://pioneer.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  genshiro:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/genshiro:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://node.genshiro.io
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  unique-quartz:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/unique-quartz:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://us-ws-quartz.unique.network
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  picasso:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/picasso:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://picasso-rpc.composable.finance
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
