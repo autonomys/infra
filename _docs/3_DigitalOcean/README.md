@@ -23,14 +23,14 @@ For all resources, there is a way to define it using Terraform. Check the [Terra
     - Example: aries-test
     - Example: general-resources
 
-#### Droplets (Name: project-name-env-droplet-name-ddmmyyyy)
+#### Droplets (Name: project-name-env-droplet)
 
-    - Example: aries-dev-nodes-farmer-relayer-03112021
-    - Example: aries-test-nodes-farmer-relayer-03112021
+    - Example: aries-dev-nodes-farmer-relayer
+    - Example: aries-test-nodes-farmer-relayer
 
-#### Volumes (project-name-env-volume-name-sizegb)
+#### Volumes (project-name-env-volume)
 
 Volumes are global resources, they cannot be attached to a project only, so we need to tag the project name and env in the volume name.
 
-    - Example: aries-dev-relayer-data-250gb
-    - Example: aries-test-relayer-data-250gb
+    - Example: aries-dev-relayer-volume
+    - Example: aries-test-relayer-volume
