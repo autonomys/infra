@@ -41,9 +41,8 @@ services:
       "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--bootnodes", "/dns/bootstrap-node/tcp/30333/p2p/GENERATED_BOOTSTRAP_NODE_ID_HERE",
       "--rpc-cors", "all",
-      "--rpc-methods", "Unsafe",
+      "--rpc-external",
       "--ws-external",
-      "--validator",
     ]
 
   farmer:
