@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   bootstrap-node:
-    image: subspacelabs/subspace-node
+    image: ghcr.io/subspace/node:snapshot-DATE
     volumes:
       - /path/to/bootstrap-node:/var/subspace:rw
     ports:
@@ -24,7 +24,7 @@ services:
     ]
 
   public-rpc-node:
-    image: subspacelabs/subspace-node
+    image: ghcr.io/subspace/node:snapshot-DATE
     volumes:
       - /path/to/public-rpc-node:/var/subspace:rw
     ports:
@@ -46,7 +46,9 @@ services:
     ]
 
   farmer:
-    image: subspacelabs/subspace-farmer
+    image: ghcr.io/subspace/farmer:snapshot-DATE
+    ports:
+      - "127.0.0.1:9955:9955"
     volumes:
       - /path/to/farmer-data:/var/subspace:rw
     restart: unless-stopped

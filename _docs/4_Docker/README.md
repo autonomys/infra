@@ -2,11 +2,11 @@
 
 ## Subspace.
 
-Subspace images are available in [Subspace Docker Hub](https://hub.docker.com/u/subspacelabs).
+Subspace images are available in:
 
-- https://hub.docker.com/r/subspacelabs/subspace-farmer
-- https://hub.docker.com/r/subspacelabs/subspace-node
-- https://hub.docker.com/r/subspacelabs/subspace-relayer
+- Node: https://github.com/subspace/subspace/pkgs/container/node
+- Farner: https://github.com/subspace/subspace/pkgs/container/farmer
+- Relayer: https://github.com/subspace/subspace-relayer/pkgs/container/relayer
 
 ## Datadog agent.
 
