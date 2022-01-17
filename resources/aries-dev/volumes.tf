@@ -1,6 +1,6 @@
 # DEVELOPMENT
 resource "digitalocean_volume" "aries-dev-relayer-volume" {
-  region                  = "sfo3"
+  region                  = "nyc3"
   name                    = "aries-dev-relayer-volume"
   size                    = 1100
   initial_filesystem_type = "ext4"
