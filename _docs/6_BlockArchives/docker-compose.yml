@@ -297,3 +297,14 @@ services:
       SOURCE_CHAIN_RPC: wss://kusama.rpc.robonomics.network/
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  zeitgeist:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/zeitgeist:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://rpc-0.zeitgeist.pm
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
