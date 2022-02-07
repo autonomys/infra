@@ -308,3 +308,14 @@ services:
       SOURCE_CHAIN_RPC: wss://rpc-0.zeitgeist.pm
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
+
+  subsocial:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/subsocial:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://para.subsocial.network
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
