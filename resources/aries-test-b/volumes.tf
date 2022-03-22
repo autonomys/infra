@@ -1,7 +1,7 @@
 resource "digitalocean_volume" "aries-test-b-volume" {
   region                  = "nyc3"
   name                    = "aries-test-b-volume"
-  size                    = 1100
+  size                    = 1800
   initial_filesystem_type = "ext4"
   description             = "Extra volume for aries test b."
 }
