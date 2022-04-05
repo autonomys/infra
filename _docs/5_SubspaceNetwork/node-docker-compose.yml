@@ -43,6 +43,7 @@ services:
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
+      "--ws-max-connections", "1000",
     ]
 
   farmer:
@@ -55,4 +56,5 @@ services:
     command: [
       "farm",
       "--node-rpc-url", "ws://bootstrap-node:9944",
+      "--ws-server-listen-addr", "0.0.0.0:9955",
     ]
