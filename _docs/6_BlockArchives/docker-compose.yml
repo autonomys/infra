@@ -477,7 +477,7 @@ services:
   turing:
     image: ghcr.io/subspace/relayer:latest
     volumes:
-      - /mnt/polkadot_archive_volume/kusama-archives/sora:/archive
+      - /mnt/polkadot_archive_volume/kusama-archives/turing:/archive
     restart: unless-stopped
     environment:
       DEBUG: 1
