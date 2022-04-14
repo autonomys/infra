@@ -437,7 +437,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://nodle-parachain.api.onfinality.io/public-ws
+      SOURCE_CHAIN_RPC: wss://nodle-parachain.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
 
@@ -460,5 +460,27 @@ services:
     environment:
       DEBUG: 1
       SOURCE_CHAIN_RPC: wss://api.phala.network/ws
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
+
+  sora:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/polkadot-archives/sora:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://ws.parachain-collator-1.c1.sora2.soramitsu.co.jp
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
+
+  turing:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/polkadot-archives/sora:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://turing.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
