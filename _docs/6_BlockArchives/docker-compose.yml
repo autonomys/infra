@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://polkadot.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://polkadot.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://statemint.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://statemint.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://acala-polkadot.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://acala-polkadot.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://astar.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://astar.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -52,7 +52,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://clover.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://clover.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -63,7 +63,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://moonbeam.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://moonbeam.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://parallel.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://parallel.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -85,7 +85,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://kusama.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://kusama.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -96,7 +96,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://statemine.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://statemine.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -107,7 +107,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://karura.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://karura.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -118,7 +118,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://bifrost-parachain.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://bifrost-parachain.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -129,7 +129,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://khala.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://khala.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -140,7 +140,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://shiden.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://shiden.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -151,7 +151,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://moonriver.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://moonriver.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -162,7 +162,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://calamari.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://calamari.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -173,7 +173,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://spiritnet.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://spiritnet.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -184,7 +184,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://basilisk.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://basilisk.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -195,7 +195,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://altair.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://altair.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -206,7 +206,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://parallel-heiko.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://parallel-heiko.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -217,7 +217,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://kintsugi.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://kintsugi.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -228,7 +228,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://pioneer.api.onfinality.io/public-ws?apikey={ONFINALITY_API_KEY}
+      SOURCE_CHAIN_RPC: wss://pioneer.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"]
 
@@ -437,7 +437,7 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: 1
-      SOURCE_CHAIN_RPC: wss://nodle-parachain.api.onfinality.io/public-ws
+      SOURCE_CHAIN_RPC: wss://nodle-parachain.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
 
@@ -460,5 +460,27 @@ services:
     environment:
       DEBUG: 1
       SOURCE_CHAIN_RPC: wss://api.phala.network/ws
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
+
+  sora:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/sora:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://ws.parachain-collator-1.c1.sora2.soramitsu.co.jp
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
+
+  turing:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/turing:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://turing.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
