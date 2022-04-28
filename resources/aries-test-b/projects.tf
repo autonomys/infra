@@ -4,6 +4,6 @@ resource "digitalocean_project" "aries-test-b" {
   purpose     = "Service or API"
   environment = "development"
   resources = [digitalocean_droplet.aries-test-b-nodes-farmer-relayer.urn, digitalocean_volume.aries-test-b-volume.urn,
-    digitalocean_droplet.aries-test-b-nodes-farmer-relayer-2.urn,
-  digitalocean_volume.aries-test-b-volume-2.urn, digitalocean_droplet.aries-farmers-network-b-nodes.urn]
+    digitalocean_droplet.aries-relaynet-a.urn,
+  digitalocean_volume.aries-relaynet-a.urn, digitalocean_droplet.aries-farmers-network-b-nodes.urn]
 }

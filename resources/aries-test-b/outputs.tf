@@ -4,7 +4,7 @@ output "ip_address_test_droplet" {
 }
 
 output "ip_address_test_droplet-2" {
-  value       = digitalocean_droplet.aries-test-b-nodes-farmer-relayer-2.ipv4_address
+  value       = digitalocean_droplet.aries-relaynet-a.ipv4_address
   description = "ip_address_test_droplet_2: "
 }
 
