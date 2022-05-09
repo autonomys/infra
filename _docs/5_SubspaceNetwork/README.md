@@ -48,7 +48,7 @@ To expose the public RPC node over a secure WebSocket connection.
 apt-get install -y nginx
 ```
 
-### Certbot setup
+### Certbot setup 
 
 To generate an SSL certificate for the public RPC node.
 
@@ -263,3 +263,21 @@ docker-compose up -d
 
 Typical commands like `docker-compose restart`, `docker-compose logs --tail=100 -f` can be used to manage this setup,
 see [Docker Compose docs](https://docs.docker.com/compose/reference/) for details.
+
+### Datadog Integration
+
+To enable logging to datadog , run the following command:
+
+```bash
+docker run -d --name datadog-agent \
+    -e DD_API_KEY=fc259acf7ea56abf2596efe89592dae7 \
+    -e DD_LOGS_ENABLED=true \
+    -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true \
+    -e DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent" \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    -v /proc/:/host/proc/:ro \
+    -v /opt/datadog-agent/run:/opt/datadog-agent/run:rw \
+    -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+    datadog/agent:latest
+```
+
