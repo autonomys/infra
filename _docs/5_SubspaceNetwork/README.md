@@ -270,7 +270,7 @@ To enable logging to datadog , run the following command:
 
 ```bash
 docker run -d --name datadog-agent \
-    -e DD_API_KEY=fc259acf7ea56abf2596efe89592dae7 \
+    -e DD_API_KEY=<INSERT DATADOG KEY> \
     -e DD_LOGS_ENABLED=true \
     -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true \
     -e DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent" \
