@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  relayer:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /root/relayer/config:/config:ro
+      - /mnt/relaynet_test_volume/polkadot-archives/:/archives:ro
+    restart: unless-stopped
+    environment:
+      CHAIN_CONFIG_PATH: /config/config.json
+      DEBUG: '1'

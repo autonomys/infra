@@ -1,0 +1,62 @@
+version: "3.7"
+services:
+  bootstrap-node:
+    image: ghcr.io/subspace/node:snapshot-2022-mar-09
+
+    volumes:
+      - /mnt/relaynet_test_volume/bootstrap-node:/var/subspace:rw
+    ports:
+      - "0.0.0.0:30333:30333"
+    restart: unless-stopped
+    command: [
+      "--chain", "testnet",
+      "--base-path", "/var/subspace",
+      "--wasm-execution", "compiled",
+      "--execution", "wasm",
+      "--pruning", "archive",
+      "--pool-kbytes", "51200",
+      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
+      "--node-key", "f593e5994721e5c413d40cff0c5a230fdd86f7855197c5bf55230f710be6dbf7",
+      # Following 3 lines are for farmer connection
+      "--rpc-cors", "all",
+      "--rpc-methods", "Unsafe",
+      "--ws-external",
+      "--validator",
+    ]
+
+  public-rpc-node:
+    image: ghcr.io/subspace/node:snapshot-2022-mar-09
+
+    volumes:
+      - /mnt/relaynet_a_volume/public-rpc-node:/var/subspace:rw
+    ports:
+      - "127.0.0.1:9933:9933"
+      - "127.0.0.1:9944:9944"
+    restart: unless-stopped
+    command: [
+      "--chain", "testnet",
+      "--base-path", "/var/subspace",
+      "--wasm-execution", "compiled",
+      "--execution", "wasm",
+      "--pruning", "archive",
+      "--pool-kbytes", "51200",
+      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
+      "--bootnodes", "/dns/bootstrap-node/tcp/30333/p2p/12D3KooWAbeaefPbU9brfEUKZPeqptT5uxcsEQxQacPFhE1Z5nbs",
+      "--rpc-cors", "all",
+      "--rpc-external",
+      "--ws-external",
+      "--ws-max-connections", "10000",
+    ]
+
+  farmer:
+    image: ghcr.io/subspace/farmer:snapshot-2022-mar-09
+
+    ports:
+      - "127.0.0.1:9955:9955"
+    volumes:
+      - /mnt/relaynet_a_volume/farmer-data:/var/subspace:rw
+    restart: unless-stopped
+    command: [
+      "farm",
+      "--node-rpc-url", "ws://bootstrap-node:9944",
+    ]

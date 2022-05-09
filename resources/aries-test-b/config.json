@@ -1,0 +1,275 @@
+{
+    "targetChainUrl": "wss://aries-relaynet-a.subspace.network/",
+    "primaryChain": {
+        "downloadedArchivePath": "/archives/kusama",
+        "wsUrls": [
+            "wss://kusama-rpc.polkadot.io",
+            "wss://kusama.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad",
+            "wss://pub.elara.patract.io/kusama",
+            "wss://kusama.geometry.io/websockets"
+        ],
+        "accountSeed": "//Alice//0",
+        "feedId": 0,
+        "bestGrandpaFinalizedBlockNumber": 12518416
+    },
+    "parachains": [
+        {
+            "downloadedArchivePath": "/archives/statemine",
+            "wsUrls": [
+                "wss://statemine-rpc.polkadot.io",
+                "wss://statemine.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 1000,
+            "accountSeed": "//Alice//1000",
+            "feedId": 1
+        },
+        {
+            "downloadedArchivePath": "/archives/karura",
+            "wsUrls": [
+                "wss://karura-rpc-0.aca-api.network",
+                "wss://karura-rpc-1.aca-api.network",
+                "wss://karura-rpc-2.aca-api.network/ws",
+                "wss://karura-rpc-3.aca-api.network/ws",
+                "wss://karura.polkawallet.io",
+                "wss://karura.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad",
+                "wss://pub.elara.patract.io/karura"
+            ],
+            "paraId": 2000,
+            "accountSeed": "//Alice//2000",
+            "feedId": 2
+        },
+        {
+            "downloadedArchivePath": "/archives/bifrost",
+            "wsUrls": [
+                "wss://bifrost-rpc.liebi.com/ws",
+                "wss://bifrost-parachain.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad",
+                "wss://pub.elara.patract.io/bifrost"
+            ],
+            "paraId": 2001,
+            "accountSeed": "//Alice//2001",
+            "feedId": 3
+        },
+        {
+            "downloadedArchivePath": "/archives/khala",
+            "wsUrls": [
+                "wss://khala-api.phala.network/ws",
+                "wss://khala.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2004,
+            "accountSeed": "//Alice//2004",
+            "feedId": 4
+        },
+        {
+            "downloadedArchivePath": "/archives/shiden",
+            "wsUrls": [
+                "wss://rpc.shiden.astar.network",
+                "wss://rpc.pinknode.io/shiden/explorer",
+                "wss://shiden.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2007,
+            "accountSeed": "//Alice//2007",
+            "feedId": 5
+        },
+        {
+            "downloadedArchivePath": "/archives/moonriver",
+            "wsUrls": [
+                "wss://wss.moonriver.moonbeam.network",
+                "wss://moonriver.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad",
+                "wss://rpc.pinknode.io/moonriver/explorer",
+                "wss://pub.elara.patract.io/moonriver"
+            ],
+            "paraId": 2023,
+            "accountSeed": "//Alice//2023",
+            "feedId": 6
+        },
+        {
+            "downloadedArchivePath": "/archives/calamari",
+            "wsUrls": [
+                "wss://falafel.calamari.systems/",
+                "wss://fritti.calamari.systems/",
+                "wss://smoothie.calamari.systems/",
+                "wss://calamari.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2084,
+            "accountSeed": "//Alice//2084",
+            "feedId": 7
+        },
+        {
+            "downloadedArchivePath": "/archives/kilt-spiritnet",
+            "wsUrls": [
+                "wss://spiritnet.kilt.io/",
+                "wss://spiritnet.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2086,
+            "accountSeed": "//Alice//2086",
+            "feedId": 8
+        },
+        {
+            "downloadedArchivePath": "/archives/basilisk",
+            "wsUrls": [
+                "wss://rpc-01.basilisk.hydradx.io",
+                "wss://basilisk.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2090,
+            "accountSeed": "//Alice//2090",
+            "feedId": 9
+        },
+        {
+            "downloadedArchivePath": "/archives/altair",
+            "wsUrls": [
+                "wss://fullnode.altair.centrifuge.io",
+                "wss://altair.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2088,
+            "accountSeed": "//Alice//2088",
+            "feedId": 10
+        },
+        {
+            "downloadedArchivePath": "/archives/parallel-heiko",
+            "wsUrls": [
+                "wss://heiko-rpc.parallel.fi",
+                "wss://parallel-heiko.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2085,
+            "accountSeed": "//Alice//2085",
+            "feedId": 11
+        },
+        {
+            "downloadedArchivePath": "/archives/kintsugi-btc",
+            "wsUrls": [
+                "wss://api-kusama.interlay.io/parachain",
+                "wss://kintsugi.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad"
+            ],
+            "paraId": 2092,
+            "accountSeed": "//Alice//2092",
+            "feedId": 12
+        },
+        {
+            "downloadedArchivePath": "/archives/bit.country-pioneer",
+            "wsUrls": [
+                "wss://pioneer.api.onfinality.io/public-ws?apikey=38f60995-1ca8-474f-bbd1-bd80844433ad",
+                "wss://pioneer-1-rpc.bit.country"
+            ],
+            "paraId": 2096,
+            "accountSeed": "//Alice//2096",
+            "feedId": 13
+        },
+        {
+            "downloadedArchivePath": "/archives/genshiro",
+            "wsUrls": [
+                "wss://node.genshiro.io"
+            ],
+            "paraId": 2024,
+            "accountSeed": "//Alice//2024",
+            "feedId": 14
+        },
+        {
+            "downloadedArchivePath": "/archives/unique-quartz",
+            "wsUrls": [
+                "wss://us-ws-quartz.unique.network"
+            ],
+            "paraId": 2095,
+            "accountSeed": "//Alice//2095",
+            "feedId": 15
+        },
+        {
+            "downloadedArchivePath": "/archives/picasso",
+            "wsUrls": [
+                "wss://picasso-rpc.composable.finance"
+            ],
+            "paraId": 2087,
+            "accountSeed": "//Alice//2087",
+            "feedId": 16
+        },
+        {
+            "downloadedArchivePath": "/archives/encointer",
+            "wsUrls": [
+                "wss://api.kusama.encointer.org"
+            ],
+            "paraId": 1001,
+            "accountSeed": "//Alice//1001",
+            "feedId": 24
+        },
+        {
+            "downloadedArchivePath": "/archives/robonomics",
+            "wsUrls": [
+                "wss://kusama.rpc.robonomics.network/"
+            ],
+            "paraId": 2048,
+            "accountSeed": "//Alice//2048",
+            "feedId": 25
+        },
+        {
+            "downloadedArchivePath": "/archives/zeitgeist",
+            "wsUrls": [
+                "wss://rpc-0.zeitgeist.pm"
+            ],
+            "paraId": 2101,
+            "accountSeed": "//Alice//2101",
+            "feedId": 26
+        },
+        {
+            "downloadedArchivePath": "/archives/subsocial",
+            "wsUrls": [
+                "wss://para.subsocial.network"
+            ],
+            "paraId": 2100,
+            "accountSeed": "//Alice//2100",
+            "feedId": 27
+        },
+        {
+            "downloadedArchivePath": "/archives/sakura",
+            "wsUrls": [
+                "wss://rpc.sakura.clover.finance"
+            ],
+            "paraId": 2016,
+            "accountSeed": "//Alice//2016",
+            "feedId": 28
+        },
+        {
+            "downloadedArchivePath": "/archives/crust-shadow",
+            "wsUrls": [
+                "wss://rpc-shadow.crust.network/"
+            ],
+            "paraId": 2012,
+            "accountSeed": "//Alice//2012",
+            "feedId": 29
+        },
+        {
+            "downloadedArchivePath": "/archives/integritee",
+            "wsUrls": [
+                "wss://kusama.api.integritee.network"
+            ],
+            "paraId": 2015,
+            "accountSeed": "//Alice//2015",
+            "feedId": 30
+        },
+        {
+            "downloadedArchivePath": "/archives/crab",
+            "wsUrls": [
+                "wss://crab-parachain-rpc.darwinia.network"
+            ],
+            "paraId": 2105,
+            "accountSeed": "//Alice//2105",
+            "feedId": 31
+        },
+        {
+            "downloadedArchivePath": "/archives/litmus",
+            "wsUrls": [
+                "wss://rpc.litmus-parachain.litentry.io"
+            ],
+            "paraId": 2106,
+            "accountSeed": "//Alice//2106",
+            "feedId": 32
+        },
+        {
+            "downloadedArchivePath": "/archives/kico",
+            "wsUrls": [
+                "wss://rpc.api.kico.dico.io"
+            ],
+            "paraId": 2107,
+            "accountSeed": "//Alice//2107",
+            "feedId": 33
+        }
+    ]
+}
