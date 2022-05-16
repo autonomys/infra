@@ -25,7 +25,6 @@ data "digitalocean_ssh_key" "leo-key" {
 data "digitalocean_ssh_key" "serge-key" {
   name = "Serge SSH Key"
 }
-
 data "digitalocean_ssh_key" "sam-key" {
   name = "Sam SSH Key"
 }
