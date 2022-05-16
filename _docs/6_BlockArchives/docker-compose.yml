@@ -484,3 +484,14 @@ services:
       SOURCE_CHAIN_RPC: wss://turing.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
       TARGET_DIR: /archive
     entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
+
+  mangata:
+    image: ghcr.io/subspace/relayer:latest
+    volumes:
+      - /mnt/polkadot_archive_volume/kusama-archives/mangata:/archive
+    restart: unless-stopped
+    environment:
+      DEBUG: 1
+      SOURCE_CHAIN_RPC: wss://mangata-x.api.onfinality.io/ws?apikey={ONFINALITY_API_KEY}
+      TARGET_DIR: /archive
+    entrypoint: ["node", "/dist/tools/continuous-fetch-blocks-to-archive.js"] 
