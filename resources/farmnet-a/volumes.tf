@@ -3,7 +3,7 @@ resource "digitalocean_volume" "aries-farmnet-a" {
   name                    = "farmnet-a-volume"
   size                    = 1800
   initial_filesystem_type = "ext4"
-  description             = "Extra volume for relaynet a."
+  description             = "Extra volume for farmnet a."
 }
 
 resource "digitalocean_volume_attachment" "aries-farmnet-a" {
