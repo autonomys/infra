@@ -7,3 +7,5 @@ resource "digitalocean_project" "aries-test-b" {
     digitalocean_droplet.aries-relaynet-a.urn,
   digitalocean_volume.aries-relaynet-a.urn, digitalocean_droplet.aries-farmers-network-b-nodes.urn]
 }
+
+
