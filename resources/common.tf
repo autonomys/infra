@@ -19,13 +19,18 @@ provider "digitalocean" {
 data "digitalocean_ssh_key" "nazar-key" {
   name = "Nazar SSH Key"
 }
-data "digitalocean_ssh_key" "leo-key" {
-  name = "Leo SSH Key"
-}
 data "digitalocean_ssh_key" "serge-key" {
   name = "Serge SSH Key"
 }
+data "digitalocean_ssh_key" "ved-key" {
+  name = "Ved SSH Key"
+}
 
-data "digitalocean_ssh_key" "sam-key" {
-  name = "Sam SSH Key"
+# add ssh keys as single var
+locals {
+  ssh_keys = [
+    data.digitalocean_ssh_key.nazar-key.id,
+    data.digitalocean_ssh_key.serge-key.id,
+    data.digitalocean_ssh_key.ved-key.id
+  ]
 }
