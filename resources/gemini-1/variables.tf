@@ -7,5 +7,5 @@ variable "droplet-size" {
 variable "droplet-regions" {
   description = "Droplet regions"
   type = list(string)
-  default = ["nyc1", "sfo1", "ams2", "fra1", "blr1", "sgp1"]
+  default = ["nyc1", "sfo3", "ams3", "fra1", "blr1", "sgp1"]
 }
