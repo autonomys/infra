@@ -9,3 +9,9 @@ variable "droplet-regions" {
   type = list(string)
   default = ["nyc1", "sfo3", "ams3", "fra1", "blr1", "sgp1"]
 }
+
+variable "node-snapshot-tag" {
+  description = "Node snapshot tag"
+  type = string
+  default = "snapshot-2022-may-18"
+}
