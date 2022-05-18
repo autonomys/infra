@@ -161,6 +161,17 @@ server {
 
 ```
 
+In `/etc/nginx/nginx.conf` make sure to make following changes:
+```
+...
+worker_processes auto;
+worker_rlimit_nofile 524288;
+...
+	worker_connections 32768;
+	multi_accept on;
+...
+```
+
 Restart the nginx service to load the config file.
 
 ```bash
@@ -183,7 +194,7 @@ Sample [docker-compose.yml](node-docker-compose.yml) can be used as a reference 
   First time can be generated with following command (please retain values across testnets that are supposed to be
   identical):
   ```bash
-  docker run --rm -it subspacelabs/subspace-node key generate-node-key
+  docker run --rm -it ghcr.io/subspace/node:snapshot-DATE key generate-node-key
   ```
 
 Now pull fresh images and spin up the network:
@@ -239,7 +250,7 @@ Sample [docker-compose.yml](relayer-docker-compose.yml) can be used as a referen
 
 Now fund accounts and create necessary feeds on the network (only needs to be done once after network restart):
 ```bash
-docker pull subspacelabs/subspace-relayer
+docker pull ghcr.io/subspace/relayer:latest
 # Fund accounts from config using account whose seed is specified in `FUNDS_ACCOUNT_SEED`
 docker run --rm -it \
     -e CHAIN_CONFIG_PATH="/config.json" \

@@ -10,15 +10,13 @@ services:
     command: [
       "--chain", "testnet",
       "--base-path", "/var/subspace",
-      "--wasm-execution", "compiled",
       "--execution", "wasm",
       "--pruning", "archive",
       "--pool-kbytes", "51200",
-      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--node-key", "GENERATED_NODE_KEY_HERE",
       # Following 3 lines are for farmer connection
       "--rpc-cors", "all",
-      "--rpc-methods", "Unsafe",
+      "--rpc-methods", "safe",
       "--ws-external",
       "--validator",
     ]
@@ -34,16 +32,14 @@ services:
     command: [
       "--chain", "testnet",
       "--base-path", "/var/subspace",
-      "--wasm-execution", "compiled",
       "--execution", "wasm",
       "--pruning", "archive",
       "--pool-kbytes", "51200",
-      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--bootnodes", "/dns/bootstrap-node/tcp/30333/p2p/GENERATED_BOOTSTRAP_NODE_ID_HERE",
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
-      "--ws-max-connections", "1000",
+      "--ws-max-connections", "10000",
     ]
 
   farmer:
@@ -55,6 +51,10 @@ services:
     restart: unless-stopped
     command: [
       "farm",
+      "--custom-path", "/var/subspace",
       "--node-rpc-url", "ws://bootstrap-node:9944",
       "--ws-server-listen-addr", "0.0.0.0:9955",
+      # Sudo account on testnet
+      "--reward-address", "5CXTmJEusve5ixyJufqHThmy4qUrrm6FyLCR7QfE4bbyMTNC",
+      "--plot-size", "1000G",
     ]
