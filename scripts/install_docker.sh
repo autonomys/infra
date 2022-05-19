@@ -2,6 +2,7 @@
 
 # updates
 apt update -y
+apt upgrade -y
 apt install -y curl jq
 
 # install docker
