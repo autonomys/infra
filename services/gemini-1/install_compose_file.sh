@@ -45,7 +45,7 @@ services:
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
-      "--ws-max-connections", "1000",
+      "--ws-max-connections", "10000",
 EOF
 
 node_count=${1}

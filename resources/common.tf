@@ -15,8 +15,8 @@ terraform {
 # Check the README for more info on set this variable.
 variable "do_token" {}
 
-# path to the ssh key that will be used to remote-exec commands
-variable "pvt_key" {}
+# SSH agen identity to use to connect to remote host
+variable "ssh_identity" {}
 
 # Set DigitalOcean as provider
 provider "digitalocean" {
