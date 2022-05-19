@@ -40,6 +40,7 @@ services:
       "--execution", "wasm",
       "--pruning", "archive",
       "--pool-kbytes", "51200",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-external",
