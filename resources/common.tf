@@ -4,6 +4,11 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.0"
     }
+
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -16,6 +21,21 @@ variable "pvt_key" {}
 # Set DigitalOcean as provider
 provider "digitalocean" {
   token = var.do_token
+}
+
+provider "cloudflare" {
+  email   = var.cloudflare_email
+  api_token = var.cloudflare_api_token
+}
+
+variable "cloudflare_email" {
+  type        = string
+  description = "clouflare email address"
+}
+
+variable "cloudflare_api_token" {
+  type        = string
+  description = "cloudflare api token"
 }
 
 # SSH team keys to be used on droplet access

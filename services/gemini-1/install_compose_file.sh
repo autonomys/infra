@@ -17,7 +17,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - CADDY_INGRESS_NETWORKS=gemini-1_default
+      - CADDY_INGRESS_NETWORKS=subspace_default
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - caddy_data:/data

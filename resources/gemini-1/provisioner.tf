@@ -17,7 +17,7 @@ resource "null_resource" "node_keys" {
 resource "null_resource" "gemini-1" {
   count = length(var.droplet-regions)
 
-  depends_on = [null_resource.node_keys]
+  depends_on = [null_resource.node_keys, cloudflare_record.bootstrap, cloudflare_record.rpc]
 
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
