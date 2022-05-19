@@ -10,7 +10,6 @@ volumes:
 services:
   # caddy reverse proxy with automatic tls management using let encrypt
   caddy:
-    container_name: caddy
     image: lucaslorentz/caddy-docker-proxy:latest
     restart: unless-stopped
     ports:
@@ -23,7 +22,6 @@ services:
       - caddy_data:/data
 
   archival-node:
-    container_name: archival-node
     image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
@@ -31,7 +29,7 @@ services:
     ports:
       - "30333:30333"
     labels:
-      caddy: rpc-\${NODE_ID}.gemini-1.subspace.network bootstrap-\${NODE_ID}.gemini-1.subspace.network
+      caddy: rpc-\${NODE_ID}.gemini-1.subspace.network
       caddy.handle_path_0: /http
       caddy.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
       caddy.handle_path_1: /ws
@@ -43,7 +41,6 @@ services:
       "--pruning", "archive",
       "--pool-kbytes", "51200",
       "--node-key", \$NODE_KEY,
-      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",

@@ -14,12 +14,12 @@ resource "null_resource" "node_keys" {
   }
 }
 
-resource "null_resource" "gemini-1" {
+resource "null_resource" "setup_nodes" {
   count = length(var.droplet-regions)
 
   depends_on = [null_resource.node_keys, cloudflare_record.bootstrap, cloudflare_record.rpc]
 
-  # trigger on new ipv4 change for any instance since we would need to update reserved ips
+  # trigger on node ip changes
   triggers = {
     cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1.*.ipv4_address)
   }
@@ -45,18 +45,44 @@ resource "null_resource" "gemini-1" {
     destination = "/subspace/install_docker.sh"
   }
 
-  # copy node keys file
-  provisioner "file" {
-    source = "./node_keys.txt"
-    destination = "/subspace/node_keys.txt"
-  }
-
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /subspace/install_docker.sh",
       "sudo /subspace/install_docker.sh"
     ]
+  }
+
+}
+
+# deployment version
+# increment this to restart node with any changes to env and compose files
+locals {
+  deployment_version = 2
+}
+
+resource "null_resource" "start_nodes" {
+  count = length(var.droplet-regions)
+
+  depends_on = [null_resource.setup_nodes]
+
+  # trigger on node deployment version change
+  triggers = {
+    deployment_version = local.deployment_version
+  }
+
+  connection {
+    host = digitalocean_droplet.gemini-1[count.index].ipv4_address
+    user = "root"
+    type = "ssh"
+    private_key = file(var.pvt_key)
+    timeout = "2m"
+  }
+
+  # copy node keys file
+  provisioner "file" {
+    source = "./node_keys.txt"
+    destination = "/subspace/node_keys.txt"
   }
 
   # copy compose file
