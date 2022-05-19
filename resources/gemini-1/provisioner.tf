@@ -7,7 +7,7 @@ resource "null_resource" "node_keys" {
   # generate node keys
   provisioner "local-exec" {
     command = "../../scripts/generate_node_keys.sh ${length(var.droplet-regions)} ./node_keys.txt"
-    interpreter = [ "/bin/zsh", "-c" ]
+    interpreter = [ "/bin/bash", "-c" ]
     environment = {
       NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-1.*.ipv4_address)
     }
@@ -32,7 +32,7 @@ resource "null_resource" "gemini-1" {
     timeout = "2m"
   }
 
-  # install docker and docker compose
+  # create subspace dir
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /subspace"
@@ -72,7 +72,7 @@ resource "null_resource" "gemini-1" {
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/install_compose_file.sh",
-      "sudo /subspace/install_compose_file.sh ${length(digitalocean_droplet.gemini-1)}",
+      "sudo /subspace/install_compose_file.sh ${length(digitalocean_droplet.gemini-1)} ${count.index}",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }

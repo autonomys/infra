@@ -24,7 +24,7 @@ services:
 
   archival-node:
     container_name: archival-node
-    image: ghcr.io/subspace/node:\${NODE_SNAPSHOT_TAG}
+    image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -32,21 +32,18 @@ services:
       - "30333:30333"
     labels:
       caddy: rpc-\${NODE_ID}.gemini-1.subspace.network bootstrap-\${NODE_ID}.gemini-1.subspace.network
-      caddy.handle_path_0: /rpc/*
+      caddy.handle_path_0: /http
       caddy.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
-      caddy.handle_path_1: /ws/*
+      caddy.handle_path_1: /ws
       caddy.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
     command: [
-      # TODO: change the chain
-      "--chain", "local",
+      "--chain", "gemini-1",
       "--base-path", "/var/subspace",
-      "--wasm-execution", "compiled",
       "--execution", "wasm",
       "--pruning", "archive",
       "--pool-kbytes", "51200",
       "--node-key", \$NODE_KEY,
       "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
-      "--reserved-only",
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
@@ -54,9 +51,12 @@ services:
 EOF
 
 node_count=${1}
+current_node=${2}
 for (( i = 0; i < node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
-  echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
+  if [ "${current_node}" != "${i}" ]; then
+    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
+    echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
+  fi
 done
 
 echo '    ]' >> /subspace/docker-compose.yml
