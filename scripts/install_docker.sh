@@ -2,15 +2,13 @@
 
 # updates
 apt update -y
-apt upgrade -y
-apt autoremove -y
-apt install -y curl
+apt install -y curl jq
 
 # install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 apt update -y
-apt-cache policy docker-ce # this ensures that docker is installed from the docker repo instead of ubuntu repo
+apt-cache -y policy docker-ce # this ensures that docker is installed from the docker repo instead of ubuntu repo
 apt install -y docker-ce
 
 # install docker-compose
