@@ -29,13 +29,13 @@ resource "digitalocean_firewall" "gemini-1-firewall" {
 
   outbound_rule {
     protocol              = "tcp"
-    port_range            = "1-65535"
-    destination_addresses = ["0.0.0.0/0", "::/0"]
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
   }
 
   outbound_rule {
     protocol              = "udp"
-    port_range            = "1-65535"
-    destination_addresses = ["0.0.0.0/0", "::/0"]
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
   }
 }
