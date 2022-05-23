@@ -13,5 +13,5 @@ variable "droplet-regions" {
 variable "node-snapshot-tag" {
   description = "Node snapshot tag"
   type = string
-  default = "snapshot-pre-gemini"
+  default = "snapshot-pre-gemini-2"
 }
