@@ -10,6 +10,12 @@ variable "droplet-regions" {
   default = ["nyc1", "sfo3", "ams3", "fra1", "blr1", "sgp1"]
 }
 
+variable "droplets-per-region" {
+  description = "Droplets per region"
+  type = number
+  default = 2
+}
+
 variable "node-snapshot-tag" {
   description = "Node snapshot tag"
   type = string

@@ -29,7 +29,7 @@ services:
     ports:
       - "30333:30333"
     labels:
-      caddy: rpc-\${NODE_ID}.gemini-1.subspace.network
+      caddy: rpc-\${NODE_ID}.gemini-1a.subspace.network
       caddy.handle_path_0: /http
       caddy.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
       caddy.handle_path_1: /ws

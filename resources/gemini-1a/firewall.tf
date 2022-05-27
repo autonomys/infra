@@ -1,7 +1,9 @@
-resource "digitalocean_firewall" "gemini-1-firewall" {
-  name = "gemini-1-firewall"
+resource "digitalocean_firewall" "gemini-1a-firewall" {
+  name = "gemini-1a-firewall"
 
-  droplet_ids = [for droplet in digitalocean_droplet.gemini-1: droplet.id]
+  droplet_ids = flatten([
+    [for droplet in digitalocean_droplet.gemini-1a: droplet.id],
+    [digitalocean_droplet.gemini-1a-temp.id]])
 
   inbound_rule {
     protocol         = "tcp"

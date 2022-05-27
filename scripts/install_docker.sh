@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # updates
+export DEBIAN_FRONTEND=noninteractive
 apt update -y
 apt dist-upgrade -y
 apt install -y curl jq
