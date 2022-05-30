@@ -14,6 +14,48 @@ resource "cloudflare_record" "gemini-1a" {
   type    = "A"
 }
 
+resource "digitalocean_firewall" "gemini-1a-firewall-temp" {
+  name = "gemini-1a-firewall-temp"
+
+  droplet_ids = [digitalocean_droplet.gemini-1a-temp.id]
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "22"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "80"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "443"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "30333"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "tcp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "udp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
+  }
+}
+
 #resource "cloudflare_record" "gemini-1a-regions" {
 #  count = length(var.droplet-regions)
 #  zone_id = data.cloudflare_zone.cloudflare_zone.id
