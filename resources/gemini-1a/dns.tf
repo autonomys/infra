@@ -3,7 +3,7 @@ data "cloudflare_zone" "cloudflare_zone" {
 }
 
 resource "cloudflare_record" "rpc" {
-  count = length(var.droplet-regions) * var.droplets-per-region
+  count = length(digitalocean_droplet.gemini-1a)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "rpc-${count.index}.gemini-1a"
   value   = digitalocean_droplet.gemini-1a[count.index].ipv4_address
@@ -11,7 +11,7 @@ resource "cloudflare_record" "rpc" {
 }
 
 resource "cloudflare_record" "bootstrap" {
-  count = length(var.droplet-regions) * var.droplets-per-region
+  count = length(digitalocean_droplet.gemini-1a)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "bootstrap-${count.index}.gemini-1a"
   value   = digitalocean_droplet.gemini-1a[count.index].ipv4_address

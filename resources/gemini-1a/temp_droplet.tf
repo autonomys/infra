@@ -14,6 +14,14 @@ resource "cloudflare_record" "gemini-1a" {
   type    = "A"
 }
 
+#resource "cloudflare_record" "gemini-1a-regions" {
+#  count = length(var.droplet-regions)
+#  zone_id = data.cloudflare_zone.cloudflare_zone.id
+#  name    = "${var.droplet-regions[count.index]}.gemini-1a"
+#  value   = digitalocean_droplet.gemini-1a-temp.ipv4_address
+#  type    = "A"
+#}
+
 resource "null_resource" "node_keys_temp" {
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
@@ -31,8 +39,8 @@ resource "null_resource" "node_keys_temp" {
 }
 
 resource "null_resource" "setup_nodes_temp" {
+#  depends_on = [null_resource.node_keys_temp, cloudflare_record.gemini-1a, cloudflare_record.gemini-1a-regions]
   depends_on = [null_resource.node_keys_temp, cloudflare_record.gemini-1a]
-
   # trigger on node ip changes
   triggers = {
     temp_ipv4 = digitalocean_droplet.gemini-1a-temp.ipv4_address

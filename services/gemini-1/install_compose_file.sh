@@ -45,6 +45,7 @@ services:
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
+      "--in-peers", "1000",
       "--ws-max-connections", "10000",
 EOF
 
