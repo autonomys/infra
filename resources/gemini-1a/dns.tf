@@ -17,4 +17,3 @@ resource "cloudflare_record" "bootstrap" {
   value   = digitalocean_droplet.gemini-1a[count.index].ipv4_address
   type    = "A"
 }
-

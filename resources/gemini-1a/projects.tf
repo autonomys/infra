@@ -5,7 +5,6 @@ resource "digitalocean_project" "gemini-1a" {
   environment = "Production"
   resources = flatten([
     [for droplet in digitalocean_droplet.gemini-1a: droplet.urn],
-    [digitalocean_droplet.gemini-1a-temp.urn],
   ])
 }
 
