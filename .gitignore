@@ -5,4 +5,3 @@
 backend_config.hcl
 *.tfvars
 node_keys.txt
-/resources/gemini-1a/node_keys_temp.txt
