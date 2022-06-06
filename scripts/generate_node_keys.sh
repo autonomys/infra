@@ -10,12 +10,11 @@ fi
 ips=$(echo "$NODE_PUBLIC_IPS" | awk -F, '{for(i=1;i<=NF;i++) print $i}')
 ips=( ${ips} )
 echo -n > "${output_file}"
-echo -n > /tmp/additionl_args.txt
 echo "Generating node keys..."
 for (( i = 0; i < node_count; i++ )); do
-    docker run --rm subspacelabs/subspace-node key generate-node-key &> /tmp/log.txt
-    peer_id=$(sed '2q;d' /tmp/log.txt)
-    node_key=$(sed '3q;d' /tmp/log.txt)
+    data="$(docker run --rm subspacelabs/subspace-node key generate-node-key 2>&1)"
+    peer_id=$(echo "$data" | sed '2q;d')
+    node_key=$(echo "$data" | sed '3q;d')
     {
       echo "NODE_${i}_PEER_ID=${peer_id}"
       echo "NODE_${i}_KEY=${node_key}"
