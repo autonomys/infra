@@ -3,3 +3,5 @@
 *.tfplan
 .DS_Store
 backend_config.hcl
+*.tfvars
+node_keys.txt

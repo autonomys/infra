@@ -6,7 +6,5 @@ resource "digitalocean_droplet" "aries-farmnet-a" {
   ssh_keys = [
     data.digitalocean_ssh_key.nazar-key.id,
     data.digitalocean_ssh_key.serge-key.id,
-    data.digitalocean_ssh_key.leo-key.id,
-    data.digitalocean_ssh_key.sam-key.id,
   ]
 }

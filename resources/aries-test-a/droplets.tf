@@ -18,6 +18,5 @@ resource "digitalocean_droplet" "aries-farmers-network-a-nodes" {
   ssh_keys = [
     data.digitalocean_ssh_key.nazar-key.id,
     data.digitalocean_ssh_key.serge-key.id,
-    data.digitalocean_ssh_key.leo-key.id,
   ]
 }
