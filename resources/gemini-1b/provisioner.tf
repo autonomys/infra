@@ -1,31 +1,31 @@
 resource "null_resource" "node_keys" {
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1a.*.ipv4_address)
+    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
   }
 
   # generate node keys
   provisioner "local-exec" {
-    command = "../../scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-1a)} ./node_keys.txt"
+    command = "../../scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-1b)} ./node_keys.txt"
     interpreter = [ "/bin/bash", "-c" ]
     environment = {
-      NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-1a.*.ipv4_address)
+      NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
     }
   }
 }
 
 resource "null_resource" "setup_nodes" {
-  count = length(digitalocean_droplet.gemini-1a)
+  count = length(digitalocean_droplet.gemini-1b)
 
   depends_on = [null_resource.node_keys, cloudflare_record.bootstrap, cloudflare_record.rpc]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1a.*.ipv4_address)
+    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1a[count.index].ipv4_address
+    host = digitalocean_droplet.gemini-1b[count.index].ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -59,11 +59,11 @@ resource "null_resource" "setup_nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  deployment_version = 1
+  deployment_version = 3
 }
 
 resource "null_resource" "start_nodes" {
-  count = length(digitalocean_droplet.gemini-1a)
+  count = length(digitalocean_droplet.gemini-1b)
 
   depends_on = [null_resource.setup_nodes]
 
@@ -73,7 +73,7 @@ resource "null_resource" "start_nodes" {
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1a[count.index].ipv4_address
+    host = digitalocean_droplet.gemini-1b[count.index].ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -96,11 +96,12 @@ resource "null_resource" "start_nodes" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
+      "docker compose -f /subspace/docker-compose.yml down",
       "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/install_compose_file.sh",
-      "sudo /subspace/install_compose_file.sh ${length(digitalocean_droplet.gemini-1a)} ${count.index}",
+      "sudo /subspace/install_compose_file.sh ${length(digitalocean_droplet.gemini-1b)} ${count.index}",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }

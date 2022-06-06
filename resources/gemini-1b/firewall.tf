@@ -1,15 +1,15 @@
 locals {
   firewall_sets = [
-    slice([for droplet in digitalocean_droplet.gemini-1a: droplet.id], 0, 6),
-    slice([for droplet in digitalocean_droplet.gemini-1a: droplet.id], 6, 12)
+    slice([for droplet in digitalocean_droplet.gemini-1b: droplet.id], 0, 6),
+    slice([for droplet in digitalocean_droplet.gemini-1b: droplet.id], 6, 12)
   ]
 }
 
 // looks like digital ocean do not support more than 10 droplets in a single firewall
 // break it up into two sets
-resource "digitalocean_firewall" "gemini-1a-firewall" {
+resource "digitalocean_firewall" "gemini-1b-firewall" {
   count = length(local.firewall_sets)
-  name = "gemini-1a-firewall-${count.index}"
+  name = "gemini-1b-firewall-${count.index}"
 
   droplet_ids = local.firewall_sets[count.index]
 

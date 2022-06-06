@@ -1,5 +1,5 @@
 output "droplet-ipv4-address" {
-  value       = digitalocean_droplet.gemini-1a[*].ipv4_address
+  value       = digitalocean_droplet.gemini-1b[*].ipv4_address
   description = "Droplet IPV4 Address"
 }
 

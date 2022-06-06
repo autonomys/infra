@@ -22,7 +22,7 @@ services:
       - caddy_data:/data
 
   archival-node:
-    image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
+    image: ghcr.io/subspace/node:\${NODE_SNAPSHOT_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -46,6 +46,8 @@ services:
       "--rpc-external",
       "--ws-external",
       "--in-peers", "1000",
+      "--out-peers", "500",
+      "--in-peers-light", "1000",
       "--ws-max-connections", "10000",
 EOF
 
@@ -55,6 +57,7 @@ for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
+    echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
   fi
 done
 
