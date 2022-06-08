@@ -59,7 +59,7 @@ resource "null_resource" "setup_nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  deployment_version = 3
+  deployment_version = 4
 }
 
 resource "null_resource" "start_nodes" {
