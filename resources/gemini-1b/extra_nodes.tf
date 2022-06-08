@@ -1,31 +1,50 @@
-resource "null_resource" "node_keys" {
-  # trigger on new ipv4 change for any instance since we would need to update reserved ips
-  triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
+resource "digitalocean_droplet" "gemini-1b-extra" {
+  image  = "ubuntu-20-04-x64"
+  name   = "gemini-1b-node-extra-0-sgp1"
+  region = "sgp1"
+  size   = var.droplet-size
+  ssh_keys = local.ssh_keys
+}
+
+resource "digitalocean_firewall" "gemini-1b-firewall-extra" {
+  name = "gemini-1b-firewall-extra"
+
+  droplet_ids = [digitalocean_droplet.gemini-1b-extra.id]
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "22"
+    source_addresses = ["0.0.0.0/0"]
   }
 
-  # generate node keys
-  provisioner "local-exec" {
-    command = "../../scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-1b)} ./node_keys.txt"
-    interpreter = [ "/bin/bash", "-c" ]
-    environment = {
-      NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
-    }
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "30333"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "tcp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "udp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
   }
 }
 
-resource "null_resource" "setup_nodes" {
-  count = length(digitalocean_droplet.gemini-1b)
-
-  depends_on = [null_resource.node_keys, cloudflare_record.bootstrap, cloudflare_record.rpc]
+resource "null_resource" "setup_nodes-extra" {
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
+    cluster_instance_ipv4 = digitalocean_droplet.gemini-1b-extra.ipv4_address
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1b[count.index].ipv4_address
+    host = digitalocean_droplet.gemini-1b-extra.ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -56,16 +75,8 @@ resource "null_resource" "setup_nodes" {
 
 }
 
-# deployment version
-# increment this to restart node with any changes to env and compose files
-locals {
-  deployment_version = 6
-}
-
-resource "null_resource" "start_nodes" {
-  count = length(digitalocean_droplet.gemini-1b)
-
-  depends_on = [null_resource.setup_nodes]
+resource "null_resource" "start_nodes_extra" {
+  depends_on = [null_resource.setup_nodes-extra]
 
   # trigger on node deployment version change
   triggers = {
@@ -73,7 +84,7 @@ resource "null_resource" "start_nodes" {
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1b[count.index].ipv4_address
+    host = digitalocean_droplet.gemini-1b-extra.ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -98,11 +109,12 @@ resource "null_resource" "start_nodes" {
     inline = [
       "docker compose -f /subspace/docker-compose.yml down",
       "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} >> /subspace/.env",
-      "echo NODE_ID=${count.index} >> /subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
+      "echo NODE_ID=12 >> /subspace/.env",
+      "echo NODE_KEY=$(sed -nr 's/NODE_12_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/install_compose_file.sh",
-      "sudo /subspace/install_compose_file.sh ${length(digitalocean_droplet.gemini-1b)} ${count.index}",
+      "sudo /subspace/install_compose_file.sh 13 12",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }
 }
+

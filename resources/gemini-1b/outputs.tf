@@ -10,3 +10,8 @@ output "rpc_records" {
 output "bootstrap_records" {
   value = cloudflare_record.bootstrap[*].hostname
 }
+
+output "droplet-extra-ipv4-address" {
+  value       = digitalocean_droplet.gemini-1b-extra[*].ipv4_address
+  description = "Droplet IPV4 Address"
+}
