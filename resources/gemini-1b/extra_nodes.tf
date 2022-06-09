@@ -88,7 +88,7 @@ resource "null_resource" "setup-nodes-extra" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  deployment_version_extra = 2
+  deployment_version_extra = 5
 }
 
 resource "null_resource" "start-nodes-extra" {
@@ -119,7 +119,7 @@ resource "null_resource" "start-nodes-extra" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
-      "docker compose -f /subspace/docker-compose.yml down",
+      "docker compose -f /subspace/docker-compose.yml down --remove-orphans",
       "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} > /subspace/.env",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
