@@ -21,3 +21,9 @@ variable "node-snapshot-tag" {
   type = string
   default = "gemini-1b-2022-jun-08"
 }
+
+variable "extra-droplets" {
+  description = "Extra droplets"
+  type = number
+  default = 20
+}

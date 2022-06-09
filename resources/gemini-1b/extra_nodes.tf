@@ -1,15 +1,23 @@
 resource "digitalocean_droplet" "gemini-1b-extra" {
+  count = var.extra-droplets
   image  = "ubuntu-20-04-x64"
-  name   = "gemini-1b-node-extra-0-sgp1"
+  name   = "gemini-1b-node-extra-${count.index}-sgp1"
   region = "sgp1"
   size   = var.droplet-size
   ssh_keys = local.ssh_keys
 }
 
-resource "digitalocean_firewall" "gemini-1b-firewall-extra" {
-  name = "gemini-1b-firewall-extra"
+locals {
+  firewall_extra_sets = [
+    slice([for droplet in digitalocean_droplet.gemini-1b-extra: droplet.id], 0, 10),
+    slice([for droplet in digitalocean_droplet.gemini-1b-extra: droplet.id], 10, 20)
+  ]
+}
 
-  droplet_ids = [digitalocean_droplet.gemini-1b-extra.id]
+resource "digitalocean_firewall" "gemini-1b-firewall-extra" {
+  count = length(local.firewall_extra_sets)
+  name = "gemini-1b-firewall-${count.index}-extra"
+  droplet_ids = local.firewall_extra_sets[count.index]
 
   inbound_rule {
     protocol         = "tcp"
@@ -36,15 +44,16 @@ resource "digitalocean_firewall" "gemini-1b-firewall-extra" {
   }
 }
 
-resource "null_resource" "setup_nodes-extra" {
+resource "null_resource" "setup-nodes-extra" {
+  count = length(digitalocean_droplet.gemini-1b-extra)
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4 = digitalocean_droplet.gemini-1b-extra.ipv4_address
+    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-1b-extra.*.ipv4_address)
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1b-extra.ipv4_address
+    host = digitalocean_droplet.gemini-1b-extra[count.index].ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -75,16 +84,25 @@ resource "null_resource" "setup_nodes-extra" {
 
 }
 
-resource "null_resource" "start_nodes_extra" {
-  depends_on = [null_resource.setup_nodes-extra]
+
+# deployment version
+# increment this to restart node with any changes to env and compose files
+locals {
+  deployment_version_extra = 2
+}
+
+resource "null_resource" "start-nodes-extra" {
+  count = length(digitalocean_droplet.gemini-1b-extra)
+
+  depends_on = [null_resource.setup-nodes-extra]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = local.deployment_version
+    deployment_version = local.deployment_version_extra
   }
 
   connection {
-    host = digitalocean_droplet.gemini-1b-extra.ipv4_address
+    host = digitalocean_droplet.gemini-1b-extra[count.index].ipv4_address
     user = "root"
     type = "ssh"
     agent = true
@@ -92,27 +110,17 @@ resource "null_resource" "start_nodes_extra" {
     timeout = "2m"
   }
 
-  # copy node keys file
-  provisioner "file" {
-    source = "./node_keys.txt"
-    destination = "/subspace/node_keys.txt"
-  }
-
   # copy compose file
   provisioner "file" {
-    source = "../../services/gemini-1/install_compose_file.sh"
-    destination = "/subspace/install_compose_file.sh"
+    source = "../../services/gemini-1/docker-compose-extra.yml"
+    destination = "/subspace/docker-compose.yml"
   }
 
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       "docker compose -f /subspace/docker-compose.yml down",
-      "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} >> /subspace/.env",
-      "echo NODE_ID=12 >> /subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_12_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
-      "sudo chmod +x /subspace/install_compose_file.sh",
-      "sudo /subspace/install_compose_file.sh 13 12",
+      "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} > /subspace/.env",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }

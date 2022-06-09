@@ -1,0 +1,34 @@
+version: "3.7"
+
+volumes:
+  archival_node_data: {}
+
+services:
+  archival-node:
+    image: ghcr.io/subspace/node:${NODE_SNAPSHOT_TAG}
+    volumes:
+      - archival_node_data:/var/subspace:rw
+    restart: unless-stopped
+    ports:
+      - "30333:30333"
+    command: [
+      "--chain", "gemini-1",
+      "--base-path", "/var/subspace",
+      "--execution", "wasm",
+      "--pruning", "archive",
+      "--pool-kbytes", "51200",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--rpc-cors", "all",
+      "--rpc-external",
+      "--ws-external",
+      "--in-peers", "500",
+      "--out-peers", "500",
+      "--in-peers-light", "1000",
+      "--ws-max-connections", "10000",
+      "--reserved-nodes", "/ip4/176.122.88.128/tcp/30334/p2p/12D3KooWPhmm8MV8EciomUyKrquHznPXWpSHcJAhWG1x2DHYwpZk",
+      "--reserved-nodes", "/ip4/176.122.88.128/tcp/30335/p2p/12D3KooWEWmUX8futkbi8YodaRGFuuuxyngmKWDPazVob4JwT1TE",
+      "--reserved-nodes", "/ip4/136.243.147.181/tcp/30333/p2p/12D3KooWMghTozorUJb9cCUvohpwoWngeRpsvZpDkfdrjhLFCodj",
+      "--reserved-nodes", "/ip4/138.201.195.122/tcp/30333/p2p/12D3KooWLnXyjqPvwDD16Y9gwvcBhCfwj9GF2ezc2zsk2BXG5aaY",
+      "--reserved-nodes", "/ip4/65.108.228.84/tcp/30333/p2p/12D3KooWHs8Z7LqutNY5xnw3ZqhEZh7sa9m1zU26eEhEm85eo2JA",
+      "--reserved-nodes", "/ip4/65.108.228.83/tcp/30333/p2p/12D3KooW9wF7EYwYRaaUYL3S3nKSRbfrb65SD7WgnvAcfVHnyx1L",
+    ]
