@@ -59,7 +59,7 @@ resource "null_resource" "setup_nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  deployment_version = 6
+  deployment_version = 8
 }
 
 resource "null_resource" "start_nodes" {
@@ -97,7 +97,7 @@ resource "null_resource" "start_nodes" {
   provisioner "remote-exec" {
     inline = [
       "docker compose -f /subspace/docker-compose.yml down",
-      "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} >> /subspace/.env",
+      "echo NODE_SNAPSHOT_TAG=${var.node-snapshot-tag} > /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/install_compose_file.sh",
