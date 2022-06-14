@@ -46,8 +46,8 @@ services:
       "--rpc-external",
       "--ws-external",
       "--in-peers", "500",
-      "--out-peers", "500",
-      "--in-peers-light", "1000",
+      "--out-peers", "250",
+      "--in-peers-light", "500",
       "--ws-max-connections", "10000",
 EOF
 
