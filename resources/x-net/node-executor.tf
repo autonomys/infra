@@ -37,7 +37,7 @@ resource "digitalocean_firewall" "x-net-executor-firewall" {
 }
 
 locals {
-  executor_deployment_version = 4
+  executor_deployment_version = 5
 }
 
 resource "null_resource" "start_executor_node" {

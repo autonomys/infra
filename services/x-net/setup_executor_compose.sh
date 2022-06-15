@@ -24,7 +24,7 @@ services:
         "--unsafe-ws-external",
         "--name", "executor-node",
         "--node-key", \$NODE_KEY,
-        "--log=subspace=debug,runtime=debug,gossip::executor=trace,bundle-producer=debug,bundle-processor=debug",
+        "--log=subspace=debug,runtime=debug,gossip::executor=trace,bundle-producer=debug,bundle-processor=debug,cirrus::executor::debug",
 EOF
 
 node_count=${1}
