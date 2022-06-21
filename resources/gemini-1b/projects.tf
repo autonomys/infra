@@ -6,6 +6,7 @@ resource "digitalocean_project" "gemini-1b" {
   resources = flatten([
     [for droplet in digitalocean_droplet.gemini-1b: droplet.urn],
     [for droplet in digitalocean_droplet.gemini-1b-extra: droplet.urn],
+    [for droplet in digitalocean_droplet.gemini-1b-extra-US: droplet.urn],
   ])
 }
 

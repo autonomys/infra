@@ -1,0 +1,41 @@
+version: "3.7"
+
+volumes:
+  archival_node_data: {}
+
+services:
+  archival-node:
+    image: ghcr.io/subspace/node:${NODE_SNAPSHOT_TAG}
+    volumes:
+      - archival_node_data:/var/subspace:rw
+    restart: unless-stopped
+    ports:
+      - "30333:30333"
+    command: [
+      "--chain", "gemini-1",
+      "--base-path", "/var/subspace",
+      "--execution", "wasm",
+      "--pruning", "archive",
+      "--pool-kbytes", "51200",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--rpc-cors", "all",
+      "--rpc-methods", "safe",
+      "--ws-external",
+      "--in-peers", "500",
+      "--out-peers", "250",
+      "--in-peers-light", "500",
+      "--ws-max-connections", "10000",
+      "--reserved-only",
+      "--reserved-nodes", "/ip4/192.34.56.129/tcp/30333/p2p/12D3KooWF9CgB8bDvWCvzPPZrWG3awjhS7gPFu7MzNPkF9F9xWwc",
+      "--reserved-nodes", "/ip4/143.198.232.248/tcp/30333/p2p/12D3KooWLrpSArNaZ3Hvs4mABwYGDY1Rf2bqiNTqUzLm7koxedQQ",
+      "--reserved-nodes", "/ip4/128.199.51.68/tcp/30333/p2p/12D3KooWNN5uuzPtDNtWoLU28ZDCQP7HTdRjyWbNYo5EA6fZDAMD",
+      "--reserved-nodes", "/ip4/207.154.193.240/tcp/30333/p2p/12D3KooWM47uyGtvbUFt5tmWdFezNQjwbYZmWE19RpWhXgRzuEqh",
+      "--reserved-nodes", "/ip4/139.59.64.225/tcp/30333/p2p/12D3KooWNMEKxFZm9mbwPXfQ3LQaUgin9JckCq7TJdLS2UnH6E7z",
+      "--reserved-nodes", "/ip4/159.223.32.127/tcp/30333/p2p/12D3KooWFfEtDmpb8BWKXoEAgxkKAMfxU2yGDq8nK87MqnHvXsok",
+      "--reserved-nodes", "/ip4/198.211.106.29/tcp/30333/p2p/12D3KooWHSeob6t43ukWAGnkTcQEoRaFSUWphGDCKF1uefG2UGDh",
+      "--reserved-nodes", "/ip4/143.198.58.194/tcp/30333/p2p/12D3KooWKwrGSmaGJBD29agJGC3MWiA7NZt34Vd98f6VYgRbV8hH",
+      "--reserved-nodes", "/ip4/164.92.218.126/tcp/30333/p2p/12D3KooWCXFrzVGtAzrTUc4y7jyyvhCcNTAcm18Zj7UN46whZ5Bm",
+      "--reserved-nodes", "/ip4/46.101.140.85/tcp/30333/p2p/12D3KooWNGxWQ4sajzW1akPRZxjYM5TszRtsCnEiLhpsGrsHrFC6",
+      "--reserved-nodes", "/ip4/139.59.70.211/tcp/30333/p2p/12D3KooWNGf1qr5411JwPHgwqftjEL6RgFRUEFnsJpTMx6zKEdWn",
+      "--reserved-nodes", "/ip4/159.223.51.101/tcp/30333/p2p/12D3KooWM7Qe4rVfzUAMucb5GTs3m4ts5ZrFg83LZnLhRCjmYEJK",
+    ]
