@@ -19,7 +19,6 @@ services:
       "--pool-kbytes", "51200",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--rpc-cors", "all",
-      "--rpc-external",
       "--ws-external",
       "--in-peers", "500",
       "--out-peers", "250",

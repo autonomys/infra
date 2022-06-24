@@ -80,7 +80,7 @@ resource "null_resource" "setup-nodes-extra-US" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  deployment_version_extra_US = 1
+  deployment_version_extra_US = 2
 }
 
 resource "null_resource" "start-nodes-extra-US" {

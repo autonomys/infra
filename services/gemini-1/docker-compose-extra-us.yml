@@ -25,7 +25,6 @@ services:
       "--out-peers", "250",
       "--in-peers-light", "500",
       "--ws-max-connections", "10000",
-      "--reserved-only",
       "--reserved-nodes", "/ip4/192.34.56.129/tcp/30333/p2p/12D3KooWF9CgB8bDvWCvzPPZrWG3awjhS7gPFu7MzNPkF9F9xWwc",
       "--reserved-nodes", "/ip4/143.198.232.248/tcp/30333/p2p/12D3KooWLrpSArNaZ3Hvs4mABwYGDY1Rf2bqiNTqUzLm7koxedQQ",
       "--reserved-nodes", "/ip4/128.199.51.68/tcp/30333/p2p/12D3KooWNN5uuzPtDNtWoLU28ZDCQP7HTdRjyWbNYo5EA6fZDAMD",
