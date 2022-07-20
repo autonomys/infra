@@ -4,7 +4,7 @@ terraform {
     organization  = "subspace-sre"
 
     workspaces {
-      name = "gemini-1b"
+      name = "gemini-1b-latest"
     }
   }
 }
