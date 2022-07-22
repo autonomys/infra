@@ -16,9 +16,7 @@ terraform {
 variable "do_token" {}
 
 # SSH agen identity to use to connect to remote host
-variable "ssh_identity" {
-  default = "root"
-}
+variable "ssh_identity" { }
 
 # Set DigitalOcean as provider
 provider "digitalocean" {
