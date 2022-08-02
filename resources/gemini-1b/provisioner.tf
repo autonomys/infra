@@ -6,7 +6,7 @@ resource "null_resource" "node_keys" {
 
   # generate node keys
   provisioner "local-exec" {
-    command = "utils/scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-1b)} ./node_keys.txt"
+    command = "scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-1b)} ./node_keys.txt"
     interpreter = [ "/bin/bash", "-c" ]
     environment = {
       NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-1b.*.ipv4_address)
@@ -29,7 +29,6 @@ resource "null_resource" "setup_nodes" {
     user = "root"
     type = "ssh"
     agent = false
-#    agent_identity = var.ssh_identity
     private_key = var.alexey2_do_private_key
     timeout = "2m"
   }
@@ -43,7 +42,7 @@ resource "null_resource" "setup_nodes" {
 
   # copy install file
   provisioner "file" {
-    source = "utils/scripts/install_docker.sh"
+    source = "scripts/install_docker.sh"
     destination = "/subspace/install_docker.sh"
   }
 
@@ -78,7 +77,6 @@ resource "null_resource" "start_nodes" {
     user = "root"
     type = "ssh"
     agent = false
-    #    agent_identity = var.ssh_identity
     private_key = var.alexey2_do_private_key
     timeout = "2m"
   }
@@ -91,7 +89,7 @@ resource "null_resource" "start_nodes" {
 
   # copy compose file
   provisioner "file" {
-    source = "utils/services/gemini-1/install_compose_file.sh"
+    source = "scripts/install_compose_file.sh"
     destination = "/subspace/install_compose_file.sh"
   }
 
