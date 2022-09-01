@@ -29,7 +29,7 @@ services:
     ports:
       - "30333:30333"
     labels:
-      caddy: rpc-\${NODE_ID}.gemini-1a.subspace.network
+      caddy: rpc-\${NODE_ID}.gemini-2a.subspace.network
       caddy.handle_path_0: /http
       caddy.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
       caddy.handle_path_1: /ws
@@ -38,16 +38,15 @@ services:
       "--chain", "gemini-1",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--pruning", "archive",
-      "--pool-kbytes", "51200",
+      "--state-pruning", "archive-canonical"
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
-      "--in-peers", "1000",
-      "--out-peers", "500",
-      "--in-peers-light", "1000",
+      "--in-peers", "500",
+      "--out-peers", "250",
+      "--in-peers-light", "500",
       "--ws-max-connections", "10000",
 EOF
 
@@ -59,6 +58,13 @@ for (( i = 0; i < node_count; i++ )); do
     echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
     echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
   fi
+done
+
+bootstrap_node_count=${3}
+for (( i = 0; i < bootstrap_node_count; i++ )); do
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/boostrap_node_keys.txt)
+  echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
+  echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
 echo '    ]' >> /subspace/docker-compose.yml
