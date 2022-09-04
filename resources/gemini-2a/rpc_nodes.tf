@@ -26,7 +26,7 @@ resource "null_resource" "rpc-node-keys" {
 resource "null_resource" "setup-rpc-nodes" {
   count = length(digitalocean_droplet.gemini-2a-rpc-nodes)
 
-  depends_on = [null_resource.rpc-node-keys, cloudflare_record.rpc]
+  depends_on = [null_resource.rpc-node-keys, cloudflare_record.rpc, null_resource.start-boostrap-nodes]
 
   # trigger on node ip changes
   triggers = {
@@ -39,7 +39,7 @@ resource "null_resource" "setup-rpc-nodes" {
     type = "ssh"
     agent = true
     agent_identity = var.ssh_identity
-    timeout = "2m"
+    timeout = "10s"
   }
 
   # create subspace dir
@@ -87,7 +87,7 @@ resource "null_resource" "start-rpc-nodes" {
     type = "ssh"
     agent = true
     agent_identity = var.ssh_identity
-    timeout = "2m"
+    timeout = "10s"
   }
 
   # copy node keys file
@@ -99,7 +99,7 @@ resource "null_resource" "start-rpc-nodes" {
   # copy boostrap node keys file
   provisioner "file" {
     source = "./bootstrap_node_keys.txt"
-    destination = "/subspace/node_keys.txt"
+    destination = "/subspace/bootstrap_node_keys.txt"
   }
 
   # copy compose file

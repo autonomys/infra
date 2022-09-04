@@ -22,7 +22,7 @@ services:
       - caddy_data:/data
 
   archival-node:
-    image: ghcr.io/subspace/node:\${NODE_SNAPSHOT_TAG}
+    image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -35,13 +35,14 @@ services:
       caddy.handle_path_1: /ws
       caddy.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
     command: [
-      "--chain", "gemini-1",
+      "--chain", "gemini-2a",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--state-pruning", "archive-canonical"
+      "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
+      "--reserved-only",
       "--rpc-external",
       "--ws-external",
       "--in-peers", "500",
@@ -62,9 +63,12 @@ done
 
 bootstrap_node_count=${3}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/boostrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
+
+echo "      \"--reserved-nodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
+echo "      \"--bootnodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
 
 echo '    ]' >> /subspace/docker-compose.yml

@@ -5,3 +5,5 @@
 backend_config.hcl
 *.tfvars
 node_keys.txt
+/resources/gemini-2a/bootstrap_node_keys.txt
+/resources/gemini-2a/rpc_node_keys.txt

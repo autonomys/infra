@@ -39,7 +39,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
     type = "ssh"
     agent = true
     agent_identity = var.ssh_identity
-    timeout = "2m"
+    timeout = "10s"
   }
 
   # create subspace dir
@@ -87,7 +87,7 @@ resource "null_resource" "start-boostrap-nodes" {
     type = "ssh"
     agent = true
     agent_identity = var.ssh_identity
-    timeout = "2m"
+    timeout = "10s"
   }
 
   # copy node keys file

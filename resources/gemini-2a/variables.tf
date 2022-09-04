@@ -19,7 +19,7 @@ variable "rpc-nodes-per-region" {
 variable "bootstrap-node-regions" {
   description = "Bootstrap node regions"
   type = list(string)
-  default = ["nyc1", "sfo3", "blr1", "sgp1", "nyc2", "sgp1"]
+  default = ["nyc1", "sfo3", "blr1", "sgp1", "nyc1", "sgp1"]
 }
 
 variable "bootstrap-nodes-per-region" {
@@ -31,5 +31,5 @@ variable "bootstrap-nodes-per-region" {
 variable "node-snapshot-tag" {
   description = "Node snapshot tag"
   type = string
-  default = "gemini-1b-2022-aug-17"
+  default = "gemini-2a-pre-release"
 }

@@ -7,7 +7,7 @@ terraform {
 
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 3.0"
+      version = "~> 3.18.0"
     }
   }
 }
@@ -25,18 +25,12 @@ provider "digitalocean" {
 
 provider "cloudflare" {
   email   = var.cloudflare_email
-  account_id = var.cloudflare_account_id
   api_token = var.cloudflare_api_token
 }
 
 variable "cloudflare_email" {
   type        = string
   description = "clouflare email address"
-}
-
-variable "cloudflare_account_id" {
-  type        = string
-  description = "cloudflare account id"
 }
 
 variable "cloudflare_api_token" {

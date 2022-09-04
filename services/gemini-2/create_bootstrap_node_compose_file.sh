@@ -8,19 +8,19 @@ volumes:
 
 services:
   archival-node:
-    image: ghcr.io/subspace/node:\${NODE_SNAPSHOT_TAG}
+    image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
     command: [
-      "--chain", "gemini-1",
+      "--chain", "gemini-2a",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--state-pruning", "archive-canonical"
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
+      "--reserved-only",
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
@@ -39,5 +39,8 @@ for (( i = 0; i < node_count; i++ )); do
     echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
   fi
 done
+
+echo "      \"--reserved-nodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
+echo "      \"--bootnodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
 
 echo '    ]' >> /subspace/docker-compose.yml
