@@ -33,3 +33,18 @@ variable "node-snapshot-tag" {
   type = string
   default = "gemini-2a-pre-release"
 }
+
+variable "hetzner_bootstrap_node_ips" {
+  description = "Hetzner bootstrap ip v4"
+  type = list(string)
+}
+
+variable "hetzner_full_node_ips" {
+  description = "Hetzner full node ip v4"
+  type = list(string)
+}
+
+variable "hetzner_rpc_node_ips" {
+  description = "Hetzner rpc node ip v4"
+  type = list(string)
+}

@@ -1,5 +1,9 @@
 locals {
-  full_node_ip_v4 = flatten([digitalocean_droplet.gemini-2a-full-nodes.*.ipv4_address])
+  full_node_ip_v4 = flatten([
+      [digitalocean_droplet.gemini-2a-full-nodes.*.ipv4_address],
+      [var.hetzner_full_node_ips],
+    ]
+  )
 }
 
 resource "null_resource" "full-node-keys" {
@@ -63,7 +67,7 @@ resource "null_resource" "setup-full-nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  full_node_deployment_version = 1
+  full_node_deployment_version = 3
 }
 
 resource "null_resource" "start-full-nodes" {
@@ -112,7 +116,7 @@ resource "null_resource" "start-full-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${length(local.full_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
-      "docker compose -f /subspace/docker-compose.yml up -d",
+      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
     ]
   }
 }

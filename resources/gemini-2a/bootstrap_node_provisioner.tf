@@ -1,5 +1,9 @@
 locals {
-  bootstrap_nodes_ip_v4 = flatten([digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address])
+  bootstrap_nodes_ip_v4 = flatten([
+      [digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address],
+      [var.hetzner_bootstrap_node_ips],
+    ]
+  )
 }
 
 resource "null_resource" "boostrap-node-keys" {
@@ -63,7 +67,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  boostrap_node_deployment_version = 1
+  boostrap_node_deployment_version = 2
 }
 
 resource "null_resource" "start-boostrap-nodes" {
@@ -106,7 +110,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
-      "docker compose -f /subspace/docker-compose.yml up -d",
+      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
     ]
   }
 }
