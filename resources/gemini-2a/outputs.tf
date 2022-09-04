@@ -1,13 +1,13 @@
-output "rpc-node-ipv4-addresses" {
-  value       = digitalocean_droplet.gemini-2a-rpc-nodes[*].ipv4_address
-  description = "RPC node IPv4 Addresses"
+output "do-full-node-ipv4-addresses" {
+  value       = digitalocean_droplet.gemini-2a-full-nodes[*].ipv4_address
+  description = "DO full node IPv4 Addresses"
 }
 
-output "bootstrap-node-ipv4-addresses" {
+output "do_bootstrap-node-ipv4-addresses" {
   value       = digitalocean_droplet.gemini-2a-bootstrap-nodes[*].ipv4_address
-  description = "Bootstrap node IPv4 Addresses"
+  description = "DO Bootstrap node IPv4 Addresses"
 }
 
-output "rpc_records" {
-  value = cloudflare_record.rpc[*].hostname
-}
+#output "rpc_records" {
+#  value = cloudflare_record.rpc[*].hostname
+#}

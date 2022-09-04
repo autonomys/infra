@@ -4,7 +4,7 @@ resource "digitalocean_project" "gemini-2a" {
   purpose     = "Testnet"
   environment = "Production"
   resources = flatten([
-    [for droplet in digitalocean_droplet.gemini-2a-rpc-nodes: droplet.urn],
+    [for droplet in digitalocean_droplet.gemini-2a-full-nodes: droplet.urn],
     [for droplet in digitalocean_droplet.gemini-2a-bootstrap-nodes: droplet.urn],
   ])
 }

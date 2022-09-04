@@ -1,40 +1,35 @@
-resource "digitalocean_droplet" "gemini-2a-bootstrap-nodes" {
-  count = length(var.bootstrap-node-regions) * var.bootstrap-nodes-per-region
-  image  = "ubuntu-22-04-x64"
-  name   = "gemini-2a-bootstrap-node-${count.index}-${var.bootstrap-node-regions[count.index % length(var.bootstrap-node-regions)]}"
-  region = var.bootstrap-node-regions[count.index % length(var.bootstrap-node-regions)]
-  size   = var.droplet-size
-  ssh_keys = local.ssh_keys
+locals {
+  bootstrap_nodes_ip_v4 = flatten([digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address])
 }
 
 resource "null_resource" "boostrap-node-keys" {
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
   }
 
   # generate rpc node keys
   provisioner "local-exec" {
-    command = "../../scripts/generate_node_keys.sh ${length(digitalocean_droplet.gemini-2a-bootstrap-nodes)} ./bootstrap_node_keys.txt"
+    command = "../../scripts/generate_node_keys.sh ${length(local.bootstrap_nodes_ip_v4)} ./bootstrap_node_keys.txt"
     interpreter = [ "/bin/bash", "-c" ]
     environment = {
-      NODE_PUBLIC_IPS = join(",", digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address)
+      NODE_PUBLIC_IPS = join(",", local.bootstrap_nodes_ip_v4)
     }
   }
 }
 
 resource "null_resource" "setup-bootstrap-nodes" {
-  count = length(digitalocean_droplet.gemini-2a-bootstrap-nodes)
+  count = length(local.bootstrap_nodes_ip_v4)
 
   depends_on = [null_resource.boostrap-node-keys]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", digitalocean_droplet.gemini-2a-bootstrap-nodes.*.ipv4_address)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
   }
 
   connection {
-    host = digitalocean_droplet.gemini-2a-bootstrap-nodes[count.index].ipv4_address
+    host = local.bootstrap_nodes_ip_v4[count.index]
     user = "root"
     type = "ssh"
     agent = true
@@ -72,7 +67,7 @@ locals {
 }
 
 resource "null_resource" "start-boostrap-nodes" {
-  count = length(digitalocean_droplet.gemini-2a-bootstrap-nodes)
+  count = length(local.bootstrap_nodes_ip_v4)
 
   depends_on = [null_resource.setup-bootstrap-nodes]
 
@@ -82,7 +77,7 @@ resource "null_resource" "start-boostrap-nodes" {
   }
 
   connection {
-    host = digitalocean_droplet.gemini-2a-bootstrap-nodes[count.index].ipv4_address
+    host = local.bootstrap_nodes_ip_v4[count.index]
     user = "root"
     type = "ssh"
     agent = true
@@ -110,7 +105,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
-      "sudo /subspace/create_compose_file.sh ${length(digitalocean_droplet.gemini-2a-bootstrap-nodes)} ${count.index}",
+      "sudo /subspace/create_compose_file.sh ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
       "docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }
