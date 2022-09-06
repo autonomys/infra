@@ -21,7 +21,6 @@ services:
       "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
-      "--reserved-only",
       "--in-peers", "500",
       "--out-peers", "250",
       "--in-peers-light", "500",

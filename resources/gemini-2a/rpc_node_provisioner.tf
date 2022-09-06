@@ -63,7 +63,7 @@ resource "null_resource" "setup-rpc-nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  rpc_node_deployment_version = 1
+  rpc_node_deployment_version = 5
 }
 
 resource "null_resource" "start-rpc-nodes" {

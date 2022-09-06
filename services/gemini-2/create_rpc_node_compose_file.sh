@@ -43,7 +43,6 @@ services:
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--reserved-only",
-      "--rpc-external",
       "--ws-external",
       "--in-peers", "500",
       "--out-peers", "250",

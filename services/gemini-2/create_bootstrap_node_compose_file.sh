@@ -20,7 +20,6 @@ services:
       "--execution", "wasm",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
-      "--reserved-only",
       "--rpc-cors", "all",
       "--rpc-external",
       "--ws-external",
