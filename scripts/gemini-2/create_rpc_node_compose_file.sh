@@ -67,7 +67,4 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
-echo "      \"--reserved-nodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
-echo "      \"--bootnodes\", \"/ip4/176.37.50.72/tcp/30333/p2p/12D3KooWPApJxK2RU4hjM6u3aAJsnmkQhfRWZyxGQyzrGFTsk5bZ\"," >> /subspace/docker-compose.yml
-
 echo '    ]' >> /subspace/docker-compose.yml

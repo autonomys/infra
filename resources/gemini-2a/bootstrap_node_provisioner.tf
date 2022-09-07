@@ -67,7 +67,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  boostrap_node_deployment_version = 5
+  boostrap_node_deployment_version = 7
 }
 
 resource "null_resource" "start-boostrap-nodes" {

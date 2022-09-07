@@ -67,7 +67,7 @@ resource "null_resource" "setup-full-nodes" {
 # deployment version
 # increment this to restart node with any changes to env and compose files
 locals {
-  full_node_deployment_version = 5
+  full_node_deployment_version = 7
 }
 
 resource "null_resource" "start-full-nodes" {
