@@ -8,17 +8,16 @@ volumes:
 
 services:
   archival-node:
-    image: ghcr.io/nazar-pc/node:\${NODE_SNAPSHOT_TAG}
+    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
     command: [
-      "--chain", "gemini-2a",
+      "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
       "--in-peers", "500",
@@ -27,8 +26,9 @@ services:
       "--ws-max-connections", "10000",
 EOF
 
-node_count=${1}
-current_node=${2}
+reserved_only=${1}
+node_count=${2}
+current_node=${3}
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
@@ -37,11 +37,8 @@ for (( i = 0; i < node_count; i++ )); do
   fi
 done
 
-bootstrap_node_count=${3}
-for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/bootstrap_node_keys.txt)
-  echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
-done
+if [ "${reserved_only}" == "true" ]; then
+    echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
+fi
 
 echo '    ]' >> /subspace/docker-compose.yml

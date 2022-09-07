@@ -12,11 +12,13 @@ terraform {
   }
 }
 
-# Check the README for more info on set this variable.
-variable "do_token" {}
+variable "do_token" {
+  description = "Digital ocean API key"
+}
 
-# SSH agen identity to use to connect to remote host
-variable "ssh_identity" {}
+variable "ssh_identity" {
+  description = "SSH agent identity to use to connect to remote host"
+}
 
 # Set DigitalOcean as provider
 provider "digitalocean" {
@@ -30,7 +32,7 @@ provider "cloudflare" {
 
 variable "cloudflare_email" {
   type        = string
-  description = "clouflare email address"
+  description = "cloudflare email address"
 }
 
 variable "cloudflare_api_token" {

@@ -1,11 +1,16 @@
 output "do-full-node-ipv4-addresses" {
-  value       = digitalocean_droplet.gemini-2a-full-nodes[*].ipv4_address
+  value       = module.gemini-2a.do-full-node-ipv4-addresses
   description = "DO full node IPv4 Addresses"
 }
 
 output "do-bootstrap-node-ipv4-addresses" {
-  value       = digitalocean_droplet.gemini-2a-bootstrap-nodes[*].ipv4_address
+  value       = module.gemini-2a.do-bootstrap-node-ipv4-addresses
   description = "DO Bootstrap node IPv4 Addresses"
+}
+
+output "do-rpc-node-ipv4-addresses" {
+  value       = module.gemini-2a.do-rpc-node-ipv4-addresses
+  description = "DO RPC node IPv4 Addresses"
 }
 
 output "hetzner-bootstrap-node-ipv4-addresses" {
@@ -24,5 +29,6 @@ output "hetzner-rpc-node-ipv4-addresses" {
 }
 
 output "rpc-records" {
-  value = cloudflare_record.rpc[*].hostname
+  value       = module.gemini-2a.rpc-records
+  description = "RPC records"
 }
