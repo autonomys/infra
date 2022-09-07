@@ -99,7 +99,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   # copy compose file
   provisioner "file" {
-    source = "../../services/gemini-2/create_rpc_node_compose_file.sh"
+    source = "../../scripts/gemini-2/create_rpc_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 

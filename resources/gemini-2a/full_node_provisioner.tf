@@ -103,7 +103,7 @@ resource "null_resource" "start-full-nodes" {
 
   # copy compose file
   provisioner "file" {
-    source = "../../services/gemini-2/create_full_node_compose_file.sh"
+    source = "../../scripts/gemini-2/create_full_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 

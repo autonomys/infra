@@ -97,7 +97,7 @@ resource "null_resource" "start-boostrap-nodes" {
 
   # copy compose file
   provisioner "file" {
-    source = "../../services/gemini-2/create_bootstrap_node_compose_file.sh"
+    source = "../../scripts/gemini-2/create_bootstrap_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 
