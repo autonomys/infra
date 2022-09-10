@@ -1,1 +1,0 @@
-/Users/vedhavyas/Projects/infra/resources/common.tf
