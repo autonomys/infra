@@ -16,7 +16,7 @@ module "gemini-2a" {
     droplet_size        = var.droplet-size
     deployment-version  = 8
     regions             = ["nyc1", "sfo3", "blr1", "sgp1"]
-    nodes-per-region    = 2
+    nodes-per-region    = 1
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "nazar-pc"
     docker-tag          = "gemini-2a-pre-release"
