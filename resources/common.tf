@@ -50,6 +50,9 @@ data "digitalocean_ssh_key" "serge-key" {
 data "digitalocean_ssh_key" "ved-key" {
   name = "Ved SSH Key"
 }
+data "digitalocean_ssh_key" "i1i1-key" {
+  name = "Ivan SSH Key"
+}
 
 # add ssh keys as single var
 locals {
