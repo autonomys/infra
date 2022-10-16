@@ -23,8 +23,6 @@ services:
     ]
     environment:
       NODE_TLS_REJECT_UNAUTHORIZED: 0
-    ports:
-      - "9090:9090" # prometheus port
 
   gateway:
     depends_on:
@@ -36,8 +34,6 @@ services:
        "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
        "--database-max-connections", "3", # max number of concurrent database connections
     ]
-    ports:
-      - "8888:8000"
 
   # Explorer service is optional.
   # It provides rich GraphQL API for querying archived data.
@@ -60,8 +56,6 @@ services:
     volumes:
       # replace VOLUME_NAME with your volume name
       - /mnt/VOLUME_NAME/node-data:/var/subspace:rw
-    ports:
-      - "0.0.0.0:9944:9944"
     restart: unless-stopped
     command: [
       # 
