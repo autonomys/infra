@@ -27,3 +27,6 @@
 6. [Block archives](./6_BlockArchives/README.md)
 - Create chain archive.
 - Update archives.
+
+7. [Subsquid archive](./7_SubsquidArchive/README.md)
+- Create Subsquid archive.
