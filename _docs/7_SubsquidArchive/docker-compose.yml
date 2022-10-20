@@ -34,6 +34,8 @@ services:
        "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
        "--database-max-connections", "3", # max number of concurrent database connections
     ]
+    ports:
+      - "8888:8000"
 
   # Explorer service is optional.
   # It provides rich GraphQL API for querying archived data.
