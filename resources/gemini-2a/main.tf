@@ -4,9 +4,9 @@ module "gemini-2a" {
   network-name    = "gemini-2a"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 8
+    deployment-version  = 9
     regions             = ["nyc1", "sfo3", "blr1", "sgp1", "nyc1", "sgp1"]
-    nodes-per-region    = 1
+    nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "nazar-pc"
     docker-tag          = "gemini-2a-pre-release"
@@ -14,9 +14,9 @@ module "gemini-2a" {
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 8
+    deployment-version  = 9
     regions             = ["nyc1", "sfo3", "blr1", "sgp1"]
-    nodes-per-region    = 1
+    nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "nazar-pc"
     docker-tag          = "gemini-2a-pre-release"
@@ -24,7 +24,7 @@ module "gemini-2a" {
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 8
+    deployment-version  = 9
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
