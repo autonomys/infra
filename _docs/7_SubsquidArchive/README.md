@@ -2,6 +2,14 @@
 
 Subspace Network maintains [Subsquid Archive](https://docs.subsquid.io/archives/) in order to store raw chain data in a normalized way and expose it using GraphQL endpoint
 
+## Docker and Docker Compose setup
+Install Docker:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-plugin
+```
+
 ## Create Subsquid Archive
 Create a Subsquid Archive setup using Docker Compose:
 ```bash
