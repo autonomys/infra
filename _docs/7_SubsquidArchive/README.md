@@ -31,3 +31,26 @@ Pull fresh images and start containers:
 docker-compose pull
 docker-compose up -d
 ```
+
+## Nginx setup and SSL certificate
+Install Nginx:
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+Sample [Nginx config](archive.subspace.network) can be used as a reference.
+
+Install Certbot:
+```bash
+sudo snap install core
+sudo snap refresh core
+sudo apt remove certbot
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+```
+
+Obtain an SSL certificate:
+```bash
+sudo certbot --nginx -d archive.subspace.network
+```
