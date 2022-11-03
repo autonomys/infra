@@ -40,6 +40,9 @@ sudo apt install nginx
 ```
 
 Sample [Nginx config](archive.subspace.network) can be used as a reference.
+> Note: it requires including `/etc/nginx/cors-settings.conf`, which can be found [here](cors-settings.conf)
+
+It exposes Archive Graphql endpoint `/api` (consumed by squids) as well as Graphql Explorer at `/graphql` (UI for exploration and debugging)
 
 Install Certbot:
 ```bash
