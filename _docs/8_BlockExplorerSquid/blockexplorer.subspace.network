@@ -4,7 +4,7 @@ server {
 
     server_name blockexplorer.subspace.network;
 
-    location / {
+    location ~* \.(?:css|js|json)$ {
         try_files $uri $uri/ @backend;
     }
 
