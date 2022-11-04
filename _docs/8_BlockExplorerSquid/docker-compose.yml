@@ -7,7 +7,9 @@ services:
       # replace VOLUME_NAME with your volume name
       - VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
     environment:
+      # provide DB name
       POSTGRES_DB:
+      # provide DB password
       POSTGRES_PASSWORD:
     ports:
       - "23798:5432"
@@ -17,6 +19,7 @@ services:
     restart: on-failure:5
     environment:
       DB_HOST: "db"
+      # provide DB name
       DB_NAME:
       DB_PASS:
     depends_on:
@@ -27,10 +30,14 @@ services:
     image: ghcr.io/subspace/blockexplorer-processor:latest
     restart: on-failure
     environment:
+      # provide archive endpoint
       ARCHIVE_ENDPOINT: 
+      # provide chain RPC endpoint
       CHAIN_RPC_ENDPOINT:
       DB_HOST: "db"
+      # provide DB name
       DB_NAME:
+      # provide DB password
       DB_PASS:
     depends_on:
       - db
@@ -46,7 +53,9 @@ services:
       - processor
     environment:
       DB_HOST: "db"
+      # provide DB name
       DB_NAME:
+      # provide DB password
       DB_PASS:
     ports:
       - "4350:4000"
