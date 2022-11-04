@@ -1,0 +1,52 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:14
+    volumes:
+      # replace VOLUME_NAME with your volume name
+      - VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB:
+      POSTGRES_PASSWORD:
+    ports:
+      - "23798:5432"
+
+  run-migrations:
+    image: ghcr.io/subspace/blockexplorer-processor:latest
+    restart: on-failure:5
+    environment:
+      DB_HOST: "db"
+      DB_NAME:
+      DB_PASS:
+    depends_on:
+      - db
+    command: "npm run db:migrate"
+
+  processor:
+    image: ghcr.io/subspace/blockexplorer-processor:latest
+    restart: on-failure
+    environment:
+      ARCHIVE_ENDPOINT: 
+      CHAIN_RPC_ENDPOINT:
+      DB_HOST: "db"
+      DB_NAME:
+      DB_PASS:
+    depends_on:
+      - db
+      - run-migrations
+    ports:
+      - "3000:3000"
+
+  graphql:
+    image: ghcr.io/subspace/blockexplorer-api-server:latest
+    depends_on:
+      - db
+      - run-migrations
+      - processor
+    environment:
+      DB_HOST: "db"
+      DB_NAME:
+      DB_PASS:
+    ports:
+      - "4350:4000"

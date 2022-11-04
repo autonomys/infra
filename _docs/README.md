@@ -29,4 +29,11 @@
 - Update archives.
 
 7. [Subsquid archive](./7_SubsquidArchive/README.md)
+- Docker and Docker Compose setup.
 - Create Subsquid archive.
+- Nginx setup and SSL certificate.
+
+8. [Block explorer squid](./8_BlockExplorerSquid/README.md)
+- Docker and Docker Compose setup.
+- Create Block explorer squid.
+- Nginx setup and SSL certificate.

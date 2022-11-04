@@ -4,7 +4,7 @@ services:
     restart: always
     volumes:
       # replace VOLUME_NAME with your volume name
-      - /mnt/VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
+      - /VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -57,7 +57,7 @@ services:
     image: ghcr.io/subspace/node:snapshot-DATE
     volumes:
       # replace VOLUME_NAME with your volume name
-      - /mnt/VOLUME_NAME/node-data:/var/subspace:rw
+      - /VOLUME_NAME/node-data:/var/subspace:rw
     restart: unless-stopped
     command: [
       # 
