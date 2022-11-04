@@ -21,6 +21,7 @@ services:
       DB_HOST: "db"
       # provide DB name
       DB_NAME:
+      # provide DB password
       DB_PASS:
     depends_on:
       - db

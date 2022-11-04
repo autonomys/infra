@@ -11,7 +11,7 @@ sudo apt-get install -y docker.io docker-compose-plugin
 ```
 
 ## Create Block explorer squid
-Create a Subsquid Archive setup using Docker Compose:
+Create a Block explorer squid setup using Docker Compose:
 ```bash
 mkdir squid-blockexplorer
 cd squid-blockexplorer
@@ -51,5 +51,5 @@ sudo ln -s /snap/bin/certbot /usr/bin/certbot
 
 Obtain an SSL certificate:
 ```bash
-sudo certbot --nginx -d archive.subspace.network
+sudo certbot --nginx -d blockexplorer.subspace.network
 ```
