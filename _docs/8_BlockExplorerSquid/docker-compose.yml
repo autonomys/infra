@@ -5,7 +5,7 @@ services:
     image: postgres:14
     volumes:
       # replace VOLUME_NAME with your volume name
-      - VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
+      - /VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
     environment:
       # provide DB name
       POSTGRES_DB:
