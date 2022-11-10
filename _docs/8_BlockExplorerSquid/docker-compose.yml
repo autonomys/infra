@@ -40,6 +40,7 @@ services:
       DB_NAME:
       # provide DB password
       DB_PASS:
+      BATCH_SIZE: 20
     depends_on:
       - db
       - run-migrations
