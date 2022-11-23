@@ -7,6 +7,15 @@ volumes:
   archival_node_data: {}
 
 services:
+  dsn-bootstrap-node:
+    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
+    volumes:
+      - boostrap_node_data:/var/subspace:rw
+    restart: unless-stopped
+    ports:
+      - "50000:50000"
+    command: ["start", \$DSN_NODE_KEY, "/ip4/0.0.0.0/tcp/50000" ]
+
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
@@ -34,6 +43,8 @@ for (( i = 0; i < node_count; i++ )); do
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
     echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
+    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/dsn_bootstrap_node_keys.txt)
+    echo "      \"--dsn-bootstrap-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
   fi
 done
 

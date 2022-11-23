@@ -98,6 +98,12 @@ resource "null_resource" "start-full-nodes" {
     destination = "/subspace/bootstrap_node_keys.txt"
   }
 
+  # copy dsn boostrap node keys file
+  provisioner "file" {
+    source      = "./dsn_bootstrap_node_keys.txt"
+    destination = "/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
   # copy compose file
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_full_node_compose_file.sh"

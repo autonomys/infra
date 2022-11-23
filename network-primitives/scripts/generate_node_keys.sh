@@ -3,6 +3,7 @@
 docker pull subspacelabs/subspace-node:latest
 node_count=${1}
 output_file=${2}
+port=${3:-30333}
 if [ -s "${output_file}" ]; then
     echo "Node keys exists..."
     exit 0
@@ -18,7 +19,7 @@ for (( i = 0; i < node_count; i++ )); do
     {
       echo "NODE_${i}_PEER_ID=${peer_id}"
       echo "NODE_${i}_KEY=${node_key}"
-      echo "NODE_${i}_MULTI_ADDR=/ip4/${ips[${i}]}/tcp/30333/p2p/${peer_id}"
+      echo "NODE_${i}_MULTI_ADDR=/ip4/${ips[${i}]}/tcp/${port}/p2p/${peer_id}"
     } >> "${output_file}"
 done
 echo "Done."
