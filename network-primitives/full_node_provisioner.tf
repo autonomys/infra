@@ -1,7 +1,7 @@
 locals {
   full_node_ip_v4 = flatten([
-    [digitalocean_droplet.full-nodes.*.ipv4_address],
     [var.full-node-config.additional-node-ips],
+    [digitalocean_droplet.full-nodes.*.ipv4_address],
     ]
   )
 }

@@ -1,7 +1,7 @@
 locals {
   rpc_node_ip_v4 = flatten([
-    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
     [var.rpc-node-config.additional-node-ips],
+    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
     ]
   )
 }

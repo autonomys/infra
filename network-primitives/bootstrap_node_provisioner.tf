@@ -1,7 +1,7 @@
 locals {
   bootstrap_nodes_ip_v4 = flatten([
-    [digitalocean_droplet.bootstrap-nodes.*.ipv4_address],
     [var.bootstrap-node-config.additional-node-ips],
+    [digitalocean_droplet.bootstrap-nodes.*.ipv4_address],
     ]
   )
 }
