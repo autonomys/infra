@@ -15,7 +15,7 @@ services:
     ports:
       - "30333:30333"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", \$NETWORK_NAME-compiled,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",

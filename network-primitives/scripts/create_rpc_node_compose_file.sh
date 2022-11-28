@@ -29,20 +29,31 @@ services:
     ports:
       - "30333:30333"
     labels:
-      caddy: \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network
-      caddy.handle_path_0: /http
-      caddy.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
-      caddy.handle_path_1: /ws
-      caddy.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
+      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network
+      caddy_0.handle_path_0: /http
+      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
+      caddy_0.handle_path_1: /ws
+      caddy_0.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
+      caddy_1: \${DOMAIN_PREFIX}-\${NODE_ID}.system.\${NETWORK_NAME}.subspace.network
+      caddy_1.handle_path_0: /http
+      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
+      caddy_1.handle_path_1: /ws
+      caddy_1.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
+      caddy_2: \${DOMAIN_PREFIX}-\${NODE_ID}.payments.\${NETWORK_NAME}.subspace.network
+      caddy_2.handle_path_0: /http
+      caddy_2.handle_path_0.reverse_proxy: "{{upstreams 7933}}"
+      caddy_2.handle_path_1: /ws
+      caddy_2.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", \$NETWORK_NAME-compiled,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
-      "--reserved-only",
+      "--rpc-port", "9933",
+      "--ws-port", "9944",
       "--ws-external",
       "--in-peers", "500",
       "--out-peers", "250",
@@ -75,5 +86,30 @@ done
 if [ "${reserved_only}" == "true" ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
+
+{
+# system domain
+  echo '      "--",'
+  echo '      "--chain=gemini-3a",'
+  echo '      "--validator",'
+  echo '      "--base-path", "/var/subspace/system_domain",'
+  echo '      "--keystore-path", "/var/subspace/keystore",'
+  echo '      "--rpc-cors", "all",'
+  echo '      "--rpc-port", "8933",'
+  echo '      "--ws-port", "8944",'
+  echo '      "--unsafe-ws-external",'
+# core payments domain
+  echo '      "--",'
+  echo '      "--",'
+  echo '      "--chain=gemini-3a",'
+  echo '      "--validator",'
+  echo '      "--domain-id", "1",'
+  echo '      "--base-path", "/var/subspace/core_payments_domain",'
+  echo '      "--keystore-path", "/var/subspace/keystore",'
+  echo '      "--rpc-cors", "all",'
+  echo '      "--rpc-port", "7933",'
+  echo '      "--ws-port", "7944",'
+  echo '      "--unsafe-ws-external",'
+}  >> /subspace/docker-compose.yml
 
 echo '    ]' >> /subspace/docker-compose.yml

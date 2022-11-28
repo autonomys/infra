@@ -5,6 +5,7 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
+  boostrap_node_data: {}
 
 services:
   dsn-bootstrap-node:
@@ -24,7 +25,7 @@ services:
     ports:
       - "30333:30333"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", \$NETWORK_NAME-compiled,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",

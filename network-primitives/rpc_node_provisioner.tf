@@ -104,6 +104,12 @@ resource "null_resource" "start-rpc-nodes" {
     destination = "/subspace/dsn_bootstrap_node_keys.txt"
   }
 
+  # copy keystore
+  provisioner "file" {
+    source      = "./keystore"
+    destination = "/subspace/keystore"
+  }
+
   # copy compose file
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_rpc_node_compose_file.sh"

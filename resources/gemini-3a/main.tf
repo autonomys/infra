@@ -6,20 +6,20 @@ module "gemini-3a" {
     droplet_size        = var.droplet-size
     deployment-version  = 1
     regions             = ["nyc1", "sfo3", "blr1", "sgp1", "nyc1", "sgp1"]
-    nodes-per-region    = 1
+    nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-pre-release"
+    docker-tag          = "gemini-3a-2022-nov-28"
     reserved-only       = true
   }
   full-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 1
     regions             = ["nyc1", "sfo3", "blr1", "sgp1"]
-    nodes-per-region    = 1
+    nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-pre-release"
+    docker-tag          = "gemini-3a-2022-nov-28"
     reserved-only       = true
   }
   rpc-node-config = {
@@ -29,7 +29,7 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-pre-release"
+    docker-tag          = "gemini-3a-2022-nov-28"
     domain-prefix       = "eu"
     reserved-only       = true
   }
