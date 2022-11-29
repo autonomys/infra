@@ -9,8 +9,8 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-28"
-    reserved-only       = true
+    docker-tag          = "gemini-3a-2022-nov-29"
+    reserved-only       = false
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -19,8 +19,8 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-28"
-    reserved-only       = true
+    docker-tag          = "gemini-3a-2022-nov-29"
+    reserved-only       = false
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -29,9 +29,9 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-28"
+    docker-tag          = "gemini-3a-2022-nov-29"
     domain-prefix       = "eu"
-    reserved-only       = true
+    reserved-only       = false
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

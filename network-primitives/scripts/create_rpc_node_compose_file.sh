@@ -45,7 +45,7 @@ services:
       caddy_2.handle_path_1: /ws
       caddy_2.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
     command: [
-      "--chain", \$NETWORK_NAME-compiled,
+      "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",

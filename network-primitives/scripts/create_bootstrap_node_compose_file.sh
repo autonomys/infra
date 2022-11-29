@@ -25,7 +25,7 @@ services:
     ports:
       - "30333:30333"
     command: [
-      "--chain", \$NETWORK_NAME-compiled,
+      "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
