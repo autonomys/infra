@@ -28,6 +28,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
+      - "30433:30433"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /http
@@ -50,6 +51,7 @@ services:
       "--execution", "wasm",
       "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-disable-private-ips",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-port", "9933",

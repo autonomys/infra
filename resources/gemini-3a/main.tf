@@ -9,7 +9,7 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-29"
+    docker-tag          = "gemini-3a-2022-nov-30"
     reserved-only       = false
   }
   full-node-config = {
@@ -19,7 +19,7 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-29"
+    docker-tag          = "gemini-3a-2022-nov-30"
     reserved-only       = false
   }
   rpc-node-config = {
@@ -29,7 +29,7 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-29"
+    docker-tag          = "gemini-3a-2022-nov-30"
     domain-prefix       = "eu"
     reserved-only       = false
   }

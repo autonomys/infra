@@ -24,11 +24,14 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
+      - "30433:30433"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
+      "--state-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-disable-private-ips",
       "--node-key", \$NODE_KEY,
       "--in-peers", "500",
       "--out-peers", "250",
