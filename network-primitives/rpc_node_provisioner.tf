@@ -1,7 +1,7 @@
 locals {
   rpc_node_ip_v4 = flatten([
-    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
     [var.rpc-node-config.additional-node-ips],
+    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
     ]
   )
 }
@@ -96,6 +96,12 @@ resource "null_resource" "start-rpc-nodes" {
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
     destination = "/subspace/bootstrap_node_keys.txt"
+  }
+
+  # copy keystore
+  provisioner "file" {
+    source      = "./keystore"
+    destination = "/subspace/keystore"
   }
 
   # copy compose file

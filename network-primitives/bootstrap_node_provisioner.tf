@@ -1,7 +1,7 @@
 locals {
   bootstrap_nodes_ip_v4 = flatten([
-    [digitalocean_droplet.bootstrap-nodes.*.ipv4_address],
     [var.bootstrap-node-config.additional-node-ips],
+    [digitalocean_droplet.bootstrap-nodes.*.ipv4_address],
     ]
   )
 }
@@ -14,7 +14,7 @@ resource "null_resource" "boostrap-node-keys" {
     cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
   }
 
-  # generate rpc node keys
+  # generate node keys
   provisioner "local-exec" {
     command     = "${var.path-to-scripts}/generate_node_keys.sh ${length(local.bootstrap_nodes_ip_v4)} ./bootstrap_node_keys.txt"
     interpreter = ["/bin/bash", "-c"]
