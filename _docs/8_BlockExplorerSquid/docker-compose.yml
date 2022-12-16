@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD:
     ports:
       - "5432:5432"
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    command: postgres -c config_file=/VOLUME_NAME/postgresql/postgresql.conf
 
   pghero:
     image: ankane/pghero

@@ -20,7 +20,8 @@ touch docker-compose.yml
 
 Sample [docker-compose.yml](docker-compose.yml) can be used as a reference. It will require running Postgres, Squid processor as well as GraphQL server
 
-> Make sure you provide: 
+> Make sure you provide:
+> - Postgres config file, sample [postgresql.conf](postgresql.conf) can be used as a reference 
 > - volume name for DB, as well as `DB_NAME` and `DB_PASS`
 > - Subsquid archive endpoint (for example `https://archive.subspace.network/api`)
 > - Chain RPC enpoint (for example `wss://eu-0.gemini-2a.subspace.network/ws`)
@@ -30,6 +31,9 @@ Pull fresh images and start containers:
 docker-compose pull
 docker-compose up -d
 ```
+
+## DB monitoring
+To keep track of Postgres DB performance `pghero` service is included. By default PgHero UI is available on port `8080`. For more details on PgHero, check [this](https://ankane.org/pghero-2-0)
 
 ## Nginx setup and SSL certificate
 Install Nginx:
