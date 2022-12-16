@@ -3,6 +3,7 @@ version: "3"
 services:
   db:
     image: postgres:14
+    shm_size: 1gb
     volumes:
       # replace VOLUME_NAME with your volume name
       - /VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
@@ -12,7 +13,16 @@ services:
       # provide DB password
       POSTGRES_PASSWORD:
     ports:
-      - "23798:5432"
+      - "5432:5432"
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+
+  pghero:
+    image: ankane/pghero
+    container_name: pghero
+    environment:
+      DATABASE_URL: postgres://postgres:squid@postgres-db:5432/squid
+    ports:
+      - "8080:8080" 
 
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:latest
