@@ -1,25 +1,25 @@
-module "gemini-3a" {
+module "gemini-3b" {
   source          = "../../network-primitives"
   path-to-scripts = "../../network-primitives/scripts"
-  network-name    = "gemini-3a"
+  network-name    = "gemini-3b"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 2
+    deployment-version  = 1
     regions             = ["nyc1", "sfo3", "blr1", "sgp1", "nyc1", "sgp1"]
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-dec-01"
+    docker-tag          = "gemini-3b-2022-dec-19"
     reserved-only       = false
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 2
+    deployment-version  = 1
     regions             = ["nyc1", "sfo3", "blr1", "sgp1"]
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-nov-30"
+    docker-tag          = "gemini-3b-2022-dec-19"
     reserved-only       = false
   }
   rpc-node-config = {
@@ -29,7 +29,7 @@ module "gemini-3a" {
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3a-2022-dec-01"
+    docker-tag          = "gemini-3b-2022-dec-19"
     domain-prefix       = "eu"
     reserved-only       = false
   }

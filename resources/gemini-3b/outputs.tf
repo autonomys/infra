@@ -1,15 +1,15 @@
 output "do-full-node-ipv4-addresses" {
-  value       = module.gemini-3a.do-full-node-ipv4-addresses
+  value       = module.gemini-3b.do-full-node-ipv4-addresses
   description = "DO full node IPv4 Addresses"
 }
 
 output "do-bootstrap-node-ipv4-addresses" {
-  value       = module.gemini-3a.do-bootstrap-node-ipv4-addresses
+  value       = module.gemini-3b.do-bootstrap-node-ipv4-addresses
   description = "DO Bootstrap node IPv4 Addresses"
 }
 
 output "do-rpc-node-ipv4-addresses" {
-  value       = module.gemini-3a.do-rpc-node-ipv4-addresses
+  value       = module.gemini-3b.do-rpc-node-ipv4-addresses
   description = "DO RPC node IPv4 Addresses"
 }
 
@@ -29,6 +29,6 @@ output "hetzner-rpc-node-ipv4-addresses" {
 }
 
 output "rpc-records" {
-  value       = module.gemini-3a.rpc-records
+  value       = module.gemini-3b.rpc-records
   description = "RPC records"
 }

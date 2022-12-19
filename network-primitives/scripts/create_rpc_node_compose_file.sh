@@ -90,7 +90,7 @@ fi
 {
 # system domain
   echo '      "--",'
-  echo '      "--chain=gemini-3a",'
+  echo "      \"--chain=\$NETWORK_NAME\","
   echo '      "--validator",'
   echo '      "--base-path", "/var/subspace/system_domain",'
   echo '      "--keystore-path", "/var/subspace/keystore",'
@@ -98,10 +98,10 @@ fi
   echo '      "--rpc-port", "8933",'
   echo '      "--ws-port", "8944",'
   echo '      "--unsafe-ws-external",'
+  echo "      \"--relayer-id=\$RELAYER_ID\","
 # core payments domain
   echo '      "--",'
-  echo '      "--",'
-  echo '      "--chain=gemini-3a",'
+  echo "      \"--chain=\$NETWORK_NAME\","
   echo '      "--validator",'
   echo '      "--domain-id", "1",'
   echo '      "--base-path", "/var/subspace/core_payments_domain",'
@@ -110,6 +110,7 @@ fi
   echo '      "--rpc-port", "7933",'
   echo '      "--ws-port", "7944",'
   echo '      "--unsafe-ws-external",'
+  echo "      \"--relayer-id=\$RELAYER_ID\","
 }  >> /subspace/docker-compose.yml
 
 echo '    ]' >> /subspace/docker-compose.yml
