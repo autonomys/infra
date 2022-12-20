@@ -56,11 +56,19 @@ resource "null_resource" "setup-rpc-nodes" {
     destination = "/subspace/install_docker.sh"
   }
 
+  # copy netdata agent file
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/start_netdata_agent.sh"
+    destination = "/subspace/start_netdata_agent.sh"
+  }
+
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /subspace/install_docker.sh",
-      "sudo /subspace/install_docker.sh"
+      "sudo /subspace/install_docker.sh",
+      "sudo chmod +x /subspace/start_netdata_agent.sh",
+      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} rpc-node-${count.index}"
     ]
   }
 

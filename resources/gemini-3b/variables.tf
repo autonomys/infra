@@ -6,6 +6,14 @@ variable "ssh_identity" {
   description = "SSH agent identity to use to connect to remote host"
 }
 
+variable "netdata_claim_token" {
+  description = "Netdata claim token"
+}
+
+variable "netdata_claim_rooms" {
+  description = "Netdata claim rooms"
+}
+
 variable "cloudflare_email" {
   type        = string
   description = "cloudflare email address"

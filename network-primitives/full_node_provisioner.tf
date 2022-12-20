@@ -56,11 +56,19 @@ resource "null_resource" "setup-full-nodes" {
     destination = "/subspace/install_docker.sh"
   }
 
+  # copy netdata agent file
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/start_netdata_agent.sh"
+    destination = "/subspace/start_netdata_agent.sh"
+  }
+
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /subspace/install_docker.sh",
-      "sudo /subspace/install_docker.sh"
+      "sudo /subspace/install_docker.sh",
+      "sudo chmod +x /subspace/start_netdata_agent.sh",
+      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} full-node-${count.index}"
     ]
   }
 
@@ -115,7 +123,7 @@ resource "null_resource" "start-full-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.full_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
-      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
+      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans"
     ]
   }
 }
