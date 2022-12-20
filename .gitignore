@@ -8,8 +8,8 @@ node_keys.txt
 /resources/gemini-2a/bootstrap_node_keys.txt
 /resources/gemini-2a/full_node_keys.txt
 /resources/gemini-2a/rpc_node_keys.txt
-/resources/gemini-3a/keystore/
-/resources/gemini-3a/bootstrap_node_keys.txt
-/resources/gemini-3a/dsn_bootstrap_node_keys.txt
-/resources/gemini-3a/full_node_keys.txt
-/resources/gemini-3a/rpc_node_keys.txt
+/resources/gemini-3b/keystore/*
+/resources/gemini-3b/bootstrap_node_keys.txt
+/resources/gemini-3b/full_node_keys.txt
+/resources/gemini-3b/rpc_node_keys.txt
+/resources/gemini-3b/relayer_ids.txt

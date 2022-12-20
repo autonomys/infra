@@ -104,6 +104,12 @@ resource "null_resource" "start-rpc-nodes" {
     destination = "/subspace/keystore"
   }
 
+  # copy relayer ids
+  provisioner "file" {
+    source      = "./relayer_ids.txt"
+    destination = "/subspace/relayer_ids.txt"
+  }
+
   # copy compose file
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_rpc_node_compose_file.sh"
@@ -120,6 +126,7 @@ resource "null_resource" "start-rpc-nodes" {
       "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
+      "echo RELAYER_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
       "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
