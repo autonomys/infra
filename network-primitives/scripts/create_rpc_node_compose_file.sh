@@ -52,6 +52,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--no-private-ipv4",
       "--dsn-disable-private-ips",
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
@@ -97,6 +98,7 @@ fi
   echo '      "--rpc-cors", "all",'
   echo '      "--rpc-port", "8933",'
   echo '      "--ws-port", "8944",'
+  echo '      "--no-private-ipv4",'
   echo '      "--unsafe-ws-external",'
   echo "      \"--relayer-id=\$RELAYER_ID\","
 # core payments domain
@@ -109,6 +111,7 @@ fi
   echo '      "--rpc-cors", "all",'
   echo '      "--rpc-port", "7933",'
   echo '      "--ws-port", "7944",'
+  echo '      "--no-private-ipv4",'
   echo '      "--unsafe-ws-external",'
   echo "      \"--relayer-id=\$RELAYER_ID\","
 }  >> /subspace/docker-compose.yml
