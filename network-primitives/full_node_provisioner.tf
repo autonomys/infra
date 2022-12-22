@@ -69,6 +69,7 @@ resource "null_resource" "setup-full-nodes" {
       "sudo /subspace/install_docker.sh",
       "sudo chmod +x /subspace/start_netdata_agent.sh",
       "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} full-node-${count.index}"
+      "sudo iptables -I OUTPUT -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
     ]
   }
 
