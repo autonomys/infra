@@ -68,7 +68,7 @@ resource "null_resource" "setup-full-nodes" {
       "sudo chmod +x /subspace/install_docker.sh",
       "sudo /subspace/install_docker.sh",
       "sudo chmod +x /subspace/start_netdata_agent.sh",
-      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} full-node-${count.index}"
+      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} full-node-${count.index}",
       "sudo iptables -I OUTPUT -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
     ]
   }
@@ -124,7 +124,9 @@ resource "null_resource" "start-full-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.full_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
-      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans"
+      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
+      "sudo mkdir -p /etc/iptables/",
+      "sudo iptables-save > /etc/iptables/rules.v4",
     ]
   }
 }

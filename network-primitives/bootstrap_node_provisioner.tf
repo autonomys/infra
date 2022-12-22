@@ -68,7 +68,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
       "sudo chmod +x /subspace/install_docker.sh",
       "sudo /subspace/install_docker.sh",
       "sudo chmod +x /subspace/start_netdata_agent.sh",
-      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} boostrap-node-${count.index}"
+      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} boostrap-node-${count.index}",
       "sudo iptables -I OUTPUT -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
     ]
   }
@@ -119,6 +119,8 @@ resource "null_resource" "start-boostrap-nodes" {
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
       "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
+      "sudo mkdir -p /etc/iptables/",
+      "sudo iptables-save > /etc/iptables/rules.v4",
     ]
   }
 }
