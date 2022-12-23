@@ -4,7 +4,7 @@ module "gemini-3b" {
   network-name    = "gemini-3b"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 12
     regions             = ["nyc1", "sfo3", "blr1", "sgp1", "nyc1", "sgp1"]
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
@@ -14,7 +14,7 @@ module "gemini-3b" {
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 12
     regions             = ["nyc1", "sfo3", "blr1", "sgp1"]
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
@@ -24,7 +24,7 @@ module "gemini-3b" {
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 11
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips

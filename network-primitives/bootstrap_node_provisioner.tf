@@ -70,7 +70,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
       "sudo chmod +x /subspace/start_netdata_agent.sh",
       "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} boostrap-node-${count.index}",
       "sudo iptables -I OUTPUT -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
-      "sudo iptables -I FORWARD -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
+      "sudo iptables -I FORWARD -o $(ip -o -4 route show to default | grep -E -o 'dev [^ ]*' | awk 'NR==1{print $2}') -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
     ]
   }
 
