@@ -8,6 +8,14 @@ variable "path-to-scripts" {
   type        = string
 }
 
+variable "netdata_claim_token" {
+  description = "Netdata claim token"
+}
+
+variable "netdata_claim_rooms" {
+  description = "Netdata claim rooms"
+}
+
 variable "full-node-config" {
   description = "Full node deployment config"
   type = object({
