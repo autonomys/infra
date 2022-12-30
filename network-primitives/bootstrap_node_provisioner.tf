@@ -63,14 +63,13 @@ resource "null_resource" "setup-bootstrap-nodes" {
   }
 
   # install docker and docker compose
+  # start netdata agent
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /subspace/install_docker.sh",
       "sudo /subspace/install_docker.sh",
       "sudo chmod +x /subspace/start_netdata_agent.sh",
       "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} boostrap-node-${count.index}",
-      "sudo iptables -I OUTPUT -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
-      "sudo iptables -I FORWARD -o $(ip -o -4 route show to default | grep -E -o 'dev [^ ]*' | awk 'NR==1{print $2}') -d 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j DROP",
     ]
   }
 
@@ -102,26 +101,46 @@ resource "null_resource" "start-boostrap-nodes" {
     destination = "/subspace/node_keys.txt"
   }
 
-  # copy compose file
+  # copy compose creation file
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_bootstrap_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 
+  # copy subspace entry script
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/subspace.sh"
+    destination = "/usr/bin/subspace"
+  }
+
+  # copy subspace systemd file
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/subspace.service"
+    destination = "/etc/systemd/system/subspace.service"
+  }
+
   # start docker containers
   provisioner "remote-exec" {
     inline = [
-      "docker compose -f /subspace/docker-compose.yml down",
+      # stop any running service
+      "systemctl stop subspace.service",
+      "systemctl reenable subspace.service",
+      "systemctl daemon-reload",
+
+      # create .env file
       "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /subspace/.env",
       "echo NODE_TAG=${var.bootstrap-node-config.docker-tag} >> /subspace/.env",
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
+
+      # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
+      "sudo chmod +x /usr/bin/subspace",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
-      "docker compose -f /subspace/docker-compose.yml up -d --remove-orphans",
-      "sudo mkdir -p /etc/iptables/",
-      "sudo iptables-save > /etc/iptables/rules.v4",
+
+      # start subspace node
+      "systemctl start subspace.service",
     ]
   }
 }
