@@ -8,6 +8,19 @@ volumes:
   archival_node_data: {}
 
 services:
+  datadog:
+    container_name: "datadog_agent"
+    image: gcr.io/datadoghq/agent:7
+    restart: unless-stopped
+    environment:
+      - DD_API_KEY=\$DATADOG_API_KEY
+      - DD_SITE=datadoghq.com
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /etc/os-release:/host/etc/os-release:ro
+
   # caddy reverse proxy with automatic tls management using let encrypt
   caddy:
     image: lucaslorentz/caddy-docker-proxy:latest
