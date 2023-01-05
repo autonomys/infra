@@ -8,12 +8,8 @@ variable "path-to-scripts" {
   type        = string
 }
 
-variable "netdata_claim_token" {
-  description = "Netdata claim token"
-}
-
-variable "netdata_claim_rooms" {
-  description = "Netdata claim rooms"
+variable "datadog_api_key" {
+  description = "Datadog API Key"
 }
 
 variable "full-node-config" {

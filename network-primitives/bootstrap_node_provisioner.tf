@@ -56,20 +56,11 @@ resource "null_resource" "setup-bootstrap-nodes" {
     destination = "/subspace/install_docker.sh"
   }
 
-  # copy netdata agent file
-  provisioner "file" {
-    source      = "${var.path-to-scripts}/start_netdata_agent.sh"
-    destination = "/subspace/start_netdata_agent.sh"
-  }
-
   # install docker and docker compose
-  # start netdata agent
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /subspace/install_docker.sh",
       "sudo /subspace/install_docker.sh",
-      "sudo chmod +x /subspace/start_netdata_agent.sh",
-      "sudo /subspace/start_netdata_agent.sh ${var.netdata_claim_token} ${var.netdata_claim_rooms} boostrap-node-${count.index}",
     ]
   }
 
@@ -133,6 +124,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
+      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
