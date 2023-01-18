@@ -114,9 +114,12 @@ resource "null_resource" "start-boostrap-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
+      "systemctl daemon-reload",
       "systemctl stop subspace.service",
       "systemctl reenable subspace.service",
-      "systemctl daemon-reload",
+
+      # set hostname
+      "hostnamectl set-hostname ${var.network-name}-bootstrap-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /subspace/.env",

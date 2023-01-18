@@ -132,9 +132,12 @@ resource "null_resource" "start-rpc-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
+      "systemctl daemon-reload",
       "systemctl stop subspace.service",
       "systemctl reenable subspace.service",
-      "systemctl daemon-reload",
+
+      # set hostname
+      "hostnamectl set-hostname ${var.network-name}-rpc-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.rpc-node-config.docker-org} > /subspace/.env",

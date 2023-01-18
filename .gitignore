@@ -13,3 +13,8 @@ node_keys.txt
 /resources/gemini-3b/full_node_keys.txt
 /resources/gemini-3b/rpc_node_keys.txt
 /resources/gemini-3b/relayer_ids.txt
+/resources/gemini-3c/keystore/*
+/resources/gemini-3c/bootstrap_node_keys.txt
+/resources/gemini-3c/full_node_keys.txt
+/resources/gemini-3c/rpc_node_keys.txt
+/resources/gemini-3c/relayer_ids.txt

@@ -120,9 +120,12 @@ resource "null_resource" "start-full-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
+      "systemctl daemon-reload",
       "systemctl stop subspace.service",
       "systemctl reenable subspace.service",
-      "systemctl daemon-reload",
+
+      # set hostname
+      "hostnamectl set-hostname ${var.network-name}-full-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.full-node-config.docker-org} > /subspace/.env",
