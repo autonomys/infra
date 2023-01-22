@@ -106,6 +106,8 @@ fi
   echo '      "--",'
   echo "      \"--chain=\$NETWORK_NAME\","
   echo '      "--validator",'
+  echo '      "--state-pruning", "archive",'
+  echo '      "--blocks-pruning", "archive",'
   echo '      "--base-path", "/var/subspace/system_domain",'
   echo '      "--keystore-path", "/var/subspace/keystore",'
   echo '      "--rpc-cors", "all",'
@@ -118,6 +120,8 @@ fi
   echo '      "--",'
   echo "      \"--chain=\$NETWORK_NAME\","
   echo '      "--validator",'
+  echo '      "--state-pruning", "archive",'
+  echo '      "--blocks-pruning", "archive",'
   echo '      "--domain-id", "1",'
   echo '      "--base-path", "/var/subspace/core_payments_domain",'
   echo '      "--keystore-path", "/var/subspace/keystore",'
