@@ -123,7 +123,7 @@ resource "null_resource" "start-rpc-nodes" {
   # copy keystore
   provisioner "file" {
     source      = "./keystore"
-    destination = "/subspace/keystore"
+    destination = "/subspace/keystore/"
   }
 
   # copy relayer ids
@@ -178,6 +178,28 @@ resource "null_resource" "start-rpc-nodes" {
 
       # start subspace node
       "systemctl start subspace.service",
+    ]
+  }
+}
+
+resource "null_resource" "inject-keystore" {
+  # for now we have one executor running. Should change here when multiple executors are expected.
+  count      = 1
+  depends_on = [null_resource.start-rpc-nodes]
+
+  connection {
+    host           = local.rpc_node_ip_v4[0]
+    user           = "root"
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_identity
+    timeout        = "10s"
+  }
+
+  # prune network
+  provisioner "remote-exec" {
+    inline = [
+      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore"
     ]
   }
 }
