@@ -66,6 +66,28 @@ resource "null_resource" "setup-farmer-nodes" {
 
 }
 
+resource "null_resource" "prune-farmer-nodes" {
+  count      = var.farmer-node-config.prune ? length(local.farmer_node_ipv4) : 0
+  depends_on = [null_resource.setup-farmer-nodes]
+
+  connection {
+    host           = local.farmer_node_ipv4[count.index]
+    user           = "root"
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_identity
+    timeout        = "10s"
+  }
+
+  # prune network
+  provisioner "remote-exec" {
+    inline = [
+      "docker ps -aq | xargs docker stop",
+      "docker system prune -a -f --volumes",
+    ]
+  }
+}
+
 resource "null_resource" "start-farmer-nodes" {
   count = length(local.farmer_node_ipv4)
 

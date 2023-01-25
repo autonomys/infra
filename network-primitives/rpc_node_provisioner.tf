@@ -66,6 +66,28 @@ resource "null_resource" "setup-rpc-nodes" {
 
 }
 
+resource "null_resource" "prune-rpc-nodes" {
+  count      = var.rpc-node-config.prune ? length(local.rpc_node_ip_v4) : 0
+  depends_on = [null_resource.setup-rpc-nodes]
+
+  connection {
+    host           = local.rpc_node_ip_v4[count.index]
+    user           = "root"
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_identity
+    timeout        = "10s"
+  }
+
+  # prune network
+  provisioner "remote-exec" {
+    inline = [
+      "docker ps -aq | xargs docker stop",
+      "docker system prune -a -f --volumes",
+    ]
+  }
+}
+
 resource "null_resource" "start-rpc-nodes" {
   count = length(local.rpc_node_ip_v4)
 

@@ -11,6 +11,7 @@ module "gemini-3b" {
     docker-org          = "subspace"
     docker-tag          = "gemini-3b-2022-dec-19"
     reserved-only       = false
+    prune               = false
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -21,6 +22,7 @@ module "gemini-3b" {
     docker-org          = "subspace"
     docker-tag          = "gemini-3b-2022-dec-19"
     reserved-only       = false
+    prune               = false
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -32,6 +34,7 @@ module "gemini-3b" {
     docker-tag          = "gemini-3b-2022-dec-19"
     domain-prefix       = "eu"
     reserved-only       = false
+    prune               = false
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -43,6 +46,7 @@ module "gemini-3b" {
     docker-tag             = "gemini-3b-2022-dec-19"
     domain-prefix          = "eu"
     reserved-only          = false
+    prune                  = false
     plot-size              = "5G"
     reward-address         = ""
     force-block-production = false
