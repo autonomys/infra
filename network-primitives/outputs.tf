@@ -3,6 +3,11 @@ output "do-full-node-ipv4-addresses" {
   description = "DO full node IPv4 Addresses"
 }
 
+output "do-farmer-node-ipv4-addresses" {
+  value       = digitalocean_droplet.farmer-nodes[*].ipv4_address
+  description = "DO Farmer node IPv4 Addresses"
+}
+
 output "do-bootstrap-node-ipv4-addresses" {
   value       = digitalocean_droplet.bootstrap-nodes[*].ipv4_address
   description = "DO Bootstrap node IPv4 Addresses"

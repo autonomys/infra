@@ -25,3 +25,12 @@ resource "digitalocean_droplet" "rpc-nodes" {
   ssh_keys = local.ssh_keys
 }
 
+resource "digitalocean_droplet" "farmer-nodes" {
+  count    = length(var.farmer-node-config.regions) * var.farmer-node-config.nodes-per-region
+  image    = "ubuntu-22-04-x64"
+  name     = "${var.network-name}-farmer-node-${count.index}-${var.farmer-node-config.regions[count.index % length(var.farmer-node-config.regions)]}"
+  region   = var.farmer-node-config.regions[count.index % length(var.farmer-node-config.regions)]
+  size     = var.farmer-node-config.droplet_size
+  ssh_keys = local.ssh_keys
+}
+
