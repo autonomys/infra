@@ -1,54 +1,54 @@
-module "gemini-3c" {
+module "devnet" {
   source          = "../../network-primitives"
   path-to-scripts = "../../network-primitives/scripts"
-  network-name    = "gemini-3c"
+  network-name    = "devnet"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 3
-    regions             = []
-    nodes-per-region    = 0
-    additional-node-ips = var.hetzner_bootstrap_node_ips
+    regions             = ["ams3"]
+    nodes-per-region    = 1
+    additional-node-ips = []
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-jan-18"
+    docker-tag          = "snapshot-2023-jan-26"
     reserved-only       = false
     prune               = false
   }
   full-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 3
-    regions             = []
-    nodes-per-region    = 0
-    additional-node-ips = var.hetzner_full_node_ips
+    regions             = ["sfo3"]
+    nodes-per-region    = 1
+    additional-node-ips = []
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-jan-18"
+    docker-tag          = "snapshot-2023-jan-26"
     reserved-only       = false
     prune               = false
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 4
-    regions             = []
-    nodes-per-region    = 0
-    additional-node-ips = var.hetzner_rpc_node_ips
+    regions             = ["fra1"]
+    nodes-per-region    = 1
+    additional-node-ips = []
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-jan-18"
-    domain-prefix       = "eu"
+    docker-tag          = "snapshot-2023-jan-26"
+    domain-prefix       = "rpc"
     reserved-only       = false
     prune               = false
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 4
-    regions                = []
-    nodes-per-region       = 0
+    deployment-version     = 5
+    regions                = ["blr1"]
+    nodes-per-region       = 1
     additional-node-ips    = []
     docker-org             = "subspace"
-    docker-tag             = "gemini-3c-2023-jan-18"
+    docker-tag             = "snapshot-2023-jan-26"
     reserved-only          = false
-    plot-size              = "5G"
-    reward-address         = ""
-    force-block-production = false
     prune                  = false
+    plot-size              = "10G"
+    reward-address         = var.farmer-reward-address
+    force-block-production = false
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

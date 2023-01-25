@@ -69,7 +69,6 @@ variable "farmer-node-config" {
     additional-node-ips    = list(string)
     docker-org             = string
     docker-tag             = string
-    domain-prefix          = string
     reserved-only          = bool
     prune                  = bool
     plot-size              = string

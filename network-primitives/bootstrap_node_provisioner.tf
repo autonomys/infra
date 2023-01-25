@@ -70,6 +70,10 @@ resource "null_resource" "prune-bootstrap-nodes" {
   count      = var.bootstrap-node-config.prune ? length(local.bootstrap_nodes_ip_v4) : 0
   depends_on = [null_resource.setup-bootstrap-nodes]
 
+  triggers = {
+    prune = var.bootstrap-node-config.prune
+  }
+
   connection {
     host           = local.bootstrap_nodes_ip_v4[count.index]
     user           = "root"

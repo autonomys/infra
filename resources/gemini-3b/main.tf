@@ -44,7 +44,6 @@ module "gemini-3b" {
     additional-node-ips    = []
     docker-org             = "subspace"
     docker-tag             = "gemini-3b-2022-dec-19"
-    domain-prefix          = "eu"
     reserved-only          = false
     prune                  = false
     plot-size              = "5G"

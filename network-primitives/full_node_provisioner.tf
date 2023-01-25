@@ -70,6 +70,10 @@ resource "null_resource" "prune-full-nodes" {
   count      = var.full-node-config.prune ? length(local.full_node_ip_v4) : 0
   depends_on = [null_resource.setup-full-nodes]
 
+  triggers = {
+    prune = var.full-node-config.prune
+  }
+
   connection {
     host           = local.full_node_ip_v4[count.index]
     user           = "root"

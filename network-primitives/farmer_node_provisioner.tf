@@ -70,6 +70,10 @@ resource "null_resource" "prune-farmer-nodes" {
   count      = var.farmer-node-config.prune ? length(local.farmer_node_ipv4) : 0
   depends_on = [null_resource.setup-farmer-nodes]
 
+  triggers = {
+    prune = var.farmer-node-config.prune
+  }
+
   connection {
     host           = local.farmer_node_ipv4[count.index]
     user           = "root"

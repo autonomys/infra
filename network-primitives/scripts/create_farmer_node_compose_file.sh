@@ -34,7 +34,7 @@ services:
       "farm",
       "--node-rpc-url", "ws://archival-node:9944",
       "--reward-address", \$REWARD_ADDRESS,
-      "--plot-size", \$PLOT_SIZE",
+      "--plot-size", \$PLOT_SIZE,
     ]
 
   archival-node:
@@ -56,6 +56,9 @@ services:
       "--no-private-ipv4",
       "--node-key", \$NODE_KEY,
       "--validator",
+      "--rpc-cors", "all",
+      "--ws-port", "9944",
+      "--unsafe-ws-external",
 EOF
 
 reserved_only=${1}

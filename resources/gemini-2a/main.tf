@@ -44,7 +44,6 @@ module "gemini-2a" {
     additional-node-ips    = []
     docker-org             = "nazar-pc"
     docker-tag             = "gemini-2a-pre-release"
-    domain-prefix          = "eu"
     reserved-only          = false
     prune                  = false
     plot-size              = "5G"

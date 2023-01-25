@@ -70,6 +70,10 @@ resource "null_resource" "prune-rpc-nodes" {
   count      = var.rpc-node-config.prune ? length(local.rpc_node_ip_v4) : 0
   depends_on = [null_resource.setup-rpc-nodes]
 
+  triggers = {
+    prune = var.rpc-node-config.prune
+  }
+
   connection {
     host           = local.rpc_node_ip_v4[count.index]
     user           = "root"
@@ -184,7 +188,7 @@ resource "null_resource" "start-rpc-nodes" {
 
 resource "null_resource" "inject-keystore" {
   # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = 1
+  count      = length(local.rpc_node_ip_v4) > 0 ? 1 : 0
   depends_on = [null_resource.start-rpc-nodes]
 
   connection {
