@@ -66,6 +66,32 @@ resource "null_resource" "setup-bootstrap-nodes" {
 
 }
 
+resource "null_resource" "prune-bootstrap-nodes" {
+  count      = var.bootstrap-node-config.prune ? length(local.bootstrap_nodes_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes]
+
+  triggers = {
+    prune = var.bootstrap-node-config.prune
+  }
+
+  connection {
+    host           = local.bootstrap_nodes_ip_v4[count.index]
+    user           = "root"
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_identity
+    timeout        = "10s"
+  }
+
+  # prune network
+  provisioner "remote-exec" {
+    inline = [
+      "docker ps -aq | xargs docker stop",
+      "docker system prune -a -f --volumes",
+    ]
+  }
+}
+
 resource "null_resource" "start-boostrap-nodes" {
   count = length(local.bootstrap_nodes_ip_v4)
 

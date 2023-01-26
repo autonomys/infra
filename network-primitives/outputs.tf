@@ -3,6 +3,11 @@ output "do-full-node-ipv4-addresses" {
   description = "DO full node IPv4 Addresses"
 }
 
+output "do-farmer-node-ipv4-addresses" {
+  value       = digitalocean_droplet.farmer-nodes[*].ipv4_address
+  description = "DO Farmer node IPv4 Addresses"
+}
+
 output "do-bootstrap-node-ipv4-addresses" {
   value       = digitalocean_droplet.bootstrap-nodes[*].ipv4_address
   description = "DO Bootstrap node IPv4 Addresses"
@@ -14,5 +19,10 @@ output "do-rpc-node-ipv4-addresses" {
 }
 
 output "rpc-records" {
-  value = cloudflare_record.rpc[*].hostname
+  value = [
+    cloudflare_record.bootstrap[*].hostname,
+    cloudflare_record.rpc[*].hostname,
+    cloudflare_record.system-domain-rpc[*].hostname,
+    cloudflare_record.core-payments-domain-rpc[*].hostname
+  ]
 }

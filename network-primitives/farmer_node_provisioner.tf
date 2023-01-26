@@ -1,41 +1,41 @@
 locals {
-  rpc_node_ip_v4 = flatten([
-    [var.rpc-node-config.additional-node-ips],
-    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
+  farmer_node_ipv4 = flatten([
+    [var.farmer-node-config.additional-node-ips],
+    [digitalocean_droplet.farmer-nodes.*.ipv4_address],
     ]
   )
 }
 
-resource "null_resource" "rpc-node-keys" {
-  count = length(local.rpc_node_ip_v4) > 0 ? 1 : 0
+resource "null_resource" "farmer-node-keys" {
+  count = length(local.farmer_node_ipv4) > 0 ? 1 : 0
 
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
-    cluster_instance_ipv4s = join(",", local.rpc_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.farmer_node_ipv4)
   }
 
-  # generate rpc node keys
+  # generate node keys
   provisioner "local-exec" {
-    command     = "${var.path-to-scripts}/generate_node_keys.sh ${length(local.rpc_node_ip_v4)} ./rpc_node_keys.txt"
+    command     = "${var.path-to-scripts}/generate_node_keys.sh ${length(local.farmer_node_ipv4)} ./farmer_node_keys.txt"
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      NODE_PUBLIC_IPS = join(",", local.rpc_node_ip_v4)
+      NODE_PUBLIC_IPS = join(",", local.farmer_node_ipv4)
     }
   }
 }
 
-resource "null_resource" "setup-rpc-nodes" {
-  count = length(local.rpc_node_ip_v4)
+resource "null_resource" "setup-farmer-nodes" {
+  count = length(local.farmer_node_ipv4)
 
-  depends_on = [null_resource.rpc-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.rpc]
+  depends_on = [null_resource.farmer-node-keys, null_resource.start-boostrap-nodes]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.rpc_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.farmer_node_ipv4)
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.farmer_node_ipv4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -66,16 +66,16 @@ resource "null_resource" "setup-rpc-nodes" {
 
 }
 
-resource "null_resource" "prune-rpc-nodes" {
-  count      = var.rpc-node-config.prune ? length(local.rpc_node_ip_v4) : 0
-  depends_on = [null_resource.setup-rpc-nodes]
+resource "null_resource" "prune-farmer-nodes" {
+  count      = var.farmer-node-config.prune ? length(local.farmer_node_ipv4) : 0
+  depends_on = [null_resource.setup-farmer-nodes]
 
   triggers = {
-    prune = var.rpc-node-config.prune
+    prune = var.farmer-node-config.prune
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.farmer_node_ipv4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -92,19 +92,19 @@ resource "null_resource" "prune-rpc-nodes" {
   }
 }
 
-resource "null_resource" "start-rpc-nodes" {
-  count = length(local.rpc_node_ip_v4)
+resource "null_resource" "start-farmer-nodes" {
+  count = length(local.farmer_node_ipv4)
 
-  depends_on = [null_resource.setup-rpc-nodes, null_resource.boostrap-node-keys]
+  depends_on = [null_resource.setup-farmer-nodes, null_resource.boostrap-node-keys]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
-    reserved_only      = var.rpc-node-config.reserved-only
+    deployment_version = var.farmer-node-config.deployment-version
+    reserved_only      = var.farmer-node-config.reserved-only
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.farmer_node_ipv4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -114,7 +114,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   # copy node keys file
   provisioner "file" {
-    source      = "./rpc_node_keys.txt"
+    source      = "./farmer_node_keys.txt"
     destination = "/subspace/node_keys.txt"
   }
 
@@ -124,21 +124,9 @@ resource "null_resource" "start-rpc-nodes" {
     destination = "/subspace/bootstrap_node_keys.txt"
   }
 
-  # copy keystore
-  provisioner "file" {
-    source      = "./keystore"
-    destination = "/subspace/keystore/"
-  }
-
-  # copy relayer ids
-  provisioner "file" {
-    source      = "./relayer_ids.txt"
-    destination = "/subspace/relayer_ids.txt"
-  }
-
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_rpc_node_compose_file.sh"
+    source      = "${var.path-to-scripts}/create_farmer_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 
@@ -163,47 +151,25 @@ resource "null_resource" "start-rpc-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-rpc-node-${count.index}",
+      "hostnamectl set-hostname ${var.network-name}-farmer-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.rpc-node-config.docker-org} > /subspace/.env",
-      "echo NODE_TAG=${var.rpc-node-config.docker-tag} >> /subspace/.env",
+      "echo NODE_ORG=${var.farmer-node-config.docker-org} > /subspace/.env",
+      "echo NODE_TAG=${var.farmer-node-config.docker-tag} >> /subspace/.env",
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
-      "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
-      "echo RELAYER_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
+      "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /subspace/.env",
+      "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
       # start subspace node
       "systemctl start subspace.service",
-    ]
-  }
-}
-
-resource "null_resource" "inject-keystore" {
-  # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.rpc_node_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-rpc-nodes]
-
-  connection {
-    host           = local.rpc_node_ip_v4[0]
-    user           = "root"
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.ssh_identity
-    timeout        = "10s"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore"
     ]
   }
 }

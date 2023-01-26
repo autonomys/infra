@@ -23,6 +23,3 @@ if ! (grep -iq "net.core.somaxconn" /etc/sysctl.conf && sed -i 's/.*net.core.som
 fi
 
 sysctl -p /etc/sysctl.conf
-
-#docker ps -aq | xargs docker stop
-#docker system prune -a -f --volumes
