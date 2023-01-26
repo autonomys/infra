@@ -29,10 +29,13 @@ services:
     volumes:
       - farmer_data:/var/subspace:rw
     restart: unless-stopped
+    ports:
+      - "30533:30533"
     command: [
       "--base-path", "/var/subspace",
       "farm",
       "--node-rpc-url", "ws://archival-node:9944",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", \$REWARD_ADDRESS,
       "--plot-size", \$PLOT_SIZE,
     ]

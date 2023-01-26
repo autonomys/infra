@@ -68,6 +68,12 @@ resource "digitalocean_firewall" "farmer-node-firewall" {
     source_addresses = ["0.0.0.0/0"]
   }
 
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "30533"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
   outbound_rule {
     protocol              = "tcp"
     port_range            = "all"

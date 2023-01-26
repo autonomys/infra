@@ -38,7 +38,7 @@ module "devnet" {
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 5
+    deployment-version     = 6
     regions                = ["blr1"]
     nodes-per-region       = 1
     additional-node-ips    = []
