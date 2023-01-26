@@ -19,5 +19,10 @@ output "do-rpc-node-ipv4-addresses" {
 }
 
 output "rpc-records" {
-  value = cloudflare_record.rpc[*].hostname
+  value = [
+    cloudflare_record.bootstrap[*].hostname,
+    cloudflare_record.rpc[*].hostname,
+    cloudflare_record.system-domain-rpc[*].hostname,
+    cloudflare_record.core-payments-domain-rpc[*].hostname
+  ]
 }
