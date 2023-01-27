@@ -13,6 +13,12 @@ variable "datadog_api_key" {
   type        = string
 }
 
+variable "piece_cache_size" {
+  description = "Piece cache size"
+  type        = string
+  default     = "1GiB"
+}
+
 variable "full-node-config" {
   description = "Full node deployment config"
   type = object({

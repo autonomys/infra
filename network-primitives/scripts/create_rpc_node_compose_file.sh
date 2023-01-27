@@ -67,6 +67,7 @@ services:
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--no-private-ipv4",
       "--dsn-disable-private-ips",
+      "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-port", "9933",

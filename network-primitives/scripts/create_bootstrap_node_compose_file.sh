@@ -36,6 +36,7 @@ services:
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
+      "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--no-private-ipv4",
       "--node-key", \$NODE_KEY,
       "--in-peers", "500",
