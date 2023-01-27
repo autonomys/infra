@@ -32,3 +32,8 @@ output "rpc-records" {
   value       = module.gemini-3c.rpc-records
   description = "RPC records"
 }
+
+output "farmer-nodes" {
+  value       = module.gemini-3c.do-farmer-node-ipv4-addresses
+  description = "RPC records"
+}

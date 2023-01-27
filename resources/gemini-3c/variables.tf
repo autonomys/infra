@@ -40,3 +40,8 @@ variable "hetzner_rpc_node_ips" {
   description = "Hetzner rpc node ip v4"
   type        = list(string)
 }
+
+variable "farmer-reward-address" {
+  description = "Farmer's reward address"
+  type        = string
+}

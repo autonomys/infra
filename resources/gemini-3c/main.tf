@@ -38,15 +38,15 @@ module "gemini-3c" {
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 4
-    regions                = []
-    nodes-per-region       = 0
+    deployment-version     = 1
+    regions                = ["ams3"]
+    nodes-per-region       = 1
     additional-node-ips    = []
     docker-org             = "subspace"
     docker-tag             = "gemini-3c-2023-jan-18"
     reserved-only          = false
-    plot-size              = "5G"
-    reward-address         = ""
+    plot-size              = "10G"
+    reward-address         = var.farmer-reward-address
     force-block-production = false
     prune                  = false
   }
