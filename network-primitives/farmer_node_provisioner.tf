@@ -162,6 +162,7 @@ resource "null_resource" "start-farmer-nodes" {
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /subspace/.env",
       "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /subspace/.env",
+      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
