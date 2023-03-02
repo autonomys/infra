@@ -5,6 +5,5 @@ resource "digitalocean_droplet" "telemetry-subspace-frontend-backend" {
   size   = "s-8vcpu-16gb"
   ssh_keys = [
     data.digitalocean_ssh_key.nazar-key.id,
-    data.digitalocean_ssh_key.leo-key.id,
   ]
 }
