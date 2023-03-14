@@ -10,7 +10,7 @@ resource "cloudflare_record" "name_of_the_resource" {
   name    = "name_of_the_resource"
   comment = "comment explaining the record existence"
   proxied = true/false
-  ttl     = 1
+  ttl     = 3600
   type    = "CNAME"
   value   = "subspace.github.io"
   zone_id = data.cloudflare_zone.cloudflare_zone.id #do not change this
