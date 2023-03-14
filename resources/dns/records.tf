@@ -2,7 +2,123 @@ data "cloudflare_zone" "cloudflare_zone" {
   name = "subspace.network"
 }
 
-resource "cloudflare_record" "terraform_managed_resource_a5918aae5b19597735cebd0887f1f22a" {
+// mailserver records
+resource "cloudflare_record" "mailserver_0" {
+  name     = "subspace.network"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 1
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_1" {
+  name     = "subspace.network"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 5
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt1.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_2" {
+  name     = "subspace.network"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 5
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt2.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_3" {
+  name     = "subspace.network"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 10
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt4.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_4" {
+  name     = "subspace.network"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 10
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt3.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_default_domain_key" {
+  name    = "default._domainkey"
+  comment = "DomainKeys authentication for mail"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7zwrsOLB+eJ9SG1t7+OwOT2BuacTImFHozl8I/ mypg7rhtp4i1NpkSnjjDC3FdXXiUhsHTvAUvg5nMtGp3nCwwQYna0C8Jo7dbt3+NUVLj9KCBBBegxPS/WoJghPSbiKq4T/SBdM0K ShrVn7C/1blWA+N4XxOwmVtELV8POMwRYCzlrxCi3kdjbRY+4gXYKmcc7MSRi5ubyR7P/+K1/CkLbJa1SbxdS6/zMRIzPH/6vOR6 be1Qkw5PFsYu0gYbz3QDqYxaUTS3euWSPE3uLnPQEgAryX3SlKQB8uyjNbxF86ukslwwe9Q5cCZ1UPsl/89qcBRirnJbfoGlwb5j rX3QIDAQAB;"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_dmarc" {
+  name    = "_dmarc"
+  comment = "DMARC for communications"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DMARC1; p=reject; pct=100; rua=mailto:g5oqy2di@ag.dmarcian.com, mailto:admin@subspace.network; ruf=mailto:admin@subspace.network"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_domain_key" {
+  name    = "_domainkey"
+  comment = "DomainKeys authentication for mail"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DKIM1; o=~"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_google_domain_key" {
+  name    = "google._domainkey"
+  comment = "DomainKeys authentication for mail specific to Google mailserver"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyqbz3f5O6pOl9LK3zOmKkczcK9aCdB34tSzDkA ZRD0g+OtBhlyWyzNeQGsrVianIfM9xyfZ7MVJK7sB/VGKIFIe5glb/Lh9tf/kLCRbkOnaafiXP5tOk4DC+mBpHOjyT0GgX5x4hxg oLmeJOrRLSu1niPQY/VqMtNsYa9+gAIo0YZnZeNi2w3FjWaslm5F7uI6mISdH3HZchqhzx2E6Ct+VJhLM0Ir+6v3qV5ylArtJzc+ PoTGdk65n5oq+Ioj9oTK4VmJunZ6jaU2Vimo+2TTAhBtRWQCa8Xy15/3kVZXiKJ4ddtPDnzSEval4er4SksIhtVYaxkeanU7pGbK w1SQIDAQAB"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mailserver_spf" {
+  name    = "subspace.network"
+  comment = "SPF record"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=spf1 +a +a:ns1.us145.siteground.us include:_spf.google.com +mx ~all"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+resource "cloudflare_record" "mail" {
+  name    = "mail"
+  proxied = true
+  ttl     = 1
+  type    = "CNAME"
+  value   = "subspace.network"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+// subspace blog
+resource "cloudflare_record" "blog_0" {
   comment = "Medium .blog Redirect #2"
   name    = "blog"
   proxied = false
@@ -12,7 +128,7 @@ resource "cloudflare_record" "terraform_managed_resource_a5918aae5b19597735cebd0
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
-resource "cloudflare_record" "terraform_managed_resource_d9ea02136ac010af87ef824e749eea73" {
+resource "cloudflare_record" "blog_1" {
   comment = "Medium .blog Redirect #1"
   name    = "blog"
   proxied = false
@@ -22,21 +138,45 @@ resource "cloudflare_record" "terraform_managed_resource_d9ea02136ac010af87ef824
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
+// subspace docs
+resource "cloudflare_record" "docs" {
+  name    = "docs"
+  comment = "Redirected docs to Github"
+  proxied = true
+  ttl     = 1
+  type    = "CNAME"
+  value   = "subspace.github.io"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+// subspace forum
+resource "cloudflare_record" "forum" {
+  name    = "forum"
+  comment = "Subspace's discourse forum"
+  proxied = false
+  ttl     = 60
+  type    = "CNAME"
+  value   = "subspace.hosted-by-discourse.com"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+// subspace status page
+resource "cloudflare_record" "status" {
+  comment = "Status redirect"
+  name    = "status"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "subspace.github.io"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
 resource "cloudflare_record" "terraform_managed_resource_964bf73d0853cefc64803baef62167a5" {
   name    = "ws"
   proxied = true
   ttl     = 1
   type    = "A"
   value   = "65.108.232.54"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_f96e5d357fde19cd4352c9992de01e23" {
-  name    = "docs"
-  proxied = true
-  ttl     = 1
-  type    = "CNAME"
-  value   = "subspace.github.io"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
@@ -58,15 +198,6 @@ resource "cloudflare_record" "terraform_managed_resource_55771960964e20edcd05f53
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
-resource "cloudflare_record" "terraform_managed_resource_785c947c74154dd6d3c13f1bc14ef9ed" {
-  name    = "forum"
-  proxied = false
-  ttl     = 60
-  type    = "CNAME"
-  value   = "subspace.hosted-by-discourse.com"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
 resource "cloudflare_record" "terraform_managed_resource_8c34fb58ccc82ccee8a5aa916c6aee55" {
   name    = "k2._domainkey"
   proxied = false
@@ -82,15 +213,6 @@ resource "cloudflare_record" "terraform_managed_resource_8c342db13e3ca5d4c407a5c
   ttl     = 60
   type    = "CNAME"
   value   = "dkim3.mcsv.net"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_1844a4529de1350925ab918618b13c83" {
-  name    = "mail"
-  proxied = true
-  ttl     = 1
-  type    = "CNAME"
-  value   = "subspace.network"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
@@ -136,16 +258,6 @@ resource "cloudflare_record" "terraform_managed_resource_e7d319fe6cdb95b5ead29b7
   ttl     = 3600
   type    = "CNAME"
   value   = "s2.domainkey.u27463899.wl150.sendgrid.net"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_452fc18259863878b1842fd5c0b19146" {
-  comment = "Status Redirect"
-  name    = "status"
-  proxied = false
-  ttl     = 3600
-  type    = "CNAME"
-  value   = "subspace.github.io"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
@@ -230,92 +342,6 @@ resource "cloudflare_record" "terraform_managed_resource_f28701c7b10678abc190c13
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
-resource "cloudflare_record" "terraform_managed_resource_f2ba964c8308b5da6a6977eb8a053c98" {
-  name     = "subspace.network"
-  priority = 5
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "alt1.aspmx.l.google.com"
-  zone_id  = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_fee42bf9a1798e7e80cfe91222f6484e" {
-  name     = "subspace.network"
-  priority = 5
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "alt2.aspmx.l.google.com"
-  zone_id  = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_d381ec393946a0115b8e4de48c7cf7d3" {
-  name     = "subspace.network"
-  priority = 10
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "alt4.aspmx.l.google.com"
-  zone_id  = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_19d853415853f88f816d0e31d5b8c4e8" {
-  name     = "subspace.network"
-  priority = 1
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "aspmx.l.google.com"
-  zone_id  = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_e0e0314943ceadf7b86e7dd0c1ab63b8" {
-  name     = "subspace.network"
-  priority = 10
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "alt3.aspmx.l.google.com"
-  zone_id  = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_cb2914cda5a9ff1c86179f0dbd45aa0a" {
-  name    = "default._domainkey"
-  proxied = false
-  ttl     = 3600
-  type    = "TXT"
-  value   = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7zwrsOLB+eJ9SG1t7+OwOT2BuacTImFHozl8I/ mypg7rhtp4i1NpkSnjjDC3FdXXiUhsHTvAUvg5nMtGp3nCwwQYna0C8Jo7dbt3+NUVLj9KCBBBegxPS/WoJghPSbiKq4T/SBdM0K ShrVn7C/1blWA+N4XxOwmVtELV8POMwRYCzlrxCi3kdjbRY+4gXYKmcc7MSRi5ubyR7P/+K1/CkLbJa1SbxdS6/zMRIzPH/6vOR6 be1Qkw5PFsYu0gYbz3QDqYxaUTS3euWSPE3uLnPQEgAryX3SlKQB8uyjNbxF86ukslwwe9Q5cCZ1UPsl/89qcBRirnJbfoGlwb5j rX3QIDAQAB;"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_4143783454a628a5d442a3073e8d8257" {
-  name    = "_dmarc"
-  proxied = false
-  ttl     = 3600
-  type    = "TXT"
-  value   = "v=DMARC1; p=reject; pct=100; rua=mailto:g5oqy2di@ag.dmarcian.com, mailto:admin@subspace.network; ruf=mailto:admin@subspace.network"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_0fa753e60de27ab86a5683d144455364" {
-  name    = "_domainkey"
-  proxied = false
-  ttl     = 3600
-  type    = "TXT"
-  value   = "v=DKIM1; o=~"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_4465f47bd1fcbb6c6850c5c84577b07e" {
-  name    = "google._domainkey"
-  proxied = false
-  ttl     = 3600
-  type    = "TXT"
-  value   = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyqbz3f5O6pOl9LK3zOmKkczcK9aCdB34tSzDkA ZRD0g+OtBhlyWyzNeQGsrVianIfM9xyfZ7MVJK7sB/VGKIFIe5glb/Lh9tf/kLCRbkOnaafiXP5tOk4DC+mBpHOjyT0GgX5x4hxg oLmeJOrRLSu1niPQY/VqMtNsYa9+gAIo0YZnZeNi2w3FjWaslm5F7uI6mISdH3HZchqhzx2E6Ct+VJhLM0Ir+6v3qV5ylArtJzc+ PoTGdk65n5oq+Ioj9oTK4VmJunZ6jaU2Vimo+2TTAhBtRWQCa8Xy15/3kVZXiKJ4ddtPDnzSEval4er4SksIhtVYaxkeanU7pGbK w1SQIDAQAB"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
 resource "cloudflare_record" "terraform_managed_resource_d5b9ae2a99064d91811927a96fda5d57" {
   name    = "_smtp._tls"
   proxied = false
@@ -349,14 +375,5 @@ resource "cloudflare_record" "terraform_managed_resource_61eda5c4af93ca9d0f50e2f
   ttl     = 3600
   type    = "TXT"
   value   = "google-site-verification=Fxi1PlaR_c4E2l34q5G5QoiMPc7PeRqY_sLpD4XiAxg"
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-}
-
-resource "cloudflare_record" "terraform_managed_resource_12997d2641e54e3226780f31597a7782" {
-  name    = "subspace.network"
-  proxied = false
-  ttl     = 3600
-  type    = "TXT"
-  value   = "v=spf1 +a +a:ns1.us145.siteground.us include:_spf.google.com +mx ~all"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
