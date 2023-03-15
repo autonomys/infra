@@ -41,6 +41,8 @@ services:
       "--node-key", \$NODE_KEY,
       "--in-peers", "500",
       "--out-peers", "250",
+      "--dsn-max-in-connections", "500",
+      "--dsn-max-out-connections", "250",
       "--in-peers-light", "500",
       "--ws-max-connections", "10000",
 EOF
