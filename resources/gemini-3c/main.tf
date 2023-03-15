@@ -4,12 +4,12 @@ module "gemini-3c" {
   network-name    = "gemini-3c"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 10
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-mar-14"
+    docker-tag          = "gemini-3c-2023-mar-15"
     reserved-only       = false
     prune               = false
   }
