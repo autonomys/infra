@@ -56,6 +56,18 @@ resource "cloudflare_record" "status" {
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
+// subspace block explorer
+resource "cloudflare_record" "block_explorer" {
+  comment = "Subspace block explorer"
+  name    = "explorer"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "subspace.github.io"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+// TODO: the following records needs to be updated with further info on why they exist
 resource "cloudflare_record" "terraform_managed_resource_964bf73d0853cefc64803baef62167a5" {
   name    = "ws"
   proxied = true
