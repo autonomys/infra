@@ -7,18 +7,25 @@ We use **Terraform** and **DigitalOcean**. Any **project**, **droplet**, **volum
 Terraform projects folder structure:
 
 ```
-└──  resources
-    └── aries-dev/
-    └── aries-test-a/
-    └── aries-test-b/
-    └── polkadot-archive/
-    └── status-page/
-    └── telemetry/
-    └── common.tf 
+terraform
+└── resources
+    ├── aries-dev
+    ├── aries-test-a
+    ├── aries-test-b
+    ├── common.tf
+    ├── devnet
+    ├── farmnet-a
+    ├── gemini-2a
+    ├── gemini-3b
+    ├── gemini-3c
+    ├── polkadot-archive
+    ├── status-page
+    ├── telemetry
+    └── telemetry-testing
 ```
 
 - `common.tf` is located on the resources folder, it contains all the definitions to be used for each project. 
-- To re use common definitions a `symlink` is created using `/resources/common.tf` as the source.
+- To re use common definitions a `symlink` is created using `terraform/resources/common.tf` as the source.
 - If you need to **create a new project**:
     - go to the **resources** folder, 
     - create a **new folder-project** 
@@ -43,7 +50,7 @@ You can find your API token in your [DigitalOcean](https://cloud.digitalocean.co
 export DO_TOKEN=9999999999999999aaaaaaaaaaaaaaa
 ```
 
-Go to **resources/PROJECT_NAME** directory and run the following commands to init terraform:
+Go to **terraform/resources/PROJECT_NAME** directory and run the following commands to init terraform:
 
 ```
 terraform init
@@ -53,7 +60,7 @@ You are ready to run the **plan** and **apply** command with this.
 
 ## Deploy resources.
 
-In the **resources/PROJECT_NAME** directory, run the following commands:
+In the **terraform/resources/PROJECT_NAME** directory, run the following commands:
 
 
 1. Run the **plan** command with the variable values passed in to see Terraform's steps to deploy your project resources.
