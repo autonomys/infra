@@ -15,35 +15,35 @@ module "gemini-3c" {
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 10
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-mar-14"
+    docker-tag          = "gemini-3c-2023-mar-15"
     reserved-only       = false
     prune               = false
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 10
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3c-2023-mar-14"
+    docker-tag          = "gemini-3c-2023-mar-15"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 9
+    deployment-version     = 10
     regions                = ["ams3"]
     nodes-per-region       = 1
     additional-node-ips    = []
     docker-org             = "subspace"
-    docker-tag             = "gemini-3c-2023-mar-14"
+    docker-tag             = "gemini-3c-2023-mar-15"
     reserved-only          = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
