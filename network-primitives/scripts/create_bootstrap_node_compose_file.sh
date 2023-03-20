@@ -39,11 +39,11 @@ services:
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--no-private-ipv4",
       "--node-key", \$NODE_KEY,
-      "--in-peers", "500",
-      "--out-peers", "250",
-      "--dsn-max-in-connections", "500",
-      "--dsn-max-out-connections", "250",
-      "--in-peers-light", "500",
+      "--in-peers", "1000",
+      "--out-peers", "1000",
+      "--dsn-max-in-connections", "1000",
+      "--dsn-max-out-connections", "1000",
+      "--in-peers-light", "1000",
       "--ws-max-connections", "10000",
 EOF
 
