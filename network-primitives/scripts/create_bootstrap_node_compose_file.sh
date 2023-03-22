@@ -43,6 +43,8 @@ services:
       "--out-peers", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
+      "--dsn-pending-in-connections", "1000",
+      "--dsn-pending-out-connections", "1000",
       "--in-peers-light", "1000",
       "--ws-max-connections", "10000",
 EOF
