@@ -29,11 +29,17 @@ The following instructions contain the minimal requirements to run Docker images
 
 ### Docker setup
 
-To run our docker images and Datadog agent integration.
+The latest docker docs can be found [here](https://docs.docker.com/engine/install/ubuntu/#set-up-the-repository) to help install docker and docker compose
 
+Remove old versions of docker first:
+```bash
+sudo apt-get remove docker docker-engine docker.io containerd runc
+```
+
+Install new versions of docker, containerd and docker compose:
 ```bash
 sudo apt-get update
-sudo apt-get install -y docker.io docker-compose-plugin
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ### Nginx setup
@@ -41,20 +47,18 @@ sudo apt-get install -y docker.io docker-compose-plugin
 To expose the public RPC node over a secure WebSocket connection.
 
 ```bash
-apt-get install -y nginx
+sudo apt update && sudo apt-get install -y nginx
 ```
 
 ### Certbot setup
 
 To generate an SSL certificate for the public RPC node.
 
+Install Certbot:
 ```bash
-snap install core
-snap refresh core
-apt-get remove certbot
-snap install --classic certbot
-ln -s /snap/bin/certbot /usr/bin/certbot
+sudo apt install certbot python3-certbot-nginx --no-install-recommends
 ```
+
 
 Following [certbot instructions](https://certbot.eff.org/lets-encrypt/ubuntufocal-nginx). We need a **subdomain (RPC_PUBLIC_NAME)** mapped to the Droplet **IP_ADDRESS** and a running **nginx** with an **open port 80**.
 
@@ -70,7 +74,7 @@ Notes:
 * In case of an entire machine wipe, create a **backup** of the generated certificates to be re-used. This way updates on records are not necessary.
 
 ```bash
-certbot certonly --nginx
+certbot certonly --nginx -d RPC_PUBLIC_NAME.subspace.network
 ```
 
 Success operation output.

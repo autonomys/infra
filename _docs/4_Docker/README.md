@@ -5,7 +5,7 @@
 Subspace images are available in:
 
 - Node: https://github.com/subspace/subspace/pkgs/container/node
-- Farmer: https://github.com/subspace/subspace/pkgs/container/farmer
+- Farner: https://github.com/subspace/subspace/pkgs/container/farmer
 - Relayer: https://github.com/subspace/subspace-relayer/pkgs/container/relayer
 
 ## Datadog agent.

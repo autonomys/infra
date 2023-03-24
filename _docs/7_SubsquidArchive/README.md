@@ -5,9 +5,17 @@ Subspace Network maintains [Subsquid Archive](https://docs.subsquid.io/archives/
 ## Docker and Docker Compose setup
 Install Docker:
 
+The latest docker docs can be found [here](https://docs.docker.com/engine/install/ubuntu/#set-up-the-repository) to help install docker and docker compose
+
+Remove old versions of docker first:
+```bash
+sudo apt-get remove docker docker-engine docker.io containerd runc
+```
+
+Install new versions of docker, containerd and docker compose:
 ```bash
 sudo apt-get update
-sudo apt-get install -y docker.io docker-compose-plugin
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ## Create Subsquid Archive
@@ -28,8 +36,8 @@ Sample [docker-compose.yml](docker-compose.yml) can be used as a reference. It w
 
 Pull fresh images and start containers:
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## Nginx setup and SSL certificate
@@ -46,11 +54,7 @@ It exposes Archive Graphql endpoint `/api` (consumed by squids) as well as Graph
 
 Install Certbot:
 ```bash
-sudo snap install core
-sudo snap refresh core
-sudo apt remove certbot
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
+sudo apt install certbot python3-certbot-nginx --no-install-recommends
 ```
 
 Obtain an SSL certificate:
