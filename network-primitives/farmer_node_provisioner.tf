@@ -40,7 +40,7 @@ resource "null_resource" "setup-farmer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "10s"
+    timeout        = "30s"
   }
 
   # create subspace dir
@@ -80,7 +80,7 @@ resource "null_resource" "prune-farmer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "10s"
+    timeout        = "30s"
   }
 
   # prune network
@@ -109,7 +109,7 @@ resource "null_resource" "start-farmer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "10s"
+    timeout        = "30s"
   }
 
   # copy node keys file
