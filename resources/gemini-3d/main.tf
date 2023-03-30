@@ -4,37 +4,37 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 2
+    deployment-version  = 3
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-28"
+    docker-tag          = "gemini-3d-2023-mar-29"
     reserved-only       = false
-    prune               = true
+    prune               = false
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 2
+    deployment-version  = 3
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-28"
+    docker-tag          = "gemini-3d-2023-mar-29"
     reserved-only       = false
-    prune               = true
+    prune               = false
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 2
+    deployment-version  = 3
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-28"
+    docker-tag          = "gemini-3d-2023-mar-29"
     domain-prefix       = "eu"
     reserved-only       = false
-    prune               = true
+    prune               = false
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -43,7 +43,7 @@ module "gemini-3d" {
     nodes-per-region       = 0
     additional-node-ips    = []
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-mar-28"
+    docker-tag             = "gemini-3d-2023-mar-29"
     reserved-only          = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
