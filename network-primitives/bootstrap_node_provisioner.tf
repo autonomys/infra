@@ -118,6 +118,12 @@ resource "null_resource" "start-boostrap-nodes" {
     destination = "/subspace/node_keys.txt"
   }
 
+  # copy boostrap node keys file
+  provisioner "file" {
+    source      = "./dsn_bootstrap_node_keys.txt"
+    destination = "/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
   # copy compose creation file
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_bootstrap_node_compose_file.sh"
@@ -155,6 +161,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/dsn_bootstrap_node_keys.txt) >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
