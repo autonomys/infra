@@ -9,9 +9,9 @@ module "devnet" {
         nodes-per-region    = 1
         additional-node-ips = []
         docker-org          = "subspace"
-        docker-tag          = "snapshot-2023-mar-28"
+        docker-tag          = "gemini-3d-2023-mar-29"
         reserved-only       = false
-        prune               = true
+        prune               = false
   }
   full-node-config = {
         droplet_size        = var.droplet-size
@@ -20,9 +20,9 @@ module "devnet" {
         nodes-per-region    = 1
         additional-node-ips = []
         docker-org          = "subspace"
-        docker-tag          = "snapshot-2023-mar-28"
+        docker-tag          = "gemini-3d-2023-mar-29"
         reserved-only       = false
-        prune               = true
+        prune               = false
   }
   rpc-node-config = {
         droplet_size        = var.droplet-size
@@ -31,10 +31,10 @@ module "devnet" {
         nodes-per-region    = 1
         additional-node-ips = []
         docker-org          = "subspace"
-        docker-tag          = "snapshot-2023-mar-28"
+        docker-tag          = "gemini-3d-2023-mar-29"
         domain-prefix       = "rpc"
         reserved-only       = false
-        prune               = true
+        prune               = false
   }
 
   farmer-node-config = {
@@ -44,12 +44,12 @@ module "devnet" {
         nodes-per-region       = 1
         additional-node-ips    = []
         docker-org             = "subspace"
-        docker-tag             = "snapshot-2023-mar-28"
+        docker-tag             = "gemini-3d-2023-mar-29"
         reserved-only          = false
-        prune                  = true
+        prune                  = false
         plot-size              = "10G"
         reward-address         = var.farmer-reward-address
-        force-block-production = true
+        force-block-production = false
   }
 
   cloudflare_api_token = var.cloudflare_api_token
