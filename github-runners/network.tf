@@ -60,8 +60,8 @@ resource "aws_route_table_association" "a-dev-subnet" {
   route_table_id = aws_route_table.public-route-dev.id
 }
 
-resource "aws_security_group" "allow_web" {
-  name        = "allow_web"
+resource "aws_security_group" "allow_runner" {
+  name        = "allow_runner"
   description = "Allow HTTP and HTTPS inbound traffic"
   vpc_id      = data.aws_vpc.default.id
 
@@ -98,7 +98,7 @@ resource "aws_security_group" "allow_web" {
   }
 
   tags = {
-    Name = "allow_web"
+    Name = "allow_runner"
   }
 
   depends_on = [
@@ -106,13 +106,13 @@ resource "aws_security_group" "allow_web" {
   ]
 }
 
-resource "aws_network_interface" "web-server-nic" {
+resource "aws_network_interface" "runner-server-nic" {
   subnet_id       = aws_subnet.dev-subnet.id
   private_ips     = local.aws.ipv4_addresses
-  security_groups = [aws_security_group.allow_web.id]
+  security_groups = [aws_security_group.allow_runner.id]
 
   depends_on = [
-    aws_security_group.allow_web,
+    aws_security_group.allow_runner,
   ]
 
   lifecycle {
@@ -121,19 +121,19 @@ resource "aws_network_interface" "web-server-nic" {
 }
 
 
-resource "aws_eip" "web-server-eip" {
-  instance                  = aws_instance.web-server.id
+resource "aws_eip" "runner-server-eip" {
+  instance                  = aws_instance.runner-server.id
   vpc                       = true
-  network_interface         = aws_network_interface.web-server-nic.id
+  network_interface         = aws_network_interface.runner-server-nic.id
   associate_with_private_ip = "172.31.2.15"
 
   depends_on = [
-    aws_network_interface.web-server-nic,
-    aws_instance.web-server
+    aws_network_interface.runner-server-nic,
+    aws_instance.runner-server
   ]
 
   tags = {
-    "Name" = "webserver-eip"
+    "Name" = "runner-server-eip"
   }
   lifecycle {
     prevent_destroy = true
