@@ -5,7 +5,6 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
-  dsn_boot_node: {}
 
 services:
   datadog:
@@ -23,8 +22,6 @@ services:
 
   dsn-bootstrap-node:
     image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
-    volumes:
-      - dsn_boot_node:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "50000:50000"
