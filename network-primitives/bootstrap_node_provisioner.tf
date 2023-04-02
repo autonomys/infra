@@ -83,11 +83,16 @@ resource "null_resource" "prune-bootstrap-nodes" {
     timeout        = "10s"
   }
 
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/prune_docker_system.sh"
+    destination = "/tmp/prune_docker_system.sh"
+  }
+
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker ps -aq | xargs docker stop",
-      "docker system prune -a -f --volumes",
+      "sudo chmod +x /tmp/prune_docker_system.sh",
+      "sudo /tmp/prune_docker_system.sh"
     ]
   }
 }
