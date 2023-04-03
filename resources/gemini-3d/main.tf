@@ -39,7 +39,7 @@ module "gemini-3d" {
   farmer-node-config = {
     droplet_size           = var.droplet-size
     deployment-version     = 1
-    regions                = ["ams3"]
+    regions                = []
     nodes-per-region       = 0
     additional-node-ips    = []
     docker-org             = "subspace"
