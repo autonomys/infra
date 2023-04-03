@@ -1,23 +1,23 @@
 // Output Variables
 
-output "public_ip_web_server" {
-  value = aws_eip.web-server-eip.public_ip
+output "public_ip_runner_server" {
+  value = aws_eip.runner-server-eip.public_ip
 }
 
-output "api_server_id" {
+output "runner_server_id" {
   value = aws_instance.api-server-1.id
 }
 
-output "api_server_private_ip" {
+output "runner_server_private_ip" {
   value = aws_instance.api-server-1.private_ip
 }
 
 output "ingress_rules" {
-  value = aws_security_group.allow_web.ingress
+  value = aws_security_group.allow_runner.ingress
 }
 
 output "server_ami" {
-  value = aws_instance.web-server.ami
+  value = aws_instance.runner-server.ami
 }
 
 # output "state_bucket_arn" {

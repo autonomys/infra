@@ -1,0 +1,9 @@
+---
+- name: Update hosts
+  import_tasks: update_hosts.yml
+
+- name: Install Prometheus
+  import_tasks: install_prometheus.yml
+
+- name: Secure Nginx
+  import_tasks: secure_nginx.yml

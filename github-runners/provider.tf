@@ -16,7 +16,7 @@ provider "aws" {
     tags = {
       Environment = "Development"
       Owner       = "subspace"
-      Project     = "Subspace Networl"
+      Project     = "Subspace Network"
     }
   }
 }
