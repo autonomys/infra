@@ -40,7 +40,7 @@ module "gemini-3d" {
     droplet_size           = var.droplet-size
     deployment-version     = 1
     regions                = ["ams3"]
-    nodes-per-region       = 1
+    nodes-per-region       = 0
     additional-node-ips    = []
     docker-org             = "subspace"
     docker-tag             = "gemini-3d-2023-mar-29"
