@@ -16,14 +16,6 @@ services:
       - "5432:5432"
     command: postgres -c config_file=/VOLUME_NAME/postgresql/postgresql.conf
 
-  pghero:
-    image: ankane/pghero
-    container_name: pghero
-    environment:
-      DATABASE_URL: postgres://postgres:squid@postgres-db:5432/squid
-    ports:
-      - "8080:8080" 
-
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:latest
     restart: on-failure:5
@@ -50,7 +42,6 @@ services:
       DB_NAME:
       # provide DB password
       DB_PASS:
-      BATCH_SIZE: 20
     depends_on:
       - db
       - run-migrations
@@ -85,3 +76,26 @@ services:
      - /var/run/docker.sock:/var/run/docker.sock
      - /proc/:/host/proc/:ro
      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+  pg-health-check:
+    image: ghcr.io/subspace/health-check:latest
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      PORT: 8080
+      # provide secret, which is going to be used in 'Authorization' header
+      SECRET: MY_SECRET
+    command: "postgres"
+    ports:
+      - 8080:8080
+  
+  prom-health-check:
+    image: ghcr.io/subspace/health-check:latest
+    environment:
+      PROMETHEUS_HOST: http://processor:3000
+      PORT: 7070
+      # provide secret, which is going to be used in 'Authorization' header
+      SECRET: MY_SECRET
+    command: "prometheus"
+    ports:
+      - 7070:7070
