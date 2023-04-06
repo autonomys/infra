@@ -16,14 +16,6 @@ services:
       - "5432:5432"
     command: postgres -c config_file=/VOLUME_NAME/postgresql/postgresql.conf
 
-  pghero:
-    image: ankane/pghero
-    container_name: pghero
-    environment:
-      DATABASE_URL: postgres://postgres:squid@postgres-db:5432/squid
-    ports:
-      - "8080:8080" 
-
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:latest
     restart: on-failure:5
@@ -50,7 +42,6 @@ services:
       DB_NAME:
       # provide DB password
       DB_PASS:
-      BATCH_SIZE: 20
     depends_on:
       - db
       - run-migrations
