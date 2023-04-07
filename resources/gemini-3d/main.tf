@@ -4,7 +4,7 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 5
+    deployment-version  = 6
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips

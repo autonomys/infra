@@ -23,6 +23,8 @@ services:
   dsn-bootstrap-node:
     image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
     restart: unless-stopped
+    environment:
+      - RUST_LOG=info
     ports:
       - "50000:50000"
     command: ["start", \$DSN_NODE_KEY, "/ip4/0.0.0.0/tcp/50000" ]
