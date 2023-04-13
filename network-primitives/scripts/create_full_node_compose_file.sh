@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "30433:30433"
+      - "30434:30434"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
