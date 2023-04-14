@@ -27,7 +27,11 @@ services:
       - RUST_LOG=info
     ports:
       - "50001:50001"
-    command: ["start", \$DSN_NODE_KEY, "/ip4/0.0.0.0/tcp/50001" ]
+    command: [
+      "start",
+       \$DSN_NODE_KEY, "/ip4/0.0.0.0/tcp/50001",
+        "--protocol-version", \$GENESIS_HASH
+      ]
 
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
