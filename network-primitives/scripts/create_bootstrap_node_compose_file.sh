@@ -26,11 +26,11 @@ services:
     environment:
       - RUST_LOG=info
     ports:
-      - "50001:50001"
+      - "\$DSN_LISTEN_PORT:50000"
     command:
       - start
       - \$DSN_NODE_KEY
-      - /ip4/0.0.0.0/tcp/50001
+      - /ip4/0.0.0.0/tcp/50000
       - --protocol-version
       - \${GENESIS_HASH}
 
