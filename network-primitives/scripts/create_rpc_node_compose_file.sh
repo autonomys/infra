@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "30433:30433"
+      - "\${NODE_DSN_PORT}:30433"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /http

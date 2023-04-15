@@ -12,6 +12,9 @@ module "gemini-2a" {
     docker-tag          = "gemini-2a-pre-release"
     reserved-only       = false
     prune               = false
+    genesis-hash        = ""
+    dsn-listen-port     = 50000
+    node-dsn-port       = 30433
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -23,6 +26,7 @@ module "gemini-2a" {
     docker-tag          = "gemini-2a-pre-release"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30433
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -35,6 +39,7 @@ module "gemini-2a" {
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30433
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -49,6 +54,7 @@ module "gemini-2a" {
     plot-size              = "5G"
     reward-address         = ""
     force-block-production = false
+    node-dsn-port          = 30433
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

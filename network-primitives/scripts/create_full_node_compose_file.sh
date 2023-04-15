@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "30433:30433"
+      - "\${NODE_DSN_PORT}:30433"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",

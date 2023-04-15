@@ -4,18 +4,21 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 6
+    deployment-version  = 8
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-apr-05"
+    docker-tag          = "gemini-3d-2023-apr-14"
     reserved-only       = false
     prune               = false
+    genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
+    dsn-listen-port     = 50001
+    node-dsn-port       = 30434
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 4
+    deployment-version  = 5
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
@@ -23,10 +26,11 @@ module "gemini-3d" {
     docker-tag          = "gemini-3d-2023-apr-05"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30434
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 4
+    deployment-version  = 5
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
@@ -35,6 +39,7 @@ module "gemini-3d" {
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30434
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -49,6 +54,7 @@ module "gemini-3d" {
     reward-address         = var.farmer-reward-address
     force-block-production = false
     prune                  = false
+    node-dsn-port          = 30434
   }
   piece_cache_size     = "50G"
   cloudflare_api_token = var.cloudflare_api_token

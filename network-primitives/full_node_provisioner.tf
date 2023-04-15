@@ -166,6 +166,7 @@ resource "null_resource" "start-full-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
+      "echo NODE_DSN_PORT=${var.full-node-config.node-dsn-port} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",

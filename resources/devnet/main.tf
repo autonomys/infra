@@ -12,6 +12,9 @@ module "devnet" {
     docker-tag          = "snapshot-2023-mar-08"
     reserved-only       = false
     prune               = false
+    genesis-hash        = ""
+    dsn-listen-port     = 50000
+    node-dsn-port       = 30433
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -23,6 +26,7 @@ module "devnet" {
     docker-tag          = "snapshot-2023-mar-08"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30433
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -35,6 +39,7 @@ module "devnet" {
     domain-prefix       = "rpc"
     reserved-only       = false
     prune               = false
+    node-dsn-port       = 30433
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -49,6 +54,7 @@ module "devnet" {
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
     force-block-production = false
+    node-dsn-port          = 30433
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

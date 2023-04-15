@@ -26,8 +26,13 @@ services:
     environment:
       - RUST_LOG=info
     ports:
-      - "50000:50000"
-    command: ["start", \$DSN_NODE_KEY, "/ip4/0.0.0.0/tcp/50000" ]
+      - "\$DSN_LISTEN_PORT:50000"
+    command:
+      - start
+      - \$DSN_NODE_KEY
+      - /ip4/0.0.0.0/tcp/50000
+      - --protocol-version
+      - \${GENESIS_HASH}
 
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
@@ -36,7 +41,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "30433:30433"
+      - "\${NODE_DSN_PORT}:30433"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
