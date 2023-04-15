@@ -8,7 +8,7 @@ spec:
  storageClassName: linode-block-storage-retain
 #storageClassName: ssd-gp3
  capacity:
-   storage: 20Gi
+   storage: 400Gi
  accessModes:
    - ReadWriteOnce
  hostPath:

@@ -12,6 +12,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
+      storage: 400Gi
   storageClassName: linode-block-storage-retain
 # storageClassName: ssd-gp3
