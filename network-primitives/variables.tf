@@ -31,6 +31,7 @@ variable "full-node-config" {
     docker-tag          = string
     reserved-only       = bool
     prune               = bool
+    node-dsn-port       = string
   })
 }
 
@@ -47,6 +48,7 @@ variable "rpc-node-config" {
     domain-prefix       = string
     reserved-only       = bool
     prune               = bool
+    node-dsn-port       = string
   })
 }
 
@@ -62,6 +64,8 @@ variable "bootstrap-node-config" {
     docker-tag          = string
     reserved-only       = bool
     prune               = bool
+    genesis-hash        = string
+    node-dsn-port       = string
   })
 }
 
@@ -80,5 +84,6 @@ variable "farmer-node-config" {
     plot-size              = string
     reward-address         = string
     force-block-production = bool
+    node-dsn-port          = string
   })
 }

@@ -167,6 +167,8 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/dsn_bootstrap_node_keys.txt) >> /subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-config.node-dsn-port} >> /subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
