@@ -418,4 +418,3 @@ spec:
         value: "explorer-squid-node"
         effect: "NoSchedule"
       restartPolicy: Always
-

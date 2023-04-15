@@ -431,4 +431,3 @@ spec:
         value: "archive-squid-node"
         effect: "NoSchedule"
       restartPolicy: Always
-
