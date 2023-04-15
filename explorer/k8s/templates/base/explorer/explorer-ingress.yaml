@@ -33,7 +33,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/websocket-services: "ws-svc"
 #    nginx.ingress.kubernetes.io/affinity: "cookie"
-#    nginx.com/sticky-cookie-services: "serviceName=api-svc srv_id expires=1h path=/api;serviceName=studio-svc srv_id expires=1h path=/studio"
+#    nginx.com/sticky-cookie-services: "serviceName=api-svc srv_id expires=1h path=/api;serviceName=explorer-svc srv_id expires=1h path=/graphql"
 #    nginx.ingress.kubernetes.io/server-snippets: |
 #      location / {
 #        return 302 /en;
@@ -42,11 +42,11 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - explorer.subspace.network
+    - squid.gemini-3d.subspace.network
     secretName: TLS_SECRET
 
   rules:
-  - host: explorer.subspace.network
+  - host: squid.gemini-3d.subspace.network
     http:
       paths:
       - path: /
@@ -57,13 +57,13 @@ spec:
             port:
               number: 80
 
-      # - path: /graphql
-      #   pathType: Prefix
-      #   backend:
-      #     service:
-      #       name: explorer-svc
-      #       port:
-      #         number: 4000
+      - path: /graphql
+        pathType: Prefix
+        backend:
+          service:
+            name: explorer-svc
+            port:
+              number: 4000
 
       # - path: /ws
       #   pathType: Prefix
