@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: explorer-configmap
+  namespace: explorer-network
+data:
+  files:
+  - config/explorer-env-file.properties

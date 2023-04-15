@@ -1,0 +1,434 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: archive-statefulset
+  namespace: archive-network
+  labels:
+    app.kubernetes.io/name: "archive-squid"
+    app.kubernetes.io/instance: "archive-squid"
+    app.kubernetes.io/version: "gemini-3d"
+    app.kubernetes.io/component: "archive"
+    app.kubernetes.io/part-of: "archive-squid"
+    app.kubernetes.io/managed-by: "kubectl"
+    app.kubernetes.io/arch: "x86_64" 
+spec:
+  selector:
+    matchLabels:
+      app: archive-app # has to match .spec.template.metadata.labels
+  serviceName: archive-svc
+  replicas: 1 # by default is 1
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        app: archive-app # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      imagePullSecrets: []
+      serviceAccountName: ""
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: nginx
+        image: nginx:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: "/etc/nginx/nginx.conf"
+            name: archive-nginx-config
+            subPath: nginx.conf
+          - mountPath: "/etc/nginx/proxy.conf"
+            name: archive-nginx-config
+            subPath: proxy.conf
+          - mountPath: "/etc/nginx/cors.conf"
+            name: archive-nginx-config
+            subPath: cors.conf
+        ports:
+          - name: nginx
+            containerPort: 80
+            protocol: TCP
+        # livenessProbe:
+        #     httpGet:
+        #       path: /health
+        #       port: 80
+        #     initialDelaySeconds: 15
+        #     periodSeconds: 15
+        #     timeoutSeconds: 5
+        #     successThreshold: 1
+        #     failureThreshold: 3
+        livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 6
+            periodSeconds: 10
+
+      - name: postgres
+        image: postgres:14
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: "/var/lib/postgresql/data"
+            name: archive-data
+          - mountPath: "/var/lib/postgresql/postgres.conf"
+            name: archive-postgres-config
+            subPath: postgres.conf
+        ports:
+          - name: db
+            containerPort: 5432
+            protocol: TCP
+        resources:
+          requests:
+            cpu: 2
+            memory: 4000Mi
+          limits:
+            cpu: 8
+            memory: 16000Mi
+        env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_HOST
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_PASSWORD
+        livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+            successThreshold: 1
+            timeoutSeconds: 5
+        readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+
+      - name: node
+        image: ghcr.io/subspace/node:snapshot-DATE
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: "/var/subspace"
+            name: archive-data
+        env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: DB_PASS
+
+      - name: ingest
+        image: ghcr.io/subspace/blockarchive-ingest:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        ports:
+          - name: ingest
+            containerPort: 3000
+            protocol: TCP
+        command:
+              - -e ws://node:9944
+              - -c 10
+              - --prom-port 9090
+              - --out postgres://postgres:postgres@db:5432/squid-archive
+        resources:
+          requests:
+            cpu: 2
+            memory: 4000Mi
+          limits:
+            cpu: 8
+            memory: 16000Mi
+        env:
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_HONODE_TLS_REJECT_UNAUTHORIZEDST
+
+      - name: explorer
+        image: subsquid/substrate-explorer:firesquid
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        ports:
+          - name: explorer
+            containerPort: 3000
+            protocol: TCP
+        env:
+            - name: DB_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_TYPE
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: DB_PASS
+        # livenessProbe:
+        #     httpGet:
+        #       path: /graphql
+        #       port: 4350
+        #     initialDelaySeconds: 5
+        #     periodSeconds: 10
+        #     timeoutSeconds: 5
+        #     successThreshold: 1
+        #     failureThreshold: 3
+        livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+        readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 6
+            periodSeconds: 30
+
+      - name: datadog
+        image: datadog/agent
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: dockersocket
+            mountPath: /var/run/docker.sock
+          - name: procdir
+            mountPath: /host/proc
+            readOnly: true
+          - name: cgroups
+            mountPath: /host/sys/fs/cgroup
+            readOnly: true
+        env:
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: DD_API_KEY
+            - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+            - name: DD_LOGS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DD_LOGS_ENABLED
+            - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+            - name: DD_CONTAINER_EXCLUDE
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: DD_CONTAINER_EXCLUDE
+
+      - name: pg-health-check
+        image: ghcr.io/subspace/health-check:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        ports:
+          - name: pghealth
+            containerPort: 8080
+            protocol: TCP
+        env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_HOST
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: POSTGRES_PASSWORD
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: HEALTH_CHECK PORT
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: HEALTH_AUTH_SECRET
+        livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+        readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 6
+            periodSeconds: 30
+
+      - name: prom-health-check
+        image: ghcr.io/subspace/health-check:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
+        ports:
+          - name: processorhealth
+            containerPort: 7070
+            protocol: TCP
+        env:
+            - name: PROMETHEUS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: PROCESSOR_HEALTH_HOST
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: archive-configmap
+                  key: PROCESSOR_HEALTH_PORT
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: archive-configmap
+                  key: HEALTH_AUTH_SECRET
+        livenessProbe:
+            tcpSocket:
+              port: 7070
+            initialDelaySeconds: 5
+            periodSeconds: 30
+        readinessProbe:
+            tcpSocket:
+              port: 7070
+            initialDelaySeconds: 6
+            periodSeconds: 30
+
+      volumes:
+        - name: archive-data
+          persistentVolumeClaim:
+            claimName: archive-data-pvc
+        - hostPath:
+            path: /var/run/docker.sock
+          name: dockersocket
+        - hostPath:
+            path: /proc
+          name: procdir
+        - hostPath:
+            path: /sys/fs/cgroup
+          name: cgroups
+        - name: archive-proxy-config
+          configMap:
+            name: archive-proxy-configmap
+        - name: archive-postgres-config
+          configMap:
+            name: archive-postgres-configmap
+      #nodeSelector: {}
+      #affinity: {}
+      nodeSelector:
+        subspace.network/role: archive-squid-node
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: subspace.network/role
+                operator: In
+                values:
+                - archive-squid-node
+          #preferredDuringSchedulingIgnoredDuringExecution:
+          #- weight: 1
+          #  preference:
+          #    matchExpressions:
+          #    - key: node-label-key
+          #      operator: In
+          #      values:
+          #      - node-label-value
+      #tolerations: []
+      tolerations:
+      - key: "subspace.network/role"
+        operator: "Equal"
+        value: "archive-squid-node"
+        effect: "NoSchedule"
+      restartPolicy: Always
+

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+     name: explorer-data-pvc
+     namespace: explorer-network
+     labels:
+       app: explorer-squid-app
+spec:
+     accessModes:
+     - ReadWriteOnce
+     resources:
+       requests:
+         storage: 20Gi
+     storageClassName: linode-block-storage-retain
+#    storageClassName: ssd-gp3
+#     volumeName: explorer-data-pv
+# Don't use static PV generate PVC dynamically
