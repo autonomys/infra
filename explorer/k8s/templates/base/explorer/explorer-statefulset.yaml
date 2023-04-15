@@ -318,8 +318,8 @@ spec:
             - name: PORT
               valueFrom:
                 configMapKeyRef:
-                  name: archive-configmap
-                  key: HEALTH_CHECK PORT
+                  name: explorer-configmap
+                  key: HEALTH_CHECK_PORT
             - name: SECRET
               valueFrom:
                 secretKeyRef:

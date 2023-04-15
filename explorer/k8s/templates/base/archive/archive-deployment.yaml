@@ -331,7 +331,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: archive-configmap
-                  key: HEALTH_CHECK PORT
+                  key: HEALTH_CHECK_PORT
             - name: SECRET
               valueFrom:
                 secretKeyRef:
