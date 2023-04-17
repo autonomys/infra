@@ -75,6 +75,18 @@ resource "null_resource" "prune-archive_squid-nodes" {
   }
 }
 
+
+# copy nginx configs
+provisioner "file" {
+  source      = "${var.path-to-scripts}/nginx_archive-squid.conf"
+  destination = "/archive_squid/nginx_conf"
+}
+
+provisioner "file" {
+  source      = "${var.path-to-scripts}/cors-settings.conf"
+  destination = "/archive_squid/cors-settings.conf"
+}
+
 # Install Nginx proxy as docker container
 resource "docker_image" "nginx" {
   name = "nginx:stable-alpine3.17-slim"
@@ -92,13 +104,6 @@ resource "docker_container" "nginx-server" {
     read_only = true
   }
 }
-
-  # copy nginx configs
-  provisioner "file" {
-    source      = "${var.path-to-scripts}/install_nginx_conf.sh"
-    destination = "/archive_squid/install_nginx_conf.sh"
-  }
-
 
 resource "null_resource" "start-archive_squid-nodes" {
   count = length(local.archive_squid_node_ip_v4)
