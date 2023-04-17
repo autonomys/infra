@@ -3,11 +3,11 @@ module "explorer-node-blue" {
   path-to-scripts = "../network/scripts"
 
   explorer-node-config = {
-    deployment-color   = "blue"
-    network-name       = "gemini-3d-blue"
+    deployment-color   = var.deployment_color
+    network-name       = "gemini-3d-${var.deployment_color}"
     droplet_size       = var.droplet_size
     deployment-version = 1
-    regions            = ["nyc1"]
+    regions            = var.regions
     nodes-per-region   = 1
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
@@ -29,10 +29,11 @@ module "explorer-node-green" {
   path-to-scripts = "../network/scripts"
 
   explorer-node-config = {
-    deployment-color   = "green"
-    network-name       = "gemini-3d-green"
+    deployment-color   = var.deployment_color
+    network-name       = "gemini-3d-${var.deployment_color}"
     droplet_size       = var.droplet_size
     deployment-version = 1
+    regions            = var.regions
     regions            = ["nyc1"]
     nodes-per-region   = 1
     docker-org         = "subspace"
@@ -56,11 +57,11 @@ module "squid-archive-node-blue" {
   path-to-scripts = "../network/scripts"
 
   squid-archive-node-config = {
-    deployment-color   = "blue"
-    network-name       = "gemini-3d-blue"
+    deployment-color   = var.deployment_color
+    network-name       = "gemini-3d-${var.deployment_color}"
     droplet_size       = var.droplet_size
     deployment-version = 1
-    regions            = ["AMS3"]
+    regions            = var.regions
     nodes-per-region   = 1
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
@@ -83,11 +84,11 @@ module "squid-archive-node-green" {
   path-to-scripts = "../network/scripts"
 
   squid-archive-node-config = {
-    deployment-color   = "green"
-    network-name       = "gemini-3d-green"
+    deployment-color   = var.deployment_color
+    network-name       = "gemini-3d-${var.deployment_color}"
     droplet_size       = var.droplet_size
     deployment-version = 1
-    regions            = ["AMS3"]
+    regions            = var.regions
     nodes-per-region   = 1
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"

@@ -32,6 +32,12 @@ variable "deployment_color" {
   default     = "blue"
 }
 
+variable "regions" {
+  description = "Droplet region"
+  type        = list(sting)
+  default     = ["AMS1", "NYC1"]
+}
+
 variable "explorer-node-config" {
   description = "Block explorer backend configuration"
   type = object({
@@ -46,12 +52,12 @@ variable "explorer-node-config" {
   })
 
   default = {
-    droplet-size     = "value"
+    droplet-size     = "m6-2vcpu-16gb"
     deployment-color = "blue"
     regions          = ["AMS3", "NYC1"]
     nodes-per-region = 1
     docker-org       = "subspace"
-    docker-tag       = "value"
+    docker-tag       = "gemini-3d"
     prune            = false
     environment      = "staging"
   }
@@ -71,12 +77,12 @@ variable "squid-archive-node-config" {
   })
   
   default = {
-    droplet-size = "value"
+    droplet-size = "m6-2vcpu-16gb"
     deployment-color = "blue"
     regions = ["AMS3", "NYC1"]
     nodes-per-region = 1
     docker-org = "subspace"
-    docker-tag = "value"
+    docker-tag = "gemini-3d"
     environment = "staging"
     prune = false
   }
