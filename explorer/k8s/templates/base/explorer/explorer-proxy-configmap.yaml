@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: explorer-proxy-config
+  name: explorer-proxy-configmap
   namespace: explorer-network
 data:
   proxy.conf: |-

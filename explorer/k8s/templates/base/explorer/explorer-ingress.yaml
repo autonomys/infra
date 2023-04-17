@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nginx-ingress
+  namespace: explorer-network
   annotations:
 #    nginx.ingress.kubernetes.io/upstream-hash-by
 #    nginx.ingress.kubernetes.io/proxy-set-header: "Host $host"

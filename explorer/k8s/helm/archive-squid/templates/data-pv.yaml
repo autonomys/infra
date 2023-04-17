@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
- name: archive-data-pv
+ name: {{ include "archive-squid.fullname" . }}-pv
  labels:
     type: linode-block-storage-retain
 spec:

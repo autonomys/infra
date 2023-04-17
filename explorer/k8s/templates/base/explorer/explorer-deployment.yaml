@@ -15,6 +15,7 @@ spec:
   selector:
     matchLabels:
       app: explorer-app # has to match .spec.template.metadata.labels
+  serviceName: explorer-app-svc
   replicas: 1
   minReadySeconds: 5
   strategy:

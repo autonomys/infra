@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: archive-statefulset
+  name: archive-app
   namespace: archive-network
   labels:
     app.kubernetes.io/name: "archive-squid"
@@ -15,7 +15,7 @@ spec:
   selector:
     matchLabels:
       app: archive-app # has to match .spec.template.metadata.labels
-  serviceName: archive-svc
+  serviceName: archive-app-svc
   replicas: 1 # by default is 1
   minReadySeconds: 5
   strategy:

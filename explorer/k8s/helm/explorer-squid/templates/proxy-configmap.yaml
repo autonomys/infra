@@ -1,44 +1,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: archive-proxy-configmap
-  namespace: archive-network
+  name: {{ include "explorer-squid.fullname" . }}-proxy-configmap
+  namespace: {{ Release.Namespace}}
+  labels:
+    {{- include "explorer-squid.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "explorer"
+    app.kubernetes.io/part-of: "squid-explorer"
+    app.kubernetes.io/arch: {{.Values.arch}}
+    app: {{ include "explorer-squid.fullname" . }}
+    app: {{ include "explorer-squid.fullname" . }}-app
 data:
-  cors.conf: |
-    if ($request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*';
-
-        add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
-
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain charset=UTF-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
-    if ($request_method = 'POST') {
-
-        add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
-
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-    }
-    if ($request_method = 'GET') {
-
-        add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
-
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-    }
-
   proxy.conf: |-
     # HTTP 1.1 support
     proxy_http_version 1.1;
@@ -51,7 +23,6 @@ data:
     proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
     proxy_read_timeout 10m;
     client_max_body_size 25m;
- 
   nginx.conf: |
     # Increase the number of connections per worker. The default of
     # 512 causes a lot of 502 HTTP errors, and leads nginx to complain
@@ -81,7 +52,7 @@ data:
             root /var/www/html;
             index index.html index.htm index.nginx-debian.html;
 
-            server_name blockarchive.subspace.network;
+            server_name blockexplorer.subspace.network;
 
             location ~* \.(?:css|js|json)$ {
                 try_files $uri $uri/ @backend;

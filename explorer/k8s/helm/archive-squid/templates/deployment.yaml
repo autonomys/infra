@@ -1,54 +1,56 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: explorer-app
-  namespace: explorer-network
+  name: {{ include "archive-squid.fullname" . }}-app
+  namespace: {{ Release.Namespace}}
   labels:
-    app.kubernetes.io/name: "squid-blockexplorer"
-    app.kubernetes.io/instance: "squid-blockexplorer"
-    app.kubernetes.io/version: "gemini-3d"
-    app.kubernetes.io/component: "explorer"
-    app.kubernetes.io/part-of: "squid-explorer"
-    app.kubernetes.io/managed-by: "kubectl"
-    app.kubernetes.io/arch: "x86_64" 
+    {{- include "archive-squid.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "archive"
+    app.kubernetes.io/part-of: "squid-archive"
+    app.kubernetes.io/arch: {{.Values.arch}}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app: explorer-app # has to match .spec.template.metadata.labels
-  serviceName: archive-app-svc
-  replicas: 1 # by default is 1
+      {{- include "archive-squid.selectorLabels" . | nindent 6 }} # has to match .spec.template.metadata.labels
   minReadySeconds: 5
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 1
+
   template:
     metadata:
-      annotations: {}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app: explorer-app # has to match .spec.selector.matchLabels
+        {{- include "archive-squid.selectorLabels" . | nindent 8 }}
     spec:
-      terminationGracePeriodSeconds: 10
-      imagePullSecrets: []
-      serviceAccountName: ""
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "archive-squid.serviceAccountName" . }}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: 10
       containers:
       - name: nginx
-        image: nginx:latest
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: nginx:latest
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         volumeMounts:
           - mountPath: "/etc/nginx/nginx.conf"
-            name: explorer-nginx-config
+            name: archive-nginx-config
             subPath: nginx.conf
           - mountPath: "/etc/nginx/proxy.conf"
-            name: explorer-nginx-config
+            name: archive-nginx-config
             subPath: proxy.conf
         ports:
           - name: nginx
@@ -75,47 +77,42 @@ spec:
             periodSeconds: 10
 
       - name: postgres
-        image: postgres:14
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: postgres:14
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         volumeMounts:
           - mountPath: "/var/lib/postgresql/data"
-            name: explorer-data
+            name: {{ include "archive-squid.fullname" . }}-data
           - mountPath: "/var/lib/postgresql/postgres.conf"
-            name: explorer-postgres-config
+            name: {{ include "archive-squid.fullname" . }}-postgres-config
             subPath: postgres.conf
         ports:
           - name: db
             containerPort: 5432
             protocol: TCP
         resources:
-          requests:
-            cpu: 2
-            memory: 4000Mi
-          limits:
-            cpu: 8
-            memory: 16000Mi
+        {{- toYaml .Values.resources | nindent 12 }}
         env:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-configmap
                   key: POSTGRES_HOST
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-configmap
                   key: POSTGRES_DB
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
                   key: POSTGRES_PASSWORD
         livenessProbe:
             exec:
@@ -140,94 +137,98 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
 
-      - name: run-migrations
-        image: ghcr.io/subspace/blockexplorer-processor:latest
+      - name: node
+        image: "{{ .Values.image_node.repository }}:{{ .Values.image_api.tag | default .Chart.AppVersion }}"
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+          - mountPath: "/var/subspace"
+            name: archive-data
         env:
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DB_HOST
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DB_NAME
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-migration-secret
                   key: DB_USER
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-migration-secret
                   key: DB_PASS
 
-      - name: processor
-        image: ghcr.io/subspace/blockexplorer-processor:latest
+      - name: ingest
+        image: "{{ .Values.image_ingest.repository }}:{{ .Values.image_ingest.tag | default .Chart.AppVersion }}"
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-          - name: processor
+          - name: ingest
             containerPort: 3000
             protocol: TCP
+        command:
+              - -e ws://node:9944
+              - -c 10
+              - --prom-port 9090
+              - --out postgres://postgres:postgres@db:5432/squid-archive
         resources:
-          requests:
-            cpu: 2
-            memory: 4000Mi
-          limits:
-            cpu: 8
-            memory: 16000Mi
+        {{- toYaml .Values.resources | nindent 12 }}
         env:
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  key: DB_HONODE_TLS_REJECT_UNAUTHORIZEDST
+
+      - name: explorer
+        image: subsquid/substrate-explorer:firesquid
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - name: explorer
+            containerPort: 3000
+            protocol: TCP
+        env:
+            - name: DB_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  key: DB_TYPE
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DB_HOST
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DB_NAME
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-migration-secret
                   key: DB_USER
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-migration-secret
                   key: DB_PASS
-        livenessProbe:
-            tcpSocket:
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 30
-        readinessProbe:
-            tcpSocket:
-              port: 3000
-            initialDelaySeconds: 6
-            periodSeconds: 30
-
-      - name: graphql
-        image: ghcr.io/subspace/blockexplorer-api-server:latest
-        securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
-        ports:
-          - name: graphql
-            containerPort: 4000
-            protocol: TCP
         # livenessProbe:
         #     httpGet:
         #       path: /graphql
-        #       port: 4000
+        #       port: 4350
         #     initialDelaySeconds: 5
         #     periodSeconds: 10
         #     timeoutSeconds: 5
@@ -235,20 +236,20 @@ spec:
         #     failureThreshold: 3
         livenessProbe:
             tcpSocket:
-              port: 4000
+              port: 3000
             initialDelaySeconds: 5
             periodSeconds: 30
         readinessProbe:
             tcpSocket:
-              port: 4000
+              port: 3000
             initialDelaySeconds: 6
             periodSeconds: 30
 
       - name: datadog
         image: datadog/agent
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         volumeMounts:
           - name: dockersocket
             mountPath: /var/run/docker.sock
@@ -262,34 +263,34 @@ spec:
             - name: DD_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-datadog-secret
                   key: DD_API_KEY
             - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
             - name: DD_LOGS_ENABLED
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DD_LOGS_ENABLED
             - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
             - name: DD_CONTAINER_EXCLUDE
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: DD_CONTAINER_EXCLUDE
 
       - name: pg-health-check
         image: ghcr.io/subspace/health-check:latest
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
           - name: pghealth
             containerPort: 8080
@@ -298,32 +299,32 @@ spec:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: POSTGRES_HOST
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: POSTGRES_DB
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
                   key: POSTGRES_PASSWORD
             - name: PORT
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
-                  key: HEALTH_CHECK_PORT
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  key: HEALTH_CHECK PORT
             - name: SECRET
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-health-auth-secret
                   key: HEALTH_AUTH_SECRET
         livenessProbe:
             tcpSocket:
@@ -339,27 +340,27 @@ spec:
       - name: prom-health-check
         image: ghcr.io/subspace/health-check:latest
         securityContext:
-          allowPrivilegeEscalation: false
-        imagePullPolicy: Always
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
           - name: processorhealth
             containerPort: 7070
             protocol: TCP
         env:
-            - name: PROCESSOR_HEALTH_HOST
+            - name: PROMETHEUS_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: PROCESSOR_HEALTH_HOST
-            - name: PROCESSOR_HEALTH_PORT
+            - name: PORT
               valueFrom:
                 configMapKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "explorer-squid.fullname" . }}-configmap
                   key: PROCESSOR_HEALTH_PORT
             - name: SECRET
               valueFrom:
                 secretKeyRef:
-                  name: explorer-configmap
+                  name: {{ include "archive-squid.fullname" . }}-health-auth-secret
                   key: HEALTH_AUTH_SECRET
         livenessProbe:
             tcpSocket:
@@ -371,10 +372,11 @@ spec:
               port: 7070
             initialDelaySeconds: 6
             periodSeconds: 30
+
       volumes:
-        - name: explorer-data
+        - name: {{ include "archive-squid.fullname" . }}-data
           persistentVolumeClaim:
-            claimName: explorer-data-pvc
+            claimName: {{ include "archive-squid.fullname" . }}-data-pvc
         - hostPath:
             path: /var/run/docker.sock
           name: dockersocket
@@ -384,37 +386,22 @@ spec:
         - hostPath:
             path: /sys/fs/cgroup
           name: cgroups
-        - name: explorer-proxy-config
+        - name: {{ include "archive-squid.fullname" . }}-proxy-config
           configMap:
-            name: explorer-proxy-configmap
-        - name: explorer-postgres-config
+            name: {{ include "archive-squid.fullname" . }}-proxy-configmap
+        - name: {{ include "archive-squid.fullname" . }}-postgres-config
           configMap:
-            name: explorer-postgres-configmap
-      #nodeSelector: {}
-      #affinity: {}
-      nodeSelector:
-        subspace.network/role: explorer-squid-node
+            name: {{ include "archive-squid.fullname" . }}-postgres-configmap
+
+      nodeSelector:{{}}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
       affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: subspace.network/role
-                operator: In
-                values:
-                - explorer-squid-node
-          #preferredDuringSchedulingIgnoredDuringExecution:
-          #- weight: 1
-          #  preference:
-          #    matchExpressions:
-          #    - key: node-label-key
-          #      operator: In
-          #      values:
-          #      - node-label-value
-      #tolerations: []
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
-      - key: "subspace.network/role"
-        operator: "Equal"
-        value: "explorer-squid-node"
-        effect: "NoSchedule"
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: Always

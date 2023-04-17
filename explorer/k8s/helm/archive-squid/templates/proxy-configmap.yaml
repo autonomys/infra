@@ -1,8 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: archive-proxy-configmap
-  namespace: archive-network
+  name: {{ include "archive-squid.fullname" . }}-proxy-configmap
+  namespace: {{ Release.Namespace}}
+  labels:
+    {{- include "archive-squid.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "archive"
+    app.kubernetes.io/part-of: "squid-archive"
+    app.kubernetes.io/arch: {{.Values.arch}}
+    app: {{ include "archive-squid.fullname" . }}
+    app: {{ include "archive-squid.fullname" . }}-app
 data:
   cors.conf: |
     if ($request_method = 'OPTIONS') {

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
- name: archive-data-pv
+ name: {{ include "explorer-squid.fullname" . }}-pv
  labels:
     type: linode-block-storage-retain
 spec:
@@ -12,7 +12,7 @@ spec:
  accessModes:
    - ReadWriteOnce
  hostPath:
-   path: "/archive-blockexplorer"
+   path: "/squid-blockexplorer"
  persistentVolumeReclaimPolicy: Retain
 #  awsElasticBlockStore:
 #     volumeID: ""

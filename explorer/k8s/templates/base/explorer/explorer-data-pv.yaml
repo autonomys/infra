@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
- name: "explorer-data-pv"
+ name: explorer-data-pv
  labels:
     type: linode-block-storage-retain
 spec:

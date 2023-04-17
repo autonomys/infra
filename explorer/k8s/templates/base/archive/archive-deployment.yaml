@@ -15,6 +15,9 @@ spec:
   selector:
     matchLabels:
       app: archive-app # has to match .spec.template.metadata.labels
+  serviceName: archive-app-svc
+  replicas: 1 # by default is 1
+  minReadySeconds: 5
   replicas: 1
   minReadySeconds: 5
   strategy:
