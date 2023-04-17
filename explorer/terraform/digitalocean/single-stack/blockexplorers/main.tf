@@ -5,6 +5,7 @@ module "explorer-node-blue" {
   explorer-node-config = {
     deployment-color   = var.deployment_color
     network-name       = "gemini-3d-${var.deployment_color}"
+    domain-prefix       = string
     droplet_size       = var.droplet_size
     deployment-version = 1
     regions            = var.regions
@@ -31,6 +32,7 @@ module "explorer-node-green" {
   explorer-node-config = {
     deployment-color   = var.deployment_color
     network-name       = "gemini-3d-${var.deployment_color}"
+    domain-prefix       = string
     droplet_size       = var.droplet_size
     deployment-version = 1
     regions            = var.regions

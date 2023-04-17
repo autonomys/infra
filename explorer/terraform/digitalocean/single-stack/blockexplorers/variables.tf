@@ -43,6 +43,7 @@ variable "explorer-node-config" {
   type = object({
     droplet-size     = string
     deployment-color = string
+    domain-prefix       = string
     regions          = list(string)
     nodes-per-region = number
     docker-org       = string
@@ -54,6 +55,7 @@ variable "explorer-node-config" {
   default = {
     droplet-size     = "m6-2vcpu-16gb"
     deployment-color = "blue"
+    domain-prefix       = "squid"
     regions          = ["AMS3", "NYC1"]
     nodes-per-region = 1
     docker-org       = "subspace"
@@ -68,6 +70,7 @@ variable "squid-archive-node-config" {
   type = object({
     droplet_size           = string
     deployment_color       = string
+    domain-prefix          = string
     regions                = list(string)
     nodes-per-region       = number
     docker-org             = string
@@ -79,6 +82,7 @@ variable "squid-archive-node-config" {
   default = {
     droplet-size = "m6-2vcpu-16gb"
     deployment-color = "blue"
+    domain-prefix       = "archive"
     regions = ["AMS3", "NYC1"]
     nodes-per-region = 1
     docker-org = "subspace"

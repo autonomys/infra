@@ -8,6 +8,7 @@ resource "cloudflare_record" "explorer" {
   name    = "${var.explorer-node-config.domain-prefix}-${count.index}.${var.network-name}"
   value   = local.explorer_node_ip_v4[count.index]
   type    = "A"
+  ttl     = "3600"
 }
 
 resource "cloudflare_record" "squid-archive" {
