@@ -1,6 +1,7 @@
 locals {
   explorer_node_ip_v4 = flatten([
-    [digitalocean_droplet.explorer-node.*.ipv4_address],
+    [digitalocean_droplet.explorer-node-blue.*.ipv4_address],
+    [digitalocean_droplet.explorer-node-green.*.ipv4_address],
     ]
   )
 }
