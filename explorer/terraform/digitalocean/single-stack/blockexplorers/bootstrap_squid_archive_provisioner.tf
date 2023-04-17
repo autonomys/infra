@@ -1,6 +1,6 @@
 locals {
   squid_archive_node_ip_v4 = flatten([
-    [digitalocean_droplet.squid_archive-nodes.*.ipv4_address],
+    [digitalocean_droplet.squid-archive-node.*.ipv4_address],
     ]
   )
 }

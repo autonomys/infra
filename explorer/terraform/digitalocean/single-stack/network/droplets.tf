@@ -1,4 +1,3 @@
-
 resource "digitalocean_droplet" "squid-archive-nodes" {
   count    = length(var.squid-archive-node-config.regions) * var.squid-archive-node-config.nodes-per-region
   image    = "ubuntu-22-04-x64"
