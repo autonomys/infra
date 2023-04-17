@@ -36,14 +36,27 @@ resource "null_resource" "setup-explorer-nodes" {
   # copy install file
   provisioner "file" {
     source      = "${var.path-to-scripts}/install_docker.sh"
-    destination = "/explorer/install_docker.sh"
+    destination = "/explorer-squid/install_docker.sh"
+  }
+
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/install_nginx_config.sh"
+    destination = "/explorer-squid/install_nginx.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x /explorer/install_docker.sh",
-      "sudo /explorer/install_docker.sh",
+      "sudo chmod +x /explorer-squid/install_docker.sh",
+      "sudo bash /explorer-squid/install_docker.sh",
+    ]
+  }
+
+  # install nginx proxy configs
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chmod +x /explorer-squid/install_nginx_conf.sh",
+      "sudo bash /explorer-squid/install_nginx_conf.sh",
     ]
   }
 
@@ -75,6 +88,31 @@ resource "null_resource" "prune-explorer-nodes" {
   }
 }
 
+# Install Nginx proxy as docker container
+resource "docker_image" "nginx" {
+  name = "nginx:stable-alpine3.17-slim"
+}
+resource "docker_container" "nginx-server" {
+  name = "nginx-server"
+  image = "${docker_image.nginx.latest}"
+  ports {
+    internal = 80
+    external = 80
+  }
+  volumes {
+    container_path  = "/etc/nginx/nginx.conf"
+    host_path = "/explorer-squid/nginx.conf"
+    read_only = true
+  }
+}
+
+
+  # copy nginx configs
+provisioner "file" {
+  source      = "${var.path-to-scripts}/install_nginx_conf.sh"
+  destination = "/archive_squid/install_nginx_conf.sh"
+}
+
 resource "null_resource" "start-explorer-nodes" {
   count = length(local.explorer_node_ip_v4)
 
@@ -98,13 +136,13 @@ resource "null_resource" "start-explorer-nodes" {
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_explorer_node_compose_file.sh"
-    destination = "/subspace/create_compose_file.sh"
+    destination = "/explorer-squid/create_compose_file.sh"
   }
 
   # copy .env file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/env.sh"
-    destination = "/subspace/env.sh"
+    source      = "${var.path-to-scripts}/set_env_vars.sh"
+    destination = "/explorer-squid/set_env_vars.sh"
   }
 
   # start docker containers
@@ -112,20 +150,22 @@ resource "null_resource" "start-explorer-nodes" {
     inline = [
       # stop any running service
       "systemctl daemon-reload",
-      "systemctl enable --now nginx.service",
-      "systemctl restart nginx.service",
+      "systemctl stop docker.service",
 
       # set hostname
       "hostnamectl set-hostname ${var.network-name}-explorer-node-${count.index}",
 
       # create .env file
-      "sudo chmod +x /subspace/set_env_vars.sh",
-      "sudo bash /subspace/set_env_vars.sh",
+      "sudo chmod +x /explorer-squid/set_env_vars.sh",
+      "sudo bash /explorer-squid/set_env_vars.sh",
+
+      # create nginx config files
+      "sudo chmod +x /explorer-squid/install_nginx_conf.sh",
+      "sudo bash /explorer-squid//install_nginx_conf.sh",
 
       # create docker compose file
-      "sudo chmod +x /subspace/create_compose_file.sh",
-      "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.explorer_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+      "sudo chmod +x /explorer-squid/create_compose_file.sh",
+      "sudo bash /explorer-squid/create_compose_file.sh",
 
       # start docker daemon
       "systemctl start docker.service",

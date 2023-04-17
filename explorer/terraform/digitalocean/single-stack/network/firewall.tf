@@ -1,5 +1,5 @@
 locals {
-  squid_archive_node_firewall_list    = chunklist(digitalocean_droplet.squid-archive-nodes.*.id, 10)
+  archive_squid_node_firewall_list    = chunklist(digitalocean_droplet.squid-archive-nodes.*.id, 10)
   explorer_node_firewall_list  = chunklist(digitalocean_droplet.explorer-nodes.*.id, 10)
 }
 

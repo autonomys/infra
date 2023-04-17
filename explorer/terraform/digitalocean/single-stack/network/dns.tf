@@ -12,9 +12,9 @@ resource "cloudflare_record" "explorer" {
 }
 
 resource "cloudflare_record" "squid-archive" {
-  count   = length(local.squid_archive_node_ip_v4)
+  count   = length(local.archive_squid_node_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "${var.squid-archive-node-config.domain-prefix}-${count.index}.${var.network-name}"
-  value   = local.squid_archive_node_ip_v4[count.index]
+  value   = local.archive_squid_node_ip_v4[count.index]
   type    = "A"
 }

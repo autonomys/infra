@@ -9,7 +9,15 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 3.18.0"
     }
-  }
+
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "3.0.2"
+    }
+}
+
+provider "docker" {
+  host = "tcp://localhost:2375"
 }
 
 # Set DigitalOcean as provider
