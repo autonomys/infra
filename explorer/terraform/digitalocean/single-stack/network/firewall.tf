@@ -42,6 +42,12 @@ resource "digitalocean_firewall" "explorer-node-firewall" {
     source_addresses = ["0.0.0.0/0"]
   }
 
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "7070"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
   outbound_rule {
     protocol              = "tcp"
     port_range            = "all"
@@ -82,13 +88,25 @@ resource "digitalocean_firewall" "squid-archive-node-firewall" {
 
   inbound_rule {
     protocol         = "tcp"
+    port_range       = "8888"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "4444"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
     port_range       = "8080"
     source_addresses = ["0.0.0.0/0"]
   }
 
   inbound_rule {
     protocol         = "tcp"
-    port_range       = "4350"
+    port_range       = "7070"
     source_addresses = ["0.0.0.0/0"]
   }
 
