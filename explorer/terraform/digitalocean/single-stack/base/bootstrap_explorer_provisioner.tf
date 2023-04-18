@@ -28,21 +28,21 @@ resource "null_resource" "setup-explorer-nodes" {
   # create explorer dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /explorer-squid"
+      "sudo mkdir -p /explorer_squid"
     ]
   }
 
   # copy install file
   provisioner "file" {
     source      = "${var.path-to-scripts}/install_docker.sh"
-    destination = "/explorer-squid/install_docker.sh"
+    destination = "/explorer_squid/install_docker.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x /explorer-squid/install_docker.sh",
-      "sudo bash /explorer-squid/install_docker.sh",
+      "sudo chmod +x /explorer_squid/install_docker.sh",
+      "sudo bash /explorer_squid/install_docker.sh",
     ]
   }
 

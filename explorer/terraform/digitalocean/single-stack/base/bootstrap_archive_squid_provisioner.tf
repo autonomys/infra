@@ -28,21 +28,21 @@ resource "null_resource" "setup-archive-squid-nodes" {
   # create archive_squid dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /archive-squid"
+      "sudo mkdir -p /archive_squid"
     ]
   }
 
   # copy install file
   provisioner "file" {
     source      = "${var.path-to-scripts}/install_docker.sh"
-    destination = "/archive-squid/install_docker.sh"
+    destination = "/archive_squid/install_docker.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x /archive-squid/install_docker.sh",
-      "sudo bash /archive-squid/install_docker.sh",
+      "sudo chmod +x /archive_squid/install_docker.sh",
+      "sudo bash /archive_squid/install_docker.sh",
     ]
   }
 
