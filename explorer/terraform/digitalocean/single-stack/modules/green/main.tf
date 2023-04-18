@@ -1,4 +1,4 @@
-module "explorer-node" {
+module "green" {
   source          = "../../base/"
   path-to-scripts = "../../base/scripts"
   network-name = var.network_name
