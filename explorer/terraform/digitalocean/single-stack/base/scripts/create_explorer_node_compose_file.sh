@@ -17,7 +17,7 @@ services:
       POSTGRES_PASSWORD:
     ports:
       - "5432:5432"
-    command: postgres -c config_file=/VOLUME_NAME/postgresql/postgresql.conf
+    command: postgres -c config_file=/explorer_squid/postgresql/postgresql.conf
 
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:latest

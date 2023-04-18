@@ -65,7 +65,7 @@ services:
     image: ghcr.io/subspace/node:snapshot-DATE
     volumes:
       # replace VOLUME_NAME with your volume name
-      - /VOLUME_NAME/node-data:/var/subspace:rw
+      - /archive_squid/node-data:/var/subspace:rw
     restart: unless-stopped
     command: [
       # 
