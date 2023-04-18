@@ -9,7 +9,7 @@ services:
     restart: always
     volumes:
       # replace VOLUME_NAME with your volume name
-      - /VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
+      - /archive_squid/postgresql/data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

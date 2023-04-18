@@ -9,7 +9,7 @@ services:
     shm_size: 1gb
     volumes:
       # replace VOLUME_NAME with your volume name
-      - /VOLUME_NAME/postgresql/data:/var/lib/postgresql/data
+      - /explorer_squid/postgresql/data:/var/lib/postgresql/data
     environment:
       # provide DB name
       POSTGRES_DB:
