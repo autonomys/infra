@@ -1,13 +1,12 @@
 locals {
   archive_squid_node_ip_v4 = flatten([
-    [digitalocean_droplet.archive-squid-node-blue.*.ipv4_address],
-    [digitalocean_droplet.archive-squid-node-green.*.ipv4_address],
+    [digitalocean_droplet.archive-squid-nodes.*.ipv4_address],
     ]
   )
 }
 
 
-resource "null_resource" "setup-archive_squid-nodes" {
+resource "null_resource" "setup-archive-squid-nodes" {
   count = length(local.archive_squid_node_ip_v4)
 
   depends_on = [cloudflare_record.archive-squid]
@@ -49,12 +48,12 @@ resource "null_resource" "setup-archive_squid-nodes" {
 
 }
 
-resource "null_resource" "prune-archive_squid-nodes" {
-  count      = var.archive_squid-node-config.prune ? length(local.archive_squid_node_ip_v4) : 0
-  depends_on = [null_resource.setup-archive_squid-nodes]
+resource "null_resource" "prune-archive-squid-nodes" {
+  count      = var.archive-squid-node-config.prune ? length(local.archive_squid_node_ip_v4) : 0
+  depends_on = [null_resource.setup-archive-squid-nodes]
 
   triggers = {
-    prune = var.archive_squid-node-config.prune
+    prune = var.archive-squid-node-config.prune
   }
 
   connection {
@@ -75,32 +74,15 @@ resource "null_resource" "prune-archive_squid-nodes" {
   }
 }
 
-# Install Nginx proxy as docker container
-resource "docker_image" "nginx-archive" {
-  name = "nginx:stable-alpine3.17-slim"
-}
-resource "docker_container" "nginx-archive" {
-  name  = "nginx-archive"
-  image = docker_image.nginx.latest
-  ports {
-    internal = 80
-    external = 80
-  }
-  volumes {
-    container_path = "/etc/nginx/nginx.conf"
-    host_path      = "/archive_squid/nginx.conf"
-    read_only      = true
-  }
-}
 
-resource "null_resource" "start-archive_squid-nodes" {
+resource "null_resource" "start-archive-squid-nodes" {
   count = length(local.archive_squid_node_ip_v4)
 
-  depends_on = [null_resource.setup-archive_squid-nodes]
+  depends_on = [null_resource.setup-archive-squid-nodes]
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_color = var.archive_squid-node-config.deployment-color
+    deployment_color = var.archive-squid-node-config.deployment-color
   }
 
   connection {

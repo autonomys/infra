@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: squid-archive
+      POSTGRES_DB: archive-squid
 
   ingest:
     depends_on:
@@ -24,7 +24,7 @@ services:
       "-e", "ws://node:9944",
       "-c", "10",
        "--prom-port", "9090",
-       "--out", "postgres://postgres:postgres@db:5432/squid-archive"
+       "--out", "postgres://postgres:postgres@db:5432/archive-squid"
     ]
     environment:
       NODE_TLS_REJECT_UNAUTHORIZED: 0
@@ -36,7 +36,7 @@ services:
     environment:
       RUST_LOG: "substrate_gateway=info,actix_server=info"
     command: [
-       "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
+       "--database-url", "postgres://postgres:postgres@db:5432/archive-squid",
        "--database-max-connections", "3", # max number of concurrent database connections
        # these parameters have to be adjusted depending on machine resources to avoid OOM
        "--scan-start-value", "20", # works as batch size but for a whole archive, default is 100
@@ -54,7 +54,7 @@ services:
       DB_TYPE: postgres
       DB_HOST: db
       DB_PORT: "5432"
-      DB_NAME: "squid-archive"
+      DB_NAME: "archive-squid"
       DB_USER: "postgres"
       DB_PASS: "postgres"
     ports:

@@ -1,9 +1,9 @@
-resource "digitalocean_droplet" "squid-archive-nodes" {
-  count    = length(var.squid-archive-node-config.regions) * var.squid-archive-node-config.nodes-per-region
+resource "digitalocean_droplet" "archive-squid-nodes" {
+  count    = length(var.archive-squid-node-config.regions) * var.archive-squid-node-config.nodes-per-region
   image    = "ubuntu-22-04-x64"
-  name     = "${var.network-name}-archive-node-${count.index}-${var.squid-archive-node-config.regions[count.index % length(var.squid-archive-node-config.regions)]}"
-  region   = var.squid-archive-node-config.regions[count.index % length(var.squid-archive-node-config.regions)]
-  size     = var.squid-archive-node-config.droplet_size
+  name     = "${var.network-name}-archive-node-${count.index}-${var.archive-squid-node-config.regions[count.index % length(var.archive-squid-node-config.regions)]}"
+  region   = var.archive-squid-node-config.regions[count.index % length(var.archive-squid-node-config.regions)]
+  size     = var.archive-squid-node-config.droplet_size
   ssh_keys = local.ssh_keys
 }
 

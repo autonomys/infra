@@ -1,7 +1,7 @@
 locals {
   droplets_urn = flatten([
     [for droplet in digitalocean_droplet.explorer-nodes : droplet.urn],
-    [for droplet in digitalocean_droplet.squid-archive-nodes : droplet.urn],
+    [for droplet in digitalocean_droplet.archive-squid-nodes : droplet.urn],
   ])
 }
 
@@ -13,7 +13,7 @@ resource "digitalocean_project" "project" {
   purpose     = "Blockchain"
   resources = flatten([
     [for droplet in digitalocean_droplet.explorer-nodes : droplet.urn],
-    [for droplet in digitalocean_droplet.squid-archive-nodes : droplet.urn],
+    [for droplet in digitalocean_droplet.archive-squid-nodes : droplet.urn],
   ])
 }
 

@@ -1,24 +1,23 @@
 locals {
-  explorer_node_ip_v4 = flatten([
-    [digitalocean_droplet.explorer-node-blue.*.ipv4_address],
-    [digitalocean_droplet.explorer-node-green.*.ipv4_address],
+  explorer_squid_node_ip_v4 = flatten([
+    [digitalocean_droplet.explorer-nodes.*.ipv4_address],
     ]
   )
 }
 
 
 resource "null_resource" "setup-explorer-nodes" {
-  count = length(local.explorer_node_ip_v4)
+  count = length(local.explorer_squid_node_ip_v4)
 
   depends_on = [cloudflare_record.explorer]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.explorer_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.explorer_squid_node_ip_v4)
   }
 
   connection {
-    host           = local.explorer_node_ip_v4[count.index]
+    host           = local.explorer_squid_node_ip_v4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -50,7 +49,7 @@ resource "null_resource" "setup-explorer-nodes" {
 }
 
 resource "null_resource" "prune-explorer-nodes" {
-  count      = var.explorer-node-config.prune ? length(local.explorer_node_ip_v4) : 0
+  count      = var.explorer-node-config.prune ? length(local.explorer_squid_node_ip_v4) : 0
   depends_on = [null_resource.setup-explorer-nodes]
 
   triggers = {
@@ -58,7 +57,7 @@ resource "null_resource" "prune-explorer-nodes" {
   }
 
   connection {
-    host           = local.explorer_node_ip_v4[count.index]
+    host           = local.explorer_squid_node_ip_v4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -75,33 +74,14 @@ resource "null_resource" "prune-explorer-nodes" {
   }
 }
 
-
-# Install Nginx proxy as docker container
-resource "docker_image" "nginx-explorer" {
-  name = "nginx:stable-alpine3.17-slim"
-}
-resource "docker_container" "nginx-explorer" {
-  name  = "nginx-explorer"
-  image = docker_image.nginx-explorer.latest
-  ports {
-    internal = 80
-    external = 80
-  }
-  volumes {
-    container_path = "/etc/nginx/nginx.conf"
-    host_path      = "/explorer_squid/nginx.conf"
-    read_only      = true
-  }
-}
-
-resource "null_resource" "start-explorer_squid-nodes" {
+resource "null_resource" "start-explorer-nodes" {
   count = length(local.explorer_squid_node_ip_v4)
 
-  depends_on = [null_resource.setup-explorer_squid-nodes]
+  depends_on = [null_resource.setup-explorer-nodes]
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_color = var.explorer_squid-node-config.deployment-color
+    deployment_color = var.explorer-node-config.deployment-color
   }
 
   connection {

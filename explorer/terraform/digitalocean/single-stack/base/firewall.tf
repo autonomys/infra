@@ -1,16 +1,16 @@
 locals {
-  archive_squid_node_firewall_list    = chunklist(digitalocean_droplet.squid-archive-nodes.*.id, 10)
-  explorer_node_firewall_list  = chunklist(digitalocean_droplet.explorer-nodes.*.id, 10)
+  archive_squid_node_firewall_list    = chunklist(digitalocean_droplet.archive-squid-nodes.*.id, 10)
+  explorer_squid_node_firewall_list  = chunklist(digitalocean_droplet.explorer-nodes.*.id, 10)
 }
 
 // looks like digital ocean do not support more than 10 droplets in a single firewall
 // break it up into two sets
 
 resource "digitalocean_firewall" "explorer-node-firewall" {
-  count = length(local.explorer_node_firewall_list)
+  count = length(local.explorer_squid_node_firewall_list)
   name  = "${var.network-name}-explorer-node-firewall-${count.index}"
 
-  droplet_ids = local.explorer_node_firewall_list[count.index]
+  droplet_ids = local.explorer_squid_node_firewall_list[count.index]
 
   inbound_rule {
     protocol         = "tcp"
@@ -62,11 +62,11 @@ resource "digitalocean_firewall" "explorer-node-firewall" {
 }
 
 
-resource "digitalocean_firewall" "squid-archive-node-firewall" {
-  count = length(local.squid-archive_node_firewall_list)
-  name  = "${var.network-name}-squid-archive-node-firewall-${count.index}"
+resource "digitalocean_firewall" "archive-squid-node-firewall" {
+  count = length(local.archive_squid_node_firewall_list)
+  name  = "${var.network-name}-archive-squid-node-firewall-${count.index}"
 
-  droplet_ids = local.squid-archive_node_firewall_list[count.index]
+  droplet_ids = local.archive_squid_node_firewall_list[count.index]
 
   inbound_rule {
     protocol         = "tcp"
