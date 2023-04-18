@@ -34,7 +34,7 @@ resource "null_resource" "setup-archive-squid-nodes" {
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_docker.sh"
+    source      = "./config/install_docker.sh"
     destination = "/archive_squid/install_docker.sh"
   }
 
@@ -96,24 +96,24 @@ resource "null_resource" "start-archive-squid-nodes" {
 
   # copy nginx configs
   provisioner "file" {
-    source      = "${var.path-to-scripts}/nginx_archive-squid.conf"
+    source      = "./config/nginx-archive-squid.conf"
     destination = "/archive_squid/nginx_conf"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-scripts}/cors-settings.conf"
+    source      = "./config/cors-settings.conf"
     destination = "/archive_squid/cors-settings.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_archive_squid_node_compose_file.sh"
+    source      = "./config/create_archive_squid_node_compose_file.sh"
     destination = "/archive_squid/create_compose_file.sh"
   }
 
   # copy .env file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/set_env_vars.sh"
+    source      = "./config/set_env_vars.sh"
     destination = "/archive_squid/set_env_vars.sh"
   }
 

@@ -34,7 +34,7 @@ resource "null_resource" "setup-explorer-nodes" {
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_docker.sh"
+    source      = ".config/install_docker.sh"
     destination = "/explorer_squid/install_docker.sh"
   }
 
@@ -94,24 +94,24 @@ resource "null_resource" "start-explorer-nodes" {
   }
 
   provisioner "file" {
-    source      = "${var.path-to-scripts}/nginx_explorer-squid.conf"
+    source      = ".config/nginx_explorer.conf"
     destination = "/explorer_squid/nginx_conf"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-scripts}/cors-settings.conf"
+    source      = ".config/cors-settings.conf"
     destination = "/explorer_squid/cors-settings.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_explorer_squid_node_compose_file.sh"
+    source      = ".config/create_explorer_squid_node_compose_file.sh"
     destination = "/explorer_squid/create_compose_file.sh"
   }
 
   # copy .env file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/set_env_vars.sh"
+    source      = ".config/set_env_vars.sh"
     destination = "/explorer_squid/set_env_vars.sh"
   }
 
