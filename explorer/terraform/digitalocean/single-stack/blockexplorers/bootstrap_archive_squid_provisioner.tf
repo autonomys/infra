@@ -75,33 +75,21 @@ resource "null_resource" "prune-archive_squid-nodes" {
   }
 }
 
-
-# copy nginx configs
-provisioner "file" {
-  source      = "${var.path-to-scripts}/nginx_archive-squid.conf"
-  destination = "/archive_squid/nginx_conf"
-}
-
-provisioner "file" {
-  source      = "${var.path-to-scripts}/cors-settings.conf"
-  destination = "/archive_squid/cors-settings.conf"
-}
-
 # Install Nginx proxy as docker container
-resource "docker_image" "nginx" {
+resource "docker_image" "nginx-archive" {
   name = "nginx:stable-alpine3.17-slim"
 }
-resource "docker_container" "nginx-server" {
-  name = "nginx-server"
-  image = "${docker_image.nginx.latest}"
+resource "docker_container" "nginx-archive" {
+  name  = "nginx-archive"
+  image = docker_image.nginx.latest
   ports {
     internal = 80
     external = 80
   }
   volumes {
-    container_path  = "/etc/nginx/nginx.conf"
-    host_path = "/archive_squid/nginx.conf"
-    read_only = true
+    container_path = "/etc/nginx/nginx.conf"
+    host_path      = "/archive_squid/nginx.conf"
+    read_only      = true
   }
 }
 
@@ -124,6 +112,16 @@ resource "null_resource" "start-archive_squid-nodes" {
     timeout        = "30s"
   }
 
+  # copy nginx configs
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/nginx_archive-squid.conf"
+    destination = "/archive_squid/nginx_conf"
+  }
+
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/cors-settings.conf"
+    destination = "/archive_squid/cors-settings.conf"
+  }
 
   # copy compose file creation script
   provisioner "file" {
@@ -150,10 +148,6 @@ resource "null_resource" "start-archive_squid-nodes" {
       # create .env file
       "sudo chmod +x /archive_squid/set_env_vars.sh",
       "sudo bash /archive_squid/set_env_vars.sh",
-
-      # create nginx config files
-      "sudo chmod +x /explorer-squid/install_nginx_conf.sh",
-      "sudo bash /explorer-squid//install_nginx_conf.sh",
 
       # create docker compose file
       "sudo chmod +x /archive_squid/create_compose_file.sh",

@@ -1,25 +1,3 @@
-variable "do_token" {
-  description = "Digital ocean API key"
-}
-
-variable "ssh_identity" {
-  description = "SSH agent identity to use to connect to remote host"
-}
-
-variable "datadog_api_key" {
-  description = "Datadog API Key"
-}
-
-variable "cloudflare_email" {
-  type        = string
-  description = "cloudflare email address"
-}
-
-variable "cloudflare_api_token" {
-  type        = string
-  description = "cloudflare api token"
-}
-
 variable "droplet_size" {
   description = "Droplet size"
   type        = string
@@ -34,7 +12,7 @@ variable "deployment_color" {
 
 variable "regions" {
   description = "Droplet region"
-  type        = list(sting)
+  type        = list(string)
   default     = ["AMS1", "NYC1"]
 }
 
@@ -43,7 +21,7 @@ variable "explorer-node-config" {
   type = object({
     droplet-size     = string
     deployment-color = string
-    domain-prefix       = string
+    domain-prefix    = string
     regions          = list(string)
     nodes-per-region = number
     docker-org       = string
@@ -55,7 +33,7 @@ variable "explorer-node-config" {
   default = {
     droplet-size     = "m6-2vcpu-16gb"
     deployment-color = "blue"
-    domain-prefix       = "squid"
+    domain-prefix    = "squid"
     regions          = ["AMS3", "NYC1"]
     nodes-per-region = 1
     docker-org       = "subspace"
@@ -68,26 +46,46 @@ variable "explorer-node-config" {
 variable "squid-archive-node-config" {
   description = "Squid Archive configuration"
   type = object({
-    droplet_size           = string
-    deployment_color       = string
-    domain-prefix          = string
-    regions                = list(string)
-    nodes-per-region       = number
-    docker-org             = string
-    docker-tag             = string
-    prune                  = bool
-    environment = string
+    droplet-size     = string
+    deployment-color = string
+    domain-prefix    = string
+    regions          = list(string)
+    nodes-per-region = number
+    docker-org       = string
+    docker-tag       = string
+    prune            = bool
+    environment      = string
   })
-  
+
   default = {
-    droplet-size = "m6-2vcpu-16gb"
+    droplet-size     = "m6-2vcpu-16gb"
     deployment-color = "blue"
-    domain-prefix       = "archive"
-    regions = ["AMS3", "NYC1"]
+    domain-prefix    = "archive"
+    regions          = ["AMS3", "NYC1"]
     nodes-per-region = 1
-    docker-org = "subspace"
-    docker-tag = "gemini-3d"
-    environment = "staging"
-    prune = false
+    docker-org       = "subspace"
+    docker-tag       = "gemini-3d"
+    environment      = "staging"
+    prune            = false
+  }
+}
+
+variable "global-node-config" {
+  description = "Block explorer backend configuration"
+  type = object({
+    cloudflare_api_token = string
+    cloudflare_email     = string
+    do_token             = string
+    ssh_identity         = string
+    datadog_api_key      = string
+  })
+
+  default = {
+    cloudflare_api_token = ""
+    cloudflare_email     = ""
+    do_token             = ""
+    ssh_identity         = ""
+    datadog_api_key      = ""
+
   }
 }

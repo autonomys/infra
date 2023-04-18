@@ -29,7 +29,7 @@ resource "null_resource" "setup-explorer-nodes" {
   # create explorer dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /explorer"
+      "sudo mkdir -p /explorer-squid"
     ]
   }
 
@@ -39,24 +39,11 @@ resource "null_resource" "setup-explorer-nodes" {
     destination = "/explorer-squid/install_docker.sh"
   }
 
-  provisioner "file" {
-    source      = "${var.path-to-scripts}/install_nginx_config.sh"
-    destination = "/explorer-squid/install_nginx.sh"
-  }
-
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /explorer-squid/install_docker.sh",
       "sudo bash /explorer-squid/install_docker.sh",
-    ]
-  }
-
-  # install nginx proxy configs
-  provisioner "remote-exec" {
-    inline = [
-      "sudo chmod +x /explorer-squid/install_nginx_conf.sh",
-      "sudo bash /explorer-squid/install_nginx_conf.sh",
     ]
   }
 
@@ -88,32 +75,22 @@ resource "null_resource" "prune-explorer-nodes" {
   }
 }
 
-# copy nginx configs
-provisioner "file" {
-  source      = "${var.path-to-scripts}/nginx_explorer-squid.conf"
-  destination = "/explorer_squid/nginx_conf"
-}
-
-provisioner "file" {
-  source      = "${var.path-to-scripts}/cors-settings.conf"
-  destination = "/explorer_squid/cors-settings.conf"
-}
 
 # Install Nginx proxy as docker container
-resource "docker_image" "nginx" {
+resource "docker_image" "nginx-explorer" {
   name = "nginx:stable-alpine3.17-slim"
 }
-resource "docker_container" "nginx-server" {
-  name = "nginx-server"
-  image = "${docker_image.nginx.latest}"
+resource "docker_container" "nginx-explorer" {
+  name  = "nginx-explorer"
+  image = docker_image.nginx-explorer.latest
   ports {
     internal = 80
     external = 80
   }
   volumes {
-    container_path  = "/etc/nginx/nginx.conf"
-    host_path = "/explorer_squid/nginx.conf"
-    read_only = true
+    container_path = "/etc/nginx/nginx.conf"
+    host_path      = "/explorer_squid/nginx.conf"
+    read_only      = true
   }
 }
 
@@ -136,6 +113,15 @@ resource "null_resource" "start-explorer_squid-nodes" {
     timeout        = "30s"
   }
 
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/nginx_explorer-squid.conf"
+    destination = "/explorer_squid/nginx_conf"
+  }
+
+  provisioner "file" {
+    source      = "${var.path-to-scripts}/cors-settings.conf"
+    destination = "/explorer_squid/cors-settings.conf"
+  }
 
   # copy compose file creation script
   provisioner "file" {
