@@ -22,7 +22,7 @@ resource "null_resource" "setup-archive-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   # create archive_squid dir
@@ -62,7 +62,7 @@ resource "null_resource" "prune-archive-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   # prune network
@@ -91,7 +91,7 @@ resource "null_resource" "start-archive-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   # copy nginx configs

@@ -8,7 +8,7 @@ apt install -y curl jq
 
 # install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
 apt update -y
 apt-cache -y policy docker-ce # this ensures that docker is installed from the docker repo instead of ubuntu repo
 apt install -y docker-ce containerd.io

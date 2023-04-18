@@ -22,7 +22,7 @@ resource "null_resource" "setup-explorer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   # create explorer dir
@@ -62,7 +62,7 @@ resource "null_resource" "prune-explorer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   # prune network
@@ -90,7 +90,7 @@ resource "null_resource" "start-explorer-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.ssh_identity
-    timeout        = "30s"
+    timeout        = "60s"
   }
 
   provisioner "file" {
