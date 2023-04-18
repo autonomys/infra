@@ -34,7 +34,7 @@ resource "null_resource" "setup-archive-squid-nodes" {
 
   # copy install file
   provisioner "file" {
-    source      = "./scripts/install_docker.sh"
+    source      = "${var.path-to-scripts}/install_docker.sh"
     destination = "/archive_squid/install_docker.sh"
   }
 
@@ -96,24 +96,24 @@ resource "null_resource" "start-archive-squid-nodes" {
 
   # copy nginx configs
   provisioner "file" {
-    source      = "./config/nginx-archive-squid.conf"
-    destination = "/archive_squid/nginx_conf"
+    source      = "${var.path-to-configs}/nginx-archive-squid.conf"
+    destination = "/etc/nginx/nginx-archive-squid.conf"
   }
 
   provisioner "file" {
-    source      = "./config/cors-settings.conf"
-    destination = "/archive_squid/cors-settings.conf"
+    source      = "${var.path-to-configs}/cors-settings.conf"
+    destination = "/etc/nginx/cors-settings.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "./scripts/create_archive_squid_node_compose_file.sh"
+    source      = "${var.path-to-scripts}/create_archive_squid_node_compose_file.sh"
     destination = "/archive_squid/create_compose_file.sh"
   }
 
   # copy .env file
   provisioner "file" {
-    source      = "./scripts/set_env_vars.sh"
+    source      = "${var.path-to-scripts}/set_env_vars.sh"
     destination = "/archive_squid/set_env_vars.sh"
   }
 
@@ -122,6 +122,8 @@ resource "null_resource" "start-archive-squid-nodes" {
     inline = [
       # stop any running service
       "systemctl daemon-reload",
+      "systemctl enable nginx",
+      "systemctl start nginx",
       "systemctl stop docker.service",
 
       # set hostname

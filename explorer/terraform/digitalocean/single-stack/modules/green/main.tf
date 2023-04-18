@@ -1,6 +1,7 @@
 module "green" {
   source          = "../../base/"
   path-to-scripts = "../../base/scripts"
+  path-to-configs = "../../base/config"
   network-name = var.network_name
   explorer-node-config = {
     deployment-color   = var.deployment_color

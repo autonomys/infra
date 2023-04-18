@@ -34,7 +34,7 @@ resource "null_resource" "setup-explorer-nodes" {
 
   # copy install file
   provisioner "file" {
-    source      = "./scripts/install_docker.sh"
+    source      = "${var.path-to-scripts}/install_docker.sh"
     destination = "/explorer_squid/install_docker.sh"
   }
 
@@ -94,24 +94,24 @@ resource "null_resource" "start-explorer-nodes" {
   }
 
   provisioner "file" {
-    source      = "./config/nginx_explorer.conf"
-    destination = "/explorer_squid/nginx_conf"
+    source      = "${var.path-to-configs}/nginx-explorer.conf"
+    destination = "/etc/nginx/nginx-explorer.conf"
   }
 
   provisioner "file" {
-    source      = "./config/cors-settings.conf"
-    destination = "/explorer_squid/cors-settings.conf"
+    source      = "${var.path-to-configs}/cors-settings.conf"
+    destination = "/etc/nginx/cors-settings.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "./scripts/create_explorer_squid_node_compose_file.sh"
+    source      = "${var.path-to-scripts}/create_explorer_squid_node_compose_file.sh"
     destination = "/explorer_squid/create_compose_file.sh"
   }
 
   # copy .env file
   provisioner "file" {
-    source      = "./scripts/set_env_vars.sh"
+    source      = "${var.path-to-scripts}/set_env_vars.sh"
     destination = "/explorer_squid/set_env_vars.sh"
   }
 
@@ -120,6 +120,8 @@ resource "null_resource" "start-explorer-nodes" {
     inline = [
       # stop any running service
       "systemctl daemon-reload",
+      "systemctl enable nginx",
+      "systemctl start nginx",
       "systemctl stop docker.service",
 
       # set hostname

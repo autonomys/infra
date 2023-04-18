@@ -40,5 +40,5 @@ variable "deployment_color" {
 variable "regions" {
   description = "Droplet region"
   type        = list(string)
-  default     = ["AMS1", "NYC1"]
+  default     = ["ams2", "nyc2"]
 }

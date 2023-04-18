@@ -8,6 +8,11 @@ variable "path-to-scripts" {
   type        = string
 }
 
+variable "path-to-configs" {
+  description = "Path to the configs"
+  type        = string
+}
+
 variable "archive-squid-node-config" {
   description = "Squid Archive configuration"
   type = object({
