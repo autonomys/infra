@@ -28,7 +28,7 @@ variable "network_name" {
 variable "droplet_size" {
   description = "Droplet size"
   type        = string
-  default     = "m6-2vcpu-16gb"
+  default     = "s-6vcpu-16gb"
 }
 
 variable "deployment_color" {

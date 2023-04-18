@@ -1,7 +1,7 @@
 module "blue" {
   source          = "../../base/"
   path-to-scripts = "../../base/scripts"
-  network-name = var.network_name
+  network-name    = var.network_name
 
   explorer-node-config = {
     deployment-color   = var.deployment_color
