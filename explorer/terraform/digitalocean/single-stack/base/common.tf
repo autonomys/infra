@@ -35,7 +35,7 @@ data "digitalocean_ssh_key" "i1i1-key" {
 }
 
 data "digitalocean_ssh_key" "muhammad-key" {
-  name = "Muhammad-SSH-key"
+  name = "Muhammad SSH Key"
 }
 
 # add ssh keys as single var
