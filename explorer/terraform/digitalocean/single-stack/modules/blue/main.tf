@@ -1,4 +1,4 @@
-module "archive-squid-node" {
+module "blue" {
   source          = "../../base/"
   path-to-scripts = "../../base/scripts"
   network-name = var.network_name
