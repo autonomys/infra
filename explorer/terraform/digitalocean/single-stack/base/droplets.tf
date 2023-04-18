@@ -12,8 +12,8 @@ resource "digitalocean_volume" "archive-squid-nodes-additional-volume" {
   count    = length(var.archive-squid-node-config.regions) * var.archive-squid-node-config.nodes-per-region
   region                  = var.archive-squid-node-config.regions[count.index % length(var.archive-squid-node-config.regions)]
   name                    = "${var.network-name}-archive-squid-node-${count.index}-${var.archive-squid-node-config.regions[count.index % length(var.archive-squid-node-config.regions)]}-vol"
-  size                    = 100
-  initial_filesystem_type = "ext4"
+  size                    = var.archive-squid-node-config.disk-volume-size
+  initial_filesystem_type = var.archive-squid-node-config.disk-volume-type
   description             = "archive_squid mount"
 }
 
@@ -37,8 +37,8 @@ resource "digitalocean_volume" "explorer-nodes-additional-volume" {
   count    = length(var.explorer-node-config.regions) * var.explorer-node-config.nodes-per-region
   region                  = var.explorer-node-config.regions[count.index % length(var.explorer-node-config.regions)]
   name                    = "${var.network-name}-explorer-node-${count.index}-${var.explorer-node-config.regions[count.index % length(var.explorer-node-config.regions)]}-vol"
-  size                    = 100
-  initial_filesystem_type = "ext4"
+  size                    = var.explorer-node-config.disk-volume-size
+  initial_filesystem_type = var.explorer-node-config.disk-volume-type
   description             = "explorer_squid mount"
 }
 

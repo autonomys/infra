@@ -27,7 +27,8 @@ variable "archive-squid-node-config" {
     docker-tag         = string
     prune              = bool
     environment        = string
-    #  disk_volume_size            = string
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
 
@@ -45,7 +46,8 @@ variable "explorer-node-config" {
     docker-tag         = string
     prune              = bool
     environment        = string
-    #  disk_volume_size            = string
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 
 }

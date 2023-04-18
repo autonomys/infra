@@ -15,8 +15,8 @@ module "blue" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
     prune              = false
-    #  disk_volume_size            = var.disk_volume_size
-    #  disk_volume_type            = var.disk_volume_type
+    disk-volume-size            = var.disk_volume_size
+    disk-volume-type            = var.disk_volume_type
     environment = "staging"
   }
 
@@ -31,8 +31,8 @@ module "blue" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
     prune              = false
-    #  disk_volume_size            = var.disk_volume_size
-    #  disk_volume_type            = var.disk_volume_type
+    disk-volume-size            = var.disk_volume_size
+    disk-volume-type            = var.disk_volume_type
     environment = "staging"
   }
 

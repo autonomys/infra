@@ -37,6 +37,18 @@ variable "deployment_color" {
   default     = "blue"
 }
 
+variable "disk_volume_size" {
+  description = "Disk Volume Size"
+  type        = number
+  default     = 400
+}
+
+variable "disk_volume_type" {
+  description = "Disk Volume Filesystem Type"
+  type        = string
+  default     = "ext4"
+}
+
 variable "regions" {
   description = "Droplet region"
   type        = list(string)
