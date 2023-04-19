@@ -15,9 +15,9 @@ module "blue" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
     prune              = false
-    disk-volume-size            = var.disk_volume_size
-    disk-volume-type            = var.disk_volume_type
-    environment = "staging"
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+    environment        = "staging"
   }
 
   archive-squid-node-config = {
@@ -31,9 +31,9 @@ module "blue" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
     prune              = false
-    disk-volume-size            = var.disk_volume_size
-    disk-volume-type            = var.disk_volume_type
-    environment = "staging"
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+    environment        = "staging"
   }
 
   cloudflare_api_token = var.cloudflare_api_token

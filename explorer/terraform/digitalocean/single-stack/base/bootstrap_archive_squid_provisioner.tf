@@ -97,7 +97,7 @@ resource "null_resource" "start-archive-squid-nodes" {
   # copy nginx configs
   provisioner "file" {
     source      = "${var.path-to-configs}/nginx-archive-squid.conf"
-    destination = "/etc/nginx/nginx-archive-squid.conf"
+    destination = "/etc/nginx/backend.conf"
   }
 
   provisioner "file" {

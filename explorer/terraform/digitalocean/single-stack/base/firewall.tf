@@ -1,6 +1,6 @@
 locals {
-  archive_squid_node_firewall_list    = chunklist(digitalocean_droplet.archive-squid-nodes.*.id, 10)
-  explorer_squid_node_firewall_list  = chunklist(digitalocean_droplet.explorer-nodes.*.id, 10)
+  archive_squid_node_firewall_list  = chunklist(digitalocean_droplet.archive-squid-nodes.*.id, 10)
+  explorer_squid_node_firewall_list = chunklist(digitalocean_droplet.explorer-nodes.*.id, 10)
 }
 
 // looks like digital ocean do not support more than 10 droplets in a single firewall

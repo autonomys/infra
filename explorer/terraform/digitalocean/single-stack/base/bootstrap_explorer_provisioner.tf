@@ -95,7 +95,7 @@ resource "null_resource" "start-explorer-nodes" {
 
   provisioner "file" {
     source      = "${var.path-to-configs}/nginx-explorer.conf"
-    destination = "/etc/nginx/nginx-explorer.conf"
+    destination = "/etc/nginx/backend.conf"
   }
 
   provisioner "file" {
