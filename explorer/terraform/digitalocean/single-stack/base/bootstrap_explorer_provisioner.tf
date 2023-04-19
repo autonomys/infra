@@ -139,6 +139,7 @@ resource "null_resource" "start-explorer-nodes" {
       "systemctl enable --now docker.service",
       "systemctl stop docker.service",
       "systemctl restart docker.service",
+      "sudo docker compose -f /explorer_squid/docker-compose.yml -d",
     ]
   }
 }

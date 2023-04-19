@@ -141,6 +141,7 @@ resource "null_resource" "start-archive-squid-nodes" {
       "systemctl enable --now docker.service",
       "systemctl stop docker.service",
       "systemctl restart docker.service",
+      "sudo docker compose -f /archive_squid/docker-compose.yml -d",
     ]
   }
 }

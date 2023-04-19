@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat > /subspace/docker-compose.yml << EOF
+cat > /archive_squid/docker-compose.yml << EOF
 version: "3.7"
 
 services:
@@ -11,9 +11,9 @@ services:
       # replace VOLUME_NAME with your volume name
       - /archive_squid/postgresql/data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: archive-squid
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
 
   ingest:
     depends_on:
@@ -51,25 +51,25 @@ services:
   explorer:
     image: subsquid/substrate-explorer:firesquid
     environment:
-      DB_TYPE: postgres
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_NAME: "archive-squid"
-      DB_USER: "postgres"
-      DB_PASS: "postgres"
+      DB_TYPE: ${DB_TYPE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
     ports:
       - "4444:3000"
 
   node:
     # Replace `snapshot-DATE` with latest release (like `snapshot-2022-apr-29`)
-    image: ghcr.io/subspace/node:snapshot-DATE
+    image: ghcr.io/subspace/node:${NODE_TAG}
     volumes:
       # replace VOLUME_NAME with your volume name
       - /archive_squid/node-data:/var/subspace:rw
     restart: unless-stopped
     command: [
       # 
-      "--chain", "gemini-2a",
+      "--chain", "${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",
@@ -77,7 +77,7 @@ services:
       "--rpc-methods", "safe",
       "--unsafe-ws-external",
       # replace NODE_NAME with your node name
-      "--name", "NODE_NAME"
+      "--name", "${NODE_NAME}"
     ]
     healthcheck:
       timeout: 5s
@@ -88,8 +88,8 @@ services:
   datadog:
     image: datadog/agent
     environment:
-      # replace DATADOG_API_KEY with real API key (can be genarated at https://app.datadoghq.com/organization-settings/api-keys)
-      DD_API_KEY: DATADOG_API_KEY
+      # replace DD_API_KEY with real API key (can be genarated at https://app.datadoghq.com/organization-settings/api-keys)
+      DD_API_KEY: ${DD_API_KEY}
       DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
       DD_LOGS_ENABLED: "true"
       DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
@@ -102,11 +102,11 @@ services:
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      PORT: 8080
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      PORT: ${HEALTH_CHECK_PORT}
       # provide secret, which is going to be used in 'Authorization' header
-      SECRET: MY_SECRET
+      SECRET: ${MY_SECRET}
     command: "postgres"
     ports:
       - 8080:8080
@@ -114,10 +114,10 @@ services:
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      PROMETHEUS_HOST: http://ingest:9090
-      PORT: 7070
+      PROMETHEUS_HOST: ${PROCESSOR_HEALTH_HOST}
+      PORT: ${PROCESSOR_HEALTH_PORT}
       # provide secret, which is going to be used in 'Authorization' header
-      SECRET: MY_SECRET
+      SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
       - 7070:7070

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat > /subspace/docker-compose.yml << EOF
+cat > /explorer_squid/docker-compose.yml << EOF
 version: "3"
 
 services:
@@ -11,10 +11,9 @@ services:
       # replace VOLUME_NAME with your volume name
       - /explorer_squid/postgresql/data:/var/lib/postgresql/data
     environment:
-      # provide DB name
-      POSTGRES_DB:
-      # provide DB password
-      POSTGRES_PASSWORD:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     command: postgres -c config_file=/explorer_squid/postgresql/postgresql.conf
@@ -23,11 +22,11 @@ services:
     image: ghcr.io/subspace/blockexplorer-processor:latest
     restart: on-failure:5
     environment:
-      DB_HOST: "db"
+      DB_HOST: ${DB_HOST}
       # provide DB name
-      DB_NAME:
+      DB_NAME: ${DB_NAME}
       # provide DB password
-      DB_PASS:
+      DB_PASS: ${DB_PASS}
     depends_on:
       - db
     command: "npm run db:migrate"
@@ -37,14 +36,14 @@ services:
     restart: on-failure
     environment:
       # provide archive endpoint
-      ARCHIVE_ENDPOINT: 
+      ARCHIVE_ENDPOINT: ${ARCHIVE_ENDPOINT}
       # provide chain RPC endpoint
-      CHAIN_RPC_ENDPOINT:
-      DB_HOST: "db"
+      CHAIN_RPC_ENDPOINT: ${CHAIN_RPC_ENDPOINT}
+      DB_HOST: ${DB_HOST}
       # provide DB name
-      DB_NAME:
+      DB_NAME: ${DB_NAME}
       # provide DB password
-      DB_PASS:
+      DB_PASS: ${DB_PASS}
     depends_on:
       - db
       - run-migrations
@@ -58,11 +57,11 @@ services:
       - run-migrations
       - processor
     environment:
-      DB_HOST: "db"
+      DB_HOST: ${DB_HOST}
       # provide DB name
-      DB_NAME:
+      DB_NAME: ${DB_NAME}
       # provide DB password
-      DB_PASS:
+      DB_PASS: ${DB_PASS}
     ports:
       - "4350:4000"
 
@@ -70,7 +69,7 @@ services:
     image: datadog/agent
     environment:
       # replace DATADOG_API_KEY with real API key (can be genarated at https://app.datadoghq.com/organization-settings/api-keys)
-      DD_API_KEY: DATADOG_API_KEY
+      DD_API_KEY: ${DD_API_KEY}
       DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
       DD_LOGS_ENABLED: "true"
       DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
@@ -83,11 +82,11 @@ services:
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      PORT: 8080
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      PORT: ${HEALTH_CHECK_PORT}
       # provide secret, which is going to be used in 'Authorization' header
-      SECRET: MY_SECRET
+      SECRET: ${MY_SECRET}
     command: "postgres"
     ports:
       - 8080:8080
@@ -95,10 +94,10 @@ services:
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      PROMETHEUS_HOST: http://processor:3000
-      PORT: 7070
+      PROMETHEUS_HOST: ${PROCESSOR_HEALTH_HOST}
+      PORT: ${PROCESSOR_HEALTH_PORT}
       # provide secret, which is going to be used in 'Authorization' header
-      SECRET: MY_SECRET
+      SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
       - 7070:7070
