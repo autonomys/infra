@@ -1,4 +1,4 @@
-output "rpc-records" {
+output "dns-records" {
   value = [
     cloudflare_record.explorer[*].hostname,
     cloudflare_record.archive-squid[*].hostname,
