@@ -30,7 +30,7 @@ resource "null_resource" "setup-archive-squid-nodes" {
     inline = [
       "sudo mkdir -p /archive_squid",
       "sudo mount -o defaults,nofail,discard,noatime /dev/sda /archive_squid",
-      "echo '/dev/sda /mnt/explorer_squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab"
+      "echo '/dev/sda /mnt/archive_squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab"
     ]
   }
 
