@@ -8,7 +8,7 @@ output "do-archive-squid-node-blue-ipv4-addresses" {
   description = "DO Explorer node IPv4 Addresses"
 }
 
-output "rpc-records-blue" {
-  value       = module.blue.rpc-records
-  description = "RPC records"
+output "dns-records-blue" {
+  value       = module.blue.dns-records
+  description = "DNS records"
 }

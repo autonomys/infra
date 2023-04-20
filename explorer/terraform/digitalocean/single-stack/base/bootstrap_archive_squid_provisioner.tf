@@ -28,7 +28,9 @@ resource "null_resource" "setup-archive-squid-nodes" {
   # create archive_squid dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /archive_squid"
+      "sudo mkdir -p /archive_squid",
+      "sudo mount -o defaults,nofail,discard,noatime /dev/sda /archive_squid",
+      "echo '/dev/sda /mnt/archive_squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab"
     ]
   }
 
@@ -43,6 +45,13 @@ resource "null_resource" "setup-archive-squid-nodes" {
     inline = [
       "sudo chmod +x /archive_squid/install_docker.sh",
       "sudo bash /archive_squid/install_docker.sh",
+    ]
+  }
+
+  # install nginx, certbot
+  provisioner "remote-exec" {
+    inline = [
+      "sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y",
     ]
   }
 
@@ -121,13 +130,14 @@ resource "null_resource" "start-archive-squid-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "systemctl daemon-reload",
-      "systemctl enable nginx",
-      "systemctl start nginx",
-      "systemctl stop docker.service",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable nginx",
+      "sudo systemctl start nginx",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-squid-node-config.domain-prefix}-${count.index}.${var.network-name}.subspace.network",
+      "sudo systemctl restart nginx",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-archive_squid-node-${count.index}",
+      "hostnamectl set-hostname ${var.network-name}-archive-squid-node-${count.index}",
 
       # create .env file
       "sudo chmod +x /archive_squid/set_env_vars.sh",
@@ -138,10 +148,11 @@ resource "null_resource" "start-archive-squid-nodes" {
       "sudo bash /archive_squid/create_compose_file.sh",
 
       # start docker daemon
-      "systemctl enable --now docker.service",
-      "systemctl stop docker.service",
-      "systemctl restart docker.service",
-      "sudo docker compose -f /archive_squid/docker-compose.yml -d",
+      "sudo systemctl enable --now docker.service",
+      "sudo systemctl stop docker.service",
+      "sudo systemctl restart docker.service",
+      "sudo docker compose -f /archive_squid/docker-compose.yml up -d",
+      "echo 'Installation Complete'"
     ]
   }
 }

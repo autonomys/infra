@@ -28,7 +28,9 @@ resource "null_resource" "setup-explorer-nodes" {
   # create explorer dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /explorer_squid"
+      "sudo mkdir -p /explorer_squid",
+      "sudo mount -o defaults,nofail,discard,noatime /dev/sda /explorer_squid",
+      "echo '/dev/sda /mnt/explorer_squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab"
     ]
   }
 
@@ -43,6 +45,13 @@ resource "null_resource" "setup-explorer-nodes" {
     inline = [
       "sudo chmod +x /explorer_squid/install_docker.sh",
       "sudo bash /explorer_squid/install_docker.sh",
+    ]
+  }
+
+  # install certbot and issue domain
+  provisioner "remote-exec" {
+    inline = [
+      "sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y",
     ]
   }
 
@@ -119,13 +128,14 @@ resource "null_resource" "start-explorer-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "systemctl daemon-reload",
-      "systemctl enable nginx",
-      "systemctl start nginx",
-      "systemctl stop docker.service",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable nginx",
+      "sudo systemctl start nginx",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.explorer-node-config.domain-prefix}-${count.index}.${var.network-name}.subspace.network",
+      "sudo systemctl restart nginx",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-explorer_squid-node-${count.index}",
+      "hostnamectl set-hostname ${var.network-name}-explorer-squid-node-${count.index}",
 
       # create .env file
       "sudo chmod +x /explorer_squid/set_env_vars.sh",
@@ -136,10 +146,11 @@ resource "null_resource" "start-explorer-nodes" {
       "sudo bash /explorer_squid/create_compose_file.sh",
 
       # start docker daemon
-      "systemctl enable --now docker.service",
-      "systemctl stop docker.service",
-      "systemctl restart docker.service",
-      "sudo docker compose -f /explorer_squid/docker-compose.yml -d",
+      "sudo systemctl enable --now docker.service",
+      "sudo systemctl stop docker.service",
+      "sudo systemctl restart docker.service",
+      "sudo docker compose -f /explorer_squid/docker-compose.yml up -d",
+      "echo 'Installation Complete'"
     ]
   }
 }
