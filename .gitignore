@@ -4,6 +4,7 @@
 .DS_Store
 backend_config.hcl
 *.tfvars
+set_env_vars.sh
 node_keys.txt
 /resources/gemini-2a/bootstrap_node_keys.txt
 /resources/gemini-2a/full_node_keys.txt
