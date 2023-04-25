@@ -49,6 +49,7 @@ variable "rpc-node-config" {
     reserved-only       = bool
     prune               = bool
     node-dsn-port       = number
+    enable-domains      = bool
   })
 }
 

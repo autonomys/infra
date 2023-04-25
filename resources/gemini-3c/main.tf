@@ -40,6 +40,7 @@ module "gemini-3c" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    enable-domains      = true
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
