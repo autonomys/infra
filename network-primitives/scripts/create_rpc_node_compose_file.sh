@@ -83,6 +83,7 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
+enable_domains=${5}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
@@ -102,36 +103,38 @@ if [ "${reserved_only}" == "true" ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 
-{
-# system domain
-  echo '      "--",'
-  echo "      \"--chain=\$NETWORK_NAME\","
-  echo '      "--validator",'
-  echo '      "--state-pruning", "archive",'
-  echo '      "--blocks-pruning", "archive",'
-  echo '      "--base-path", "/var/subspace/system_domain",'
-  echo '      "--keystore-path", "/var/subspace/keystore",'
-  echo '      "--rpc-cors", "all",'
-  echo '      "--rpc-port", "8933",'
-  echo '      "--ws-port", "8944",'
-  echo '      "--no-private-ipv4",'
-  echo '      "--unsafe-ws-external",'
-  echo "      \"--relayer-id=\$RELAYER_ID\","
-# core payments domain
-  echo '      "--",'
-  echo "      \"--chain=\$NETWORK_NAME\","
-  echo '      "--validator",'
-  echo '      "--state-pruning", "archive",'
-  echo '      "--blocks-pruning", "archive",'
-  echo '      "--domain-id", "1",'
-  echo '      "--base-path", "/var/subspace/core_payments_domain",'
-  echo '      "--keystore-path", "/var/subspace/keystore",'
-  echo '      "--rpc-cors", "all",'
-  echo '      "--rpc-port", "7933",'
-  echo '      "--ws-port", "7944",'
-  echo '      "--no-private-ipv4",'
-  echo '      "--unsafe-ws-external",'
-  echo "      \"--relayer-id=\$RELAYER_ID\","
-}  >> /subspace/docker-compose.yml
+if [ "${enable_domains}" == "true" ]; then
+    {
+    # system domain
+      echo '      "--",'
+      echo "      \"--chain=\$NETWORK_NAME\","
+      echo '      "--validator",'
+      echo '      "--state-pruning", "archive",'
+      echo '      "--blocks-pruning", "archive",'
+      echo '      "--base-path", "/var/subspace/system_domain",'
+      echo '      "--keystore-path", "/var/subspace/keystore",'
+      echo '      "--rpc-cors", "all",'
+      echo '      "--rpc-port", "8933",'
+      echo '      "--ws-port", "8944",'
+      echo '      "--no-private-ipv4",'
+      echo '      "--unsafe-ws-external",'
+      echo "      \"--relayer-id=\$RELAYER_ID\","
+    # core payments domain
+      echo '      "--",'
+      echo "      \"--chain=\$NETWORK_NAME\","
+      echo '      "--validator",'
+      echo '      "--state-pruning", "archive",'
+      echo '      "--blocks-pruning", "archive",'
+      echo '      "--domain-id", "1",'
+      echo '      "--base-path", "/var/subspace/core_payments_domain",'
+      echo '      "--keystore-path", "/var/subspace/keystore",'
+      echo '      "--rpc-cors", "all",'
+      echo '      "--rpc-port", "7933",'
+      echo '      "--ws-port", "7944",'
+      echo '      "--no-private-ipv4",'
+      echo '      "--unsafe-ws-external",'
+      echo "      \"--relayer-id=\$RELAYER_ID\","
+    }  >> /subspace/docker-compose.yml
+fi
 
 echo '    ]' >> /subspace/docker-compose.yml
