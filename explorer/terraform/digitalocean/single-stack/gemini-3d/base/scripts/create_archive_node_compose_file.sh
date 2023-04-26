@@ -106,8 +106,8 @@ services:
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      PROMETHEUS_HOST: ${PROCESSOR_HEALTH_HOST}
-      PORT: ${PROCESSOR_HEALTH_PORT}
+      PROMETHEUS_HOST: ${INGEST_HEALTH_HOST}
+      PORT: ${INGEST_HEALTH_PORT}
       SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
