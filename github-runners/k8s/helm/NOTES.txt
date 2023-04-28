@@ -1,0 +1,16 @@
+helm upgrade --install --namespace actions-runner-system  --wait actions-runner-controller \
+actions-runner-controller/actions-runner-controller --set \
+syncPeriod=1m
+Release "actions-runner-controller" does not exist. Installing it now.
+NAME: actions-runner-controller
+LAST DEPLOYED: Fri Apr 14 00:30:53 2023
+NAMESPACE: actions-runner-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace actions-runner-system -l "app.kubernetes.io/name=actions-runner-controller,app.kubernetes.io/instance=actions-runner-controller" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace actions-runner-system $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace actions-runner-system port-forward $POD_NAME 8080:$CONTAINER_PORT

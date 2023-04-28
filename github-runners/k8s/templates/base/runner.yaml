@@ -1,0 +1,34 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+ name: k8s-github-runner
+ namespace: actions-runner-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: k8s-github-runner
+  template:
+    metadata:
+      labels:
+        app: k8s-github-runner
+    spec:
+      repository: https://github.com/subspace/subspace-cli
+      containers:
+      - name: github-runner
+        image: sanderknape/github-runner:latest
+        env:
+        - name: GITHUB_OWNER
+          value: your-organization
+        - name: GITHUB_REPOSITORY
+          value: your-repository
+        - name: GITHUB_PAT # stored separately in a Kubernetes Secret
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: pat
+        - name: GITHUB_TOKEN # stored separately in a Kubernetes Secret
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: pat
