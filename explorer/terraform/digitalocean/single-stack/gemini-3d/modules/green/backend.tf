@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "squid-blue"
+      name = "squid-3d-green"
     }
   }
 }
