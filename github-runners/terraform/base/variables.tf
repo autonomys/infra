@@ -1,7 +1,29 @@
-variable "instance_type" {
-  default = "t2.micro"
+variable "GH_TOKEN" {
+  default = ""
   type    = string
 }
+
+variable "netdata_token" {
+  default = ""
+  type    = string
+
+}
+
+variable "instance_type" {
+  default = ["t2.micro"]
+  type    = list(string)
+}
+
+variable "instance_type_mac" {
+  default = ["mac1.metal", "mac2.metal"]
+  type    = list(string)
+}
+
+variable "instance_type_arm" {
+  default = ["a1.2xlarge", "a1.4xlarge"]
+  type    = list(string)
+}
+
 
 variable "vpc_id" {
   default = "default"
@@ -11,28 +33,8 @@ variable "vpc_id" {
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1c", "eu-central-1a"]
+  default     = ["us-east-2a", "us-east-2b"]
 }
-
-
-variable "ami" {
-  default = "ami-0557a15b87f6559cf"
-  type    = string
-
-  validation {
-    condition     = length(var.ami) > 4 && substr(var.ami, 0, 4) == "ami-"
-    error_message = "The image_id value must be a valid AMI id, starting with \"ami-\"."
-  }
-}
-
-# variable "ec2_ami" {
-#   type = map
-
-#   default = {
-#     us-east-1 = "ami-0557a15b87f6559cf"
-#     us-west-1 = "ami-006fce872b320923e"
-#   }
-# }
 
 variable "instance_count" {
   type    = number
@@ -75,6 +77,11 @@ variable "aws_key_name" {
 }
 
 variable "public_key_path" {
-  type = string
+  type    = string
   default = ""
+}
+
+variable "win_admin_password" {
+  default = "default"
+  type    = string
 }
