@@ -1,11 +1,13 @@
 variable "GH_TOKEN" {
   default = ""
   type    = string
+  sensitive = true
 }
 
 variable "netdata_token" {
   default = ""
   type    = string
+  sensitive = true
 
 }
 
