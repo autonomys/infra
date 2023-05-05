@@ -173,7 +173,7 @@ resource "null_resource" "start-farmer-nodes" {
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production} ${var.rpc-node-config.domain-id}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production} ${var.farmer-node-config.domain-id}",
 
       # start subspace node
       "systemctl start subspace.service",
