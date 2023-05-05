@@ -32,7 +32,6 @@ variable "full-node-config" {
     reserved-only       = bool
     prune               = bool
     node-dsn-port       = number
-    domain-id           = number
   })
 }
 
@@ -70,7 +69,6 @@ variable "bootstrap-node-config" {
     genesis-hash        = string
     dsn-listen-port     = number
     node-dsn-port       = number
-    domain-id           = number
   })
 }
 
@@ -90,6 +88,5 @@ variable "farmer-node-config" {
     reward-address         = string
     force-block-production = bool
     node-dsn-port          = number
-    domain-id              = number
   })
 }
