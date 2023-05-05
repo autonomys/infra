@@ -174,7 +174,7 @@ resource "null_resource" "start-boostrap-nodes" {
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index} ${var.bootstrap-node-config.domain-id}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
       "systemctl start subspace.service",
