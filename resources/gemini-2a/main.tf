@@ -15,7 +15,6 @@ module "gemini-2a" {
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
-    domain-id           = var.domain_id
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -28,7 +27,6 @@ module "gemini-2a" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
-    domain-id           = var.domain_id
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -59,7 +57,6 @@ module "gemini-2a" {
     reward-address         = ""
     force-block-production = false
     node-dsn-port          = 30433
-    domain-id              = var.domain_id
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

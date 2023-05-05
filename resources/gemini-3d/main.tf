@@ -15,7 +15,6 @@ module "gemini-3d" {
     genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
     dsn-listen-port     = 50001
     node-dsn-port       = 30434
-    domain-id           = var.domain_id
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -28,7 +27,6 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    domain-id           = var.domain_id
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -59,7 +57,6 @@ module "gemini-3d" {
     force-block-production = false
     prune                  = false
     node-dsn-port          = 30434
-    domain-id              = var.domain_id
   }
   piece_cache_size     = "50G"
   cloudflare_api_token = var.cloudflare_api_token
