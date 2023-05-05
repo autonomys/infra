@@ -15,6 +15,7 @@ module "gemini-3c" {
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
+    domain-id           = var.domain_id
   }
   full-node-config = {
     droplet_size        = var.droplet-size
@@ -27,6 +28,7 @@ module "gemini-3c" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    domain-id           = var.domain_id
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
@@ -41,6 +43,7 @@ module "gemini-3c" {
     prune               = false
     node-dsn-port       = 30433
     enable-domains      = true
+    domain-id           = var.domain_id
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -56,6 +59,7 @@ module "gemini-3c" {
     force-block-production = false
     prune                  = false
     node-dsn-port          = 30433
+    domain-id              = var.domain_id
   }
   piece_cache_size     = "50G"
   cloudflare_api_token = var.cloudflare_api_token

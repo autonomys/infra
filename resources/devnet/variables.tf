@@ -30,3 +30,9 @@ variable "farmer-reward-address" {
   description = "Farmer's reward address"
   type        = string
 }
+
+variable "domain_id" {
+  description = "Domain ID"
+  type        = number
+  default     = 1
+}
