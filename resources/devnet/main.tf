@@ -40,6 +40,8 @@ module "devnet" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    enable-domains      = true
+    domain-id           = var.domain_id
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
@@ -55,6 +57,7 @@ module "devnet" {
     reward-address         = var.farmer-reward-address
     force-block-production = false
     node-dsn-port          = 30433
+
   }
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email

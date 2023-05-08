@@ -36,3 +36,9 @@ variable "hetzner_rpc_node_ips" {
   description = "Hetzner rpc node ip v4"
   type        = list(string)
 }
+
+variable "domain_id" {
+  description = "Domain ID"
+  type        = number
+  default     = 1
+}

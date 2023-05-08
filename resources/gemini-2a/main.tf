@@ -41,6 +41,7 @@ module "gemini-2a" {
     prune               = false
     node-dsn-port       = 30433
     enable-domains      = true
+    domain-id           = var.domain_id
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
