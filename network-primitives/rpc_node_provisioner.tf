@@ -177,7 +177,9 @@ resource "null_resource" "start-rpc-nodes" {
       "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
-      "echo RELAYER_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
+      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
+      "echo RELAYER_EVM_ID=$(sed -nr 's/NODE_${count.index + 1}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
+      "echo RELAYER_PAYMENTS_ID=$(sed -nr 's/NODE_${count.index + 2}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
       "echo NODE_DSN_PORT=${var.rpc-node-config.node-dsn-port} >> /subspace/.env",
@@ -214,7 +216,7 @@ resource "null_resource" "inject-keystore" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore"
+      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
     ]
   }
 }

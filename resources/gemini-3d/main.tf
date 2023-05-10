@@ -7,7 +7,7 @@ module "gemini-3d" {
     deployment-version  = 8
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_bootstrap_node_ips
+    additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-apr-14"
     reserved-only       = false
@@ -21,7 +21,7 @@ module "gemini-3d" {
     deployment-version  = 5
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_full_node_ips
+    additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-apr-05"
     reserved-only       = false
@@ -33,7 +33,7 @@ module "gemini-3d" {
     deployment-version  = 5
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_rpc_node_ips
+    additional-node-ips = var.rpc_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-apr-05"
     domain-prefix       = "eu"
@@ -48,7 +48,7 @@ module "gemini-3d" {
     deployment-version     = 1
     regions                = []
     nodes-per-region       = 0
-    additional-node-ips    = []
+    additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
     docker-tag             = "gemini-3d-2023-apr-05"
     reserved-only          = false

@@ -4,12 +4,12 @@ module "devnet" {
   network-name    = "devnet"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 11
+    deployment-version  = 0
     regions             = ["ams3"]
-    nodes-per-region    = 1
-    additional-node-ips = []
+    nodes-per-region    = 0
+    additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-08"
+    docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
     prune               = false
     genesis-hash        = ""
@@ -18,24 +18,24 @@ module "devnet" {
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 11
+    deployment-version  = 0
     regions             = ["sfo3"]
-    nodes-per-region    = 1
-    additional-node-ips = []
+    nodes-per-region    = 0
+    additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-08"
+    docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 11
+    deployment-version  = 0
     regions             = ["fra1"]
-    nodes-per-region    = 1
-    additional-node-ips = []
+    nodes-per-region    = 0
+    additional-node-ips = var.rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "snapshot-2023-mar-08"
+    docker-tag          = "snapshot-2023-may-06"
     domain-prefix       = "rpc"
     reserved-only       = false
     prune               = false
@@ -45,12 +45,12 @@ module "devnet" {
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 14
+    deployment-version     = 1
     regions                = ["blr1"]
-    nodes-per-region       = 1
-    additional-node-ips    = []
+    nodes-per-region       = 0
+    additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-mar-08"
+    docker-tag             = "snapshot-2023-may-06"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"

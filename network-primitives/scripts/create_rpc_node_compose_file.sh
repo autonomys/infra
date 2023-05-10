@@ -58,6 +58,11 @@ services:
       caddy_2.handle_path_0.reverse_proxy: "{{upstreams 7933}}"
       caddy_2.handle_path_1: /ws
       caddy_2.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
+      caddy_3: \${DOMAIN_PREFIX}-\${NODE_ID}.evm.\${NETWORK_NAME}.subspace.network
+      caddy_3.handle_path_0: /http
+      caddy_3.handle_path_0.reverse_proxy: "{{upstreams 6933}}"
+      caddy_3.handle_path_1: /ws
+      caddy_3.handle_path_1.reverse_proxy: "{{upstreams 6944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -84,6 +89,7 @@ node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
 enable_domains=${5}
+domain_id=${6}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
@@ -99,11 +105,17 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
-if [ "${reserved_only}" == "true" ]; then
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> /subspace/docker-compose.yml
+done
+
+
+if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 
-if [ "${enable_domains}" == "true" ]; then
+if [ "${enable_domains}" == true ]; then
     {
     # system domain
       echo '      "--",'
@@ -118,8 +130,8 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--ws-port", "8944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_ID\","
-    # core payments domain
+      echo "      \"--relayer-id=\$RELAYER_SYSTEM_ID\","
+    # core payment domain
       echo '      "--",'
       echo "      \"--chain=\$NETWORK_NAME\","
       echo '      "--validator",'
@@ -133,7 +145,22 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--ws-port", "7944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_ID\","
+      echo "      \"--relayer-id=\$RELAYER_PAYMENTS_ID\","
+    # core evm domain
+      echo '      "--",'
+      echo "      \"--chain=\$NETWORK_NAME\","
+      echo '      "--validator",'
+      echo '      "--state-pruning", "archive",'
+      echo '      "--blocks-pruning", "archive",'
+      echo '      "--domain-id", "3",'
+      echo '      "--base-path", "/var/subspace/core_evm_domain",'
+      echo '      "--keystore-path", "/var/subspace/keystore",'
+      echo '      "--rpc-cors", "all",'
+      echo '      "--rpc-port", "6933",'
+      echo '      "--ws-port", "6944",'
+      echo '      "--no-private-ipv4",'
+      echo '      "--unsafe-ws-external",'
+      echo "      \"--relayer-id=\$RELAYER_EVM_ID\","
     }  >> /subspace/docker-compose.yml
 fi
 
