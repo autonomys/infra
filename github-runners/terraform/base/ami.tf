@@ -1,4 +1,4 @@
-data "aws_ami" "ubuntu_x86" {
+data "aws_ami" "ubuntu_x86_64" {
   most_recent = true
 
   filter {
@@ -41,7 +41,7 @@ data "aws_ami" "ubuntu_arm64" {
 }
 
 
-data "aws_ami" "mac_x86" {
+data "aws_ami" "mac_x86_64" {
   most_recent = true
 
   filter {
@@ -85,7 +85,7 @@ data "aws_ami" "mac_arm64" {
 }
 
 
-data "aws_ami" "windows" {
+data "aws_ami" "windows_x86_64" {
   most_recent = true
 
   filter {

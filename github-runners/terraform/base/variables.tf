@@ -11,6 +11,29 @@ variable "netdata_token" {
 
 }
 
+variable "netdata_room" {
+  default = ""
+  type    = string
+  sensitive = true
+
+}
+
+variable "gh_runner_version" {
+  type = string
+  default = ""
+}
+
+variable "gh_runner_checksums" {
+  type = map(string)
+  default = {
+    linux_x86_64 = "",
+    linux_arm64 = "",
+    mac_x86_64 = "",
+    mac_arm64 = "",
+    windows_x86_64 = ""
+  }
+}
+
 variable "instance_type" {
   default = ["t2.micro"]
   type    = list(string)
@@ -25,7 +48,6 @@ variable "instance_type_arm" {
   default = ["a1.2xlarge", "a1.4xlarge"]
   type    = list(string)
 }
-
 
 variable "vpc_id" {
   default = "default"
@@ -42,7 +64,6 @@ variable "instance_count" {
   type    = number
   default = 1
 }
-
 
 variable "aws_region" {
   description = "aws region"
@@ -82,6 +103,13 @@ variable "public_key_path" {
   type    = string
   default = ""
 }
+
+variable "win_admin_username" {
+  default = "default"
+  type    = string
+  sensitive = true
+}
+
 
 variable "win_admin_password" {
   default = "default"

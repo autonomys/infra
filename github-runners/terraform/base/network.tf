@@ -1,10 +1,3 @@
-# data "aws_internet_gateway" "gh-runners" {
-#   filter {
-#     name   = "vpc-*"
-#     values = [aws_vpc.id]
-#   }
-# }
-
 resource "aws_vpc" "gh-runners" {
   cidr_block           = "172.31.0.0/16"
   enable_dns_support   = true
@@ -193,14 +186,14 @@ resource "aws_nat_gateway" "nat_gateway" {
 # resource "aws_eip" "server_eip" {
 #   count                     = length(var.public_subnet_cidrs)
 #   network_interface         = element(aws_network_interface.server_nic.*.id, count.index)
-# #  instance                  = aws_instance.linux_x86_runner[count.index].id
+# #  instance                  = aws_instance.linux_x86_64_runner[count.index].id
 #   vpc                       = true
 #   associate_with_private_ip = aws_network_interface.server_nic.*.private_ip[count.index]
 
 #   depends_on = [
 #     aws_internet_gateway.gw,
 #     aws_network_interface.server_nic,
-#     aws_instance.linux_x86_runner
+#     aws_instance.linux_x86_64_runner
 #   ]
 
 #   tags = {
