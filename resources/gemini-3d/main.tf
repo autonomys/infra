@@ -45,16 +45,16 @@ module "gemini-3d" {
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 2
+    deployment-version     = 1
     regions                = []
-    nodes-per-region       = 1
+    nodes-per-region       = 0
     additional-node-ips    = []
     docker-org             = "subspace"
     docker-tag             = "gemini-3d-2023-may-15"
     reserved-only          = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
-    force-block-production = true
+    force-block-production = false
     prune                  = false
     node-dsn-port          = 30434
   }
