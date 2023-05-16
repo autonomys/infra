@@ -1,4 +1,4 @@
-variable "GH_TOKEN" {
+variable "gh_token" {
   default = ""
   type    = string
   sensitive = true
@@ -86,4 +86,5 @@ variable "public_key_path" {
 variable "win_admin_password" {
   default = "default"
   type    = string
+  sensitive = true
 }

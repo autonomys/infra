@@ -46,7 +46,7 @@ data "aws_ami" "mac_x86" {
 
   filter {
     name   = "name"
-    values = ["amzn-ec2-macos-12.6.3-20230216-212401"]
+    values = ["amzn-ec2-macos-12.6.3-20230201-041127"]
   }
 
   filter {
@@ -59,7 +59,7 @@ data "aws_ami" "mac_x86" {
     values = ["x86_64_mac"]
   }
 
-  owners = ["628277914472"] # Canonical
+  owners = ["634519214787"] # Apple
 }
 
 
@@ -68,7 +68,7 @@ data "aws_ami" "mac_arm64" {
 
   filter {
     name   = "name"
-    values = ["amzn-ec2-macos-13.2.1-20230215-230343-arm64"]
+    values = ["amzn-ec2-macos-12.6.3-20230201-190453-arm64"]
   }
 
   filter {
@@ -81,7 +81,7 @@ data "aws_ami" "mac_arm64" {
     values = ["arm64_mac"]
   }
 
-  owners = ["628277914472"] # Canonical
+  owners = ["634519214787"] # Apple
 }
 
 
@@ -98,5 +98,5 @@ data "aws_ami" "windows" {
     values = ["hvm"]
   }
 
-  owners = ["801119661308"] # Canonical
+  owners = ["801119661308"] # Microsoft
 }

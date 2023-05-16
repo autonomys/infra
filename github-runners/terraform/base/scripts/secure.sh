@@ -1,10 +1,17 @@
 #! /bin/bash
 
-set -euxo pipefail
+set -eu
+
+export DEBIAN_FRONTEND=noninteractive
 
 echo "running security hardening script for server."
 
-# Step 1: Document the host information
+# Step 1: Update your system
+echo -e "\e[33mStep 7: Updating your system\e[0m"
+sudo apt-get update && sudo apt-get upgrade -y
+echo ""
+
+# Step 2: Document the host information
 echo -e "\e[33mStep 1: Documenting host information\e[0m"
 echo "Hostname: $(hostname)"
 echo "Kernel version: $(uname -r)"
@@ -14,7 +21,7 @@ echo "Memory information: $(free -h | awk '/Mem/{print $2}')"
 echo "Disk information: $(lsblk | grep disk)"
 echo 
 
-# Step 2: BIOS protection
+# Step 3: BIOS protection
 echo -e "\e[33mStep 2: BIOS protection\e[0m"
 echo "Checking if BIOS protection is enabled..."
 if [ -f /sys/devices/system/cpu/microcode/reload ]; then
@@ -24,7 +31,7 @@ else
 fi
 echo ""
 
-# Step 3: Hard disk encryption
+# Step 4: Hard disk encryption
 echo -e "\e[33mStep 3: Hard disk encryption\e[0m"
 echo "Checking if hard disk encryption is enabled..."
 if [ -d /etc/luks ]; then
@@ -33,21 +40,6 @@ else
   echo "Hard disk encryption is not enabled"
 fi
 echo ""
-
-# Step 4: Disk partitioning
-echo -e "\e[33mStep 4: Disk partitioning\e[0m"
-echo "Checking if disk partitioning is already done..."
-if [ -d /home -a -d /var -a -d /usr ]; then
-  echo "Disk partitioning is already done"
-else
-  echo "Disk partitioning is not done or incomplete"
-fi
-sudo fdisk /dev/sda
-sudo mkfs.ext4 /dev/sda1
-sudo mkswap /dev/sda2
-sudo swapon /dev/sda2
-sudo mount /dev/sda1 /mnt
-echo
 
 # Step 5: Lock the boot directory
 echo -e "\e[33mSstep 5: Lock the boot directory\e[0m"
@@ -63,7 +55,7 @@ echo ""
 
 # Step 7: Update your system
 echo -e "\e[33mStep 7: Updating your system\e[0m"
-sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install net-tools curl debsums gnupg openssl python3 -y
 echo ""
 
 # Step 8: Check the installed packages
@@ -143,14 +135,14 @@ echo "Checking for security on key files..."
 sudo find /etc/ssh -type f -name 'ssh_host_*_key' -exec chmod 600 {} \;
 echo ""
 
-# Step 18: Limit root access using SUDO
-echo -e "\e[33mStep 18: Limiting root access using SUDO\e[0m"
-echo "Limiting root access using SUDO..."
-sudo apt-get install sudo -y
-sudo groupadd admin
-sudo usermod -a -
-sudo sed -i 's/%sudo\tALL=(ALL:ALL) ALL/%admin\tALL=(ALL:ALL) ALL/g' /etc/sudoers
-echo ""
+# # Step 18: Limit root access using SUDO
+# echo -e "\e[33mStep 18: Limiting root access using SUDO\e[0m"
+# echo "Limiting root access using SUDO..."
+# sudo apt-get install sudo -y
+# sudo groupadd admin
+# sudo usermod -a -
+# sudo sed -i 's/%sudo\tALL=(ALL:ALL) ALL/%admin\tALL=(ALL:ALL) ALL/g' /etc/sudoers
+# echo ""
 
 # Step 19: Only allow root to access CRON
 echo -e "\e[33mStep 19: Restricting access to CRON\e[0m"
@@ -158,11 +150,11 @@ echo "Only allowing root to access CRON..."
 sudo chmod 600 /etc/crontab
 sudo chown root:root /etc/crontab
 sudo chmod 600 /etc/crontab
-sudo chmod 600 /etc/cron.hourly/*
-sudo chmod 600 /etc/cron.daily/*
-sudo chmod 600 /etc/cron.weekly/*
-sudo chmod 600 /etc/cron.monthly/*
-sudo chmod 600 /etc/cron.d/*
+# sudo chmod 600 /etc/cron.hourly/*
+# sudo chmod 600 /etc/cron.daily/*
+# sudo chmod 600 /etc/cron.weekly/*
+# sudo chmod 600 /etc/cron.monthly/*
+# sudo chmod 600 /etc/cron.d/*
 echo ""
 
 # Step 20: Remote access and SSH basic settings
@@ -221,11 +213,9 @@ echo ""
 
 # Step 26: Rootkit detection
 echo -e "\e[33mStep 26: Installing and running Rootkit detection...\e[0m"
-sudo apt-get install rkhunter
-sudo rkhunter --update
-sudo rkhunter --propupd
-sudo rkhunter --check
-echo
+sudo apt-get install chkrootkit -y
+sudo chkrootkit 
+echo ""
 
 # Step 27: Monitor system logs
 echo -e "\e[33mStep 27: Monitoring system logs\e[0m"
