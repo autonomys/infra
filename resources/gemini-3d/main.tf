@@ -4,12 +4,12 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 8
+    deployment-version  = 9
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-apr-14"
+    docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
     prune               = false
     genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
@@ -18,29 +18,29 @@ module "gemini-3d" {
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 5
+    deployment-version  = 6
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-apr-05"
+    docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 5
+    deployment-version  = 6
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-apr-05"
+    docker-tag          = "gemini-3d-2023-may-15"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = true
+    enable-domains      = false
     domain-id           = var.domain_id
   }
   farmer-node-config = {
@@ -50,7 +50,7 @@ module "gemini-3d" {
     nodes-per-region       = 0
     additional-node-ips    = []
     docker-org             = "subspace"
-    docker-tag             = "gemini-3d-2023-apr-05"
+    docker-tag             = "gemini-3d-2023-may-15"
     reserved-only          = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address

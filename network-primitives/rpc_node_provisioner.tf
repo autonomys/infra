@@ -214,7 +214,7 @@ resource "null_resource" "inject-keystore" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore"
+      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
     ]
   }
 }

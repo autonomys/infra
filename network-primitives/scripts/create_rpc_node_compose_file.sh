@@ -99,11 +99,11 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
-if [ "${reserved_only}" == "true" ]; then
+if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 
-if [ "${enable_domains}" == "true" ]; then
+if [ "${enable_domains}" == true ]; then
     {
     # system domain
       echo '      "--",'
