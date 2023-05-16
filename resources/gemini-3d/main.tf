@@ -4,33 +4,33 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 9
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_bootstrap_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
-    prune               = true
+    prune               = false
     genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
     dsn-listen-port     = 50001
     node-dsn-port       = 30434
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 6
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_full_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
-    prune               = true
+    prune               = false
     node-dsn-port       = 30434
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 6
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.hetzner_rpc_node_ips
@@ -38,14 +38,14 @@ module "gemini-3d" {
     docker-tag          = "gemini-3d-2023-may-15"
     domain-prefix       = "eu"
     reserved-only       = false
-    prune               = true
+    prune               = false
     node-dsn-port       = 30434
     enable-domains      = false
     domain-id           = var.domain_id
   }
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 0
+    deployment-version     = 2
     regions                = []
     nodes-per-region       = 1
     additional-node-ips    = []
