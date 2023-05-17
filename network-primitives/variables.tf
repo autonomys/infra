@@ -54,7 +54,7 @@ variable "rpc-node-config" {
 }
 
 variable "domain-node-config" {
-  description = "RPC node deployment config"
+  description = "Domain node deployment config"
   type = object({
     droplet_size        = string
     deployment-version  = number

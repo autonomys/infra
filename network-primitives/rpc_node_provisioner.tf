@@ -168,7 +168,7 @@ resource "null_resource" "start-rpc-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.domain-node-config.domain-prefix}-${count.index}.${var.network-name}-rpc-node",
+      "hostnamectl set-hostname ${var.rpc-node-config.domain-prefix}-${count.index}.${var.network-name}-rpc-node",
 
       # create .env file
       "echo NODE_ORG=${var.rpc-node-config.docker-org} > /subspace/.env",

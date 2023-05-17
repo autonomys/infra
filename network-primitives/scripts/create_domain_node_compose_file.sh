@@ -155,8 +155,8 @@ if [ "${enable_domains}" == true ]; then
         echo '      "--base-path", "/var/subspace/core_evm_domain",'
         echo '      "--keystore-path", "/var/subspace/keystore",'
         echo '      "--rpc-cors", "all",'
-        echo '      "--rpc-port", "6933",'
-        echo '      "--ws-port", "6944",'
+        echo '      "--rpc-port", "7933",'
+        echo '      "--ws-port", "7944",'
         echo '      "--no-private-ipv4",'
         echo '      "--unsafe-ws-external",'
         echo "      \"--relayer-id=\$RELAYER_DOMAIN_ID\","
