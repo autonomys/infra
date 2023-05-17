@@ -9,13 +9,14 @@ module "gemini-3d" {
     nodes-per-region    = 0
     additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-apr-14"
+    docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
     prune               = false
     genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
     dsn-listen-port     = 50001
     node-dsn-port       = 30434
   }
+
   full-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 7
@@ -28,6 +29,7 @@ module "gemini-3d" {
     prune               = false
     node-dsn-port       = 30434
   }
+
   rpc-node-config = {
     droplet_size        = var.droplet-size
     deployment-version  = 7
@@ -40,7 +42,7 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = true
+    enable-domains      = false
   }
 
   domain-node-config = {
@@ -55,7 +57,7 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = true
+    enable-domains      = false
     domain-id           = var.domain_id
     domain-labels        = var.domain_labels
   }
