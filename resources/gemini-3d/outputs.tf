@@ -13,6 +13,11 @@ output "do-rpc-node-ipv4-addresses" {
   description = "DO RPC node IPv4 Addresses"
 }
 
+output "do-domain-node-ipv4-addresses" {
+  value       = module.gemini-3d.do-domain-node-ipv4-addresses
+  description = "DO domain node IPv4 Addresses"
+}
+
 output "hetzner-bootstrap-node-ipv4-addresses" {
   value       = var.hetzner_bootstrap_node_ips
   description = "Hetzner Bootstrap node IPv4 Addresses"
@@ -27,6 +32,12 @@ output "hetzner-rpc-node-ipv4-addresses" {
   value       = var.hetzner_rpc_node_ips
   description = "Hetzner rpc node IPv4 Addresses"
 }
+
+output "hetzner-domain-node-ipv4-addresses" {
+  value       = var.hetzner_domain_node_ips
+  description = "Hetzner domain node IPv4 Addresses"
+}
+
 
 output "rpc-records" {
   value       = module.gemini-3d.rpc-records

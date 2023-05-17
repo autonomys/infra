@@ -20,7 +20,7 @@ output "do-rpc-node-ipv4-addresses" {
 
 output "do-domain-node-ipv4-addresses" {
   value       = digitalocean_droplet.domain-nodes[*].ipv4_address
-  description = "DO Domain node IPv4 Addresses"
+  description = "DO domain node IPv4 Addresses"
 }
 
 output "rpc-records" {

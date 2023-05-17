@@ -85,7 +85,6 @@ current_node=${3}
 bootstrap_node_count=${4}
 enable_domains=${5}
 domain_id=${6}
-domain_label=${7}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then

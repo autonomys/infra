@@ -4,6 +4,7 @@ locals {
     [for droplet in digitalocean_droplet.farmer-nodes : droplet.urn],
     [for droplet in digitalocean_droplet.bootstrap-nodes : droplet.urn],
     [for droplet in digitalocean_droplet.rpc-nodes : droplet.urn],
+    [for droplet in digitalocean_droplet.domain-nodes : droplet.urn],
   ])
 }
 
@@ -18,6 +19,6 @@ resource "digitalocean_project" "project" {
     [for droplet in digitalocean_droplet.farmer-nodes : droplet.urn],
     [for droplet in digitalocean_droplet.bootstrap-nodes : droplet.urn],
     [for droplet in digitalocean_droplet.rpc-nodes : droplet.urn],
+    [for droplet in digitalocean_droplet.domain-nodes : droplet.urn],
   ])
 }
-
