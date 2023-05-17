@@ -156,7 +156,7 @@ resource "null_resource" "start-full-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-full-node-${count.index}",
+      "hostnamectl set-hostname ${var.domain-node-config.domain-prefix}-${count.index}.${var.network-name}-full-node",
 
       # create .env file
       "echo NODE_ORG=${var.full-node-config.docker-org} > /subspace/.env",

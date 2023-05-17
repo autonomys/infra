@@ -174,7 +174,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-bootstrap-node-${count.index}",
+      "hostnamectl set-hostname ${var.domain-node-config.domain-prefix}-${count.index}.${var.network-name}-bootstrap-node",
 
       # create .env file
       "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /subspace/.env",

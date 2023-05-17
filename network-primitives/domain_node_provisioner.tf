@@ -175,6 +175,7 @@ resource "null_resource" "start-domain-nodes" {
       "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /subspace/.env",
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[count.index]} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
