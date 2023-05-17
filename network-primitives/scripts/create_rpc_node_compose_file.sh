@@ -53,16 +53,6 @@ services:
       caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
       caddy_1.handle_path_1: /ws
       caddy_1.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
-      caddy_2: \${DOMAIN_PREFIX}-\${NODE_ID}.payments.\${NETWORK_NAME}.subspace.network
-      caddy_2.handle_path_0: /http
-      caddy_2.handle_path_0.reverse_proxy: "{{upstreams 7933}}"
-      caddy_2.handle_path_1: /ws
-      caddy_2.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
-      caddy_3: \${DOMAIN_PREFIX}-\${NODE_ID}.evm.\${NETWORK_NAME}.subspace.network
-      caddy_3.handle_path_0: /http
-      caddy_3.handle_path_0.reverse_proxy: "{{upstreams 6933}}"
-      caddy_3.handle_path_1: /ws
-      caddy_3.handle_path_1.reverse_proxy: "{{upstreams 6944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -89,7 +79,6 @@ node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
 enable_domains=${5}
-domain_id=${6}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
@@ -131,36 +120,6 @@ if [ "${enable_domains}" == true ]; then
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
       echo "      \"--relayer-id=\$RELAYER_SYSTEM_ID\","
-    # core payment domain
-      echo '      "--",'
-      echo "      \"--chain=\$NETWORK_NAME\","
-      echo '      "--validator",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--domain-id", "1",'
-      echo '      "--base-path", "/var/subspace/core_payments_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "7933",'
-      echo '      "--ws-port", "7944",'
-      echo '      "--no-private-ipv4",'
-      echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_PAYMENTS_ID\","
-    # core evm domain
-      echo '      "--",'
-      echo "      \"--chain=\$NETWORK_NAME\","
-      echo '      "--validator",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--domain-id", "3",'
-      echo '      "--base-path", "/var/subspace/core_evm_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "6933",'
-      echo '      "--ws-port", "6944",'
-      echo '      "--no-private-ipv4",'
-      echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_EVM_ID\","
     }  >> /subspace/docker-compose.yml
 fi
 

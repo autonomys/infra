@@ -2,6 +2,7 @@ locals {
   full_node_firewall_list      = chunklist(digitalocean_droplet.full-nodes.*.id, 10)
   bootstrap_node_firewall_list = chunklist(digitalocean_droplet.bootstrap-nodes.*.id, 10)
   rpc_node_firewall_list       = chunklist(digitalocean_droplet.rpc-nodes.*.id, 10)
+  domain_node_firewall_list    = chunklist(digitalocean_droplet.domain-nodes.*.id, 10)
   farmer_node_firewall_list    = chunklist(digitalocean_droplet.farmer-nodes.*.id, 10)
 }
 
@@ -173,3 +174,52 @@ resource "digitalocean_firewall" "rpc-node-firewall" {
   }
 }
 
+
+resource "digitalocean_firewall" "domain-node-firewall" {
+  count = length(local.domain_node_firewall_list)
+  name  = "${var.network-name}-${var.domain-node-config.domain-labels[count.index]}-node-firewall-${count.index}"
+
+  droplet_ids = local.domain_node_firewall_list[count.index]
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "22"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "80"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "443"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "30333"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "30433"
+    source_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "tcp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
+  }
+
+  outbound_rule {
+    protocol              = "udp"
+    port_range            = "all"
+    destination_addresses = ["0.0.0.0/0"]
+  }
+}

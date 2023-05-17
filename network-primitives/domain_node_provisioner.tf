@@ -1,41 +1,41 @@
 locals {
-  rpc_node_ip_v4 = flatten([
-    [var.rpc-node-config.additional-node-ips],
-    [digitalocean_droplet.rpc-nodes.*.ipv4_address],
+  domain_node_ip_v4 = flatten([
+    [var.domain-node-config.additional-node-ips],
+    [digitalocean_droplet.domain-nodes.*.ipv4_address],
     ]
   )
 }
 
-resource "null_resource" "rpc-node-keys" {
-  count = length(local.rpc_node_ip_v4) > 0 ? 1 : 0
+resource "null_resource" "domain-node-keys" {
+  count = length(local.domain_node_ip_v4) > 0 ? 1 : 0
 
   # trigger on new ipv4 change for any instance since we would need to update reserved ips
   triggers = {
-    cluster_instance_ipv4s = join(",", local.rpc_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.domain_node_ip_v4)
   }
 
-  # generate rpc node keys
+  # generate domain node keys
   provisioner "local-exec" {
-    command     = "${var.path-to-scripts}/generate_node_keys.sh ${length(local.rpc_node_ip_v4)} ./rpc_node_keys.txt"
+    command     = "${var.path-to-scripts}/generate_node_keys.sh ${length(local.domain_node_ip_v4)} ./domain_node_keys.txt"
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      NODE_PUBLIC_IPS = join(",", local.rpc_node_ip_v4)
+      NODE_PUBLIC_IPS = join(",", local.domain_node_ip_v4)
     }
   }
 }
 
-resource "null_resource" "setup-rpc-nodes" {
-  count = length(local.rpc_node_ip_v4)
+resource "null_resource" "setup-domain-nodes" {
+  count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.rpc-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.rpc]
+  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain-rpc]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.rpc_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.domain_node_ip_v4)
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.domain_node_ip_v4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -66,16 +66,16 @@ resource "null_resource" "setup-rpc-nodes" {
 
 }
 
-resource "null_resource" "prune-rpc-nodes" {
-  count      = var.rpc-node-config.prune ? length(local.rpc_node_ip_v4) : 0
-  depends_on = [null_resource.setup-rpc-nodes]
+resource "null_resource" "prune-domain-nodes" {
+  count      = var.domain-node-config.prune ? length(local.domain_node_ip_v4) : 0
+  depends_on = [null_resource.setup-domain-nodes]
 
   triggers = {
-    prune = var.rpc-node-config.prune
+    prune = var.domain-node-config.prune
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.domain_node_ip_v4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -97,19 +97,19 @@ resource "null_resource" "prune-rpc-nodes" {
   }
 }
 
-resource "null_resource" "start-rpc-nodes" {
-  count = length(local.rpc_node_ip_v4)
+resource "null_resource" "start-domain-nodes" {
+  count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.setup-rpc-nodes, null_resource.boostrap-node-keys]
+  depends_on = [null_resource.setup-domain-nodes, null_resource.boostrap-node-keys]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
-    reserved_only      = var.rpc-node-config.reserved-only
+    deployment_version = var.domain-node-config.deployment-version
+    reserved_only      = var.domain-node-config.reserved-only
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[count.index]
+    host           = local.domain_node_ip_v4[count.index]
     user           = "root"
     type           = "ssh"
     agent          = true
@@ -119,7 +119,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   # copy node keys file
   provisioner "file" {
-    source      = "./rpc_node_keys.txt"
+    source      = "./domain_node_keys.txt"
     destination = "/subspace/node_keys.txt"
   }
 
@@ -143,7 +143,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_rpc_node_compose_file.sh"
+    source      = "${var.path-to-scripts}/create_domain_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"
   }
 
@@ -168,24 +168,25 @@ resource "null_resource" "start-rpc-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network-name}-rpc-node-${count.index}",
+      "hostnamectl set-hostname ${var.network-name}-domain-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.rpc-node-config.docker-org} > /subspace/.env",
-      "echo NODE_TAG=${var.rpc-node-config.docker-tag} >> /subspace/.env",
+      "echo NODE_ORG=${var.domain-node-config.docker-org} > /subspace/.env",
+      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /subspace/.env",
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
-      "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /subspace/.env",
+      "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
+      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index + 1}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
-      "echo NODE_DSN_PORT=${var.rpc-node-config.node-dsn-port} >> /subspace/.env",
+      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /subspace/.env",
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.rpc-node-config.enable-domains}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id}",
 
       # start subspace node
       "systemctl start subspace.service",
@@ -193,17 +194,17 @@ resource "null_resource" "start-rpc-nodes" {
   }
 }
 
-resource "null_resource" "inject-keystore" {
+resource "null_resource" "inject-domain-keystore" {
   # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.rpc_node_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-rpc-nodes]
+  count      = length(local.domain_node_ip_v4) > 0 ? 1 : 0
+  depends_on = [null_resource.start-domain-nodes]
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
+    deployment_version = var.domain-node-config.deployment-version
   }
 
   connection {
-    host           = local.rpc_node_ip_v4[0]
+    host           = local.domain_node_ip_v4[0]
     user           = "root"
     type           = "ssh"
     agent          = true

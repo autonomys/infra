@@ -18,11 +18,16 @@ output "do-rpc-node-ipv4-addresses" {
   description = "DO RPC node IPv4 Addresses"
 }
 
+output "do-domain-node-ipv4-addresses" {
+  value       = digitalocean_droplet.domain-nodes[*].ipv4_address
+  description = "DO Domain node IPv4 Addresses"
+}
+
 output "rpc-records" {
   value = [
     cloudflare_record.bootstrap[*].hostname,
     cloudflare_record.rpc[*].hostname,
     cloudflare_record.system-domain-rpc[*].hostname,
-    cloudflare_record.core-payments-domain-rpc[*].hostname
+    cloudflare_record.core-domain-rpc[*].hostname,
   ]
 }
