@@ -44,19 +44,19 @@ module "devnet" {
 
   domain-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 1
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.domain_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-06"
+    docker-tag          = "snapshot-2023-may-06"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
     enable-domains      = true
     domain-id           = var.domain_id
-    domain-labels        = var.domain_labels
+    domain-labels       = var.domain_labels
   }
 
   farmer-node-config = {
@@ -71,7 +71,7 @@ module "devnet" {
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
 
   }
