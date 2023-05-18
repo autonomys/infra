@@ -27,7 +27,7 @@ resource "null_resource" "domain-node-keys" {
 resource "null_resource" "setup-domain-nodes" {
   count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain-rpc]
+  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain]
 
   # trigger on node ip changes
   triggers = {
