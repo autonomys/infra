@@ -100,12 +100,11 @@ for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> /subspace/docker-compose.yml
 done
 
-
-if [ "${reserved_only}" == true ]; then
+if [ ${reserved_only} == true ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 
-if [ "${enable_domains}" == true ]; then
+if [ ${enable_domains} == true ]; then
     {
     # system domain
       echo '      "--",'
@@ -128,8 +127,8 @@ if [ "${enable_domains}" == true ]; then
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo '      "--domain-id=\${DOMAIN_ID}\",'
-      echo '      "--base-path", "/var/subspace/core_\${DOMAIN_LABEL}_domain",'
+      echo "      \"--domain-id=\${DOMAIN_ID}\","
+      echo "      \"--base-path", "/var/subspace/core_\${DOMAIN_LABEL}_domain\","
       echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "7933",'

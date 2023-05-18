@@ -27,7 +27,7 @@ resource "null_resource" "domain-node-keys" {
 resource "null_resource" "setup-domain-nodes" {
   count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain-rpc]
+  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain]
 
   # trigger on node ip changes
   triggers = {
@@ -188,7 +188,7 @@ resource "null_resource" "start-domain-nodes" {
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[count.index]}",
 
       # start subspace node
       "systemctl start subspace.service",

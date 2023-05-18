@@ -33,9 +33,16 @@ variable "farmer-reward-address" {
 
 variable "domain_id" {
   description = "Domain ID"
-  type        = number
-  default     = 3
+  type        = list(number)
+  default     = [1, 2, 3]
 }
+
+variable "domain_labels" {
+  description = "Tag of the domain to run"
+  type        = list(string)
+  default     = ["payments", "evm"]
+}
+
 
 variable "bootstrap_node_ips" {
   description = "IP of boostrap node"

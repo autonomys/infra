@@ -13,14 +13,9 @@ output "do-bootstrap-node-ipv4-addresses" {
   description = "DO Bootstrap node IPv4 Addresses"
 }
 
-output "domain-node-ipv4-addresses" {
-  value       = var.domain_node_ips
-  description = "domain node IPv4 Addresses"
-}
-
-output "rpc-records" {
-  value       = module.gemini-3d.rpc-records
-  description = "RPC records"
+output "do-domain-node-ipv4-addresses" {
+  value       = module.devnet.do-domain-node-ipv4-addresses
+  description = "DO Domain node IPv4 Addresses"
 }
 
 output "rpc-records" {
