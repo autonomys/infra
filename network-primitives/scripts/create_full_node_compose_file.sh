@@ -69,7 +69,14 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
-if [ "${reserved_only}" == "true" ]; then
+
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> /subspace/docker-compose.yml
+done
+
+
+if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 

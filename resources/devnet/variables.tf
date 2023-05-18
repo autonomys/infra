@@ -34,5 +34,35 @@ variable "farmer-reward-address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = number
-  default     = 1
+  default     = 3
+}
+
+variable "bootstrap_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "full_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "rpc_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "domain_node_ips" {
+  description = "IP of domain node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "farmer_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
 }

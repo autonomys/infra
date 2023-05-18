@@ -4,10 +4,10 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 9
+    deployment-version  = 10
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_bootstrap_node_ips
+    additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
@@ -16,39 +16,57 @@ module "gemini-3d" {
     dsn-listen-port     = 50001
     node-dsn-port       = 30434
   }
+
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 6
+    deployment-version  = 7
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_full_node_ips
+    additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-may-15"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
   }
+
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 6
+    deployment-version  = 7
     regions             = []
     nodes-per-region    = 0
-    additional-node-ips = var.hetzner_rpc_node_ips
+    additional-node-ips = var.rpc_node_ips
     docker-org          = "subspace"
     docker-tag          = "gemini-3d-2023-may-15"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = false
-    domain-id           = var.domain_id
   }
+
+  domain-node-config = {
+    droplet_size        = var.droplet-size
+    deployment-version  = 1
+    regions             = []
+    nodes-per-region    = 0
+    additional-node-ips = var.domain_node_ips
+    docker-org          = "subspace"
+    docker-tag          = "gemini-3d-2023-may-15"
+    domain-prefix       = "eu"
+    reserved-only       = false
+    prune               = false
+    node-dsn-port       = 30434
+    enable-domains      = true
+    domain-id           = var.domain_id
+    domain-labels        = var.domain_labels
+  }
+
   farmer-node-config = {
     droplet_size           = var.droplet-size
     deployment-version     = 1
     regions                = []
     nodes-per-region       = 0
-    additional-node-ips    = []
+    additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
     docker-tag             = "gemini-3d-2023-may-15"
     reserved-only          = false

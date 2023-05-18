@@ -26,21 +26,6 @@ variable "droplet-size" {
   default     = "m6-2vcpu-16gb"
 }
 
-variable "hetzner_bootstrap_node_ips" {
-  description = "Hetzner bootstrap ip v4"
-  type        = list(string)
-}
-
-variable "hetzner_full_node_ips" {
-  description = "Hetzner full node ip v4"
-  type        = list(string)
-}
-
-variable "hetzner_rpc_node_ips" {
-  description = "Hetzner rpc node ip v4"
-  type        = list(string)
-}
-
 variable "farmer-reward-address" {
   description = "Farmer's reward address"
   type        = string
@@ -48,6 +33,43 @@ variable "farmer-reward-address" {
 
 variable "domain_id" {
   description = "Domain ID"
-  type        = number
-  default     = 1
+  type        = list(number)
+  default     = [1, 2, 3]
+}
+
+variable "domain_labels" {
+  description = "Tag of the domain to run"
+  type        = list(string)
+  default     = ["payments", "evm"]
+}
+
+
+variable "bootstrap_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "full_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "rpc_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "domain_node_ips" {
+  description = "IP of domain node"
+  type        = list(string)
+  default     = [""]
+}
+
+variable "farmer_node_ips" {
+  description = "IP of boostrap node"
+  type        = list(string)
+  default     = [""]
 }

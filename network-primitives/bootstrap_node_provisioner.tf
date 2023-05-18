@@ -24,6 +24,24 @@ resource "null_resource" "boostrap-node-keys" {
   }
 }
 
+resource "null_resource" "dsn-boostrap-node-keys" {
+  count = length(local.bootstrap_nodes_ip_v4) > 0 ? 1 : 0
+
+  # trigger on new ipv4 change for any instance since we would need to update reserved ips
+  triggers = {
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
+  }
+
+  # generate node keys
+  provisioner "local-exec" {
+    command     = "${var.path-to-scripts}/generate_dsn_node_keys.sh ${length(local.bootstrap_nodes_ip_v4)} ./dsn_bootstrap_node_keys.txt"
+    interpreter = ["/bin/bash", "-c"]
+    environment = {
+      NODE_PUBLIC_IPS = join(",", local.bootstrap_nodes_ip_v4)
+    }
+  }
+}
+
 resource "null_resource" "setup-bootstrap-nodes" {
   count = length(local.bootstrap_nodes_ip_v4)
 
@@ -117,19 +135,19 @@ resource "null_resource" "start-boostrap-nodes" {
     timeout        = "30s"
   }
 
-  # copy node keys file
+  # copy bootstrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
     destination = "/subspace/node_keys.txt"
   }
 
-  # copy boostrap node keys file
+  # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
     destination = "/subspace/dsn_bootstrap_node_keys.txt"
   }
 
-  # copy compose creation file
+  # copy compose file creation script
   provisioner "file" {
     source      = "${var.path-to-scripts}/create_bootstrap_node_compose_file.sh"
     destination = "/subspace/create_compose_file.sh"

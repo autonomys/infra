@@ -69,6 +69,7 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
+dsn_bootstrap_node_count=${4}
 force_block_production=${5}
 
 for (( i = 0; i < node_count; i++ )); do
@@ -86,11 +87,16 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
 done
 
-if [ "${reserved_only}" == "true" ]; then
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> /subspace/docker-compose.yml
+done
+
+if [ "${reserved_only}" == true ]; then
   echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
 fi
 
-if [ "${force_block_production}" == "true" ]; then
+if [ "${force_block_production}" == true ]; then
   echo "      \"--force-synced\"," >> /subspace/docker-compose.yml
   echo "      \"--force-authoring\"," >> /subspace/docker-compose.yml
 fi

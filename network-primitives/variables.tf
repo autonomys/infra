@@ -49,8 +49,26 @@ variable "rpc-node-config" {
     reserved-only       = bool
     prune               = bool
     node-dsn-port       = number
+  })
+}
+
+variable "domain-node-config" {
+  description = "Domain node deployment config"
+  type = object({
+    droplet_size        = string
+    deployment-version  = number
+    regions             = list(string)
+    nodes-per-region    = number
+    additional-node-ips = list(string)
+    docker-org          = string
+    docker-tag          = string
+    domain-prefix       = string
+    reserved-only       = bool
+    prune               = bool
+    node-dsn-port       = number
     enable-domains      = bool
-    domain-id           = number
+    domain-id           = list(number)
+    domain-labels       = list(string)
   })
 }
 

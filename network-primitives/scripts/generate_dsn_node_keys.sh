@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker pull ghcr.io/subspace/node:gemini-3d-2023-may-15
+docker pull ghcr.io/subspace/bootstrap-node:gemini-3d-2023-may-15-aarch64
 node_count=${1}
 output_file=${2}
 port=${3:-30333}
@@ -13,7 +13,7 @@ ips=( ${ips} )
 echo -n > "${output_file}"
 echo "Generating node keys..."
 for (( i = 0; i < node_count; i++ )); do
-    data="$(docker run --rm ghcr.io/subspace/node:gemini-3d-2023-may-15 key generate-node-key 2>&1)"
+    data="$(docker run --rm "ghcr.io/subspace/bootstrap-node:gemini-3d-2023-may-15-aarch64" generate-keypair 2>&1)"
     peer_id=$(echo "$data" | sed '2q;d')
     node_key=$(echo "$data" | sed '3q;d')
     {
