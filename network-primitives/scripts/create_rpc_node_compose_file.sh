@@ -48,11 +48,6 @@ services:
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
       caddy_0.handle_path_1: /ws
       caddy_0.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
-      caddy_1: \${DOMAIN_PREFIX}-\${NODE_ID}.system.\${NETWORK_NAME}.subspace.network
-      caddy_1.handle_path_0: /http
-      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
-      caddy_1.handle_path_1: /ws
-      caddy_1.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -78,7 +73,6 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
-enable_domains=${5}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
@@ -102,25 +96,6 @@ done
 
 if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
-fi
-
-if [ "${enable_domains}" == true ]; then
-    {
-    # system domain
-      echo '      "--",'
-      echo "      \"--chain=\$NETWORK_NAME\","
-      echo '      "--validator",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--base-path", "/var/subspace/system_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "8933",'
-      echo '      "--ws-port", "8944",'
-      echo '      "--no-private-ipv4",'
-      echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_SYSTEM_ID\","
-    }  >> /subspace/docker-compose.yml
 fi
 
 echo '    ]' >> /subspace/docker-compose.yml

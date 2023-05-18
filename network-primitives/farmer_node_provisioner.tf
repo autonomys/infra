@@ -156,7 +156,7 @@ resource "null_resource" "start-farmer-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.farmer-node-config.domain-prefix}-${count.index}.${var.network-name}-farmer-node",
+      "hostnamectl set-hostname ${var.network-name}-farmer-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.farmer-node-config.docker-org} > /subspace/.env",

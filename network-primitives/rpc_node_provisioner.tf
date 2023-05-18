@@ -168,7 +168,7 @@ resource "null_resource" "start-rpc-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.rpc-node-config.domain-prefix}-${count.index}.${var.network-name}-rpc-node",
+      "hostnamectl set-hostname ${var.network-name}-rpc-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.rpc-node-config.docker-org} > /subspace/.env",
@@ -177,7 +177,6 @@ resource "null_resource" "start-rpc-nodes" {
       "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
-      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",
       "echo DATADOG_API_KEY=${var.datadog_api_key} >> /subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /subspace/.env",
       "echo NODE_DSN_PORT=${var.rpc-node-config.node-dsn-port} >> /subspace/.env",
@@ -185,7 +184,7 @@ resource "null_resource" "start-rpc-nodes" {
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
       "sudo chmod +x /usr/bin/subspace",
-      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.rpc-node-config.enable-domains}",
+      "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
 
       # start subspace node
       "systemctl start subspace.service",

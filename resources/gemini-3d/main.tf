@@ -42,7 +42,6 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = false
   }
 
   domain-node-config = {
@@ -57,7 +56,7 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
-    enable-domains      = false
+    enable-domains      = true
     domain-id           = var.domain_id
     domain-labels        = var.domain_labels
   }

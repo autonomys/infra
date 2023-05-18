@@ -168,7 +168,7 @@ resource "null_resource" "start-domain-nodes" {
       "systemctl reenable subspace.service",
 
       # set hostname
-      "hostnamectl set-hostname ${var.domain-node-config.domain-prefix}-${count.index}.${var.network-name}-domain-node",
+      "hostnamectl set-hostname ${var.network-name}-domain-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.domain-node-config.docker-org} > /subspace/.env",
@@ -176,6 +176,7 @@ resource "null_resource" "start-domain-nodes" {
       "echo NETWORK_NAME=${var.network-name} >> /subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /subspace/.env",
       "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[count.index]} >> /subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[count.index]} >> /subspace/.env",
       "echo NODE_ID=${count.index} >> /subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /subspace/node_keys.txt) >> /subspace/.env",
       "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' /subspace/relayer_ids.txt) >> /subspace/.env",

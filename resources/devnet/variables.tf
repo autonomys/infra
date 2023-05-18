@@ -55,6 +55,12 @@ variable "rpc_node_ips" {
   default     = [""]
 }
 
+variable "domain_node_ips" {
+  description = "IP of domain node"
+  type        = list(string)
+  default     = [""]
+}
+
 variable "farmer_node_ips" {
   description = "IP of boostrap node"
   type        = list(string)
