@@ -4,7 +4,7 @@ module "gemini-3d" {
   network-name    = "gemini-3d"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 10
+    deployment-version  = 8
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.bootstrap_node_ips
@@ -19,7 +19,7 @@ module "gemini-3d" {
 
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 7
+    deployment-version  = 8
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.full_node_ips
@@ -32,7 +32,7 @@ module "gemini-3d" {
 
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 7
+    deployment-version  = 8
     regions             = []
     nodes-per-region    = 0
     additional-node-ips = var.rpc_node_ips

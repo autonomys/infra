@@ -53,6 +53,7 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
+dsn_bootstrap_node_count=${4}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
