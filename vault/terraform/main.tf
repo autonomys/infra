@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "vault_storage" {
-  bucket = "vault-subspace-network"
+  bucket        = "vault-subspace-network"
   force_destroy = true
-#  acl = "private"
+  #  acl = "private"
   depends_on = [
     aws_iam_user.vault,
     aws_kms_key.vault
@@ -13,10 +13,10 @@ resource "aws_s3_bucket" "vault_storage" {
   }
 }
 
-resource "aws_s3_bucket_acl" "acl_vault_storage" {
-  bucket = aws_s3_bucket.vault_storage.id
-  acl    = "private"
-}
+# resource "aws_s3_bucket_acl" "acl_vault_storage" {
+#   bucket = aws_s3_bucket.vault_storage.id
+#   acl    = "private"
+# }
 
 resource "aws_s3_bucket_versioning" "versioning_vault_storage" {
   bucket = aws_s3_bucket.vault_storage.id
@@ -35,6 +35,34 @@ resource "aws_iam_user" "vault" {
 
 resource "aws_iam_access_key" "vault" {
   user = aws_iam_user.vault.name
+}
+
+resource "aws_iam_instance_profile" "vault" {
+  name = "vault-instance-profile"
+  role = aws_iam_role.vault.name
+}
+
+resource "aws_iam_role" "vault" {
+  name               = "vault-role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "vault" {
+  role       = aws_iam_role.vault.name
+  policy_arn = aws_iam_policy.vault.arn
 }
 
 resource "aws_iam_policy" "vault" {
@@ -66,19 +94,19 @@ resource "aws_iam_policy" "vault" {
       "Resource": "arn:aws:s3:::${aws_s3_bucket.vault_storage.bucket}/*"
     },
     {
+      "Effect": "Allow",
       "Action": [
         "kms:Decrypt",
         "kms:Encrypt",
         "kms:GenerateDataKey*",
         "kms:DescribeKey"
       ],
-      "Effect": "Allow",
       "Resource": "*"
     },
     {
-      "Action": "sts:AssumeRole",
       "Effect": "Allow",
-      "Sid": ""
+      "Action": "sts:AssumeRole",
+      "Resource": "*"
     }
   ]
 }
@@ -112,20 +140,21 @@ resource "aws_security_group_rule" "vault_http" {
 }
 
 resource "aws_instance" "vault" {
-  ami           = data.aws_ami.ubuntu_x86.id # Update with the desired Vault AMI ID
-  instance_type = var.vault_instance_type       # Update with the desired instance type
-  key_name      = var.ssh_key_name              # Update with your SSH key pair
-  subnet_id     = aws_subnet.vault_subnet.id
-  availability_zone = var.aws_az
+  ami                         = data.aws_ami.ubuntu_x86.id # Update with the desired Vault AMI ID
+  instance_type               = var.vault_instance_type    # Update with the desired instance type
+  key_name                    = var.ssh_key_name           # Update with your SSH key pair
+  subnet_id                   = aws_subnet.vault_subnet.id
+  availability_zone           = var.aws_az
+  associate_public_ip_address = true
 
   # Attach the IAM role to the instance
-  iam_instance_profile = aws_iam_user.vault.arn
+  iam_instance_profile = aws_iam_instance_profile.vault.name
 
   vpc_security_group_ids = [aws_security_group.vault_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
-              sudo apt-get install -y nginx unzip
+              sudo apt-get install -y nginx unzip certbot
               cat <<EOF-n > /etc/nginx/conf.d/vault.conf
               server {
                 listen 80;
@@ -139,6 +168,7 @@ resource "aws_instance" "vault" {
                 }
               }
               EOF-n
+              sudo certbot nginx --non-interactive --agree-tos --email alert@subspace.network -d vault.subspace.network
               sudo systemctl restart nginx
               echo "export VAULT_ADDR=http://localhost:8200" >> /etc/environment
               echo "export VAULT_SKIP_VERIFY=true" >> /etc/environment
