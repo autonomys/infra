@@ -14,12 +14,15 @@ variable "aws_az" {
   default     = "us-east-2a"
 }
 
+variable vault_version {
+  type = string
+  default = "1.13.2"
+}
 variable "vault_admin_token" {
   description = "The region to run the AWS resources"
   type        = string
   default     = ""
 }
-
 
 variable "ssh_key_name" {
   description = "The name of an EC2 Key Pair that can be used to SSH to the EC2 Instances in this cluster. Set to an empty string to not associate a Key Pair."
@@ -27,7 +30,7 @@ variable "ssh_key_name" {
   default     = "deployer"
 }
 
-variable "public_key_path" {
+variable "private_key_path" {
   type    = string
   default = ""
 }

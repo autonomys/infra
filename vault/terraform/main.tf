@@ -1,7 +1,6 @@
 resource "aws_s3_bucket" "vault_storage" {
   bucket        = "vault-subspace-network"
   force_destroy = true
-  #  acl = "private"
   depends_on = [
     aws_iam_user.vault,
     aws_kms_key.vault
@@ -12,11 +11,6 @@ resource "aws_s3_bucket" "vault_storage" {
     prevent_destroy = false
   }
 }
-
-# resource "aws_s3_bucket_acl" "acl_vault_storage" {
-#   bucket = aws_s3_bucket.vault_storage.id
-#   acl    = "private"
-# }
 
 resource "aws_s3_bucket_versioning" "versioning_vault_storage" {
   bucket = aws_s3_bucket.vault_storage.id
@@ -139,6 +133,11 @@ resource "aws_security_group_rule" "vault_http" {
   cidr_blocks       = ["0.0.0.0/0"] # Restrict the CIDR block as needed
 }
 
+# Read private key file and assign it to a variable
+data "local_file" "private_key" {
+  filename = var.private_key_path
+}
+
 resource "aws_instance" "vault" {
   ami                         = data.aws_ami.ubuntu_x86.id # Update with the desired Vault AMI ID
   instance_type               = var.vault_instance_type    # Update with the desired instance type
@@ -152,55 +151,56 @@ resource "aws_instance" "vault" {
 
   vpc_security_group_ids = [aws_security_group.vault_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo apt-get install -y nginx unzip certbot
-              cat <<EOF-n > /etc/nginx/conf.d/vault.conf
-              server {
-                listen 80;
-                server_name vault.subspace.network;
-                location / {
-                  proxy_pass http://127.0.0.1:8200;
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                }
-              }
-              EOF-n
-              sudo certbot nginx --non-interactive --agree-tos --email alert@subspace.network -d vault.subspace.network
-              sudo systemctl restart nginx
-              echo "export VAULT_ADDR=http://localhost:8200" >> /etc/environment
-              echo "export VAULT_SKIP_VERIFY=true" >> /etc/environment
-              echo "export vault_storage=s3" >> /etc/environment
-              echo "export VAULT_BUCKET=${aws_s3_bucket.vault_storage.bucket}" >> /etc/environment
-              echo "export VAULT_BUCKET_REGION=${var.aws_region}" >> /etc/environment
-              echo "export AWS_ACCESS_KEY_ID=${aws_iam_access_key.vault.id}" >> /etc/environment
-              echo "export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.vault.secret}" >> /etc/environment
-              echo "export VAULT_KMS_KEY_ID=${aws_kms_alias.vault.target_key_id}" >> /etc/environment
-              echo "export VAULT_TLS_DISABLE=true" >> /etc/environment
-
-              curl -LO https://releases.hashicorp.com/vault/1.13.2/vault_1.13.2_linux_amd64.zip
-              unzip vault_1.13.2_linux_amd64.zip
-              mv vault /usr/local/bin/
-              chmod +x /usr/local/bin/vault
-              # Configure Vault server
-              cat > vault-config.hcl <<EOF2
-              storage "s3" {
-                bucket      = "${aws_s3_bucket.vault_storage.bucket}"
-                region      = "${var.aws_region}"  # Replace with your desired region
-                access_key  = "${aws_iam_access_key.vault.id}"
-                secret_key  = "${aws_iam_access_key.vault.secret}"
-              }
-              listener "tcp" {
-                address     = "127.0.0.1:8200"
-                tls_disable = 1
-              }
-              EOF2
-              nohup vault server -config=/etc/vault-config/vault.hcl &
-              EOF
-
   tags = {
     Name = "vault-server"
+  }
+
+  provisioner "remote-exec" {
+  inline = [
+    "export DEBIAN_FRONTEND=noninteractive",
+    "sudo apt update -y",
+    "sudo apt upgrade -y",
+    "sudo apt install git curl wget gnupg openssl make build-essential jq net-tools unzip nginx certbot python3-certbot-nginx -y",
+    "sudo bash -c 'cat <<EOF > /etc/nginx/conf.d/vault.conf",
+    "server {",
+    "  listen 80;",
+    "  server_name vault.subspace.network;",
+    "  location / {",
+    "    proxy_pass http://127.0.0.1:8200;",
+    "    proxy_set_header Host $host;",
+    "    proxy_set_header X-Real-IP $remote_addr;",
+    "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+    "    proxy_set_header X-Forwarded-Proto $scheme;",
+    "  }",
+    "}",
+    "EOF'",
+    "sudo systemctl restart nginx",
+    "echo 'export VAULT_ADDR=http://localhost:8200' | sudo tee -a /etc/environment",
+    "echo 'export VAULT_SKIP_VERIFY=true' | sudo tee -a /etc/environment",
+    "echo 'export vault_storage=s3' | sudo tee -a /etc/environment",
+    "echo 'export VAULT_BUCKET=${aws_s3_bucket.vault_storage.bucket}' | sudo tee -a /etc/environment",
+    "echo 'export VAULT_BUCKET_REGION=${var.aws_region}' | sudo tee -a /etc/environment",
+    "echo 'export AWS_ACCESS_KEY_ID=${aws_iam_access_key.vault.id}' | sudo tee -a /etc/environment",
+    "echo 'export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.vault.secret}' | sudo tee -a /etc/environment",
+    "echo 'export VAULT_KMS_KEY_ID=${aws_kms_alias.vault.target_key_id}' | sudo tee -a /etc/environment",
+    "echo 'export VAULT_TLS_DISABLE=true' | sudo tee -a /etc/environment",
+    "curl -LO https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
+    "unzip vault_${var.vault_version}_linux_amd64.zip",
+    "sudo mv vault /usr/local/bin/",
+    "sudo chmod +x /usr/local/bin/vault",
+    "sudo nohup vault server -config=/etc/vault-config/vault.hcl &",
+    "echo 'Installation complete'"
+  ]
+
+    on_failure = continue
+
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = data.local_file.private_key.content
+    host        = self.public_ip
+    timeout     = "90s"
   }
 }
