@@ -129,6 +129,22 @@ resource "aws_security_group" "allow_runner" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "WinRM for VPC"
+    from_port   = 5985
+    to_port     = 5985
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "RDP for VPC"
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "egress for VPC"
     from_port   = 0
