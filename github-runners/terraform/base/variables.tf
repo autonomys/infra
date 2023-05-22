@@ -20,17 +20,17 @@ variable "netdata_room" {
 
 variable "gh_runner_version" {
   type    = string
-  default = ""
+  default = "2.304.0"
 }
 
 variable "gh_runner_checksums" {
   type = map(string)
   default = {
-    linux_x86_64   = "",
-    linux_arm64    = "",
-    mac_x86_64     = "",
-    mac_arm64      = "",
-    windows_x86_64 = ""
+    linux_x86_64   = "292e8770bdeafca135c2c06cd5426f9dda49a775568f45fcc25cc2b576afc12f",
+    linux_arm64    = "34c49bd0e294abce6e4a073627ed60dc2f31eee970c13d389b704697724b31c6",
+    mac_x86_64     = "26dddab8eafc193bb8b27afc5844ff3a6f789a655aca5bf79b018493963681a7",
+    mac_arm64      = "789fc57af2f0819d470fcc447e2970f201cfc8aa1d803d4e5b748ec4c5d10db8",
+    windows_x86_64 = "fbbddd2f94b195dde46aa6028acfe873351964c502aa9f29bb64e529b789500b"
   }
 }
 
@@ -57,7 +57,7 @@ variable "vpc_id" {
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-2a", "us-east-2b"]
+  default     = ["us-east-2b", "us-east-1a"]
 }
 
 variable "instance_count" {
@@ -68,7 +68,7 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-east-2"]
 }
 
 variable "public_subnet_cidrs" {
