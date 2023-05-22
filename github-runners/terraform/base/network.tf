@@ -183,39 +183,3 @@ resource "aws_nat_gateway" "nat_gateway" {
     Name = "public-subnet-nat-GTW-${count.index}"
   }
 }
-
-# resource "aws_network_interface" "server_nic" {
-#   count     = length(var.public_subnet_cidrs)
-#   subnet_id = element(aws_subnet.public_subnets.*.id, count.index)
-#   private_ips     = ["172.31.1.17", "172.31.1.18", "172.31.1.19"]
-#   security_groups = [aws_security_group.allow_runner.id]
-
-#   depends_on = [
-#     aws_security_group.allow_runner,
-#   ]
-
-#   lifecycle {
-#     prevent_destroy = false
-#   }
-# }
-
-# resource "aws_eip" "server_eip" {
-#   count                     = length(var.public_subnet_cidrs)
-#   network_interface         = element(aws_network_interface.server_nic.*.id, count.index)
-# #  instance                  = aws_instance.linux_x86_64_runner[count.index].id
-#   vpc                       = true
-#   associate_with_private_ip = aws_network_interface.server_nic.*.private_ip[count.index]
-
-#   depends_on = [
-#     aws_internet_gateway.gw,
-#     aws_network_interface.server_nic,
-#     aws_instance.linux_x86_64_runner
-#   ]
-
-#   tags = {
-#     "Name" = "gh-runner-public-server-eip"
-#   }
-#   lifecycle {
-#     prevent_destroy = false
-#   }
-# }

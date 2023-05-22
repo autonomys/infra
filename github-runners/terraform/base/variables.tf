@@ -1,35 +1,35 @@
 variable "gh_token" {
-  default = ""
-  type    = string
+  default   = ""
+  type      = string
   sensitive = true
 }
 
 variable "netdata_token" {
-  default = ""
-  type    = string
+  default   = ""
+  type      = string
   sensitive = true
 
 }
 
 variable "netdata_room" {
-  default = ""
-  type    = string
+  default   = ""
+  type      = string
   sensitive = true
 
 }
 
 variable "gh_runner_version" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "gh_runner_checksums" {
   type = map(string)
   default = {
-    linux_x86_64 = "",
-    linux_arm64 = "",
-    mac_x86_64 = "",
-    mac_arm64 = "",
+    linux_x86_64   = "",
+    linux_arm64    = "",
+    mac_x86_64     = "",
+    mac_arm64      = "",
     windows_x86_64 = ""
   }
 }
@@ -105,14 +105,14 @@ variable "public_key_path" {
 }
 
 variable "win_admin_username" {
-  default = "default"
-  type    = string
+  default   = "default"
+  type      = string
   sensitive = true
 }
 
 
 variable "win_admin_password" {
-  default = "default"
-  type    = string
+  default   = "default"
+  type      = string
   sensitive = true
 }
