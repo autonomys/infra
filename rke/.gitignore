@@ -1,0 +1,26 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# terraform.tvars
+terraform.tfvars
+
+# known files created by terraform modules
+id_rsa*
+kube_config*
+
+# vagrant files
+.vagrant/
+vagrant/local_config.yaml
+
+# MacOS junk
+.DS_Store
+
+# Terraform plan files
+*.tfplan
