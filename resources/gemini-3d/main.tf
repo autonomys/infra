@@ -9,7 +9,7 @@ module "gemini-3d" {
     nodes-per-region    = 0
     additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-15"
+    docker-tag          = "gemini-3d-2023-may-23"
     reserved-only       = false
     prune               = false
     genesis-hash        = "0x7f489750cfe91e17fc19b42a5acaba41d1975cedd3440075d4a4b4171ad0ac20"
@@ -24,7 +24,7 @@ module "gemini-3d" {
     nodes-per-region    = 0
     additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-15"
+    docker-tag          = "gemini-3d-2023-may-23"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30434
@@ -37,7 +37,7 @@ module "gemini-3d" {
     nodes-per-region    = 0
     additional-node-ips = var.rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-15"
+    docker-tag          = "gemini-3d-2023-may-23"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
@@ -51,7 +51,7 @@ module "gemini-3d" {
     nodes-per-region    = 0
     additional-node-ips = var.domain_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-15"
+    docker-tag          = "gemini-3d-2023-may-23"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
@@ -68,7 +68,7 @@ module "gemini-3d" {
     nodes-per-region       = 0
     additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
-    docker-tag             = "gemini-3d-2023-may-15"
+    docker-tag             = "gemini-3d-2023-may-23"
     reserved-only          = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
