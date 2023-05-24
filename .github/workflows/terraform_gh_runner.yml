@@ -50,12 +50,9 @@ jobs:
             # Store the token as a secret in GitHub Actions
             gh secret set RUNNER_TOKEN -r "$repo" -b "$runner_token"
 
-            # Print the token
-            echo "GitHub Actions Runner Token: $runner_token"
-
       - name: Run Terraform
         working-directory: ./github-runners/terraform/base
         run: |
           terraform init-backend-config="organization=${{ secrets.ORGANIZATION_NAME }}" -backend-config="workspaces=${{ secrets.WORKSPACE_NAME }}"
-          terraform plan
+          terraform plan -var-file=${{ secrets.VAR_FILE }}
           terraform apply -auto-approve -var "gh_token=${{ secrets.RUNNER_TOKEN }}"

@@ -21,6 +21,3 @@ export RUNNER_TOKEN="$runner_token"
 
 # Store the token as a secret in GitHub Actions
 gh secret set RUNNER_TOKEN -r "$repo" -b "$runner_token"
-
-# Print the token
-echo "GitHub Actions Runner Token: $runner_token"

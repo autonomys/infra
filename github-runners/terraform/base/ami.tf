@@ -16,7 +16,7 @@ data "aws_ami" "ubuntu_x86_64" {
     values = ["x86_64"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["099720109477"]
 }
 
 data "aws_ami" "ubuntu_arm64" {
@@ -37,7 +37,7 @@ data "aws_ami" "ubuntu_arm64" {
     values = ["arm64"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["099720109477"]
 }
 
 
@@ -59,7 +59,7 @@ data "aws_ami" "mac_x86_64" {
     values = ["x86_64_mac"]
   }
 
-  owners = ["634519214787"] # Apple
+  owners = ["634519214787"]
 }
 
 
@@ -81,7 +81,7 @@ data "aws_ami" "mac_arm64" {
     values = ["arm64_mac"]
   }
 
-  owners = ["634519214787"] # Apple
+  owners = ["634519214787"]
 }
 
 
@@ -98,5 +98,5 @@ data "aws_ami" "windows_x86_64" {
     values = ["hvm"]
   }
 
-  owners = ["801119661308"] # Microsoft
+  owners = ["801119661308"]
 }

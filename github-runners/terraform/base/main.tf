@@ -48,15 +48,14 @@ resource "aws_instance" "linux_x86_64_runner" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl make build-essential jq net-tools -y",
-      "sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly -y",
+      "sudo apt install git curl wget gnupg openssl net-tools -y",
       # Download runner image
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-linux-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
       "echo '${lookup(var.gh_runner_checksums, "linux_x86_64", "")} actions-runner-linux-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
       # configure runner
-      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name linux_x86_64 --labels 'self-hosted,Linux,X64' --work _work --runasservice",
+      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name linux_x86_64 --labels 'self-hosted,Linux,x86_64' --work _work --runasservice",
       "sudo ./svc.sh install",
       "sudo ./svc.sh start",
       "sudo ./svc.sh status",
@@ -129,7 +128,7 @@ resource "aws_instance" "linux_arm64_runner" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl make build-essential jq net-tools -y",
+      "sudo apt install git curl wget gnupg openssl net-tools -y",
       # Download runner image
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz",
@@ -177,7 +176,7 @@ resource "aws_instance" "mac_x86_64_runner" {
     os_name    = "macos"
     os_version = "12"
     os_name    = "Monterey"
-    arch       = "x86"
+    arch       = "x86_64"
   }
 
   depends_on = [
@@ -210,7 +209,7 @@ resource "aws_instance" "mac_x86_64_runner" {
       "curl -o actions-runner-osx-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
       "echo '${lookup(var.gh_runner_checksums, "mac_x86_64", "")} actions-runner-osx-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
-      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name mac_x86_64 --labels 'self-hosted,MacOS,X64' --work _work --runasservice",
+      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name mac_x86_64 --labels 'self-hosted,MacOS,x86_64' --work _work --runasservice",
       "sudo ./run.sh",
       "curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
     ]
@@ -321,7 +320,7 @@ resource "aws_instance" "windows_x86_64_runner" {
     role       = "runner"
     os_name    = "windows"
     os_version = "Microsoft Windows Server 2022 "
-    arch       = "x86"
+    arch       = "x86_64"
   }
 
   depends_on = [
@@ -361,7 +360,7 @@ resource "aws_instance" "windows_x86_64_runner" {
       "if((Get-FileHash -Path actions-runner-win-x64-${var.gh_runner_version}.zip -Algorithm SHA256).Hash.ToUpper() -ne '${lookup(var.gh_runner_checksums, "windows_x86_64", "")}'.ToUpper()){ throw 'Computed checksum did not match' }",
       "Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$PWD/actions-runner-win-x64-${var.gh_runner_version}.zip\", \"$PWD\")",
       # configure runner
-      "./config.cmd --url https://github.com/subspace --token ${var.gh_token} --unattended --name windows_x86_64 --labels 'self-hosted,Linux,X64' --work _work --runasservice",
+      "./config.cmd --url https://github.com/subspace --token ${var.gh_token} --unattended --name windows_x86_64 --labels 'self-hosted,Windows,x86_64' --work _work --runasservice",
       "./run.cmd",
     ]
 
