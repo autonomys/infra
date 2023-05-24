@@ -1,14 +1,8 @@
 # Variables for AWS infrastructure module
-
-// TODO - use null defaults
-
-# Required
 variable "aws_access_key" {
   type        = string
   description = "AWS access key used to create infrastructure"
 }
-
-# Required
 variable "aws_secret_key" {
   type        = string
   description = "AWS secret key used to create AWS infrastructure"
@@ -41,30 +35,30 @@ variable "prefix" {
 variable "instance_type" {
   type        = string
   description = "Instance type used for all EC2 instances"
-  default     = "t3a.medium"
+  default     = "m6i.xlarge"
 }
 
 variable "rancher_kubernetes_version" {
   type        = string
   description = "Kubernetes version to use for Rancher server cluster"
-  default     = "v1.24.13+k3s1"
+  default     = "v1.26.4+k3s1"
 }
 
 variable "workload_kubernetes_version" {
   type        = string
   description = "Kubernetes version to use for managed workload cluster"
-  default     = "v1.24.13+rke2r1"
+  default     = "v1.27.1+rke2r1"
 }
 
 variable "cert_manager_version" {
   type        = string
-  description = "Version of cert-manager to install alongside Rancher (format: 0.0.0)"
-  default     = "1.10.0"
+  description = "Version of cert-manager to install alongside Rancher"
+  default     = "1.11.0"
 }
 
 variable "rancher_version" {
   type        = string
-  description = "Rancher server version (format: v0.0.0)"
+  description = "Rancher server version"
   default     = "2.7.3"
 }
 
@@ -73,8 +67,6 @@ variable "rancher_helm_repository" {
   description = "The helm repository, where the Rancher helm chart is installed from"
   default     = "https://releases.rancher.com/server-charts/latest"
 }
-
-# Required
 variable "rancher_server_admin_password" {
   type        = string
   description = "Admin password to use for Rancher server bootstrap, min. 12 characters"

@@ -3,7 +3,7 @@
 ### Cloud vendors
 
 - [**Amazon Web Services** (`aws`)](./rancher/aws)
-- [**Hetzner Cloud** (`hcloud`)](./rancher/hcloud)
+- [**Hetzner Cloud** (`hcloud`)](./rancher/hetzner)
 
 
 Each vendor module will install Rancher on a single-node K3s cluster, then will provision another single-node RKE2 workload cluster using a Custom cluster in Rancher.

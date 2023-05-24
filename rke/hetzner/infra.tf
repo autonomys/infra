@@ -84,7 +84,7 @@ module "rancher_common" {
   admin_password     = var.rancher_server_admin_password
 
   workload_kubernetes_version = var.workload_kubernetes_version
-  workload_cluster_name       = "subspace-hcloud-custom"
+  workload_cluster_name       = "${var.prefix}-hcloud-custom"
 }
 
 # HCloud instance for creating a single node workload cluster

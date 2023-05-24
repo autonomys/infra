@@ -15,10 +15,6 @@ terraform.tfvars
 id_rsa*
 kube_config*
 
-# vagrant files
-.vagrant/
-vagrant/local_config.yaml
-
 # MacOS junk
 .DS_Store
 

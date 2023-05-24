@@ -1,7 +1,4 @@
 # Data for AWS module
-
-# AWS data
-# ----------------------------------------------------------
 data "aws_ami" "ubuntu_amd64" {
   most_recent = true
 
@@ -25,5 +22,5 @@ data "aws_ami" "ubuntu_amd64" {
     values = ["ebs"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["099720109477"]
 }
