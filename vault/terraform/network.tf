@@ -28,9 +28,9 @@ resource "aws_route_table_association" "vault_subnet_association" {
 
 # Create a default route to the internet gateway
 resource "aws_route" "vault_internet_gateway_route" {
-  route_table_id            = aws_route_table.vault_rt.id
-  destination_cidr_block    = "0.0.0.0/0"
-  gateway_id                = aws_internet_gateway.vault_igw.id
+  route_table_id         = aws_route_table.vault_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.vault_igw.id
 }
 
 # Create a security group

@@ -1,4 +1,4 @@
-data "aws_ami" "ubuntu_x86" {
+data "aws_ami" "ubuntu_amd64" {
   most_recent = true
 
   filter {
@@ -16,5 +16,5 @@ data "aws_ami" "ubuntu_x86" {
     values = ["x86_64"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["${var.owner}"]
 }

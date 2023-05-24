@@ -139,7 +139,7 @@ data "local_file" "private_key" {
 }
 
 resource "aws_instance" "vault" {
-  ami                         = data.aws_ami.ubuntu_x86.id # Update with the desired Vault AMI ID
+  ami                         = data.aws_ami.ubuntu_amd64.id # Update with the desired Vault AMI ID
   instance_type               = var.vault_instance_type    # Update with the desired instance type
   key_name                    = var.ssh_key_name           # Update with your SSH key pair
   subnet_id                   = aws_subnet.vault_subnet.id
@@ -156,41 +156,41 @@ resource "aws_instance" "vault" {
   }
 
   provisioner "remote-exec" {
-  inline = [
-    "export DEBIAN_FRONTEND=noninteractive",
-    "sudo apt update -y",
-    "sudo apt upgrade -y",
-    "sudo apt install git curl wget gnupg openssl make build-essential jq net-tools unzip nginx certbot python3-certbot-nginx -y",
-    "sudo bash -c 'cat <<EOF > /etc/nginx/conf.d/vault.conf",
-    "server {",
-    "  listen 80;",
-    "  server_name vault.subspace.network;",
-    "  location / {",
-    "    proxy_pass http://127.0.0.1:8200;",
-    "    proxy_set_header Host $host;",
-    "    proxy_set_header X-Real-IP $remote_addr;",
-    "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
-    "    proxy_set_header X-Forwarded-Proto $scheme;",
-    "  }",
-    "}",
-    "EOF'",
-    "sudo systemctl restart nginx",
-    "echo 'export VAULT_ADDR=http://localhost:8200' | sudo tee -a /etc/environment",
-    "echo 'export VAULT_SKIP_VERIFY=true' | sudo tee -a /etc/environment",
-    "echo 'export vault_storage=s3' | sudo tee -a /etc/environment",
-    "echo 'export VAULT_BUCKET=${aws_s3_bucket.vault_storage.bucket}' | sudo tee -a /etc/environment",
-    "echo 'export VAULT_BUCKET_REGION=${var.aws_region}' | sudo tee -a /etc/environment",
-    "echo 'export AWS_ACCESS_KEY_ID=${aws_iam_access_key.vault.id}' | sudo tee -a /etc/environment",
-    "echo 'export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.vault.secret}' | sudo tee -a /etc/environment",
-    "echo 'export VAULT_KMS_KEY_ID=${aws_kms_alias.vault.target_key_id}' | sudo tee -a /etc/environment",
-    "echo 'export VAULT_TLS_DISABLE=true' | sudo tee -a /etc/environment",
-    "curl -LO https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
-    "unzip vault_${var.vault_version}_linux_amd64.zip",
-    "sudo mv vault /usr/local/bin/",
-    "sudo chmod +x /usr/local/bin/vault",
-    "sudo nohup vault server -config=/etc/vault-config/vault.hcl &",
-    "echo 'Installation complete'"
-  ]
+    inline = [
+      "export DEBIAN_FRONTEND=noninteractive",
+      "sudo apt update -y",
+      "sudo apt upgrade -y",
+      "sudo apt install curl gnupg openssl net-tools unzip nginx certbot python3-certbot-nginx -y",
+      "sudo bash -c 'cat <<EOF > /etc/nginx/conf.d/vault.conf",
+      "server {",
+      "  listen 80;",
+      "  server_name vault.subspace.network;",
+      "  location / {",
+      "    proxy_pass http://127.0.0.1:8200;",
+      "    proxy_set_header Host $host;",
+      "    proxy_set_header X-Real-IP $remote_addr;",
+      "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+      "    proxy_set_header X-Forwarded-Proto $scheme;",
+      "  }",
+      "}",
+      "EOF'",
+      "sudo systemctl restart nginx",
+      "echo 'export VAULT_ADDR=http://localhost:8200' | sudo tee -a /etc/environment",
+      "echo 'export VAULT_SKIP_VERIFY=true' | sudo tee -a /etc/environment",
+      "echo 'export vault_storage=s3' | sudo tee -a /etc/environment",
+      "echo 'export VAULT_BUCKET=${aws_s3_bucket.vault_storage.bucket}' | sudo tee -a /etc/environment",
+      "echo 'export VAULT_BUCKET_REGION=${var.aws_region}' | sudo tee -a /etc/environment",
+      "echo 'export AWS_ACCESS_KEY_ID=${aws_iam_access_key.vault.id}' | sudo tee -a /etc/environment",
+      "echo 'export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.vault.secret}' | sudo tee -a /etc/environment",
+      "echo 'export VAULT_KMS_KEY_ID=${aws_kms_alias.vault.target_key_id}' | sudo tee -a /etc/environment",
+      "echo 'export VAULT_TLS_DISABLE=true' | sudo tee -a /etc/environment",
+      "curl -LO https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
+      "unzip vault_${var.vault_version}_linux_amd64.zip",
+      "sudo mv vault /usr/local/bin/",
+      "sudo chmod +x /usr/local/bin/vault",
+      "sudo nohup vault server -config=/etc/vault-config/vault.hcl &",
+      "echo 'Installation complete'"
+    ]
 
     on_failure = continue
 

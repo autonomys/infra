@@ -2,6 +2,11 @@
 variable "access_key" {}
 variable "secret_key" {}
 
+variable "owner" {
+  description = "The ami image owner i.e canonical"
+  type        = string
+  default     = "099720109477"
+}
 variable "aws_region" {
   description = "The region to run the AWS resources"
   type        = string
@@ -14,8 +19,8 @@ variable "aws_az" {
   default     = "us-east-2a"
 }
 
-variable vault_version {
-  type = string
+variable "vault_version" {
+  type    = string
   default = "1.13.2"
 }
 variable "vault_admin_token" {
