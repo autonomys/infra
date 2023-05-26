@@ -129,6 +129,12 @@ resource "null_resource" "start-domain-nodes" {
     destination = "/subspace/bootstrap_node_keys.txt"
   }
 
+  # copy dsn_boostrap node keys file
+  provisioner "file" {
+    source      = "./dsn_bootstrap_node_keys.txt"
+    destination = "/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
   # copy keystore
   provisioner "file" {
     source      = "./keystore"

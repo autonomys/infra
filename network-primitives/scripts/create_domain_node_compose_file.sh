@@ -45,14 +45,14 @@ services:
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.system.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /http
-      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 9933}}"
+      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
       caddy_0.handle_path_1: /ws
-      caddy_0.handle_path_1.reverse_proxy: "{{upstreams 9944}}"
+      caddy_0.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
       caddy_1: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_1.handle_path_0: /http
-      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
+      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 7933}}"
       caddy_1.handle_path_1: /ws
-      caddy_1.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
+      caddy_1.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -78,6 +78,7 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
+dsn_bootstrap_node_count=${4}
 enable_domains=${5}
 domain_id=${6}
 
@@ -108,7 +109,7 @@ if [ ${enable_domains} == true ]; then
     {
     # system domain
       echo '      "--",'
-      echo "      \"--chain=\$NETWORK_NAME\","
+      echo '      "--chain=\${NETWORK_NAME}",'
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
@@ -119,23 +120,23 @@ if [ ${enable_domains} == true ]; then
       echo '      "--ws-port", "8944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_SYSTEM_ID\","
+      echo '      "--relayer-id=\${RELAYER_SYSTEM_ID}",'
 
     # core domain
       echo '      "--",'
-      echo "      \"--chain=\$NETWORK_NAME\","
+      echo '      "--chain=\${NETWORK_NAME}\",'
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo "      \"--domain-id=\${DOMAIN_ID}\","
-      echo "      \"--base-path", "/var/subspace/core_\${DOMAIN_LABEL}_domain\","
+      echo '      "--domain-id=\${DOMAIN_ID}",'
+      echo '      "--base-path", "/var/subspace/core_\${DOMAIN_LABEL}_domain",'
       echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "7933",'
       echo '      "--ws-port", "7944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo "      \"--relayer-id=\$RELAYER_DOMAIN_ID\","
+      echo '      "--relayer-id=\${RELAYER_DOMAIN_ID}",'
 
     }  >> /subspace/docker-compose.yml
 fi
