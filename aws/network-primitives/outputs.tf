@@ -83,3 +83,11 @@ output "farmer_node_public_ip" {
 output "farmer_node_ami" {
   value = aws_instance.farmer_node.*.ami
 }
+
+output "dns-records" {
+  value = [
+    cloudflare_record.bootstrap[*].hostname,
+    cloudflare_record.rpc[*].hostname,
+    cloudflare_record.core-domain[*].hostname,
+  ]
+}

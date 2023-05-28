@@ -129,6 +129,22 @@ resource "aws_security_group" "gemini_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Node Port 30333 for VPC"
+    from_port   = 30333
+    to_port     = 30333
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Node Port 30433 for VPC"
+    from_port   = 30433
+    to_port     = 30433
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "egress for VPC"
     from_port   = 0
