@@ -5,7 +5,7 @@ resource "aws_instance" "archive_node" {
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.allow_runner.id}"]
+  vpc_security_group_ids = ["${aws_security_group.gemini-explorer-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -36,7 +36,7 @@ resource "aws_instance" "archive_node" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl jq net-tools -y",
+      "sudo apt install git curl wget gnupg openssl net-tools -y",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
 

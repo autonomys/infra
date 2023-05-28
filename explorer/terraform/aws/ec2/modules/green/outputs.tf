@@ -1,14 +1,14 @@
 output "squid-node-green-ipv4-addresses" {
-  value       = module.green.squid-node-ipv4-addresses
+  value       = module.green.squid_green_node.*.public_ip
   description = "Explorer node IPv4 Addresses"
 }
 
-output "archive-node-green-ipv4-addresses" {
-  value       = module.green.archive-node-ipv4-addresses
+output "archive-node-ipv4-addresses" {
+  value       = aws_instance.archive_node.*.public_ip
   description = "Explorer node IPv4 Addresses"
 }
 
-output "dns-records-green" {
-  value       = module.green.dns-records
+output "dns-records-blue" {
+  value       = module.blue.dns-records
   description = "DNS records"
 }

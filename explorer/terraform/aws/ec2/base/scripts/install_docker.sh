@@ -4,7 +4,6 @@
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
 apt dist-upgrade -y
-apt install -y curl jq gnupg
 
 # install docker & Docker Compose
 sudo install -m 0755 -d /etc/apt/keyrings

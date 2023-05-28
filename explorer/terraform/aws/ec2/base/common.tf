@@ -1,7 +1,3 @@
-variable "do_token" {
-  description = "Digital ocean API key"
-}
-
 variable "datadog_api_key" {
   description = "Datadog API Key"
 }

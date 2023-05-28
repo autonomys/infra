@@ -1,7 +1,3 @@
-variable "do_token" {
-  description = "Digital ocean API key"
-}
-
 variable "ssh_identity" {
   description = "SSH agent identity to use to connect to remote host"
 }
@@ -25,46 +21,82 @@ variable "network_name" {
   type        = string
 }
 
-variable "droplet_size" {
-  description = "Droplet size"
-  type        = string
-  default     = "s-6vcpu-16gb"
-}
-
 variable "deployment_color" {
   description = "Deployment environment"
   type        = string
   default     = "green"
 }
 
-variable "disk_volume_size" {
-  description = "Disk Volume Size"
-  type        = number
-  default     = 400
+variable "instance_type" {
+  default = "t2.micro"
+  type    = string
 }
 
-variable "disk_volume_type" {
-  description = "Disk Volume Filesystem Type"
-  type        = string
-  default     = "ext4"
+variable "vpc_id" {
+  default = "default"
+  type    = string
 }
 
-variable "regions" {
-  description = "Droplet region"
+variable "azs" {
   type        = list(string)
-  default     = ["ams2", "nyc2"]
+  description = "Availability Zones"
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
+variable "instance_count" {
+  type    = number
+  default = 1
+}
+
+variable "aws_region" {
+  description = "aws region"
+  type        = list(string)
+  default     = ["us-east-1"]
+}
+
+variable "public_subnet_cidrs" {
+  type        = list(string)
+  description = "Public Subnet CIDR values"
+  default     = ["172.31.1.0/24"]
+}
+
+variable "private_subnet_cidrs" {
+  type        = list(string)
+  description = "Private Subnet CIDR values"
+  default     = ["172.31.2.0/24"]
+}
+
+variable "secret_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "access_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "aws_key_name" {
+  default   = ""
+  type      = string
+  sensitive = true
+}
+
+variable "public_key_path" {
+  type    = string
+  default = ""
 }
 
 variable "squid-node-config" {
-  description = "Block squid backend configuration"
+  description = "squid backend configuration"
   type = object({
     deployment-color   = string
     network-name       = string
     domain-prefix      = string
-    droplet_size       = string
+    instance-type      = string
     deployment-version = number
-    regions            = list(string)
-    nodes-per-region   = number
+    region             = list(string)
+    instance-count     = number
     docker-org         = string
     docker-tag         = string
     prune              = bool
@@ -72,5 +104,4 @@ variable "squid-node-config" {
     disk-volume-size   = number
     disk-volume-type   = string
   })
-
 }

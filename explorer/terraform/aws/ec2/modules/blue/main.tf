@@ -9,10 +9,10 @@ module "blue" {
     deployment-color   = var.deployment_color
     network-name       = "${var.network_name}-${var.deployment_color}"
     domain-prefix      = "squid"
-    instance-size       = var.instance_size
+    instance-type      = var.instance_type
     deployment-version = 1
-    regions            = var.regions
-    nodes-per-region   = 1
+    regions            = var.aws_region
+    instance_count     = 1
     docker-org         = "subspace"
     docker-tag         = "gemini-3d"
     prune              = false
