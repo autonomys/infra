@@ -63,8 +63,6 @@ module "aws_eks" {
   node_security_group_tags             = var.node_security_group_tags
 
   enable_irsa              = var.enable_irsa
-  openid_connect_audiences = var.openid_connect_audiences
-  custom_oidc_thumbprints  = var.custom_oidc_thumbprints
 
   create_cloudwatch_log_group            = var.create_cloudwatch_log_group
   cluster_enabled_log_types              = var.cluster_enabled_log_types
@@ -78,23 +76,6 @@ module "aws_eks" {
   tags = var.tags
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# Amazon EMR on EKS Virtual Clusters
-# ---------------------------------------------------------------------------------------------------------------------
-module "emr_on_eks" {
-  source = "./modules/emr-on-eks"
-
-  for_each = { for key, value in var.emr_on_eks_teams : key => value
-    if var.enable_emr_on_eks && length(var.emr_on_eks_teams) > 0
-  }
-
-  emr_on_eks_teams              = each.value
-  eks_cluster_id                = module.aws_eks.cluster_id
-  iam_role_permissions_boundary = var.iam_role_permissions_boundary
-  tags                          = var.tags
-
-  depends_on = [kubernetes_config_map.aws_auth]
-}
 
 resource "kubernetes_config_map" "amazon_vpc_cni" {
   count = var.enable_windows_support ? 1 : 0
@@ -112,6 +93,7 @@ resource "kubernetes_config_map" "amazon_vpc_cni" {
     data.http.eks_cluster_readiness[0]
   ]
 }
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Teams

@@ -1,5 +1,5 @@
 variable "tags" {
-  description = "Additional tags (e.g. `map('BusinessUnit`,`XYZ`)"
+  description = "Additional tags"
   type        = map(string)
   default     = {}
 }
@@ -262,7 +262,7 @@ variable "iam_role_additional_policies" {
 variable "enable_irsa" {
   description = "Determines whether to create an OpenID Connect Provider for EKS to enable IRSA"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "openid_connect_audiences" {
@@ -350,15 +350,6 @@ variable "worker_additional_security_group_ids" {
 }
 
 #-------------------------------
-# Fargate
-#-------------------------------
-variable "fargate_profiles" {
-  description = "Fargate profile configuration"
-  type        = any
-  default     = {}
-}
-
-#-------------------------------
 # aws-auth Config Map
 #-------------------------------
 variable "map_accounts" {
@@ -397,21 +388,6 @@ variable "eks_readiness_timeout" {
   description = "The maximum time (in seconds) to wait for EKS API server endpoint to become healthy"
   type        = number
   default     = "600"
-}
-
-#-------------------------------
-# Amazon EMR on EKS
-#-------------------------------
-variable "enable_emr_on_eks" {
-  description = "Enable EMR on EKS"
-  type        = bool
-  default     = false
-}
-
-variable "emr_on_eks_teams" {
-  description = "EMR on EKS Teams config"
-  type        = any
-  default     = {}
 }
 
 #-------------------------------
