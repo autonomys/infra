@@ -47,7 +47,7 @@ variable "farmer_node_ips" {
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "t3.small"
   type    = string
 }
 
@@ -96,12 +96,17 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default   = ""
+  default   = "deployer"
   type      = string
-  sensitive = true
 }
 
-variable "public_key_path" {
-  type    = string
-  default = ""
+variable "ssh_user" {
+  default   = "ubuntu"
+  type      = string
 }
+
+variable "private_key_path" {
+  type    = string
+  default = "~/.ssh/deployer.pem"
+}
+

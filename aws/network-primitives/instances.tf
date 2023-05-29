@@ -32,7 +32,7 @@ resource "aws_instance" "bootstrap_node" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "sleep 180",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -48,7 +48,7 @@ resource "aws_instance" "bootstrap_node" {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
     user        = "ubuntu"
-    private_key = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout     = "90s"
   }
 
@@ -89,7 +89,7 @@ resource "aws_instance" "full_node" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "sleep 180",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -105,7 +105,7 @@ resource "aws_instance" "full_node" {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
     user        = "ubuntu"
-    private_key = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout     = "90s"
   }
 
@@ -146,7 +146,7 @@ resource "aws_instance" "rpc_node" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "sleep 180",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -162,7 +162,7 @@ resource "aws_instance" "rpc_node" {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
     user        = "ubuntu"
-    private_key = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout     = "90s"
   }
 
@@ -203,7 +203,7 @@ resource "aws_instance" "domain_node" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "sleep 180",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -219,7 +219,7 @@ resource "aws_instance" "domain_node" {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
     user        = "ubuntu"
-    private_key = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout     = "90s"
   }
 
@@ -260,7 +260,7 @@ resource "aws_instance" "farmer_node" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "sleep 180",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -276,7 +276,7 @@ resource "aws_instance" "farmer_node" {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
     user        = "ubuntu"
-    private_key = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout     = "90s"
   }
 

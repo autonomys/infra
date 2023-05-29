@@ -1,6 +1,6 @@
 locals {
   domain_node_ip_v4 = flatten([
-    [var.domain-node-config.additional-node-ips],
+    #    [var.domain-node-config.additional-node-ips],
     [aws_instance.domain_node.*.public_ip]
     ]
   )
@@ -35,12 +35,12 @@ resource "null_resource" "setup-domain-nodes" {
   }
 
   connection {
-    host           = local.domain_node_ip_v4[count.index]
-    user           = "root"
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    timeout        = "30s"
+    host        = local.domain_node_ip_v4[count.index]
+    user        = "${var.ssh_user}"
+    type        = "ssh"
+    agent       = true
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
   }
 
   # create subspace dir
@@ -75,12 +75,12 @@ resource "null_resource" "prune-domain-nodes" {
   }
 
   connection {
-    host           = local.domain_node_ip_v4[count.index]
-    user           = "root"
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    timeout        = "30s"
+    host        = local.domain_node_ip_v4[count.index]
+    user        = "${var.ssh_user}"
+    type        = "ssh"
+    agent       = true
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
   }
 
   provisioner "file" {
@@ -109,12 +109,12 @@ resource "null_resource" "start-domain-nodes" {
   }
 
   connection {
-    host           = local.domain_node_ip_v4[count.index]
-    user           = "root"
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    timeout        = "30s"
+    host        = local.domain_node_ip_v4[count.index]
+    user        = "${var.ssh_user}"
+    type        = "ssh"
+    agent       = true
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
   }
 
   # copy node keys file
@@ -197,7 +197,7 @@ resource "null_resource" "start-domain-nodes" {
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[count.index]}",
 
       # start subspace node
-      "systemctl start subspace.service",
+      #"systemctl start subspace.service",
     ]
   }
 }
@@ -212,12 +212,12 @@ resource "null_resource" "inject-domain-keystore" {
   }
 
   connection {
-    host           = local.domain_node_ip_v4[0]
-    user           = "root"
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    timeout        = "30s"
+    host        = local.domain_node_ip_v4[0]
+    user        = "${var.ssh_user}"
+    type        = "ssh"
+    agent       = true
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
   }
 
   # prune network

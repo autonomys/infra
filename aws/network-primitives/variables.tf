@@ -13,7 +13,7 @@ variable "cloudflare_api_token" {
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "t3.small"
   type    = string
 }
 
@@ -52,14 +52,18 @@ variable "private_subnet_cidrs" {
 }
 
 variable "aws_key_name" {
-  default   = ""
+  default   = "deployer"
   type      = string
-  sensitive = true
 }
 
-variable "public_key_path" {
+variable "ssh_user" {
+  default   = "ubuntu"
+  type      = string
+}
+
+variable "private_key_path" {
   type    = string
-  default = ""
+  default = "~/.ssh/deployer.pem"
 }
 
 variable "network_name" {
