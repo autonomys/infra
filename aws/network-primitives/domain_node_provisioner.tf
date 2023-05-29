@@ -1,33 +1,15 @@
 locals {
   domain_node_ip_v4 = flatten([
-    #    [var.domain-node-config.additional-node-ips],
+#   [var.domain-node-config.additional-node-ips],
     [aws_instance.domain_node.*.public_ip]
     ]
   )
 }
 
-resource "null_resource" "domain-node-keys" {
-  count = length(local.domain_node_ip_v4) > 0 ? 1 : 0
-
-  # trigger on new ipv4 change for any instance since we would need to update reserved ips
-  triggers = {
-    cluster_instance_ipv4s = join(",", local.domain_node_ip_v4)
-  }
-
-  # generate domain node keys
-  provisioner "local-exec" {
-    command     = "${var.path_to_scripts}/generate_node_keys.sh ${length(local.domain_node_ip_v4)} ./domain_node_keys.txt"
-    interpreter = ["/bin/bash", "-c"]
-    environment = {
-      NODE_PUBLIC_IPS = join(",", local.domain_node_ip_v4)
-    }
-  }
-}
-
 resource "null_resource" "setup-domain-nodes" {
   count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.domain-node-keys, null_resource.start-boostrap-nodes, cloudflare_record.core-domain]
+  depends_on = [aws_instance.domain_node]
 
   # trigger on node ip changes
   triggers = {
@@ -46,7 +28,9 @@ resource "null_resource" "setup-domain-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /subspace"
+      "sudo mkdir -p /subspace",
+      "sudo mkdir -p /home/ubuntu/bin/",
+      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 775 /subspace",
     ]
   }
 
@@ -100,7 +84,7 @@ resource "null_resource" "prune-domain-nodes" {
 resource "null_resource" "start-domain-nodes" {
   count = length(local.domain_node_ip_v4)
 
-  depends_on = [null_resource.setup-domain-nodes, null_resource.boostrap-node-keys]
+  depends_on = [null_resource.setup-domain-nodes]
 
   # trigger on node deployment version change
   triggers = {
@@ -153,28 +137,14 @@ resource "null_resource" "start-domain-nodes" {
     destination = "/subspace/create_compose_file.sh"
   }
 
-  # copy subspace entry script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/subspace.sh"
-    destination = "/usr/bin/subspace"
-  }
-
-  # copy subspace systemd file
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/subspace.service"
-    destination = "/etc/systemd/system/subspace.service"
-  }
-
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "systemctl daemon-reload",
-      "systemctl stop subspace.service",
-      "systemctl reenable subspace.service",
+      "sudo docker compose -f /subspace/docker-compose.yml down ",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.domain-node-config.docker-org} > /subspace/.env",
@@ -193,11 +163,11 @@ resource "null_resource" "start-domain-nodes" {
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
-      "sudo chmod +x /usr/bin/subspace",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[count.index]}",
 
       # start subspace node
-      #"systemctl start subspace.service",
+      "sudo chown ubuntu:ubuntu /subspace/docker-compose.yml",
+      "sudo docker compose -f /subspace/docker-compose.yml up -d --build ",
     ]
   }
 }
@@ -223,7 +193,7 @@ resource "null_resource" "inject-domain-keystore" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
+      "sudo docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
     ]
   }
 }

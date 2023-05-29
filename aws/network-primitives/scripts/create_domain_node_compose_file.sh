@@ -124,7 +124,7 @@ if [ ${enable_domains} == true ]; then
 
     # core domain
       echo '      "--",'
-      echo '      "--chain=\${NETWORK_NAME}\",'
+      echo '      "--chain=\${NETWORK_NAME}",'
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'

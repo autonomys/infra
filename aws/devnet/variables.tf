@@ -12,7 +12,7 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["payments", "evm"]
+  default     = ["evm", "payments"]
 }
 
 
@@ -96,13 +96,13 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default   = "deployer"
-  type      = string
+  default = "deployer"
+  type    = string
 }
 
 variable "ssh_user" {
-  default   = "ubuntu"
-  type      = string
+  default = "ubuntu"
+  type    = string
 }
 
 variable "private_key_path" {

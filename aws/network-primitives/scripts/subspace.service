@@ -6,11 +6,11 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStartPre=/usr/bin/subspace pre-start
-ExecStart=/usr/bin/subspace start
-ExecStartPost=/usr/bin/subspace post-start
-ExecStop=/usr/bin/subspace stop
-ExecStopPost=/usr/bin/subspace post-stop
+ExecStartPre=/home/ubuntu/bin/subspace pre-start
+ExecStart=/home/ubuntu/bin/subspace start
+ExecStartPost=/home/ubuntu/bin/subspace post-start
+ExecStop=/home/ubuntu/bin/subspace stop
+ExecStopPost=/home/ubuntu/bin/subspace post-stop
 Restart=on-failure
 
 [Install]

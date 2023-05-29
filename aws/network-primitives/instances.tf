@@ -33,10 +33,8 @@ resource "aws_instance" "bootstrap_node" {
   provisioner "remote-exec" {
     inline = [
       "sleep 180",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -90,10 +88,8 @@ resource "aws_instance" "full_node" {
   provisioner "remote-exec" {
     inline = [
       "sleep 180",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -147,10 +143,8 @@ resource "aws_instance" "rpc_node" {
   provisioner "remote-exec" {
     inline = [
       "sleep 180",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -204,10 +198,8 @@ resource "aws_instance" "domain_node" {
   provisioner "remote-exec" {
     inline = [
       "sleep 180",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -261,10 +253,8 @@ resource "aws_instance" "farmer_node" {
   provisioner "remote-exec" {
     inline = [
       "sleep 180",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue

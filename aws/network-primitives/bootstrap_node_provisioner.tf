@@ -1,51 +1,15 @@
 locals {
   bootstrap_nodes_ip_v4 = flatten([
-    #    [var.bootstrap-node-config.additional-node-ips],
+#   [var.bootstrap-node-config.additional-node-ips],
     [aws_instance.bootstrap_node.*.public_ip]
     ]
   )
 }
 
-resource "null_resource" "boostrap-node-keys" {
-  count = length(local.bootstrap_nodes_ip_v4) > 0 ? 1 : 0
-
-  # trigger on new ipv4 change for any instance since we would need to update reserved ips
-  triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
-  }
-
-  # generate node keys
-  provisioner "local-exec" {
-    command     = "${var.path_to_scripts}/generate_node_keys.sh ${length(local.bootstrap_nodes_ip_v4)} ./bootstrap_node_keys.txt"
-    interpreter = ["/bin/bash", "-c"]
-    environment = {
-      NODE_PUBLIC_IPS = join(",", local.bootstrap_nodes_ip_v4)
-    }
-  }
-}
-
-resource "null_resource" "dsn-boostrap-node-keys" {
-  count = length(local.bootstrap_nodes_ip_v4) > 0 ? 1 : 0
-
-  # trigger on new ipv4 change for any instance since we would need to update reserved ips
-  triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
-  }
-
-  # generate node keys
-  provisioner "local-exec" {
-    command     = "${var.path_to_scripts}/generate_dsn_node_keys.sh ${length(local.bootstrap_nodes_ip_v4)} ./dsn_bootstrap_node_keys.txt"
-    interpreter = ["/bin/bash", "-c"]
-    environment = {
-      NODE_PUBLIC_IPS = join(",", local.bootstrap_nodes_ip_v4)
-    }
-  }
-}
-
 resource "null_resource" "setup-bootstrap-nodes" {
   count = length(local.bootstrap_nodes_ip_v4)
 
-  depends_on = [null_resource.boostrap-node-keys]
+  depends_on = [aws_instance.bootstrap_node]
 
   # trigger on node ip changes
   triggers = {
@@ -64,7 +28,9 @@ resource "null_resource" "setup-bootstrap-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /subspace"
+      "sudo mkdir -p /subspace",
+      "sudo mkdir -p /home/ubuntu/bin/",
+      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 775 /subspace",
     ]
   }
 
@@ -153,28 +119,14 @@ resource "null_resource" "start-boostrap-nodes" {
     destination = "/subspace/create_compose_file.sh"
   }
 
-  # copy subspace entry script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/subspace.sh"
-    destination = "/usr/bin/subspace"
-  }
-
-  # copy subspace systemd file
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/subspace.service"
-    destination = "/etc/systemd/system/subspace.service"
-  }
-
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "systemctl daemon-reload",
-      "systemctl stop subspace.service",
-      "systemctl reenable subspace.service",
+      "sudo docker compose -f /subspace/docker-compose.yml down ",
 
       # set hostname
-      "hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /subspace/.env",
@@ -191,11 +143,11 @@ resource "null_resource" "start-boostrap-nodes" {
 
       # create docker compose file
       "sudo chmod +x /subspace/create_compose_file.sh",
-      "sudo chmod +x /usr/bin/subspace",
       "sudo /subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      #"systemctl start subspace.service",
+      "sudo chown ubuntu:ubuntu /subspace/docker-compose.yml",
+      "sudo docker compose -f /subspace/docker-compose.yml up -d --build ",
     ]
   }
 }
