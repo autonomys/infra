@@ -72,14 +72,14 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default   = ""
+  default   = "deployer"
   type      = string
   sensitive = true
 }
 
 variable "public_key_path" {
   type    = string
-  default = ""
+  default = "~/.ssh/deployer.pem"
 }
 
 variable "squid-node-config" {

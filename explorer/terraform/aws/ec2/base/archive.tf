@@ -35,8 +35,7 @@ resource "aws_instance" "archive_node" {
     inline = [
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl wget gnupg openssl net-tools -y",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
 

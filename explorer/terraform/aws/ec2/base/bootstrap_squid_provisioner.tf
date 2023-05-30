@@ -30,8 +30,10 @@ resource "null_resource" "setup-squid-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /mnt/squid",
+      "sudo chown ubuntu:ubuntu /mnt/squid",
+      "sudo chmod -R 755 /mnt/squid",
       "sudo mount -o defaults,nofail,discard,noatime /dev/sda /mnt/squid",
-      "echo '/dev/sda /mnt/squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
+      "sudo echo '/dev/sda /mnt/squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
       "cd / && sudo ln -s /mnt/squid /squid ",
       "sudo mkdir -p /squid/postgresql/data",
     ]
@@ -82,8 +84,8 @@ resource "null_resource" "prune-squid-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker ps -aq | xargs docker stop",
-      "docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
+      "sudo docker ps -aq | xargs docker stop",
+      "sudo docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
     ]
   }
 }
@@ -146,7 +148,7 @@ resource "null_resource" "start-squid-nodes" {
       "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}-${count.index}.${var.squid-node-config.network-name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-${count.index}-${var.squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-${count.index}-${var.squid-node-config.network-name}",
       # create .env file
       "sudo chmod +x /squid/set_env_vars.sh",
       "sudo bash /squid/set_env_vars.sh",

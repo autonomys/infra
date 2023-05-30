@@ -29,8 +29,10 @@ resource "null_resource" "setup-archive-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /mnt/archive",
+      "sudo chown ubuntu:ubuntu /mnt/archive",
+      "sudo chmod -R 755 /mnt/archive",
       "sudo mount -o defaults,nofail,discard,noatime /dev/sda /mnt/archive",
-      "echo '/dev/sda /mnt/archive ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
+      "sudo echo '/dev/sda /mnt/archive ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
       "cd / && sudo ln -s /mnt/archive /archive ",
       "sudo mkdir -p /archive/postgresql/data",
       "sudo mkdir -p /archive/node-data && chown -R nobody:nogroup /archive/node-data",
@@ -82,8 +84,8 @@ resource "null_resource" "prune-archive-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "docker ps -aq | xargs docker stop",
-      "docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
+      "sudo docker ps -aq | xargs docker stop",
+      "sudo docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
     ]
   }
 }
@@ -147,7 +149,7 @@ resource "null_resource" "start-archive-nodes" {
       "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-node-config.domain-prefix}-${count.index}.${var.archive-node-config.network-name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-${count.index}-${var.archive-node-config.network-name}",
+      "sudo hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-${count.index}-${var.archive-node-config.network-name}",
       # create .env file
       "sudo chmod +x /archive/set_env_vars.sh",
       "sudo bash /archive/set_env_vars.sh",

@@ -62,5 +62,5 @@ variable "aws_key_name" {
 
 variable "public_key_path" {
   type    = string
-  default = ""
+  default = "~/.ssh/deployer.pem"
 }
