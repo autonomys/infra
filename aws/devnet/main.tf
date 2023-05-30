@@ -11,7 +11,7 @@ module "devnet" {
     docker-org          = "subspace"
     docker-tag          = "snapshot-2023-may-23"
     reserved-only       = false
-    prune               = true
+    prune               = false
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
