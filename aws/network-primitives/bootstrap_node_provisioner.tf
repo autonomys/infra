@@ -126,7 +126,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "sudo docker compose -f /subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
 
       # create .env file
       "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /subspace/.env",

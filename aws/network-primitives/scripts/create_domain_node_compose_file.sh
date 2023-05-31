@@ -109,7 +109,7 @@ if [ ${enable_domains} == true ]; then
     {
     # system domain
       echo '      "--",'
-      echo '      "--chain=\${NETWORK_NAME}",'
+      echo '      "--chain=${NETWORK_NAME}",'
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
@@ -120,23 +120,23 @@ if [ ${enable_domains} == true ]; then
       echo '      "--ws-port", "8944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo '      "--relayer-id=\${RELAYER_SYSTEM_ID}",'
+      echo '      "--relayer-id=${RELAYER_SYSTEM_ID}",'
 
     # core domain
       echo '      "--",'
-      echo '      "--chain=\${NETWORK_NAME}",'
+      echo '      "--chain=${NETWORK_NAME}",'
       echo '      "--validator",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo '      "--domain-id=\${DOMAIN_ID}",'
-      echo '      "--base-path", "/var/subspace/core_\${DOMAIN_LABEL}_domain",'
+      echo '      "--domain-id=${DOMAIN_ID}",'
+      echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "7933",'
       echo '      "--ws-port", "7944",'
       echo '      "--no-private-ipv4",'
       echo '      "--unsafe-ws-external",'
-      echo '      "--relayer-id=\${RELAYER_DOMAIN_ID}",'
+      echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
 
     }  >> /subspace/docker-compose.yml
 fi

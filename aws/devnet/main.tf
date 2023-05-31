@@ -63,17 +63,17 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count
     additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
     docker-tag             = "snapshot-2023-may-23"
     reserved-only          = false
-    prune                  = false
+    prune                  = true
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = false
+    force-block-production = true
     node-dsn-port          = 30433
 
   }

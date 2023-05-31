@@ -86,8 +86,8 @@ output "farmer_node_ami" {
 
 output "dns-records" {
   value = [
-    cloudflare_record.bootstrap[*].hostname,
-    cloudflare_record.rpc[*].hostname,
-    cloudflare_record.core-domain[*].hostname,
+    cloudflare_record.bootstrap.*.hostname,
+    cloudflare_record.rpc.*.hostname,
+    cloudflare_record.core-domain.*.hostname,
   ]
 }
