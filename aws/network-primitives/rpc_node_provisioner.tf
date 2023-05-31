@@ -1,6 +1,6 @@
 locals {
   rpc_node_ip_v4 = flatten([
-#   [var.rpc-node-config.additional-node-ips],
+    #   [var.rpc-node-config.additional-node-ips],
     [aws_instance.rpc_node.*.public_ip]
     ]
   )
@@ -18,7 +18,7 @@ resource "null_resource" "setup-rpc-nodes" {
 
   connection {
     host        = local.rpc_node_ip_v4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")
@@ -30,7 +30,7 @@ resource "null_resource" "setup-rpc-nodes" {
     inline = [
       "sudo mkdir -p /subspace",
       "sudo mkdir -p /home/ubuntu/bin",
-      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 775 /subspace",
+      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 770 /subspace",
     ]
   }
 
@@ -60,7 +60,7 @@ resource "null_resource" "prune-rpc-nodes" {
 
   connection {
     host        = local.rpc_node_ip_v4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")
@@ -94,7 +94,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   connection {
     host        = local.rpc_node_ip_v4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")
@@ -173,7 +173,7 @@ resource "null_resource" "inject-keystore" {
 
   connection {
     host        = local.rpc_node_ip_v4[0]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")

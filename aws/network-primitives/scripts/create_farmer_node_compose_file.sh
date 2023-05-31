@@ -25,7 +25,7 @@ services:
     depends_on:
       archival-node:
         condition: service_healthy
-    image: ghcr.io/\${NODE_ORG}/farmer:\${NODE_TAG}
+    image: ghcr.io/\$NODE_ORG/farmer:\$NODE_TAG
     volumes:
       - farmer_data:/var/subspace:rw
     restart: unless-stopped
@@ -41,7 +41,7 @@ services:
     ]
 
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

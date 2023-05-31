@@ -21,7 +21,7 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
 
   dsn-bootstrap-node:
-    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
+    image: ghcr.io/\$NODE_ORG/bootstrap-node:\$NODE_TAG
     restart: unless-stopped
     environment:
       - RUST_LOG=info
@@ -35,7 +35,7 @@ services:
       - \${GENESIS_HASH}
 
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

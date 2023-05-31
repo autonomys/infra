@@ -15,6 +15,8 @@ module "devnet" {
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   full-node-config = {
@@ -28,6 +30,8 @@ module "devnet" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   rpc-node-config = {
@@ -42,6 +46,8 @@ module "devnet" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   domain-node-config = {
@@ -59,22 +65,26 @@ module "devnet" {
     enable-domains      = true
     domain-id           = var.domain_id
     domain-labels       = var.domain_labels
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 1
+    deployment-version     = 0
     regions                = var.aws_region
     instance-count         = var.instance_count
     additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
     docker-tag             = "snapshot-2023-may-23"
     reserved-only          = false
-    prune                  = true
+    prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
+    disk-volume-size       = var.disk_volume_size
+    disk-volume-type       = var.disk_volume_type
 
   }
 

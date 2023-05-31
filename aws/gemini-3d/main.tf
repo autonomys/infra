@@ -15,6 +15,8 @@ module "gemini-3d" {
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   full-node-config = {
@@ -28,6 +30,8 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   rpc-node-config = {
@@ -42,6 +46,8 @@ module "gemini-3d" {
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   domain-node-config = {
@@ -59,6 +65,8 @@ module "gemini-3d" {
     enable-domains      = true
     domain-id           = var.domain_id
     domain-labels       = var.domain_labels
+    disk-volume-size    = var.disk_volume_size
+    disk-volume-type    = var.disk_volume_type
   }
 
   farmer-node-config = {
@@ -75,6 +83,8 @@ module "gemini-3d" {
     reward-address         = var.farmer_reward_address
     force-block-production = false
     node-dsn-port          = 30433
+    disk-volume-size       = var.disk_volume_size
+    disk-volume-type       = var.disk_volume_type
 
   }
 

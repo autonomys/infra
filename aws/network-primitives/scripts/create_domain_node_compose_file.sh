@@ -35,7 +35,7 @@ services:
       - caddy_data:/data
 
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

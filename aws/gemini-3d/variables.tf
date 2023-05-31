@@ -85,6 +85,16 @@ variable "private_subnet_cidrs" {
   default     = ["172.31.2.0/24"]
 }
 
+variable "disk_volume_size" {
+  type    = number
+  default = 50
+}
+
+variable "disk_volume_type" {
+  type    = string
+  default = "gp3"
+}
+
 variable "secret_key" {
   type      = string
   sensitive = true
@@ -96,13 +106,13 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default   = "deployer"
-  type      = string
+  default = "deployer"
+  type    = string
 }
 
 variable "ssh_user" {
-  default   = "ubuntu"
-  type      = string
+  default = "ubuntu"
+  type    = string
 }
 
 variable "private_key_path" {

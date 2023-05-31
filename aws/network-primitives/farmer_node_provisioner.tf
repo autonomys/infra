@@ -1,6 +1,6 @@
 locals {
   farmer_node_ipv4 = flatten([
-#   [var.farmer-node-config.additional-node-ips],
+    #   [var.farmer-node-config.additional-node-ips],
     [aws_instance.farmer_node.*.public_ip]
     ]
   )
@@ -18,7 +18,7 @@ resource "null_resource" "setup-farmer-nodes" {
 
   connection {
     host        = local.farmer_node_ipv4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")
@@ -30,7 +30,7 @@ resource "null_resource" "setup-farmer-nodes" {
     inline = [
       "sudo mkdir -p /subspace",
       "sudo mkdir -p /home/ubuntu/bin/",
-      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 775 /subspace",
+      "sudo chown ubuntu:ubuntu /subspace && sudo chmod -R 770 /subspace",
     ]
   }
 
@@ -60,7 +60,7 @@ resource "null_resource" "prune-farmer-nodes" {
 
   connection {
     host        = local.farmer_node_ipv4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")
@@ -94,7 +94,7 @@ resource "null_resource" "start-farmer-nodes" {
 
   connection {
     host        = local.farmer_node_ipv4[count.index]
-    user        = "${var.ssh_user}"
+    user        = var.ssh_user
     type        = "ssh"
     agent       = true
     private_key = file("${var.private_key_path}")

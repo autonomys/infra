@@ -51,14 +51,24 @@ variable "private_subnet_cidrs" {
   default     = ["172.31.2.0/24"]
 }
 
+variable "disk_volume_size" {
+  type    = number
+  default = 50
+}
+
+variable "disk_volume_type" {
+  type    = string
+  default = "gp3"
+}
+
 variable "aws_key_name" {
-  default   = "deployer"
-  type      = string
+  default = "deployer"
+  type    = string
 }
 
 variable "ssh_user" {
-  default   = "ubuntu"
-  type      = string
+  default = "ubuntu"
+  type    = string
 }
 
 variable "private_key_path" {
@@ -95,6 +105,8 @@ variable "full-node-config" {
     reserved-only       = bool
     prune               = bool
     node-dsn-port       = number
+    disk-volume-size    = number
+    disk-volume-type    = string
   })
 }
 
@@ -112,6 +124,8 @@ variable "rpc-node-config" {
     reserved-only       = bool
     prune               = bool
     node-dsn-port       = number
+    disk-volume-size    = number
+    disk-volume-type    = string
   })
 }
 
@@ -132,6 +146,8 @@ variable "domain-node-config" {
     enable-domains      = bool
     domain-id           = list(number)
     domain-labels       = list(string)
+    disk-volume-size    = number
+    disk-volume-type    = string
   })
 }
 
@@ -150,6 +166,8 @@ variable "bootstrap-node-config" {
     genesis-hash        = string
     dsn-listen-port     = number
     node-dsn-port       = number
+    disk-volume-size    = number
+    disk-volume-type    = string
   })
 }
 
@@ -169,6 +187,8 @@ variable "farmer-node-config" {
     reward-address         = string
     force-block-production = bool
     node-dsn-port          = number
+    disk-volume-size       = number
+    disk-volume-type       = string
   })
 }
 
