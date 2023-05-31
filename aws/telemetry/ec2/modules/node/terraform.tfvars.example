@@ -1,0 +1,16 @@
+# AWS access key used to create infrastructure
+access_key = ""
+# AWS secret key used to create AWS infrastructure
+secret_key           = ""
+aws_key_name         = "ssh"
+network_name         = "telemetry"
+instance_type        = "t1.micro"
+instance_count       = 1
+private_key_path     = "~/.ssh/ssh.pem"
+disk_volume_size     = 50
+disk_volume_type     = "gp3"
+aws_region           = ["us-east-1"]
+azs                  = "us-east-1b"
+cloudflare_email     = ""
+cloudflare_api_token = ""
+datadog_api_key      = ""
