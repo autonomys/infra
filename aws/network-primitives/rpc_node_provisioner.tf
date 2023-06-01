@@ -113,6 +113,12 @@ resource "null_resource" "start-rpc-nodes" {
     destination = "/subspace/bootstrap_node_keys.txt"
   }
 
+  # copy DSN bootstrap node keys file
+  provisioner "file" {
+    source      = "./dsn_bootstrap_node_keys.txt"
+    destination = "/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
   # copy keystore
   provisioner "file" {
     source      = "./keystore"
@@ -180,7 +186,6 @@ resource "null_resource" "inject-keystore" {
     timeout     = "300s"
   }
 
-  # prune network
   provisioner "remote-exec" {
     inline = [
       "sudo docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"

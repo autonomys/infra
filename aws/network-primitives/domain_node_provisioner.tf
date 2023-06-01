@@ -190,7 +190,6 @@ resource "null_resource" "inject-domain-keystore" {
     timeout     = "300s"
   }
 
-  # prune network
   provisioner "remote-exec" {
     inline = [
       "sudo docker cp /subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"

@@ -113,6 +113,12 @@ resource "null_resource" "start-farmer-nodes" {
     destination = "/subspace/bootstrap_node_keys.txt"
   }
 
+  # copy DSN bootstrap node keys file
+  provisioner "file" {
+    source      = "./dsn_bootstrap_node_keys.txt"
+    destination = "/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_farmer_node_compose_file.sh"

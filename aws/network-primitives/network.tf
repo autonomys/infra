@@ -110,7 +110,7 @@ resource "aws_security_group" "gemini_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.gemini_vpc.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -118,7 +118,7 @@ resource "aws_security_group" "gemini_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.gemini_vpc.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -141,6 +141,14 @@ resource "aws_security_group" "gemini_sg" {
     description = "Node Port 30433 for VPC"
     from_port   = 30433
     to_port     = 30433
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Farmer Port 30533 for VPC"
+    from_port   = 30533
+    to_port     = 30533
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

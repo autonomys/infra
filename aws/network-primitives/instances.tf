@@ -9,6 +9,12 @@ resource "aws_instance" "bootstrap_node" {
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
+  ebs_optimized = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = 100
+  }
+
 
   tags = {
     name       = "${var.network_name}-bootstrap"
@@ -64,6 +70,11 @@ resource "aws_instance" "full_node" {
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
+  ebs_optimized = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = 100
+  }
 
   tags = {
     name       = "${var.network_name}-full"
@@ -119,7 +130,11 @@ resource "aws_instance" "rpc_node" {
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
-
+  ebs_optimized = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = 100
+  }
   tags = {
     name       = "${var.network_name}-rpc"
     role       = "rpc node"
@@ -174,6 +189,11 @@ resource "aws_instance" "domain_node" {
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
+  ebs_optimized = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = 100
+  }
 
   tags = {
     name       = "${var.network_name}-domain"
@@ -229,7 +249,11 @@ resource "aws_instance" "farmer_node" {
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
-
+  ebs_optimized = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = 100
+  }
   tags = {
     name       = "${var.network_name}-farmer"
     role       = "farmer node"
