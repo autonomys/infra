@@ -40,14 +40,14 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["payments", "evm"]
+  default     = ["evm"]
 }
 
 
 variable "bootstrap_node_ips" {
   description = "IP of boostrap node"
   type        = list(string)
-  default     = [""]
+  default     = ["65.108.232.59"]
 }
 
 variable "full_node_ips" {
@@ -59,17 +59,17 @@ variable "full_node_ips" {
 variable "rpc_node_ips" {
   description = "IP of boostrap node"
   type        = list(string)
-  default     = [""]
+  default     = ["65.108.232.54"]
 }
 
 variable "domain_node_ips" {
   description = "IP of domain node"
   type        = list(string)
-  default     = [""]
+  default     = ["65.108.74.115"]
 }
 
 variable "farmer_node_ips" {
   description = "IP of boostrap node"
   type        = list(string)
-  default     = [""]
+  default     = ["65.108.232.15"]
 }
