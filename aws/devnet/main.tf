@@ -9,7 +9,7 @@ module "devnet" {
     instance-count      = var.instance_count
     additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-23"
+    docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
     prune               = false
     genesis-hash        = ""
@@ -26,7 +26,7 @@ module "devnet" {
     instance-count      = var.instance_count
     additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-23"
+    docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
     prune               = false
     node-dsn-port       = 30433
@@ -41,7 +41,7 @@ module "devnet" {
     instance-count      = var.instance_count
     additional-node-ips = var.rpc_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-23"
+    docker-tag          = "snapshot-2023-may-06"
     domain-prefix       = "rpc"
     reserved-only       = false
     prune               = false
@@ -57,7 +57,7 @@ module "devnet" {
     instance-count      = var.instance_count
     additional-node-ips = var.domain_node_ips
     docker-org          = "subspace"
-    docker-tag          = "gemini-3d-2023-may-23"
+    docker-tag          = "snapshot-2023-may-06"
     domain-prefix       = "eu"
     reserved-only       = false
     prune               = false
@@ -76,7 +76,7 @@ module "devnet" {
     instance-count         = var.instance_count
     additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
-    docker-tag             = "gemini-3d-2023-may-23"
+    docker-tag             = "snapshot-2023-may-06"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
