@@ -4,33 +4,33 @@ module "devnet" {
   network-name    = "devnet"
   bootstrap-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 1
     regions             = ["ams3"]
     nodes-per-region    = 0
     additional-node-ips = var.bootstrap_node_ips
     docker-org          = "subspace"
     docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
-    prune               = true
+    prune               = false
     genesis-hash        = ""
     dsn-listen-port     = 50000
     node-dsn-port       = 30433
   }
   full-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 1
     regions             = ["sfo3"]
     nodes-per-region    = 0
     additional-node-ips = var.full_node_ips
     docker-org          = "subspace"
     docker-tag          = "snapshot-2023-may-06"
     reserved-only       = false
-    prune               = true
+    prune               = false
     node-dsn-port       = 30433
   }
   rpc-node-config = {
     droplet_size        = var.droplet-size
-    deployment-version  = 0
+    deployment-version  = 1
     regions             = ["fra1"]
     nodes-per-region    = 0
     additional-node-ips = var.rpc_node_ips
@@ -61,17 +61,17 @@ module "devnet" {
 
   farmer-node-config = {
     droplet_size           = var.droplet-size
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = ["blr1"]
     nodes-per-region       = 0
     additional-node-ips    = var.farmer_node_ips
     docker-org             = "subspace"
     docker-tag             = "snapshot-2023-may-06"
     reserved-only          = false
-    prune                  = true
+    prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer-reward-address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
 
   }
