@@ -13,7 +13,7 @@ variable "cloudflare_api_token" {
 }
 
 variable "instance_type" {
-  default = "t3.small"
+  default = "m5a.xlarge"
   type    = string
 }
 
@@ -53,7 +53,7 @@ variable "private_subnet_cidrs" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 50
+  default = 100
 }
 
 variable "disk_volume_type" {
@@ -95,79 +95,75 @@ variable "piece_cache_size" {
 variable "full-node-config" {
   description = "Full node deployment config"
   type = object({
-    instance-type       = string
-    deployment-version  = number
-    regions             = list(string)
-    instance-count      = number
-    additional-node-ips = list(string)
-    docker-org          = string
-    docker-tag          = string
-    reserved-only       = bool
-    prune               = bool
-    node-dsn-port       = number
-    disk-volume-size    = number
-    disk-volume-type    = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
 
 variable "rpc-node-config" {
   description = "RPC node deployment config"
   type = object({
-    instance-type       = string
-    deployment-version  = number
-    regions             = list(string)
-    instance-count      = number
-    additional-node-ips = list(string)
-    docker-org          = string
-    docker-tag          = string
-    domain-prefix       = string
-    reserved-only       = bool
-    prune               = bool
-    node-dsn-port       = number
-    disk-volume-size    = number
-    disk-volume-type    = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    domain-prefix      = string
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
 
 variable "domain-node-config" {
   description = "Domain node deployment config"
   type = object({
-    instance-type       = string
-    deployment-version  = number
-    regions             = list(string)
-    instance-count      = number
-    additional-node-ips = list(string)
-    docker-org          = string
-    docker-tag          = string
-    domain-prefix       = string
-    reserved-only       = bool
-    prune               = bool
-    node-dsn-port       = number
-    enable-domains      = bool
-    domain-id           = list(number)
-    domain-labels       = list(string)
-    disk-volume-size    = number
-    disk-volume-type    = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    domain-prefix      = string
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    enable-domains     = bool
+    domain-id          = list(number)
+    domain-labels      = list(string)
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
 
 variable "bootstrap-node-config" {
   description = "Bootstrap node deployment config"
   type = object({
-    instance-type       = string
-    deployment-version  = number
-    regions             = list(string)
-    instance-count      = number
-    additional-node-ips = list(string)
-    docker-org          = string
-    docker-tag          = string
-    reserved-only       = bool
-    prune               = bool
-    genesis-hash        = string
-    dsn-listen-port     = number
-    node-dsn-port       = number
-    disk-volume-size    = number
-    disk-volume-type    = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    reserved-only      = bool
+    prune              = bool
+    genesis-hash       = string
+    dsn-listen-port    = number
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
 
@@ -178,7 +174,6 @@ variable "farmer-node-config" {
     deployment-version     = number
     regions                = list(string)
     instance-count         = number
-    additional-node-ips    = list(string)
     docker-org             = string
     docker-tag             = string
     reserved-only          = bool

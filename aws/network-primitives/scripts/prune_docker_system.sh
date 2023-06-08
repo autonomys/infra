@@ -15,3 +15,6 @@ sudo docker system prune -a -f --volumes
 # so we need to prune volumes manually. Remove the following when issue is fixed.
 # TODO: https://github.com/docker/cli/issues/4028
 sudo docker volume prune -f --filter all=1
+
+# remove key files
+sudo rm -rf /subspace/*_keys.txt

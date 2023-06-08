@@ -1,6 +1,5 @@
 locals {
   farmer_node_ipv4 = flatten([
-    #   [var.farmer-node-config.additional-node-ips],
     [aws_instance.farmer_node.*.public_ip]
     ]
   )
@@ -152,7 +151,7 @@ resource "null_resource" "start-farmer-nodes" {
 
       # start subspace 
       "sudo chown ubuntu:ubuntu /subspace/docker-compose.yml",
-      "sudo docker compose -f /subspace/docker-compose.yml up -d --build ",
+      "sudo docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }
 }

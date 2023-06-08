@@ -12,42 +12,11 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["evm", "payments"]
-}
-
-
-variable "bootstrap_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "full_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "rpc_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "domain_node_ips" {
-  description = "IP of domain node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "farmer_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
+  default     = ["system", "payments", "evm"]
 }
 
 variable "instance_type" {
-  default = "t3.small"
+  default = "m5a.xlarge"
   type    = string
 }
 
@@ -87,7 +56,7 @@ variable "private_subnet_cidrs" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 50
+  default = 100
 }
 
 variable "disk_volume_type" {
@@ -119,4 +88,3 @@ variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
 }
-

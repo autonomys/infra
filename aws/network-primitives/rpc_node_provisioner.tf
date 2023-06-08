@@ -1,6 +1,5 @@
 locals {
   rpc_node_ip_v4 = flatten([
-    #   [var.rpc-node-config.additional-node-ips],
     [aws_instance.rpc_node.*.public_ip]
     ]
   )
@@ -163,7 +162,7 @@ resource "null_resource" "start-rpc-nodes" {
 
       # start subspace node
       "sudo chown ubuntu:ubuntu /subspace/docker-compose.yml",
-      "sudo docker compose -f /subspace/docker-compose.yml up -d --build ",
+      "sudo docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }
 }

@@ -7,7 +7,7 @@ terraform {
 
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 3.18.0"
+      version = ">=4.7.0"
     }
   }
 }
@@ -27,6 +27,5 @@ provider "aws" {
 
 
 provider "cloudflare" {
-  email     = var.cloudflare_email
   api_token = var.cloudflare_api_token
 }

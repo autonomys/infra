@@ -12,42 +12,11 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["payments", "evm"]
-}
-
-
-variable "bootstrap_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "full_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "rpc_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "domain_node_ips" {
-  description = "IP of domain node"
-  type        = list(string)
-  default     = [""]
-}
-
-variable "farmer_node_ips" {
-  description = "IP of boostrap node"
-  type        = list(string)
-  default     = [""]
+  default     = ["system", "payments", "evm"]
 }
 
 variable "instance_type" {
-  default = "t3.small"
+  default = "m5a.xlarge"
   type    = string
 }
 

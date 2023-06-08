@@ -1,4 +1,4 @@
-resource "aws_vpc" "gemini_vpc" {
+resource "aws_vpc" "network_vpc" {
   cidr_block           = "172.31.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -10,7 +10,7 @@ resource "aws_vpc" "gemini_vpc" {
 
 resource "aws_subnet" "public_subnets" {
   count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.gemini_vpc.id
+  vpc_id                  = aws_vpc.network_vpc.id
   cidr_block              = element(var.public_subnet_cidrs, count.index)
   availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = "true"
@@ -22,7 +22,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_subnet" "private_subnets" {
   count             = length(var.private_subnet_cidrs)
-  vpc_id            = aws_vpc.gemini_vpc.id
+  vpc_id            = aws_vpc.network_vpc.id
   cidr_block        = element(var.private_subnet_cidrs, count.index)
   availability_zone = element(var.azs, count.index)
 
@@ -39,7 +39,7 @@ resource "aws_subnet" "private_subnets" {
 
 resource "aws_internet_gateway" "gw" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.gemini_vpc.id
+  vpc_id = aws_vpc.network_vpc.id
 
   tags = {
     Name = "${var.network_name}-igw-public-subnet-${count.index}"
@@ -52,7 +52,7 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_route_table" "public_route_table" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.gemini_vpc.id
+  vpc_id = aws_vpc.network_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -82,7 +82,7 @@ resource "aws_route_table_association" "public_route_table_subnets_association" 
 
 resource "aws_route_table" "private_route_table" {
   count  = length(var.private_subnet_cidrs)
-  vpc_id = aws_vpc.gemini_vpc.id
+  vpc_id = aws_vpc.network_vpc.id
 
   route {
     cidr_block     = "0.0.0.0/0"
@@ -100,10 +100,10 @@ resource "aws_route_table_association" "private_route_table_subnets_association"
   route_table_id = element(aws_route_table.private_route_table.*.id, count.index)
 }
 
-resource "aws_security_group" "gemini_sg" {
-  name        = "gemini_sg"
+resource "aws_security_group" "network_sg" {
+  name        = "network_sg"
   description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = aws_vpc.gemini_vpc.id
+  vpc_id      = aws_vpc.network_vpc.id
 
   ingress {
     description = "HTTPS for VPC"
@@ -153,6 +153,14 @@ resource "aws_security_group" "gemini_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "DSN Port 50000 for VPC"
+    from_port   = 50000
+    to_port     = 50000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "egress for VPC"
     from_port   = 0
@@ -166,7 +174,7 @@ resource "aws_security_group" "gemini_sg" {
   }
 
   depends_on = [
-    aws_vpc.gemini_vpc
+    aws_vpc.network_vpc
   ]
 }
 

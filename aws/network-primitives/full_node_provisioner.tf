@@ -1,6 +1,5 @@
 locals {
   full_node_ip_v4 = flatten([
-    #   [var.full-node-config.additional-node-ips],
     [aws_instance.full_node.*.public_ip]
     ]
   )
@@ -149,7 +148,7 @@ resource "null_resource" "start-full-nodes" {
 
       # start subspace node
       "sudo chown ubuntu:ubuntu /subspace/docker-compose.yml",
-      "sudo docker compose -f /subspace/docker-compose.yml up -d --build ",
+      "sudo docker compose -f /subspace/docker-compose.yml up -d",
     ]
   }
 }

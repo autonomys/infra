@@ -3,7 +3,7 @@
 # updates
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update -y
-sudo apt install -y curl jq
+sudo apt install -y curl
 
 # install docker & Docker Compose
 sudo install -m 0755 -d /etc/apt/keyrings
