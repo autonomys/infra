@@ -8,10 +8,10 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08"
+    docker-tag         = "snapshot-2023-jun-08-2"
     reserved-only      = false
     prune              = false
-    genesis-hash       = ""
+    genesis-hash       = "8a94e770a50298516444025b8c075034f8be7745812358d25189175fe504fc66"
     dsn-listen-port    = 50000
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -24,7 +24,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08"
+    docker-tag         = "snapshot-2023-jun-08-2"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -38,7 +38,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08"
+    docker-tag         = "snapshot-2023-jun-08-2"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -53,7 +53,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08"
+    docker-tag         = "snapshot-2023-jun-08-2"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -71,7 +71,7 @@ module "devnet" {
     regions                = var.aws_region
     instance-count         = var.instance_count
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-jun-08"
+    docker-tag             = "snapshot-2023-jun-08-2"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
