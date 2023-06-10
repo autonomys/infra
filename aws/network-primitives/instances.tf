@@ -41,6 +41,7 @@ resource "aws_instance" "bootstrap_node" {
 
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
@@ -104,6 +105,7 @@ resource "aws_instance" "full_node" {
 
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
@@ -165,6 +167,7 @@ resource "aws_instance" "rpc_node" {
 
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt-get install curl gnupg openssl net-tools -y",
     ]
@@ -227,6 +230,7 @@ resource "aws_instance" "domain_node" {
 
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
@@ -288,6 +292,7 @@ resource "aws_instance" "farmer_node" {
 
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
