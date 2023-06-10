@@ -13,6 +13,9 @@ resource "aws_instance" "bootstrap_node" {
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.bootstrap-node-config.disk-volume-size
+    volume_type = var.bootstrap-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
   }
 
 
@@ -74,6 +77,9 @@ resource "aws_instance" "full_node" {
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.full-node-config.disk-volume-size
+    volume_type = var.full-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
   }
 
   tags = {
@@ -133,6 +139,9 @@ resource "aws_instance" "rpc_node" {
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.rpc-node-config.disk-volume-size
+    volume_type = var.rpc-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
   }
   tags = {
     name       = "${var.network_name}-rpc"
@@ -191,6 +200,9 @@ resource "aws_instance" "domain_node" {
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.domain-node-config.disk-volume-size
+    volume_type = var.domain-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
   }
 
   tags = {
@@ -250,6 +262,9 @@ resource "aws_instance" "farmer_node" {
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.farmer-node-config.disk-volume-size
+    volume_type = var.farmer-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
   }
   tags = {
     name       = "${var.network_name}-farmer"
