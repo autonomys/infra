@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "explorer-gemini-network-aws"
+      name = "squid-3d-green-aws"
     }
   }
 }
