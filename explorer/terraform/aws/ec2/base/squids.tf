@@ -1,17 +1,26 @@
 resource "aws_instance" "squid_blue_node" {
-  count             = length(var.public_subnet_cidrs)
-  ami               = data.aws_ami.ubuntu_x86_64.image_id
-  instance_type     = element(var.instance_type, 1)
+  count             = length(var.aws_region) * var.squid-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  availability_zone = element(var.azs, count.index + 1)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-explorer-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.gemini-squid-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
 
+  ebs_optimized               = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = var.squid-node-config.disk-volume-size
+    volume_type = var.squid-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
+  }
+
   tags = {
-    name       = "squid-${var.deployment_color}"
+    name       = "squid-${var.squid-node-config.deployment-color}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -20,7 +29,6 @@ resource "aws_instance" "squid_blue_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
@@ -49,28 +57,39 @@ resource "aws_instance" "squid_blue_node" {
   connection {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
-    user        = "ubuntu"
-    private_key = file("${var.public_key_path}")
-    timeout     = "90s"
+    user        = var.ssh_user
+    agent          = true
+    agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
+    timeout     = "180s"
   }
 
 }
 
 
 resource "aws_instance" "squid_green_node" {
-  count             = length(var.public_subnet_cidrs)
+  count             = length(var.aws_region) * var.squid-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
-  instance_type     = element(var.instance_type, 1)
+  instance_type     = var.squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-explorer-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.gemini-squid-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
 
+  ebs_optimized               = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = var.squid-node-config.disk-volume-size
+    volume_type = var.squid-node-config.disk-volume-type
+    iops = 3000
+    throughput = 250
+  }
+
   tags = {
-    name       = "squid-${var.deployment_color}"
+    name       = "squid-${var.squid-node-config.deployment-color}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -79,7 +98,6 @@ resource "aws_instance" "squid_green_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
@@ -92,7 +110,6 @@ resource "aws_instance" "squid_green_node" {
 # # base installation
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -110,9 +127,11 @@ resource "aws_instance" "squid_green_node" {
   connection {
     type        = "ssh"
     host        = element(self.*.public_ip, count.index)
-    user        = "ubuntu"
-    private_key = file("${var.public_key_path}")
-    timeout     = "90s"
+    user        = var.ssh_user
+    agent          = true
+    agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
+    timeout     = "180s"
   }
 
 }

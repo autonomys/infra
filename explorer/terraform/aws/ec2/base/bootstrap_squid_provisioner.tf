@@ -1,7 +1,7 @@
 locals {
   squid_node_ip_v4 = flatten([
-    [aws_instance.squid_node_blue.*.public_ip],
-    [aws_instance.squid_node_green.*.public_ip],
+    [aws_instance.squid_blue_node.*.public_ip],
+    [aws_instance.squid_green_node.*.public_ip],
     ]
   )
 }
@@ -10,7 +10,7 @@ locals {
 resource "null_resource" "setup-squid-nodes" {
   count = length(local.squid_node_ip_v4)
 
-  depends_on = [cloudflare_record.squid]
+  depends_on = [aws_instance.archive_node]
 
   # trigger on node ip changes
   triggers = {
@@ -19,46 +19,44 @@ resource "null_resource" "setup-squid-nodes" {
 
   connection {
     host           = local.squid_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
   # create squid dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /mnt/squid",
-      "sudo chown ubuntu:ubuntu /mnt/squid",
-      "sudo chmod -R 755 /mnt/squid",
-      "sudo mount -o defaults,nofail,discard,noatime /dev/sda /mnt/squid",
-      "sudo echo '/dev/sda /mnt/squid ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
-      "cd / && sudo ln -s /mnt/squid /squid ",
+      "sudo mkdir -p /archive",
+      "sudo chown ubuntu:ubuntu /archive",
+      "sudo chmod -R 770 /archive",
       "sudo mkdir -p /squid/postgresql/data",
     ]
   }
 
   # copy postgres config file
   provisioner "file" {
-    source      = "${var.path-to-configs}/postgresql.conf"
+    source      = "${var.path_to_configs}/postgresql.conf"
     destination = "/squid/postgresql/postgresql.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_squid_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_squid_node_compose_file.sh"
     destination = "/squid/create_compose_file.sh"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-scripts}/set_env_vars.sh"
+    source      = "${var.path_to_scripts}/set_env_vars.sh"
     destination = "/squid/set_env_vars.sh"
   }
 
   # copy docker install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_docker.sh"
+    source      = "${var.path_to_scripts}/install_docker.sh"
     destination = "/squid/install_docker.sh"
   }
 
@@ -74,10 +72,11 @@ resource "null_resource" "prune-squid-nodes" {
 
   connection {
     host           = local.squid_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -102,10 +101,11 @@ resource "null_resource" "start-squid-nodes" {
 
   connection {
     host           = local.squid_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
 
   }
@@ -120,17 +120,17 @@ resource "null_resource" "start-squid-nodes" {
   }
 
   provisioner "file" {
-    source      = "${var.path-to-configs}/nginx-squid.conf"
+    source      = "${var.path_to_configs}/nginx-squid.conf"
     destination = "/etc/nginx/backend.conf"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-configs}/cors-settings.conf"
+    source      = "${var.path_to_configs}/cors-settings.conf"
     destination = "/etc/nginx/cors-settings.conf"
   }
   # copy nginx install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_nginx.sh"
+    source      = "${var.path_to_scripts}/install_nginx.sh"
     destination = "/squid/install_nginx.sh"
   }
 
@@ -145,10 +145,10 @@ resource "null_resource" "start-squid-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}-${count.index}.${var.squid-node-config.network-name}.subspace.network",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}.${var.squid-node-config.network-name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-${count.index}-${var.squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-${var.squid-node-config.network-name}",
       # create .env file
       "sudo chmod +x /squid/set_env_vars.sh",
       "sudo bash /squid/set_env_vars.sh",
@@ -156,8 +156,6 @@ resource "null_resource" "start-squid-nodes" {
       # create docker compose file
       "sudo chmod +x /squid/create_compose_file.sh",
       "sudo bash /squid/create_compose_file.sh",
-      # change docker path to use secondary disk
-      "sudo mv /var/lib/docker /squid/ && ln -s /squid/docker /var/lib/docker",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",

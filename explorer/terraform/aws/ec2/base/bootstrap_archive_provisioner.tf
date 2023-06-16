@@ -9,7 +9,7 @@ locals {
 resource "null_resource" "setup-archive-nodes" {
   count = length(local.archive_node_ip_v4)
 
-  depends_on = [cloudflare_record.archive]
+  depends_on = [aws_security_group.gemini-squid-sg, cloudflare_record.archive]
 
   # trigger on node ip changes
   triggers = {
@@ -18,22 +18,20 @@ resource "null_resource" "setup-archive-nodes" {
 
   connection {
     host           = local.archive_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
   # create archive dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /mnt/archive",
-      "sudo chown ubuntu:ubuntu /mnt/archive",
-      "sudo chmod -R 755 /mnt/archive",
-      "sudo mount -o defaults,nofail,discard,noatime /dev/sda /mnt/archive",
-      "sudo echo '/dev/sda /mnt/archive ext4 defaults,nofail,discard,noatime 0 0' >> /etc/fstab",
-      "cd / && sudo ln -s /mnt/archive /archive ",
+      "sudo mkdir -p /archive",
+      "sudo chown ubuntu:ubuntu /archive",
+      "sudo chmod -R 770 /archive",
       "sudo mkdir -p /archive/postgresql/data",
       "sudo mkdir -p /archive/node-data && chown -R nobody:nogroup /archive/node-data",
     ]
@@ -41,43 +39,44 @@ resource "null_resource" "setup-archive-nodes" {
 
   # copy postgres config file
   provisioner "file" {
-    source      = "${var.path-to-configs}/postgresql.conf"
+    source      = "${var.path_to_configs}/postgresql.conf"
     destination = "/archive/postgresql/postgresql.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path-to-scripts}/create_archive_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_archive_node_compose_file.sh"
     destination = "/archive/create_compose_file.sh"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-scripts}/set_env_vars.sh"
+    source      = "${var.path_to_scripts}/set_env_vars.sh"
     destination = "/archive/set_env_vars.sh"
   }
 
   # copy docker install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_docker.sh"
+    source      = "${var.path_to_scripts}/install_docker.sh"
     destination = "/archive/install_docker.sh"
   }  # copy nginx configs
 
 }
 
 resource "null_resource" "prune-archive-nodes" {
-  count      = var.archive-node-config.prune ? length(local.archive_node_ip_v4) : 0
+  count      = var.squid-node-config.prune ? length(local.archive_node_ip_v4) : 0
   depends_on = [null_resource.setup-archive-nodes]
 
   triggers = {
-    prune = var.archive-node-config.prune
+    prune = var.squid-node-config.prune
   }
 
   connection {
     host           = local.archive_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -98,15 +97,16 @@ resource "null_resource" "start-archive-nodes" {
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_color = var.archive-node-config.deployment-color
+    deployment_version = var.squid-node-config.deployment-version
   }
 
   connection {
     host           = local.archive_node_ip_v4[count.index]
-    user           = "root"
+    user           = var.ssh_user
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
+    private_key = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -120,17 +120,17 @@ resource "null_resource" "start-archive-nodes" {
   }
 
   provisioner "file" {
-    source      = "${var.path-to-configs}/nginx-archive.conf"
+    source      = "${var.path_to_configs}/nginx-archive.conf"
     destination = "/etc/nginx/backend.conf"
   }
 
   provisioner "file" {
-    source      = "${var.path-to-configs}/cors-settings.conf"
+    source      = "${var.path_to_configs}/cors-settings.conf"
     destination = "/etc/nginx/cors-settings.conf"
   }
   # copy nginx install file
   provisioner "file" {
-    source      = "${var.path-to-scripts}/install_nginx.sh"
+    source      = "${var.path_to_scripts}/install_nginx.sh"
     destination = "/archive/install_nginx.sh"
   }
 
@@ -146,10 +146,10 @@ resource "null_resource" "start-archive-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-node-config.domain-prefix}-${count.index}.${var.archive-node-config.network-name}.subspace.network",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d evm.archive.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-${count.index}-${var.archive-node-config.network-name}",
+      "sudo hostnamectl set-hostname evm.archive.${var.network_name}",
       # create .env file
       "sudo chmod +x /archive/set_env_vars.sh",
       "sudo bash /archive/set_env_vars.sh",
@@ -157,8 +157,6 @@ resource "null_resource" "start-archive-nodes" {
       # create docker compose file
       "sudo chmod +x /archive/create_compose_file.sh",
       "sudo bash /archive/create_compose_file.sh",
-      # change docker path to use secondary disk
-      "sudo mv /var/lib/docker /archive/ && ln -s /archive/docker /var/lib/docker",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",

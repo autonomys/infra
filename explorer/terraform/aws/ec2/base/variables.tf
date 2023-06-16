@@ -6,8 +6,8 @@ variable "netdata_token" {
 }
 
 variable "instance_type" {
-  default = ["t2.micro"]
-  type    = list(string)
+  default = "m6a.2xlarge"
+  type    = string
 }
 
 variable "vpc_id" {
@@ -18,7 +18,7 @@ variable "vpc_id" {
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-2a", "us-east-2b"]
+  default     = ["us-east-2c"]
 }
 
 variable "instance_count" {
@@ -29,7 +29,7 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-east-2"]
 }
 
 variable "public_subnet_cidrs" {
@@ -42,6 +42,27 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   description = "Private Subnet CIDR values"
   default     = ["172.31.2.0/24"]
+}
+
+variable "disk_volume_size" {
+  type    = number
+  default = 800
+}
+
+variable "disk_volume_type" {
+  type    = string
+  default = "gp3"
+}
+
+
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
+}
+
+variable "private_key_path" {
+  type    = string
+  default = "~/.ssh/deployer.pem"
 }
 
 variable "secret_key" {
@@ -63,4 +84,44 @@ variable "aws_key_name" {
 variable "public_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
+}
+
+variable "network_name" {
+  description = "Network name"
+  type        = string
+  default = "gemini-3d"
+}
+
+variable "deployment_color" {
+  description = "Deployment environment"
+  type        = string
+  default     = ""
+}
+
+variable "path_to_scripts" {
+  description = "Path to the scripts"
+  type        = string
+}
+
+variable "path_to_configs" {
+  description = "Path to the configs"
+  type        = string
+}
+
+variable "squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color   = string
+    network-name       = string
+    domain-prefix      = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    prune              = bool
+    disk-volume-size   = number
+    disk-volume-type   = string
+    environment        = string
+  })
+
 }

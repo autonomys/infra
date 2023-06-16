@@ -1,33 +1,33 @@
-resource "aws_vpc" "gemini-explorer-vpc" {
+resource "aws_vpc" "gemini-squid-vpc" {
   cidr_block           = "172.31.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
-    name = "gemini-explorer-vpc"
+    name = "gemini-squid-vpc"
   }
 }
 
 
 resource "aws_subnet" "public_subnets" {
   count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.gemini-explorer-vpc
+  vpc_id                  = aws_vpc.gemini-squid-vpc.id
   cidr_block              = element(var.public_subnet_cidrs, count.index)
   availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = "true"
 
   tags = {
-    Name = "public-subnet-${count.index + 1}"
+    Name = "squid-public-subnet-${count.index + 1}"
   }
 }
 
 
 resource "aws_internet_gateway" "gw" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.gemini-explorer-vpc
+  vpc_id = aws_vpc.gemini-squid-vpc.id
 
   tags = {
-    Name = "igw-public-subnet-${count.index}"
+    Name = "squid-igw-public-subnet-${count.index}"
   }
 
   lifecycle {
@@ -38,7 +38,7 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_route_table" "public_route_table" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.gemini-explorer-vpc
+  vpc_id = aws_vpc.gemini-squid-vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -51,7 +51,7 @@ resource "aws_route_table" "public_route_table" {
   }
 
   tags = {
-    Name = "public-route-tbl-${count.index}"
+    Name = "squid-public-route-tbl-${count.index}"
   }
 
   depends_on = [
@@ -60,24 +60,17 @@ resource "aws_route_table" "public_route_table" {
 }
 
 
-resource "aws_route_table_association" "private_route_table_subnets_association" {
-  count          = length(var.private_subnet_cidrs)
-  subnet_id      = element(aws_subnet.private_subnets.*.id, count.index)
-  route_table_id = element(aws_route_table.private_route_table.*.id, count.index)
-}
-
-
-resource "aws_security_group" "gemini-explorer-sg" {
-  name        = "gemini-explorer-sg"
+resource "aws_security_group" "gemini-squid-sg" {
+  name        = "gemini-squid-sg"
   description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = aws_vpc.gemini-explorer-vpc
+  vpc_id      = aws_vpc.gemini-squid-vpc.id
 
   ingress {
     description = "HTTPS for VPC"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.gemini-explorer-vpc.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -85,7 +78,7 @@ resource "aws_security_group" "gemini-explorer-sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.gemini-explorer-vpc.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -105,32 +98,10 @@ resource "aws_security_group" "gemini-explorer-sg" {
   }
 
   tags = {
-    Name = "gemini-explorer-sg"
+    Name = "gemini-squid-sg"
   }
 
   depends_on = [
-    aws_vpc.gemini-explorer-vpc
+    aws_vpc.gemini-squid-vpc
   ]
-}
-
-## Allocate EIP to NAT Gateway
-
-resource "aws_eip" "public_subnet_eip" {
-  count = length(var.public_subnet_cidrs)
-  vpc   = true
-
-  depends_on = [
-    aws_internet_gateway.gw,
-  ]
-}
-
-# NAT Gateway for public subnet
-resource "aws_nat_gateway" "nat_gateway" {
-  count         = length(var.public_subnet_cidrs)
-  allocation_id = element(aws_eip.public_subnet_eip.*.allocation_id, count.index)
-  subnet_id     = element(aws_subnet.public_subnets.*.id, count.index)
-
-  tags = {
-    Name = "public-subnet-nat-GTW-${count.index}"
-  }
 }

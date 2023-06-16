@@ -1,11 +1,7 @@
 // Output Variables
 
 output "ingress_rules" {
-  value = aws_security_group.allow_runner.*.ingress
-}
-
-output "public_subnet_eip" {
-  value = aws_eip.public_subnet_eip.*.public_ip
+  value = aws_security_group.gemini-squid-sg.*.ingress
 }
 
 output "squid_blue_node_server_id" {
@@ -59,7 +55,8 @@ output "archive_node_ami" {
 
 output "dns-records" {
   value = [
-    cloudflare_record.squid[*].hostname,
+    cloudflare_record.squid-blue[*].hostname,
+    cloudflare_record.squid-green[*].hostname,
     cloudflare_record.archive[*].hostname,
   ]
 }

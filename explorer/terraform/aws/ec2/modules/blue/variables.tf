@@ -15,6 +15,7 @@ variable "cloudflare_api_token" {
 variable "network_name" {
   description = "Network name"
   type        = string
+  default = "gemini-3d"
 }
 variable "deployment_color" {
   description = "Deployment environment"
@@ -23,7 +24,7 @@ variable "deployment_color" {
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "m6a.2xlarge"
   type    = string
 }
 
@@ -35,7 +36,7 @@ variable "vpc_id" {
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["us-east-2c"]
 }
 
 variable "instance_count" {
@@ -46,19 +47,13 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-east-2"]
 }
 
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
   default     = ["172.31.1.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "Private Subnet CIDR values"
-  default     = ["172.31.2.0/24"]
 }
 
 variable "secret_key" {
@@ -77,27 +72,22 @@ variable "aws_key_name" {
   sensitive = true
 }
 
-variable "public_key_path" {
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
+}
+
+variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
 }
 
-variable "squid-node-config" {
-  description = "archive backend configuration"
-  type = object({
-    deployment-color   = string
-    network-name       = string
-    domain-prefix      = string
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    prune              = bool
-    environment        = string
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
+variable "disk_volume_size" {
+  type    = number
+  default = 800
+}
 
+variable "disk_volume_type" {
+  type    = string
+  default = "gp3"
 }
