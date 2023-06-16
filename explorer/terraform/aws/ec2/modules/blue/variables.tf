@@ -15,7 +15,7 @@ variable "cloudflare_api_token" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default = "gemini-3d"
+  default     = "gemini-3d"
 }
 variable "deployment_color" {
   description = "Deployment environment"

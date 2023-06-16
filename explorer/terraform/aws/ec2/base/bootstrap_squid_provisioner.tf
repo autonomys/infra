@@ -23,7 +23,7 @@ resource "null_resource" "setup-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -76,7 +76,7 @@ resource "null_resource" "prune-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -105,7 +105,7 @@ resource "null_resource" "start-squid-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
 
   }

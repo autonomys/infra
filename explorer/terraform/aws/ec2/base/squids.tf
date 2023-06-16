@@ -10,13 +10,13 @@ resource "aws_instance" "squid_blue_node" {
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
 
-  ebs_optimized               = true
+  ebs_optimized = true
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.squid-node-config.disk-volume-size
     volume_type = var.squid-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
 
   tags = {
@@ -41,6 +41,7 @@ resource "aws_instance" "squid_blue_node" {
   # # base installation
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo DEBIAN_FRONTEND=noninteractive apt install git curl wget gnupg openssl net-tools -y",
@@ -55,13 +56,13 @@ resource "aws_instance" "squid_blue_node" {
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
+    type           = "ssh"
+    host           = element(self.*.public_ip, count.index)
+    user           = var.ssh_user
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
-    timeout     = "180s"
+    private_key    = file("${var.private_key_path}")
+    timeout        = "180s"
   }
 
 }
@@ -79,13 +80,13 @@ resource "aws_instance" "squid_green_node" {
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
 
-  ebs_optimized               = true
+  ebs_optimized = true
   ebs_block_device {
     device_name = "/dev/sda1"
     volume_size = var.squid-node-config.disk-volume-size
     volume_type = var.squid-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
 
   tags = {
@@ -107,9 +108,10 @@ resource "aws_instance" "squid_green_node" {
 
   }
 
-# # base installation
+  # # base installation
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
@@ -125,13 +127,13 @@ resource "aws_instance" "squid_green_node" {
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
+    type           = "ssh"
+    host           = element(self.*.public_ip, count.index)
+    user           = var.ssh_user
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
-    timeout     = "180s"
+    private_key    = file("${var.private_key_path}")
+    timeout        = "180s"
   }
 
 }

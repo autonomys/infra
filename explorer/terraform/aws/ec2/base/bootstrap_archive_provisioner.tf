@@ -22,7 +22,7 @@ resource "null_resource" "setup-archive-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -58,7 +58,7 @@ resource "null_resource" "setup-archive-nodes" {
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
     destination = "/archive/install_docker.sh"
-  }  # copy nginx configs
+  } # copy nginx configs
 
 }
 
@@ -76,7 +76,7 @@ resource "null_resource" "prune-archive-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
   }
 
@@ -106,7 +106,7 @@ resource "null_resource" "start-archive-nodes" {
     type           = "ssh"
     agent          = true
     agent_identity = var.aws_key_name
-    private_key = file("${var.private_key_path}")
+    private_key    = file("${var.private_key_path}")
     timeout        = "300s"
   }
 

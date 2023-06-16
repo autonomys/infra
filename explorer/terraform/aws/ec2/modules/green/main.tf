@@ -1,8 +1,8 @@
 module "green" {
-  source          = "../../base/"
-  path_to_scripts = "../../base/scripts"
-  path_to_configs = "../../base/config"
-  network_name    = var.network_name
+  source           = "../../base/"
+  path_to_scripts  = "../../base/scripts"
+  path_to_configs  = "../../base/config"
+  network_name     = var.network_name
   deployment_color = var.deployment_color
 
   squid-node-config = {
@@ -15,7 +15,7 @@ module "green" {
     instance-count     = var.instance_count
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
-    prune = false
+    prune              = false
     environment        = "production"
   }
 
