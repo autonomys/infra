@@ -29,7 +29,7 @@ resource "aws_instance" "archive_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.gw
+    aws_internet_gateway.squid-gw
   ]
 
   lifecycle {
@@ -44,7 +44,7 @@ resource "aws_instance" "archive_node" {
       "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install wget gnupg openssl net-tools -y",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
 

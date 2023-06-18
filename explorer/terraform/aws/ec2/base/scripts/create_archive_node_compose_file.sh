@@ -1,14 +1,17 @@
 #!/bin/bash
 source ~/.bash_profile
-cat > /archive/docker-compose.yml << EOF
+cat > ~/archive/docker-compose.yml << EOF
 version: "3.7"
+
+volumes:
+  archival_node_data: {}
 
 services:
   db:
     image: postgres:14
     restart: always
     volumes:
-      - /archive/postgresql:/var/lib/postgresql
+      - ~/archive/postgresql:/var/lib/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -62,7 +65,7 @@ services:
   node:
     image: ghcr.io/subspace/node:${NODE_TAG}
     volumes:
-      - /archive/node-data:/var/subspace:rw
+      - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     command: [
       "--chain", "${NETWORK_NAME}",
@@ -102,7 +105,7 @@ services:
     command: "postgres"
     ports:
       - 8080:8080
-  
+
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:

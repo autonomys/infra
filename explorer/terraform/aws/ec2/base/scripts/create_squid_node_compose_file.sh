@@ -1,21 +1,28 @@
 #!/bin/sh
 source ~/.bash_profile
-cat > /squid/docker-compose.yml << EOF
-version: "3"
+cat > ~/squid/docker-compose.yml << EOF
+version: "3.7"
+
+volumes:
+  db_data: {}
 
 services:
   db:
     image: postgres:14
     shm_size: 1gb
     volumes:
-      - /squid/postgresql/:/var/lib/postgresql/
+      - db_data:/var/lib/postgresql/data
+      - type: bind
+        source: ~/squid/postgresql/conf/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
-    command: postgres -c config_file=/var/lib/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:latest
@@ -87,7 +94,7 @@ services:
     command: "postgres"
     ports:
       - 8080:8080
-  
+
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:

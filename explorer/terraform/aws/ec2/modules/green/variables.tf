@@ -50,9 +50,14 @@ variable "azs" {
   default     = ["us-east-2c"]
 }
 
-variable "instance_count" {
+variable "instance_count_blue" {
   type    = number
   default = 1
+}
+
+variable "instance_count_green" {
+  type    = number
+  default = 0
 }
 
 variable "aws_region" {
@@ -64,7 +69,7 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
+  default     = ["172.31.3.0/24"]
 }
 
 variable "secret_key" {
@@ -78,9 +83,8 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default   = "deployer"
-  type      = string
-  sensitive = true
+  default = "explorer-deployer"
+  type    = string
 }
 
 variable "ssh_user" {
@@ -90,7 +94,7 @@ variable "ssh_user" {
 
 variable "private_key_path" {
   type    = string
-  default = "~/.ssh/deployer.pem"
+  default = "~/.ssh/explorer-deployer.pem"
 }
 
 variable "disk_volume_size" {

@@ -1,0 +1,15 @@
+# AWS access key used to create infrastructure
+access_key = ""
+# AWS secret key used to create AWS infrastructure
+secret_key           = ""
+aws_key_name         = "explorer-deployer"
+ssh_user             = "ubuntu"
+network_name         = "gemini-3d"
+deployment_color     = "green"
+instance_type        = "m6a.2xlarge"
+instance_count_blue  = 1
+disk_volume_size     = 800
+private_key_path     = "~/.ssh/explorer-deployer.pem"
+cloudflare_email     = ""
+cloudflare_api_token = ""
+datadog_api_key      = ""

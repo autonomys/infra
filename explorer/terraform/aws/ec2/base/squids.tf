@@ -1,5 +1,5 @@
 resource "aws_instance" "squid_blue_node" {
-  count             = length(var.aws_region) * var.squid-node-config.instance-count
+  count             = length(var.aws_region) * var.squid-node-config.instance-count-blue
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
@@ -29,7 +29,7 @@ resource "aws_instance" "squid_blue_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.gw
+    aws_internet_gateway.squid-gw
   ]
 
   lifecycle {
@@ -44,7 +44,7 @@ resource "aws_instance" "squid_blue_node" {
       "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl wget gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install wget gnupg openssl net-tools -y",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
 
@@ -56,20 +56,18 @@ resource "aws_instance" "squid_blue_node" {
 
   # Setting up the ssh connection
   connection {
-    type           = "ssh"
-    host           = element(self.*.public_ip, count.index)
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.aws_key_name
-    private_key    = file("${var.private_key_path}")
-    timeout        = "180s"
+    type        = "ssh"
+    host        = element(self.*.public_ip, count.index)
+    user        = var.ssh_user
+    private_key = file("${var.private_key_path}")
+    timeout     = "180s"
   }
 
 }
 
 
 resource "aws_instance" "squid_green_node" {
-  count             = length(var.aws_region) * var.squid-node-config.instance-count
+  count             = length(var.aws_region) * var.squid-node-config.instance-count-green
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
@@ -99,7 +97,7 @@ resource "aws_instance" "squid_green_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.gw
+    aws_internet_gateway.squid-gw
   ]
 
   lifecycle {
@@ -127,13 +125,11 @@ resource "aws_instance" "squid_green_node" {
 
   # Setting up the ssh connection
   connection {
-    type           = "ssh"
-    host           = element(self.*.public_ip, count.index)
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.aws_key_name
-    private_key    = file("${var.private_key_path}")
-    timeout        = "180s"
+    type        = "ssh"
+    host        = element(self.*.public_ip, count.index)
+    user        = var.ssh_user
+    private_key = file("${var.private_key_path}")
+    timeout     = "180s"
   }
 
 }

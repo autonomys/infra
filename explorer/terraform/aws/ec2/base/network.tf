@@ -22,12 +22,12 @@ resource "aws_subnet" "public_subnets" {
 }
 
 
-resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "squid-gw" {
   count  = length(var.public_subnet_cidrs)
   vpc_id = aws_vpc.gemini-squid-vpc.id
 
   tags = {
-    Name = "squid-igw-public-subnet-${count.index}"
+    Name = "squid-gw-public-subnet-${count.index}"
   }
 
   lifecycle {
@@ -42,12 +42,12 @@ resource "aws_route_table" "public_route_table" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw[count.index].id
+    gateway_id = aws_internet_gateway.squid-gw[count.index].id
   }
 
   route {
     ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.gw[count.index].id
+    gateway_id      = aws_internet_gateway.squid-gw[count.index].id
   }
 
   tags = {
@@ -55,10 +55,15 @@ resource "aws_route_table" "public_route_table" {
   }
 
   depends_on = [
-    aws_internet_gateway.gw
+    aws_internet_gateway.squid-gw
   ]
 }
 
+resource "aws_route_table_association" "public_route_table_subnets_association" {
+  count          = length(var.public_subnet_cidrs)
+  subnet_id      = element(aws_subnet.public_subnets.*.id, count.index)
+  route_table_id = element(aws_route_table.public_route_table.*.id, count.index)
+}
 
 resource "aws_security_group" "gemini-squid-sg" {
   name        = "gemini-squid-sg"

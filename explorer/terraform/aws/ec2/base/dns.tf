@@ -3,7 +3,7 @@ data "cloudflare_zone" "cloudflare_zone" {
 }
 
 resource "cloudflare_record" "squid-blue" {
-  count   = length(local.squid_node_ip_v4) - 1
+  count   = var.squid-node-config.instance-count-blue
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "${var.squid-node-config.domain-prefix}.${var.squid-node-config.network-name}"
   value   = local.squid_node_ip_v4[count.index]
@@ -12,7 +12,7 @@ resource "cloudflare_record" "squid-blue" {
 }
 
 resource "cloudflare_record" "squid-green" {
-  count   = length(local.squid_node_ip_v4) - 1
+  count   = var.squid-node-config.instance-count-green
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "${var.squid-node-config.domain-prefix}.${var.squid-node-config.network-name}"
   value   = local.squid_node_ip_v4[count.index]

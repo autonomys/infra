@@ -3,10 +3,11 @@
 # updates
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update -y
+sudo apt install -y curl
 
 # install docker & Docker Compose
 sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
 echo \
@@ -22,4 +23,3 @@ if ! (grep -iq "net.core.somaxconn" /etc/sysctl.conf && sed -i 's/.*net.core.som
 fi
 
 sudo sysctl -p /etc/sysctl.conf
-
