@@ -56,7 +56,6 @@ variable "private_subnet_cidrs" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 50
 }
 
 variable "disk_volume_type" {
