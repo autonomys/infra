@@ -44,11 +44,11 @@ resource "aws_instance" "linux_x86_64_runner" {
   # # Github runner installation
   provisioner "remote-exec" {
     inline = [
-      "sleep 60",
+      "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools -y",
+      "sudo apt install wget gnupg openssl net-tools -y",
       # Download runner image
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-linux-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
@@ -56,9 +56,7 @@ resource "aws_instance" "linux_x86_64_runner" {
       "tar xzf ./actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
       # configure runner
       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name linux_x86_64 --labels 'self-hosted,Linux,x86_64' --work _work --runasservice",
-      "sudo ./svc.sh install",
-      "sudo ./svc.sh start",
-      "sudo ./svc.sh status",
+      "./run.sh",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
 
@@ -124,11 +122,11 @@ resource "aws_instance" "linux_arm64_runner" {
   # Github runner installation
   provisioner "remote-exec" {
     inline = [
-      "sleep 120",
+      "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools -y",
+      "sudo apt install wget gnupg openssl net-tools -y",
       # Download runner image
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz",
@@ -136,9 +134,7 @@ resource "aws_instance" "linux_arm64_runner" {
       "tar xzf ./actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz",
       # configure runner
       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name linux_arm64 --labels 'self-hosted,Linux,ARM64' --work _work --runasservice",
-      "sudo ./svc.sh install",
-      "sudo ./svc.sh start",
-      "sudo ./svc.sh status",
+      "./run.sh",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
     ]
@@ -204,13 +200,13 @@ resource "aws_instance" "mac_x86_64_runner" {
   # Github runner installation
   provisioner "remote-exec" {
     inline = [
-      "sleep 160",
+      "cloud-init status --wait",
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-osx-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
       "echo '${lookup(var.gh_runner_checksums, "mac_x86_64", "")} actions-runner-osx-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name mac_x86_64 --labels 'self-hosted,MacOS,x86_64' --work _work --runasservice",
-      "sudo ./run.sh",
+      "./run.sh",
       "curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
     ]
 
@@ -277,13 +273,13 @@ resource "aws_instance" "mac_arm64_runner" {
   # Github runner installation
   provisioner "remote-exec" {
     inline = [
-      "sleep 160",
+      "cloud-init status --wait",
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-osx-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz",
       "echo '${lookup(var.gh_runner_checksums, "mac_arm64", "")}  actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz",
       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name mac_arm64 --labels 'self-hosted,MacOS,ARM64' --work _work --runasservice",
-      "sudo ./run.sh",
+      "./run.sh",
       "curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room}  --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
     ]
 

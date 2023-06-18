@@ -20,17 +20,17 @@ variable "netdata_room" {
 
 variable "gh_runner_version" {
   type    = string
-  default = "2.304.0"
+  default = "2.305.0"
 }
 
 variable "gh_runner_checksums" {
   type = map(string)
   default = {
-    linux_x86_64   = "292e8770bdeafca135c2c06cd5426f9dda49a775568f45fcc25cc2b576afc12f",
-    linux_arm64    = "34c49bd0e294abce6e4a073627ed60dc2f31eee970c13d389b704697724b31c6",
-    mac_x86_64     = "26dddab8eafc193bb8b27afc5844ff3a6f789a655aca5bf79b018493963681a7",
-    mac_arm64      = "789fc57af2f0819d470fcc447e2970f201cfc8aa1d803d4e5b748ec4c5d10db8",
-    windows_x86_64 = "fbbddd2f94b195dde46aa6028acfe873351964c502aa9f29bb64e529b789500b"
+    linux_x86_64   = "737bdcef6287a11672d6a5a752d70a7c96b4934de512b7eb283be6f51a563f2f",
+    linux_arm64    = "63d7b0ba495055e390ac057dc67d721ed78113990fa837a20b141a75044e152a",
+    mac_x86_64     = "a7c623e013f97db6c73c27288047c1d02ab6964519020ad0e87e69c328e96534",
+    mac_arm64      = "a2383a869b99793dee5e1ff7c1df4e7bc86f73521ae03f884f0c7aa43830e2cb",
+    windows_x86_64 = "3a4afe6d9056c7c63ecc17f4db32148e946454f2384427b0a4565b7690ef7420"
   }
 }
 
