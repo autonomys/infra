@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat > /subspace/docker-compose.yml << EOF
+cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -68,16 +68,16 @@ node_count=${2}
 current_node=${3}
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
-    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/node_keys.txt)
-    echo "      \"--reserved-nodes\", \"${addr}\"," >> /subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> /subspace/docker-compose.yml
-    dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" /subspace/dsn_bootstrap_node_keys.txt)
-    echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> /subspace/docker-compose.yml
+    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+    echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 
 if [ "${reserved_only}" == true ]; then
-    echo "      \"--reserved-only\"," >> /subspace/docker-compose.yml
+    echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
 
-echo '    ]' >> /subspace/docker-compose.yml
+echo '    ]' >> ~/subspace/docker-compose.yml

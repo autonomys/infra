@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-
-sudo systemctl stop subspace.service
-# disable the service
-sudo systemctl disable subspace.service
-# delete the service file
-sudo rm  /etc/systemd/system/subspace.service
-# update docker restart policy to no so that containers wont start.
 sudo docker ps -aq | xargs docker update --restart=no
 # stop all the containers
 sudo docker ps -aq | xargs docker stop
@@ -17,4 +10,4 @@ sudo docker system prune -a -f --volumes
 sudo docker volume prune -f --filter all=1
 
 # remove key files
-sudo rm -rf /subspace/*_keys.txt
+sudo rm -rf ~/subspace/*_keys.txt
