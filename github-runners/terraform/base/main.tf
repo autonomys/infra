@@ -32,11 +32,6 @@ resource "aws_instance" "linux_x86_64_runner" {
   }
 
   provisioner "file" {
-    source      = "./scripts/secure.sh"
-    destination = "/home/ubuntu/secure.sh"
-  }
-
-  provisioner "file" {
     source      = "./scripts/cleanup.sh"
     destination = "/home/ubuntu/cleanup.sh"
   }
@@ -107,11 +102,6 @@ resource "aws_instance" "linux_arm64_runner" {
 
     create_before_destroy = true
 
-  }
-
-  provisioner "file" {
-    source      = "./scripts/secure.sh"
-    destination = "/home/ubuntu/secure.sh"
   }
 
   provisioner "file" {
@@ -188,11 +178,6 @@ resource "aws_instance" "mac_x86_64_runner" {
   }
 
   provisioner "file" {
-    source      = "./scripts/secure.sh"
-    destination = "/home/ec2-user/secure.sh"
-  }
-
-  provisioner "file" {
     source      = "./scripts/cleanup.sh"
     destination = "/home/ec2-user/cleanup.sh"
   }
@@ -258,11 +243,6 @@ resource "aws_instance" "mac_arm64_runner" {
 
     create_before_destroy = true
 
-  }
-
-  provisioner "file" {
-    source      = "./scripts/secure.sh"
-    destination = "/home/ec2-user/secure.sh"
   }
 
   provisioner "file" {
