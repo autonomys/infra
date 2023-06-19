@@ -8,7 +8,7 @@ module "green" {
   squid-node-config = {
     deployment-color     = var.deployment_color
     network-name         = "${var.network_name}-${var.deployment_color}"
-    domain-prefix        = "evm.squid"
+    domain-prefix        = "evm"
     instance-type        = var.instance_type
     deployment-version   = 1
     regions              = var.aws_region

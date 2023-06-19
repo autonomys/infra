@@ -148,10 +148,10 @@ resource "null_resource" "start-squid-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}.${var.squid-node-config.network-name}.subspace.network",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}.squid.${var.squid-node-config.network-name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-${var.squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-squid-${var.squid-node-config.network-name}",
       # create .env file
       "chmod +x ./squid/set_env_vars.sh",
       "bash ./squid/set_env_vars.sh",

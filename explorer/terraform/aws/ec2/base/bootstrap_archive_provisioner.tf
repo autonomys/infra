@@ -148,10 +148,10 @@ resource "null_resource" "start-archive-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d evm.archive.${var.network_name}.subspace.network",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}.archive.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname evm-archive-${var.network_name}",
+      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-archive-${var.network_name}",
       # create .env file
       "chmod +x ./archive/set_env_vars.sh",
       "bash ./archive/set_env_vars.sh",
