@@ -1,18 +1,15 @@
 variable "gh_token" {
-  default   = ""
-  type      = string
+  type      = list(string)
   sensitive = true
 }
 
 variable "netdata_token" {
-  default   = ""
   type      = string
   sensitive = true
 
 }
 
 variable "netdata_room" {
-  default   = ""
   type      = string
   sensitive = true
 
@@ -35,7 +32,7 @@ variable "gh_runner_checksums" {
 }
 
 variable "instance_type" {
-  default = ["t2.micro"]
+  default = ["t3.2xlarge"]
   type    = list(string)
 }
 
@@ -77,15 +74,15 @@ variable "public_subnet_cidrs" {
   default     = ["172.31.1.0/24"]
 }
 
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "Private Subnet CIDR values"
-  default     = ["172.31.2.0/24"]
-}
-
 variable "secret_key" {
   type      = string
   sensitive = true
+}
+
+variable "ssh_user" {
+  type = list(string)
+  default = [ "ubuntu", "ec2-user"]
+  
 }
 
 variable "access_key" {
@@ -99,20 +96,17 @@ variable "aws_key_name" {
   sensitive = true
 }
 
-variable "public_key_path" {
+variable "private_key_path" {
   type    = string
-  default = ""
 }
 
 variable "win_admin_username" {
-  default   = "default"
   type      = string
-  sensitive = true
+  default = "Administrator"
 }
 
 
 variable "win_admin_password" {
-  default   = "default"
   type      = string
   sensitive = true
 }
