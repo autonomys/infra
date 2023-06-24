@@ -8,7 +8,7 @@ module "gemini-3d" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-may-23"
+    docker-tag         = "gemini-3d-2023-jun-14"
     reserved-only      = false
     prune              = false
     genesis-hash       = ""
@@ -24,7 +24,7 @@ module "gemini-3d" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-may-23"
+    docker-tag         = "gemini-3d-2023-jun-14"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -38,7 +38,7 @@ module "gemini-3d" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-may-23"
+    docker-tag         = "gemini-3d-2023-jun-14"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -53,7 +53,7 @@ module "gemini-3d" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-may-23"
+    docker-tag         = "gemini-3d-2023-jun-14"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -71,7 +71,7 @@ module "gemini-3d" {
     regions                = var.aws_region
     instance-count         = var.instance_count
     docker-org             = "subspace"
-    docker-tag             = "gemini-3d-2023-may-23"
+    docker-tag             = "gemini-3d-2023-jun-14"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"

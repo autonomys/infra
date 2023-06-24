@@ -43,16 +43,9 @@ services:
       - "30333:30333"
       - "\${NODE_DSN_PORT}:30433"
     labels:
-      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.system.\${NETWORK_NAME}.subspace.network
+      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /http
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
-      caddy_0.handle_path_1: /ws
-      caddy_0.handle_path_1.reverse_proxy: "{{upstreams 8944}}"
-      caddy_1: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
-      caddy_1.handle_path_0: /http
-      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 7933}}"
-      caddy_1.handle_path_1: /ws
-      caddy_1.handle_path_1.reverse_proxy: "{{upstreams 7944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -60,18 +53,16 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--no-private-ipv4",
       "--dsn-disable-private-ips",
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-port", "9933",
-      "--ws-port", "9944",
-      "--ws-external",
+      "--rpc-external",
       "--in-peers", "500",
       "--out-peers", "250",
       "--in-peers-light", "500",
-      "--ws-max-connections", "10000",
+      "--rpc-max-connections", "10000",
 EOF
 
 reserved_only=${1}
@@ -107,21 +98,6 @@ fi
 
 if [ ${enable_domains} == true ]; then
     {
-    # system domain
-      echo '      "--",'
-      echo '      "--chain=${NETWORK_NAME}",'
-      echo '      "--validator",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--base-path", "/var/subspace/system_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "8933",'
-      echo '      "--ws-port", "8944",'
-      echo '      "--no-private-ipv4",'
-      echo '      "--unsafe-ws-external",'
-      echo '      "--relayer-id=${RELAYER_SYSTEM_ID}",'
-
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
@@ -132,10 +108,8 @@ if [ ${enable_domains} == true ]; then
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "7933",'
-      echo '      "--ws-port", "7944",'
-      echo '      "--no-private-ipv4",'
-      echo '      "--unsafe-ws-external",'
+      echo '      "--rpc-port", "8933",'
+      echo '      "--unsafe-rpc-external",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
 
     }  >> ~/subspace/docker-compose.yml

@@ -4,14 +4,14 @@ module "devnet" {
   network_name    = "devnet"
   bootstrap-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-jun-22-4"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "8a94e770a50298516444025b8c075034f8be7745812358d25189175fe504fc66"
+    genesis-hash       = "2e45c5cbc42f10e3faaaaa44618927ee1403a08c9625d70891ae3f2fecc35e0b"
     dsn-listen-port    = 50000
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -24,7 +24,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-jun-22-4"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -34,11 +34,11 @@ module "devnet" {
 
   rpc-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-jun-22-4"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -53,7 +53,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-jun-22-4"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -67,16 +67,16 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-jun-08-2"
+    docker-tag             = "snapshot-2023-jun-22-4"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type

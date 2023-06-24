@@ -55,18 +55,16 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--no-private-ipv4",
       "--dsn-disable-private-ips",
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-port", "9933",
-      "--ws-port", "9944",
-      "--ws-external",
+      "--rpc-external",
       "--in-peers", "500",
       "--out-peers", "250",
       "--in-peers-light", "500",
-      "--ws-max-connections", "10000",
+      "--rpc-max-connections", "10000",
 EOF
 
 reserved_only=${1}
