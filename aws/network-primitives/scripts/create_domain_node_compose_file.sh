@@ -44,8 +44,8 @@ services:
       - "\${NODE_DSN_PORT}:30433"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
-      caddy_0.handle_path_0: /http
-      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8933}}"
+      caddy_0.handle_path_0: /ws
+      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     command: [
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
@@ -57,7 +57,6 @@ services:
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--rpc-cors", "all",
-      "--rpc-port", "9933",
       "--rpc-external",
       "--in-peers", "500",
       "--out-peers", "250",
@@ -108,7 +107,7 @@ if [ ${enable_domains} == true ]; then
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "8933",'
+      echo '      "--rpc-port", "8944",'
       echo '      "--unsafe-rpc-external",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
 

@@ -188,7 +188,7 @@ resource "null_resource" "inject-domain-keystore" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo docker cp ~/subspace/keystore/.  subspace-archival-node-1:/var~/subspace/keystore/"
+      "sudo docker cp ~/subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
     ]
   }
 }

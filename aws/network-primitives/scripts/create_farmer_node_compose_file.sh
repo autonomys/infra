@@ -60,8 +60,7 @@ services:
       "--node-key", \$NODE_KEY,
       "--validator",
       "--rpc-cors", "all",
-      "--ws-port", "9944",
-      "--unsafe-ws-external",
+      "--unsafe-rpc-external",
 EOF
 
 reserved_only=${1}
