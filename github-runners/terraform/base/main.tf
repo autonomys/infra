@@ -38,7 +38,7 @@ resource "aws_instance" "linux_x86_64_runner" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install wget gnupg openssl net-tools -y",
+      "sudo apt install gnupg openssl net-tools -y",
       # Download runner image
       "mkdir actions-runner && cd actions-runner",
       "curl -o actions-runner-linux-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
@@ -49,7 +49,7 @@ resource "aws_instance" "linux_x86_64_runner" {
       "sudo ./svc.sh install ${var.ssh_user[0]}",
       "sudo ./svc.sh start",
       # install monitoring
-      "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo sh -c \"curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud\"",
 
     ]
 
@@ -107,7 +107,7 @@ resource "aws_instance" "linux_x86_64_runner" {
 #       "export DEBIAN_FRONTEND=noninteractive",
 #       "sudo apt update -y",
 #       "sudo apt upgrade -y",
-#       "sudo apt install wget gnupg openssl net-tools -y",
+#       "sudo apt install gnupg openssl net-tools -y",
 #       # Download runner image
 #       "mkdir actions-runner && cd actions-runner",
 #       "curl -o actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz",
@@ -118,7 +118,7 @@ resource "aws_instance" "linux_x86_64_runner" {
 #       "sudo ./svc.sh install ${var.ssh_user[0]},
 #       "sudo ./svc.sh start",
 #       # install monitoring
-#       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+#       "sudo sh -c \"curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud\"",
 #     ]
 
 #     on_failure = continue
@@ -179,9 +179,12 @@ resource "aws_instance" "linux_x86_64_runner" {
 #       "echo '${lookup(var.gh_runner_checksums, "mac_x86_64", "")} actions-runner-osx-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
 #       "tar xzf ./actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
 #       "./config.sh --url https://github.com/subspace --token ${var.gh_token[1]} --unattended --name mac_x86_64 --labels 'self-hosted,macOS,x86_64' --work _work --runasservice",
-#       "sudo su -- ec2-user ./svc.sh install",
-#       "sudo su -- ec2-user ./runsvc.sh start &",
-#       "curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room} --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+#       "sudo su -- ${var.ssh_user[1]} ./svc.sh install",
+#       "sudo su -- ${var.ssh_user[1]} ./runsvc.sh start &",
+#       # install monitoring
+#       "NONINTERACTIVE=1 /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)\"",
+#       "brew install netdata",
+#       "netdata -W \"claim -token=${var.netdata_token} -rooms=${var.netdata_room}\" -u ${var.ssh_user[1]} -c /opt/homebrew/var/lib/netdata/cloud.d/cloud.conf",
 #     ]
 
 #     on_failure = continue
@@ -244,9 +247,12 @@ resource "aws_instance" "mac_arm64_runner" {
       "echo '${lookup(var.gh_runner_checksums, "mac_arm64", "")}  actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz",
       "./config.sh --url https://github.com/subspace --token ${var.gh_token[1]} --unattended --name mac_arm64 --labels 'self-hosted,macOS,ARM64' --work _work --runasservice",
-      "sudo su -- ec2-user ./svc.sh install",
-      "sudo su -- ec2-user ./runsvc.sh start &",
-      "curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-rooms ${var.netdata_room}  --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo su -- ${var.ssh_user[1]} ./svc.sh install",
+      "sudo su -- ${var.ssh_user[1]} ./runsvc.sh start &",
+      # install monitoring
+      "NONINTERACTIVE=1 /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)\"",
+      "brew install netdata",
+      "netdata -W \"claim -token=${var.netdata_token} -rooms=${var.netdata_room}\" -u ${var.ssh_user[1]} -c /opt/homebrew/var/lib/netdata/cloud.d/cloud.conf",
     ]
 
     on_failure = continue
@@ -323,7 +329,7 @@ resource "aws_instance" "mac_arm64_runner" {
 #       "Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$PWD/actions-runner-win-x64-${var.gh_runner_version}.zip\", \"$PWD\")",
 #       # configure runner
 #       "./config.cmd --url https://github.com/subspace --token ${var.gh_token[2]} --unattended --name windows_x86_64 --labels 'self-hosted,Windows,x86_64' --work _work",
-#       "Start-Service "actions.runner.*",
+#       "Start-Service \"actions.runner.*\"",
 #     ]
 
 #     on_failure = continue
