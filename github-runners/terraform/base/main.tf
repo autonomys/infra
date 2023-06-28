@@ -45,7 +45,7 @@ resource "aws_instance" "linux_x86_64_runner" {
       "echo '${lookup(var.gh_runner_checksums, "linux_x86_64", "")} actions-runner-linux-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-linux-x64-${var.gh_runner_version}.tar.gz",
       # configure runner
-      "./config.sh --url https://github.com/subspace --token ${var.gh_token[0]} --unattended --name linux_x86_64 --labels 'Linux,x86_64,self-hosted' --work _work --runasservice",
+      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name ubuntu_22_04_x86_64 --labels 'self-hosted,self-hosted-ubuntu-22.04-x86-64,Linux,x86_64' --work _work --runasservice",
       "sudo ./svc.sh install ${var.ssh_user[0]}",
       "sudo ./svc.sh start",
       # install monitoring
@@ -114,7 +114,7 @@ resource "aws_instance" "linux_x86_64_runner" {
 #       "echo '${lookup(var.gh_runner_checksums, "linux_arm64", "")} actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
 #       "tar xzf ./actions-runner-linux-arm64-${var.gh_runner_version}.tar.gz",
 #       # configure runner
-#       "./config.sh --url https://github.com/subspace --token ${var.gh_token[0]} --unattended --name linux_arm64 --labels 'Linux,ARM64,self-hosted' --work _work --runasservice",
+#       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name ubuntu_22_04_arm64 --labels 'self-hosted,self-hosted-ubuntu-22.04-arm64,Linux,arm64' --work _work --runasservice",
 #       "sudo ./svc.sh install ${var.ssh_user[0]},
 #       "sudo ./svc.sh start",
 #       # install monitoring
@@ -178,7 +178,7 @@ resource "aws_instance" "linux_x86_64_runner" {
 #       "curl -o actions-runner-osx-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
 #       "echo '${lookup(var.gh_runner_checksums, "mac_x86_64", "")} actions-runner-osx-x64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
 #       "tar xzf ./actions-runner-osx-x64-${var.gh_runner_version}.tar.gz",
-#       "./config.sh --url https://github.com/subspace --token ${var.gh_token[1]} --unattended --name mac_x86_64 --labels 'self-hosted,macOS,x86_64' --work _work --runasservice",
+#       "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name macos_12_x86_64 --labels 'self-hosted,self-hosted-macos-12-x86_64,macOS,x86_64' --work _work --runasservice",
 #       "sudo su -- ${var.ssh_user[1]} ./svc.sh install",
 #       "sudo su -- ${var.ssh_user[1]} ./runsvc.sh start &",
 #       # install monitoring
@@ -246,7 +246,7 @@ resource "aws_instance" "mac_arm64_runner" {
       "curl -o actions-runner-osx-x64-${var.gh_runner_version}.tar.gz -L https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz",
       "echo '${lookup(var.gh_runner_checksums, "mac_arm64", "")}  actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz' | shasum -a 256 -c",
       "tar xzf ./actions-runner-osx-arm64-${var.gh_runner_version}.tar.gz",
-      "./config.sh --url https://github.com/subspace --token ${var.gh_token[1]} --unattended --name mac_arm64 --labels 'self-hosted,macOS,ARM64' --work _work --runasservice",
+      "./config.sh --url https://github.com/subspace --token ${var.gh_token} --unattended --name macos_12_arm64 --labels 'self-hosted,self-hosted-macos-12-arm64,macOS,arm64' --work _work --runasservice",
       "sudo su -- ${var.ssh_user[1]} ./svc.sh install",
       "sudo su -- ${var.ssh_user[1]} ./runsvc.sh start &",
       # install monitoring
@@ -323,13 +323,12 @@ resource "aws_instance" "mac_arm64_runner" {
 #   provisioner "remote-exec" {
 #     inline = [
 #       # Download runner image
-#       "mkdir actions-runner; cd actions-runner",
+#       "cd C:\; mkdir actions-runner; cd actions-runner",
 #       "Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${var.gh_runner_version}/actions-runner-win-x64-${var.gh_runner_version}.zip -OutFile actions-runner-win-x64-${var.gh_runner_version}.zip",
 #       "if((Get-FileHash -Path actions-runner-win-x64-${var.gh_runner_version}.zip -Algorithm SHA256).Hash.ToUpper() -ne '${lookup(var.gh_runner_checksums, "windows_x86_64", "")}'.ToUpper()){ throw 'Computed checksum did not match' }",
 #       "Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$PWD/actions-runner-win-x64-${var.gh_runner_version}.zip\", \"$PWD\")",
 #       # configure runner
-#       "./config.cmd --url https://github.com/subspace --token ${var.gh_token[2]} --unattended --name windows_x86_64 --labels 'self-hosted,Windows,x86_64' --work _work",
-#       "Start-Service \"actions.runner.*\"",
+#       "./config.cmd --url https://github.com/subspace --token ${var.gh_token} --unattended --name windows_server_2022_x86_64 --labels 'self-hosted,self-hosted-windows_server_2022,Windows,x86_64' --work _work --runasservice",
 #     ]
 
 #     on_failure = continue

@@ -1,5 +1,5 @@
 variable "gh_token" {
-  type      = list(string)
+  type      = string
   sensitive = true
 }
 
