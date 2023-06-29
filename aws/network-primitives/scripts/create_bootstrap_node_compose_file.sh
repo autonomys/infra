@@ -51,7 +51,6 @@ services:
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
-      "--no-private-ipv4",
       "--node-key", \$NODE_KEY,
       "--in-peers", "1000",
       "--out-peers", "1000",
@@ -60,7 +59,7 @@ services:
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
       "--in-peers-light", "1000",
-      "--ws-max-connections", "10000",
+      "--rpc-max-connections", "10000",
 EOF
 
 reserved_only=${1}

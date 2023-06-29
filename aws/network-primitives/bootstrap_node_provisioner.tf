@@ -27,21 +27,22 @@ resource "null_resource" "setup-bootstrap-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ~/subspace",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/"
     ]
   }
 
   # copy install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "~/subspace/install_docker.sh"
+    destination = "/home/${var.ssh_user}/subspace/install_docker.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/install_docker.sh",
-      "sudo bash ~/subspace/install_docker.sh",
+      "chmod +x /home/${var.ssh_user}/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/install_docker.sh",
     ]
   }
 
@@ -66,14 +67,14 @@ resource "null_resource" "prune-bootstrap-nodes" {
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "~/subspace/prune_docker_system.sh"
+    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
   }
 
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/prune_docker_system.sh",
-      "sudo bash ~/subspace/prune_docker_system.sh"
+      "chmod +x /home/${var.ssh_user}/subspace/prune_docker_system.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
 }
@@ -101,49 +102,49 @@ resource "null_resource" "start-boostrap-nodes" {
   # copy bootstrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
-    destination = "~/subspace/node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
   # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
-    destination = "~/subspace/dsn_bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_bootstrap_node_compose_file.sh"
-    destination = "~/subspace/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f ~/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > ~/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-config.docker-tag} >> ~/subspace/.env",
-      "echo NETWORK_NAME=${var.network_name} >> ~/subspace/.env",
-      "echo NODE_ID=${count.index} >> ~/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' ~/subspace/node_keys.txt) >> ~/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> ~/subspace/.env",
-      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> ~/subspace/.env",
-      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' ~/subspace/dsn_bootstrap_node_keys.txt) >> ~/subspace/.env",
-      "echo DSN_LISTEN_PORT=${var.bootstrap-node-config.dsn-listen-port} >> ~/subspace/.env",
-      "echo NODE_DSN_PORT=${var.bootstrap-node-config.node-dsn-port} >> ~/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> ~/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x ~/subspace/create_compose_file.sh",
-      "bash ~/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
+      "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      "sudo docker compose -f ~/subspace/docker-compose.yml up -d",
+      # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

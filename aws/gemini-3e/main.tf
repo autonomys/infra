@@ -51,7 +51,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = 0 #var.instance_count
+    instance-count     = 0
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-29"
     domain-prefix      = "domain"
