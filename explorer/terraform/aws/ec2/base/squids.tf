@@ -1,7 +1,7 @@
 resource "aws_instance" "squid_blue_node" {
-  count             = length(var.aws_region) * var.squid-node-config.instance-count-blue
+  count             = length(var.aws_region) * var.blue-squid-node-config.instance-count-blue
   ami               = data.aws_ami.ubuntu_amd64.image_id
-  instance_type     = var.squid-node-config.instance-type
+  instance_type     = var.blue-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index + 1)
   # Security Group
@@ -13,14 +13,14 @@ resource "aws_instance" "squid_blue_node" {
   ebs_optimized = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.squid-node-config.disk-volume-size
-    volume_type = var.squid-node-config.disk-volume-type
+    volume_size = var.blue-squid-node-config.disk-volume-size
+    volume_type = var.blue-squid-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
 
   tags = {
-    name       = "squid-${var.squid-node-config.deployment-color}"
+    name       = "squid-${var.blue-squid-node-config.deployment-color}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -67,9 +67,9 @@ resource "aws_instance" "squid_blue_node" {
 
 
 resource "aws_instance" "squid_green_node" {
-  count             = length(var.aws_region) * var.squid-node-config.instance-count-green
+  count             = length(var.aws_region) * var.green-squid-node-config.instance-count-green
   ami               = data.aws_ami.ubuntu_amd64.image_id
-  instance_type     = var.squid-node-config.instance-type
+  instance_type     = var.green-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
@@ -81,14 +81,14 @@ resource "aws_instance" "squid_green_node" {
   ebs_optimized = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.squid-node-config.disk-volume-size
-    volume_type = var.squid-node-config.disk-volume-type
+    volume_size = var.green-squid-node-config.disk-volume-size
+    volume_type = var.green-squid-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
 
   tags = {
-    name       = "squid-${var.squid-node-config.deployment-color}"
+    name       = "squid-${var.green-squid-node-config.deployment-color}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"

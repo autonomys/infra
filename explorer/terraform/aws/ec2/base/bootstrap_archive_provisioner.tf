@@ -61,11 +61,11 @@ resource "null_resource" "setup-archive-nodes" {
 }
 
 resource "null_resource" "prune-archive-nodes" {
-  count      = var.squid-node-config.prune ? length(local.archive_node_ip_v4) : 0
+  count      = var.archive-node-config.prune ? length(local.archive_node_ip_v4) : 0
   depends_on = [null_resource.setup-archive-nodes]
 
   triggers = {
-    prune = var.squid-node-config.prune
+    prune = var.archive-node-config.prune
   }
 
   connection {
@@ -96,7 +96,7 @@ resource "null_resource" "start-archive-nodes" {
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_version = var.squid-node-config.deployment-version
+    deployment_version = var.archive-node-config.deployment-version
   }
 
   connection {
@@ -148,10 +148,10 @@ resource "null_resource" "start-archive-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.squid-node-config.domain-prefix}.archive.${var.network_name}.subspace.network",
+      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-node-config.domain-prefix}.archive.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.squid-node-config.domain-prefix}-archive-${var.network_name}",
+      "sudo hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-archive-${var.network_name}",
       # create .env file
       "chmod +x ./archive/set_env_vars.sh",
       "bash ./archive/set_env_vars.sh",

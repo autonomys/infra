@@ -21,6 +21,11 @@ variable "azs" {
   default     = ["us-east-2c"]
 }
 
+variable "instance_count" {
+  type    = number
+  default = 1
+}
+
 variable "instance_count_blue" {
   type    = number
   default = 1
@@ -100,7 +105,7 @@ variable "path_to_configs" {
   type        = string
 }
 
-variable "squid-node-config" {
+variable "blue-squid-node-config" {
   description = "squid blue configuration"
   type = object({
     deployment-color     = string
@@ -110,11 +115,41 @@ variable "squid-node-config" {
     deployment-version   = number
     regions              = list(string)
     instance-count-blue  = number
+    prune                = bool
+    disk-volume-size     = number
+    disk-volume-type     = string
+    environment          = string
+  })
+}
+
+variable "green-squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color     = string
+    network-name         = string
+    domain-prefix        = string
+    instance-type        = string
+    deployment-version   = number
+    regions              = list(string)
     instance-count-green = number
     prune                = bool
     disk-volume-size     = number
     disk-volume-type     = string
     environment          = string
   })
+}
 
+variable "archive-node-config" {
+  description = "archive squid configuration"
+  type = object({
+    network-name         = string
+    domain-prefix        = string
+    instance-type        = string
+    deployment-version   = number
+    regions              = list(string)
+    instance-count  = number
+    prune                = bool
+    disk-volume-size     = number
+    disk-volume-type     = string
+  })
 }

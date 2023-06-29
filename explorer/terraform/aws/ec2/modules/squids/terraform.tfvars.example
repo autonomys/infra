@@ -8,6 +8,7 @@ network_name         = "gemini-3d"
 deployment_color     = "blue"
 instance_type        = "m6a.2xlarge"
 instance_count_blue  = 1
+instance_count_green = 0
 disk_volume_size     = 800
 private_key_path     = "~/.ssh/explorer-deployer.pem"
 cloudflare_email     = ""

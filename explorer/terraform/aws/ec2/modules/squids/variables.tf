@@ -20,7 +20,6 @@ variable "network_name" {
 variable "deployment_color" {
   description = "Deployment environment"
   type        = string
-  default     = "blue"
 }
 
 variable "instance_type" {
@@ -41,12 +40,10 @@ variable "azs" {
 
 variable "instance_count_blue" {
   type    = number
-  default = 1
 }
 
 variable "instance_count_green" {
   type    = number
-  default = 0
 }
 
 variable "aws_region" {
