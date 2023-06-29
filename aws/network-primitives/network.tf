@@ -64,7 +64,7 @@ resource "aws_route_table_association" "public_route_table_subnets_association" 
 }
 
 resource "aws_security_group" "network_sg" {
-  name        = "network_sg"
+  name        = "${var.network_name}-network-sg"
   description = "Allow HTTP and HTTPS inbound traffic"
   vpc_id      = aws_vpc.network_vpc.id
 

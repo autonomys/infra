@@ -21,7 +21,7 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "default"
+  default = "devnet-vpc"
   type    = string
 }
 

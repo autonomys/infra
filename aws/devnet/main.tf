@@ -2,6 +2,7 @@ module "devnet" {
   source          = "../network-primitives"
   path_to_scripts = "../network-primitives/scripts"
   network_name    = "devnet"
+
   bootstrap-node-config = {
     instance-type      = var.instance_type
     deployment-version = 1
@@ -88,5 +89,9 @@ module "devnet" {
   datadog_api_key      = var.datadog_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
+  vpc_id               = var.vpc_id
+  instance_type        = var.instance_type
+  vpc_cidr_block       = var.vpc_cidr_block
+  public_subnet_cidrs  = var.public_subnet_cidrs
 
 }

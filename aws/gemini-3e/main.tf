@@ -51,7 +51,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = 0 #var.instance_count
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-29"
     domain-prefix      = "domain"
@@ -88,5 +88,9 @@ module "gemini-3e" {
   datadog_api_key      = var.datadog_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
+  vpc_id               = var.vpc_id
+  instance_type        = var.instance_type
+  vpc_cidr_block       = var.vpc_cidr_block
+  public_subnet_cidrs  = var.public_subnet_cidrs
 
 }

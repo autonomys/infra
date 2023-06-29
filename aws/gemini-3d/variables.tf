@@ -16,12 +16,12 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  default = "m6a.2xlarge"
+  default = "c6a.2xlarge"
   type    = string
 }
 
 variable "vpc_id" {
-  default = "default"
+  default = "gemini-3d-vpc"
   type    = string
 }
 

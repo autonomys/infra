@@ -13,12 +13,10 @@ variable "cloudflare_api_token" {
 }
 
 variable "instance_type" {
-  default = "m5a.xlarge"
   type    = string
 }
 
 variable "vpc_id" {
-  default = "default"
   type    = string
 }
 
