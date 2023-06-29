@@ -66,7 +66,7 @@ resource "aws_instance" "full_node" {
   count             = length(var.aws_region) * var.full-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
   # instance_type     = var.instance_type
-  instance_type     = "t3.small"
+  instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
