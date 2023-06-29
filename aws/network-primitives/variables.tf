@@ -22,6 +22,10 @@ variable "vpc_id" {
   type    = string
 }
 
+variable "vpc_cidr_block" {
+  type = string
+}
+
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
@@ -42,13 +46,6 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "Private Subnet CIDR values"
-  default     = ["172.31.2.0/24"]
 }
 
 variable "disk_volume_type" {

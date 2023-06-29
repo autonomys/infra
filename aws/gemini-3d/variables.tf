@@ -16,13 +16,17 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  default = "m5a.xlarge"
+  default = "m6a.2xlarge"
   type    = string
 }
 
 variable "vpc_id" {
   default = "default"
   type    = string
+}
+
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "azs" {
@@ -45,17 +49,11 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "Private Subnet CIDR values"
-  default     = ["172.31.2.0/24"]
+  default     = ["172.32.1.0/24"]
 }
 
 variable "disk_volume_size" {
-  type    = number
+  type = number
 }
 
 variable "disk_volume_type" {
