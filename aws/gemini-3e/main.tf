@@ -12,7 +12,7 @@ module "gemini-3e" {
     reserved-only      = false
     prune              = false
     genesis-hash       = ""
-    dsn-listen-port    = 50000
+    dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
