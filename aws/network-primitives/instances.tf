@@ -2,8 +2,8 @@ resource "aws_instance" "bootstrap_node" {
   count             = length(var.aws_region) * var.bootstrap-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -35,7 +35,7 @@ resource "aws_instance" "bootstrap_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 
@@ -67,8 +67,8 @@ resource "aws_instance" "full_node" {
   ami               = data.aws_ami.ubuntu_amd64.image_id
   # instance_type     = var.instance_type
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -99,7 +99,7 @@ resource "aws_instance" "full_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 
@@ -130,8 +130,8 @@ resource "aws_instance" "rpc_node" {
   count             = length(var.aws_region) * var.rpc-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -161,7 +161,7 @@ resource "aws_instance" "rpc_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 
@@ -192,8 +192,8 @@ resource "aws_instance" "domain_node" {
   count             = length(var.aws_region) * var.domain-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -224,7 +224,7 @@ resource "aws_instance" "domain_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 
@@ -255,8 +255,8 @@ resource "aws_instance" "farmer_node" {
   count             = length(var.aws_region) * var.farmer-node-config.instance-count
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -286,7 +286,7 @@ resource "aws_instance" "farmer_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 

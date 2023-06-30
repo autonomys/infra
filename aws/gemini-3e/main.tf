@@ -4,11 +4,11 @@ module "gemini-3e" {
   network_name    = "gemini-3e"
   bootstrap-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count + 1
     docker-org         = "subspace"
-    docker-tag         = "gemini-3e-2023-jun-29"
+    docker-tag         = "gemini-3e-2023-jun-30"
     reserved-only      = false
     prune              = false
     genesis-hash       = ""
@@ -20,11 +20,11 @@ module "gemini-3e" {
 
   full-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3e-2023-jun-29"
+    docker-tag         = "gemini-3e-2023-jun-30"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -34,11 +34,11 @@ module "gemini-3e" {
 
   rpc-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "gemini-3e-2023-jun-29"
+    docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -49,11 +49,11 @@ module "gemini-3e" {
 
   domain-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
-    instance-count     = 0
+    instance-count     = 1
     docker-org         = "subspace"
-    docker-tag         = "gemini-3e-2023-jun-29"
+    docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -67,11 +67,11 @@ module "gemini-3e" {
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count
     docker-org             = "subspace"
-    docker-tag             = "gemini-3e-2023-jun-29"
+    docker-tag             = "gemini-3e-2023-jun-30"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"

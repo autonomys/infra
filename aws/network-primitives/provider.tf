@@ -18,9 +18,9 @@ provider "aws" {
   region     = var.aws_region[0]
   default_tags {
     tags = {
-      Environment = "Devnet"
+      Environment = "Gemin-3e"
       Owner       = "subspace"
-      Project     = "Subspace Devnet network"
+      Project     = "Subspace Gemini network"
     }
   }
 }
