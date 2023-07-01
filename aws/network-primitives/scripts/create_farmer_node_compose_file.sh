@@ -5,7 +5,6 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
-  farmer_data: {}
 
 services:
   datadog:
@@ -27,7 +26,7 @@ services:
         condition: service_healthy
     image: ghcr.io/\$NODE_ORG/farmer:\$NODE_TAG
     volumes:
-      - farmer_data:/var/subspace:rw
+      - ~/subspace/farmer_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30533:30533"

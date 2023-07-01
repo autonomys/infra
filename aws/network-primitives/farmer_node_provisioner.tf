@@ -28,7 +28,9 @@ resource "null_resource" "setup-farmer-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/"
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/",
+      "sudo chown -R nobody:nogroup /home/${var.ssh_user}/subspace/farmer_data/"
     ]
   }
 
@@ -98,6 +100,18 @@ resource "null_resource" "start-farmer-nodes" {
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
   }
+
+  # copy farmer identity files
+  provisioner "file" {
+    source      = "./identity.bin"
+    destination = "/home/${var.ssh_user}/subspace/farmer_data/identity.bin"
+  }
+
+  provisioner "file" {
+    source      = "./single_disk_plot.json"
+    destination = "/home/${var.ssh_user}/subspace/farmer_data/single_disk_plot.json"
+  }
+
 
   # copy boostrap node keys file
   provisioner "file" {
