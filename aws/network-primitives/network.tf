@@ -116,14 +116,6 @@ resource "aws_security_group" "network_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "DSN Port 50000 for VPC"
-    from_port   = 50000
-    to_port     = 50000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   egress {
     description = "egress for VPC"
     from_port   = 0

@@ -13,7 +13,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     restart: unless-stopped
     environment:
-      - DD_API_KEY=\$DATADOG_API_KEY
+      - DD_API_KEY=$DATADOG_API_KEY
       - DD_SITE=datadoghq.com
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -35,27 +35,27 @@ services:
       - caddy_data:/data
 
   archival-node:
-    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
+    image: ghcr.io/$NODE_ORG/node:$NODE_TAG
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "\${NODE_DSN_PORT}:30433"
+      - "${NODE_DSN_PORT}:30433"
     labels:
-      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+      caddy_0: ${DOMAIN_PREFIX}-${NODE_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", $NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
-      "--piece-cache-size", \$PIECE_CACHE_SIZE,
-      "--node-key", \$NODE_KEY,
+      "--piece-cache-size", $PIECE_CACHE_SIZE,
+      "--node-key", $NODE_KEY,
       "--rpc-cors", "all",
       "--rpc-external",
       "--in-peers", "500",
