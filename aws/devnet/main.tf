@@ -12,7 +12,7 @@ module "devnet" {
     docker-tag         = "snapshot-2023-jun-27-3"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "2e45c5cbc42f10e3faaaaa44618927ee1403a08c9625d70891ae3f2fecc35e0b"
+    genesis-hash       = "9f6e08049721059c4e518743be4a0ef62c4786a1cf1ba0a7d84a5c590b1ec2a9"
     dsn-listen-port    = 50000
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
