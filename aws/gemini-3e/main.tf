@@ -9,7 +9,7 @@ module "gemini-3e" {
     instance-count     = var.instance_count + 1
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     genesis-hash       = ""
     dsn-listen-port    = 30533
@@ -25,7 +25,7 @@ module "gemini-3e" {
     instance-count     = var.instance_count
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -40,7 +40,7 @@ module "gemini-3e" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "rpc"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -55,7 +55,7 @@ module "gemini-3e" {
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "domain"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30434
     enable-domains     = true
@@ -72,11 +72,11 @@ module "gemini-3e" {
     instance-count         = var.instance_count
     docker-org             = "subspace"
     docker-tag             = "gemini-3e-2023-jun-30"
-    reserved-only          = true
+    reserved-only          = false
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type
