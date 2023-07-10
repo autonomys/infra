@@ -17,10 +17,6 @@ variable "network_name" {
   type        = string
   default     = "gemini-3d"
 }
-variable "deployment_color" {
-  description = "Deployment environment"
-  type        = string
-}
 
 variable "instance_type" {
   default = "m6a.2xlarge"
@@ -28,22 +24,26 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "default"
+  default = "explorer-gemini-3d-vpc"
   type    = string
+}
+
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "azs" {
   type        = list(string)
   description = "Availability Zones"
-  default     = ["us-east-2c"]
+  default     = ["us-east-2b"]
 }
 
 variable "instance_count_blue" {
-  type    = number
+  type = number
 }
 
 variable "instance_count_green" {
-  type    = number
+  type = number
 }
 
 variable "aws_region" {
@@ -55,7 +55,6 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.3.0/24"]
 }
 
 variable "secret_key" {

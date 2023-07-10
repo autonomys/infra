@@ -34,33 +34,34 @@ resource "null_resource" "setup-blue-squid-nodes" {
   # create squid dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ./squid",
-      "mkdir -p ./squid/postgresql",
-      "mkdir -p ./squid/postgresql/{conf,data}",
+      "sudo mkdir -p /home/${var.ssh_user}/squid",
+      "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql",
+      "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/{conf,data}",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 755 /home/${var.ssh_user}/squid/"
     ]
   }
 
   # copy postgres config file
   provisioner "file" {
     source      = "${var.path_to_configs}/postgresql.conf"
-    destination = "./squid/postgresql/conf/postgresql.conf"
+    destination = "/home/${var.ssh_user}/squid/postgresql/conf/postgresql.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_squid_node_compose_file.sh"
-    destination = "./squid/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/squid/create_compose_file.sh"
   }
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/set_env_vars.sh"
-    destination = "./squid/set_env_vars.sh"
+    destination = "/home/${var.ssh_user}/squid/set_env_vars.sh"
   }
 
   # copy docker install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "./squid/install_docker.sh"
+    destination = "/home/${var.ssh_user}/squid/install_docker.sh"
   }
 
 }
@@ -88,33 +89,34 @@ resource "null_resource" "setup-green-squid-nodes" {
   # create squid dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ./squid",
-      "mkdir -p ./squid/postgresql",
-      "mkdir -p ./squid/postgresql/{conf,data}",
+      "mkdir -p /home/${var.ssh_user}/squid",
+      "mkdir -p /home/${var.ssh_user}/squid/postgresql",
+      "mkdir -p /home/${var.ssh_user}/squid/postgresql/{conf,data}",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 755 /home/${var.ssh_user}/squid/"
     ]
   }
 
   # copy postgres config file
   provisioner "file" {
     source      = "${var.path_to_configs}/postgresql.conf"
-    destination = "./squid/postgresql/conf/postgresql.conf"
+    destination = "/home/${var.ssh_user}/squid/postgresql/conf/postgresql.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_squid_node_compose_file.sh"
-    destination = "./squid/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/squid/create_compose_file.sh"
   }
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/set_env_vars.sh"
-    destination = "./squid/set_env_vars.sh"
+    destination = "/home/${var.ssh_user}/squid/set_env_vars.sh"
   }
 
   # copy docker install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "./squid/install_docker.sh"
+    destination = "/home/${var.ssh_user}/squid/install_docker.sh"
   }
 
 }
@@ -199,31 +201,31 @@ resource "null_resource" "start-blue-squid-nodes" {
 
   provisioner "file" {
     source      = "${var.path_to_configs}/nginx-squid.conf"
-    destination = "./squid/backend.conf"
+    destination = "/home/${var.ssh_user}/squid/backend.conf"
   }
 
   provisioner "file" {
     source      = "${var.path_to_configs}/cors-settings.conf"
-    destination = "./squid/cors-settings.conf"
+    destination = "/home/${var.ssh_user}/squid/cors-settings.conf"
   }
   # copy nginx install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "./squid/install_nginx.sh"
+    destination = "/home/${var.ssh_user}/squid/install_nginx.sh"
   }
 
   # install deployments
   provisioner "remote-exec" {
     inline = [
       # install nginx, certbot, docker and docker compose
-      "chmod +x ./squid/install_docker.sh",
-      "sudo bash ./squid/install_docker.sh",
+      "chmod +x /home/${var.ssh_user}/squid/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_docker.sh",
       "sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y",
       # copy files
-      "sudo cp -f ./squid/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f ./squid/backend.conf /etc/nginx/backend.conf",
-      "chmod +x ./squid/install_nginx.sh",
-      "sudo bash ./squid/install_nginx.sh",
+      "sudo cp -f /home/${var.ssh_user}/squid/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sudo cp -f /home/${var.ssh_user}/squid/backend.conf /etc/nginx/backend.conf",
+      "chmod +x /home/${var.ssh_user}/squid/install_nginx.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_nginx.sh",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx
@@ -235,12 +237,12 @@ resource "null_resource" "start-blue-squid-nodes" {
       # set hostname
       "sudo hostnamectl set-hostname ${var.blue-squid-node-config.domain-prefix}-squid-${var.blue-squid-node-config.network-name}",
       # create .env file
-      "chmod +x ./squid/set_env_vars.sh",
-      "bash ./squid/set_env_vars.sh",
+      "chmod +x /home/${var.ssh_user}/squid/set_env_vars.sh",
+      "bash /home/${var.ssh_user}/squid/set_env_vars.sh",
       "source /.bash_profile",
       # create docker compose file
-      "chmod +x ./squid/create_compose_file.sh",
-      "bash ./squid/create_compose_file.sh",
+      "chmod +x /home/${var.ssh_user}/squid/create_compose_file.sh",
+      "bash /home/${var.ssh_user}/squid/create_compose_file.sh",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",
@@ -276,31 +278,31 @@ resource "null_resource" "start-green-squid-nodes" {
 
   provisioner "file" {
     source      = "${var.path_to_configs}/nginx-squid.conf"
-    destination = "./squid/backend.conf"
+    destination = "/home/${var.ssh_user}/squid/backend.conf"
   }
 
   provisioner "file" {
     source      = "${var.path_to_configs}/cors-settings.conf"
-    destination = "./squid/cors-settings.conf"
+    destination = "/home/${var.ssh_user}/squid/cors-settings.conf"
   }
   # copy nginx install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "./squid/install_nginx.sh"
+    destination = "/home/${var.ssh_user}/squid/install_nginx.sh"
   }
 
   # install deployments
   provisioner "remote-exec" {
     inline = [
       # install nginx, certbot, docker and docker compose
-      "chmod +x ./squid/install_docker.sh",
-      "sudo bash ./squid/install_docker.sh",
+      "chmod +x /home/${var.ssh_user}/squid/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_docker.sh",
       "sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y",
       # copy files
-      "sudo cp -f ./squid/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f ./squid/backend.conf /etc/nginx/backend.conf",
-      "chmod +x ./squid/install_nginx.sh",
-      "sudo bash ./squid/install_nginx.sh",
+      "sudo cp -f /home/${var.ssh_user}/squid/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sudo cp -f /home/${var.ssh_user}/squid/backend.conf /etc/nginx/backend.conf",
+      "chmod +x /home/${var.ssh_user}/squid/install_nginx.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_nginx.sh",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx
@@ -312,12 +314,12 @@ resource "null_resource" "start-green-squid-nodes" {
       # set hostname
       "sudo hostnamectl set-hostname ${var.green-squid-node-config.domain-prefix}-squid-${var.green-squid-node-config.network-name}",
       # create .env file
-      "chmod +x ./squid/set_env_vars.sh",
-      "bash ./squid/set_env_vars.sh",
+      "chmod +x /home/${var.ssh_user}/squid/set_env_vars.sh",
+      "bash /home/${var.ssh_user}/squid/set_env_vars.sh",
       "source /.bash_profile",
       # create docker compose file
-      "chmod +x ./squid/create_compose_file.sh",
-      "bash ./squid/create_compose_file.sh",
+      "chmod +x /home/${var.ssh_user}/squid/create_compose_file.sh",
+      "bash /home/${var.ssh_user}/squid/create_compose_file.sh",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",

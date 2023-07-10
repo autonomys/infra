@@ -29,33 +29,34 @@ resource "null_resource" "setup-archive-nodes" {
   # create archive dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ./archive",
-      "mkdir -p ./archive/postgresql/data",
-      "mkdir -p ./archive/node-data",
+      "sudo mkdir -p /home/${var.ssh_user}/archive/",
+      "sudo mkdir -p /home/${var.ssh_user}/archive/postgresql/data",
+      "sudo mkdir -p /home/${var.ssh_user}/archive/node-data",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/archive/ && sudo chmod -R 755 /home/${var.ssh_user}/archive/"
     ]
   }
 
   # copy postgres config file
   provisioner "file" {
     source      = "${var.path_to_configs}/postgresql.conf"
-    destination = "./archive/postgresql/postgresql.conf"
+    destination = "/home/${var.ssh_user}/archive/postgresql/postgresql.conf"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_archive_node_compose_file.sh"
-    destination = "./archive/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/archive/create_compose_file.sh"
   }
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/set_env_vars.sh"
-    destination = "./archive/set_env_vars.sh"
+    destination = "/home/${var.ssh_user}/archive/set_env_vars.sh"
   }
 
   # copy docker install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "./archive/install_docker.sh"
+    destination = "/home/${var.ssh_user}/archive/install_docker.sh"
   }
 
 }
@@ -112,25 +113,25 @@ resource "null_resource" "start-archive-nodes" {
   # install nginx, certbot, docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ./archive/install_docker.sh",
-      "sudo bash ./archive/install_docker.sh",
+      "chmod +x /home/${var.ssh_user}/archive/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/archive/install_docker.sh",
       "sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y",
     ]
   }
 
   provisioner "file" {
     source      = "${var.path_to_configs}/nginx-archive.conf"
-    destination = "./archive/backend.conf"
+    destination = "/home/${var.ssh_user}/archive/backend.conf"
   }
 
   provisioner "file" {
     source      = "${var.path_to_configs}/cors-settings.conf"
-    destination = "./archive/cors-settings.conf"
+    destination = "/home/${var.ssh_user}/archive/cors-settings.conf"
   }
   # copy nginx install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "./archive/install_nginx.sh"
+    destination = "/home/${var.ssh_user}/archive/install_nginx.sh"
   }
 
 
@@ -138,10 +139,10 @@ resource "null_resource" "start-archive-nodes" {
   provisioner "remote-exec" {
     inline = [
       # copy files
-      "sudo cp -f ./archive/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f ./archive/backend.conf /etc/nginx/backend.conf",
-      "chmod +x ./archive/install_nginx.sh",
-      "sudo bash ./archive/install_nginx.sh",
+      "sudo cp -f /home/${var.ssh_user}/archive/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sudo cp -f /home/${var.ssh_user}/archive/backend.conf /etc/nginx/backend.conf",
+      "chmod +x /home/${var.ssh_user}/archive/install_nginx.sh",
+      "sudo bash /home/${var.ssh_user}/archive/install_nginx.sh",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx
@@ -153,17 +154,17 @@ resource "null_resource" "start-archive-nodes" {
       # set hostname
       "sudo hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-archive-${var.network_name}",
       # create .env file
-      "chmod +x ./archive/set_env_vars.sh",
-      "bash ./archive/set_env_vars.sh",
+      "chmod +x /home/${var.ssh_user}/archive/set_env_vars.sh",
+      "bash /home/${var.ssh_user}/archive/set_env_vars.sh",
       "source /.bash_profile",
       # create docker compose file
-      "chmod +x ./archive/create_compose_file.sh",
-      "bash ./archive/create_compose_file.sh",
+      "chmod +x /home/${var.ssh_user}/archive/create_compose_file.sh",
+      "bash /home/${var.ssh_user}/archive/create_compose_file.sh",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",
       "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./archive/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/archive/docker-compose.yml up -d",
       "echo 'Installation Complete'"
     ]
   }

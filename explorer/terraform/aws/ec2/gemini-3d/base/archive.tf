@@ -2,8 +2,8 @@ resource "aws_instance" "archive_node" {
   count             = 1
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
-  subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
-  availability_zone = element(var.azs, count.index)
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = element(var.azs, 0)
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.gemini-squid-sg.id}"]
   # the Public SSH key
@@ -34,7 +34,7 @@ resource "aws_instance" "archive_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    prevent_destroy = true
 
   }
 

@@ -3,11 +3,10 @@ module "squids" {
   path_to_scripts  = "../../base/scripts"
   path_to_configs  = "../../base/config"
   network_name     = var.network_name
-  deployment_color = var.deployment_color
 
   blue-squid-node-config = {
-    deployment-color     = var.deployment_color
-    network-name         = "${var.network_name}-${var.deployment_color}"
+    deployment-color     = "blue"
+    network-name         = "${var.network_name}-blue"
     domain-prefix        = "evm"
     instance-type        = var.instance_type
     deployment-version   = 0
@@ -20,8 +19,8 @@ module "squids" {
   }
 
   green-squid-node-config = {
-    deployment-color     = var.deployment_color
-    network-name         = "${var.network_name}-${var.deployment_color}"
+    deployment-color     = "green"
+    network-name         = "${var.network_name}-green"
     domain-prefix        = "evm"
     instance-type        = var.instance_type
     deployment-version   = 0
@@ -34,7 +33,7 @@ module "squids" {
   }
 
   archive-node-config = {
-    network-name         = "${var.network_name}-${var.deployment_color}"
+    network-name         = "${var.network_name}"
     domain-prefix        = "evm"
     instance-type        = var.instance_type
     deployment-version   = 0
@@ -51,5 +50,7 @@ module "squids" {
   datadog_api_key      = var.datadog_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
-
+  vpc_id               = var.vpc_id
+  vpc_cidr_block       = var.vpc_cidr_block
+  public_subnet_cidrs  = var.public_subnet_cidrs
 }

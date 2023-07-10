@@ -11,14 +11,11 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "default"
-  type    = string
+  type = string
 }
 
-variable "azs" {
-  type        = list(string)
-  description = "Availability Zones"
-  default     = ["us-east-2c"]
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "instance_count" {
@@ -42,10 +39,15 @@ variable "aws_region" {
   default     = ["us-east-2"]
 }
 
+variable "azs" {
+  type        = list(string)
+  description = "Availability Zones"
+  default     = ["us-east-2b"]
+}
+
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.3.0/24"]
 }
 
 variable "disk_volume_size" {
@@ -87,12 +89,7 @@ variable "aws_key_name" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default     = "gemini-3d"
-}
-
-variable "deployment_color" {
-  description = "Deployment environment"
-  type        = string
+  default     = "gemini-3e"
 }
 
 variable "path_to_scripts" {
@@ -108,17 +105,17 @@ variable "path_to_configs" {
 variable "blue-squid-node-config" {
   description = "squid blue configuration"
   type = object({
-    deployment-color     = string
-    network-name         = string
-    domain-prefix        = string
-    instance-type        = string
-    deployment-version   = number
-    regions              = list(string)
-    instance-count-blue  = number
-    prune                = bool
-    disk-volume-size     = number
-    disk-volume-type     = string
-    environment          = string
+    deployment-color    = string
+    network-name        = string
+    domain-prefix       = string
+    instance-type       = string
+    deployment-version  = number
+    regions             = list(string)
+    instance-count-blue = number
+    prune               = bool
+    disk-volume-size    = number
+    disk-volume-type    = string
+    environment         = string
   })
 }
 
@@ -142,14 +139,14 @@ variable "green-squid-node-config" {
 variable "archive-node-config" {
   description = "archive squid configuration"
   type = object({
-    network-name         = string
-    domain-prefix        = string
-    instance-type        = string
-    deployment-version   = number
-    regions              = list(string)
-    instance-count  = number
-    prune                = bool
-    disk-volume-size     = number
-    disk-volume-type     = string
+    network-name       = string
+    domain-prefix      = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    prune              = bool
+    disk-volume-size   = number
+    disk-volume-type   = string
   })
 }
