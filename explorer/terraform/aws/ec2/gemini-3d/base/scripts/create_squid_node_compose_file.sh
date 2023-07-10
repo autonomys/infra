@@ -1,6 +1,6 @@
 #!/bin/sh
-source ~/.bash_profile
-cat > ~/squid/docker-compose.yml << EOF
+source /home/ubuntu/.bash_profile
+cat > /home/ubuntu/squid/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -13,7 +13,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - type: bind
-        source: ~/squid/postgresql/conf/postgresql.conf
+        source: /home/ubuntu/squid/postgresql/conf/postgresql.conf
         target: /etc/postgresql/postgresql.conf
         read_only: true
     environment:

@@ -36,7 +36,8 @@ resource "null_resource" "setup-blue-squid-nodes" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/squid",
       "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql",
-      "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/{conf,data}",
+      "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/conf",
+      "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/data",
       "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 755 /home/${var.ssh_user}/squid/"
     ]
   }
@@ -171,9 +172,9 @@ resource "null_resource" "prune-green-squid-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "sudo docker ps -aq | xargs docker stop",
-      "sudo docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
-      "cat /dev/null > $HOME/.bash_profile"
+      "sudo docker ps -aq | xargs sudo docker stop",
+      "sudo docker system prune -a -f && sudo docker volume ls -q | xargs sudo docker volume rm -f",
+      "cat /dev/null > $HOME/.bash_profile",
     ]
   }
 }

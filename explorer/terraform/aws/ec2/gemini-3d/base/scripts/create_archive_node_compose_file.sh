@@ -1,6 +1,6 @@
 #!/bin/bash
-source ~/.bash_profile
-cat > ~/archive/docker-compose.yml << EOF
+source /home/ubuntu/.bash_profile
+cat > /home/ubuntu/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -11,7 +11,7 @@ services:
     image: postgres:14
     restart: always
     volumes:
-      - ~/archive/postgresql:/var/lib/postgresql
+      - /home/ubuntu/archive/postgresql:/var/lib/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -74,7 +74,7 @@ services:
       "--state-pruning", "archive",
       "--rpc-cors", "all",
       "--rpc-methods", "safe",
-      "--unsafe-ws-external",
+      "--unsafe-rpc-external",
       "--name", "${NODE_NAME}"
     ]
     healthcheck:

@@ -82,8 +82,8 @@ resource "null_resource" "prune-archive-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "sudo docker ps -aq | xargs docker stop",
-      "sudo docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
+      "sudo docker ps -aq | xargs sudo docker stop",
+      "sudo docker system prune -a -f && sudo docker volume ls -q | xargs sudo docker volume rm -f",
       "cat /dev/null > $HOME/.bash_profile",
     ]
   }

@@ -38,12 +38,20 @@ resource "cloudflare_record" "squid-main-green" {
   ttl     = "3600"
 }
 
-
-resource "cloudflare_record" "archive_evm" {
-  count   = length(local.archive_node_ip_v4)
+resource "cloudflare_record" "squid-live" {
+  count   = var.green-squid-node-config.instance-count-green
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.archive-node-config.domain-prefix}.archive.${var.network_name}"
-  value   = local.archive_node_ip_v4[count.index]
+  name    = "squid.${var.network-name}"
+  value   = local.green_squid_node_ip_v4[count.index]
+  type    = "A"
+  ttl     = "3600"
+}
+
+resource "cloudflare_record" "squid-live-evm" {
+  count   = var.green-squid-node-config.instance-count-green
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+  name    = "${var.green-squid-node-config.domain-prefix}-squid.${var.network-name}"
+  value   = local.green_squid_node_ip_v4[count.index]
   type    = "A"
   ttl     = "3600"
 }
