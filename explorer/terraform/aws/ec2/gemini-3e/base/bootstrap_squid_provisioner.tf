@@ -14,7 +14,7 @@ locals {
 resource "null_resource" "setup-blue-squid-nodes" {
   count = length(local.blue_squid_node_ip_v4)
 
-  depends_on = [aws_instance.archive_node]
+  depends_on = [aws_instance.squid_blue_node]
 
   # trigger on node ip changes
   triggers = {
@@ -69,7 +69,7 @@ resource "null_resource" "setup-blue-squid-nodes" {
 resource "null_resource" "setup-green-squid-nodes" {
   count = length(local.green_squid_node_ip_v4)
 
-  depends_on = [aws_instance.archive_node]
+  depends_on = [aws_instance.squid_green_node]
 
   # trigger on node ip changes
   triggers = {
@@ -247,7 +247,7 @@ resource "null_resource" "start-blue-squid-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",
       "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./archive/docker-compose.yml up -d",
+      "sudo docker compose -f ./squid/docker-compose.yml up -d",
       "echo 'Installation Complete'",
     ]
   }
@@ -324,7 +324,7 @@ resource "null_resource" "start-green-squid-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl stop docker.service",
       "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./archive/docker-compose.yml up -d",
+      "sudo docker compose -f ./squid/docker-compose.yml up -d",
       "echo 'Installation Complete'",
     ]
   }

@@ -20,7 +20,7 @@ resource "aws_instance" "archive_node" {
   }
 
   tags = {
-    name       = "squid-archive"
+    name       = "squid-archive-${var.archive-node-config.network-name}"
     role       = "archive"
     os_name    = "ubuntu"
     os_version = "22.04"

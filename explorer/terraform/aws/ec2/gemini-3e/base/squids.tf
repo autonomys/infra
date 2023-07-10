@@ -20,7 +20,7 @@ resource "aws_instance" "squid_blue_node" {
   }
 
   tags = {
-    name       = "squid-${var.blue-squid-node-config.deployment-color}"
+    name       = "squid-${var.blue-squid-node-config.network-name}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -88,7 +88,7 @@ resource "aws_instance" "squid_green_node" {
   }
 
   tags = {
-    name       = "squid-${var.green-squid-node-config.deployment-color}"
+    name       = "squid-${var.green-squid-node-config.network-name}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
