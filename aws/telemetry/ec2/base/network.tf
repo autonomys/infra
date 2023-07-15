@@ -17,54 +17,9 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = "true"
 
   tags = {
-    Name = "public-subnet-${count.index}"
+    Name = "telemetry-public-subnet"
   }
 }
-
-
-resource "aws_internet_gateway" "gw" {
-  count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.telemetry-vpc.id
-
-  tags = {
-    Name = "igw-public-subnet-${count.index}"
-  }
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-
-resource "aws_route_table" "public_route_table" {
-  count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.telemetry-vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw[count.index].id
-  }
-
-  route {
-    ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.gw[count.index].id
-  }
-
-  tags = {
-    Name = "public-route-tbl-${count.index}"
-  }
-
-  depends_on = [
-    aws_internet_gateway.gw
-  ]
-}
-
-resource "aws_route_table_association" "public_route_table_subnets_association" {
-  count          = length(var.public_subnet_cidrs)
-  subnet_id      = element(aws_subnet.public_subnets.*.id, count.index)
-  route_table_id = element(aws_route_table.public_route_table.*.id, count.index)
-}
-
 
 resource "aws_security_group" "telemetry-subspace-sg" {
   name        = "telemetry-subspace-sg"

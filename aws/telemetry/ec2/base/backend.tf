@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "telemetry"
+      name = "telemetry-aws"
     }
   }
 }

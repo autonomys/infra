@@ -1,7 +1,7 @@
 resource "aws_instance" "telemetry_subspace_node" {
   count             = length(var.aws_region) * var.instance_count
   ami               = data.aws_ami.ubuntu_amd64.image_id
-  instance_type     = element(var.instance_type, 1)
+  instance_type     = element(var.instance_type, 0)
   subnet_id         = aws_subnet.public_subnets[count.index].id
   availability_zone = var.azs
   # Security Group
