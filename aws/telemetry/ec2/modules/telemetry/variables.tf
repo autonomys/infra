@@ -1,37 +1,21 @@
-variable "datadog_api_key" {
-  description = "Datadog API Key"
-}
-
-variable "cloudflare_email" {
-  type        = string
-  description = "cloudflare email address"
-}
-
-variable "cloudflare_api_token" {
-  type        = string
-  description = "cloudflare api token"
-}
-
-variable "network_name" {
-  description = "Network name"
-  type        = string
-}
-
-
 variable "instance_type" {
-  default = "t2.micro"
+  default = "m6a.4xlarge"
   type    = string
 }
 
 variable "vpc_id" {
-  default = "default"
+  default = "telemetry-vpc"
   type    = string
+}
+
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-east-1c"
+  default     = "us-west-2c"
 }
 
 variable "instance_count" {
@@ -41,19 +25,18 @@ variable "instance_count" {
 
 variable "aws_region" {
   description = "aws region"
-  type        = list(string)
-  default     = ["us-east-1"]
+  type        = string
+  default     = "us-west-2"
 }
 
 variable "public_subnet_cidrs" {
-  type        = list(string)
+  type        = string
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
+  default     = "172.31.1.0/24"
 }
 
 variable "disk_volume_size" {
-  type    = number
-  default = 50
+  type = number
 }
 
 variable "disk_volume_type" {
@@ -76,7 +59,22 @@ variable "aws_key_name" {
   type    = string
 }
 
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
+}
+
 variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
+}
+
+variable "cloudflare_email" {
+  type        = string
+  description = "cloudflare email address"
+}
+
+variable "cloudflare_api_token" {
+  type        = string
+  description = "cloudflare api token"
 }

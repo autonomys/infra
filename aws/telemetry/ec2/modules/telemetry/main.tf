@@ -1,10 +1,9 @@
-module "node" {
+module "telemetry" {
   source          = "../../base/"
   path_to_scripts = "../../base/scripts"
-  network_name    = var.network_name
+  path_to_configs  = "../../base/config"
 
   telemetry-subspace-node-config = {
-    network-name       = "${var.network_name}"
     domain-prefix      = "telemetry"
     instance-type      = var.instance_type
     deployment-version = 1
@@ -16,8 +15,10 @@ module "node" {
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email
-  datadog_api_key      = var.datadog_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
-
+  vpc_id               = var.vpc_id
+  instance_type        = var.instance_type
+  vpc_cidr_block       = var.vpc_cidr_block
+  public_subnet_cidrs  = var.public_subnet_cidrs
 }

@@ -1,17 +1,19 @@
 variable "instance_type" {
-  default = ["t2.micro"]
-  type    = list(string)
+  type    = string
 }
 
 variable "vpc_id" {
-  default = "default"
   type    = string
+}
+
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-east-1c"
+  default     = "us-west-2a"
 }
 
 variable "instance_count" {
@@ -21,24 +23,43 @@ variable "instance_count" {
 
 variable "aws_region" {
   description = "aws region"
-  type        = list(string)
-  default     = ["us-east-1"]
+  type        = string
+  default     = "us-west-2"
 }
 
 variable "public_subnet_cidrs" {
-  type        = list(string)
+  type        = string
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
-}
-
-variable "disk_volume_size" {
-  type    = number
-  default = 50
 }
 
 variable "disk_volume_type" {
   type    = string
   default = "gp3"
+}
+
+variable "aws_key_name" {
+  default = "deployer"
+  type    = string
+}
+
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
+}
+
+variable "private_key_path" {
+  type    = string
+  default = "~/.ssh/deployer.pem"
+}
+
+variable "path_to_scripts" {
+  description = "Path to the scripts"
+  type        = string
+}
+
+variable "path_to_configs" {
+  description = "Path to the configs"
+  type        = string
 }
 
 variable "secret_key" {
@@ -51,37 +72,25 @@ variable "access_key" {
   sensitive = true
 }
 
-variable "aws_key_name" {
-  default   = "deployer"
-  type      = string
-  sensitive = true
-}
-
-variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/deployer.pem"
-}
-
-variable "network_name" {
-  description = "Network name"
-  type        = string
-}
-
-variable "path_to_scripts" {
-  description = "Path to the scripts"
-  type        = string
-}
-
 variable "telemetry-subspace-node-config" {
-  description = "node configuration"
+  description = "telemetry node deployment config"
   type = object({
-    network-name       = string
     domain-prefix      = string
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
+    regions            = string
     instance-count     = number
     disk-volume-size   = number
     disk-volume-type   = string
   })
+}
+
+variable "cloudflare_email" {
+  type        = string
+  description = "cloudflare email address"
+}
+
+variable "cloudflare_api_token" {
+  type        = string
+  description = "cloudflare api token"
 }

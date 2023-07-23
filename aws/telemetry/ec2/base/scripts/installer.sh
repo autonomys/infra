@@ -4,6 +4,9 @@
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update -y
 
+#install nginx, certbot and base packages
+sudo apt install curl git openssl gnupg --no-install-recommends -y
+
 # install docker & Docker Compose
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
