@@ -1,4 +1,4 @@
-// mailserver records for subspace.netwwork
+// mailserver records for subspace.network
 resource "cloudflare_record" "mailserver_mx_1" {
   name     = "subspace.network"
   comment  = "MX record pointing to our preferred mailserver"
