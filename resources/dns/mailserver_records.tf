@@ -1,4 +1,4 @@
-// mailserver records
+// mailserver records for subspace.network
 resource "cloudflare_record" "mailserver_mx_1" {
   name     = "subspace.network"
   comment  = "MX record pointing to our preferred mailserver"
@@ -111,4 +111,91 @@ resource "cloudflare_record" "mail" {
   type    = "CNAME"
   value   = "subspace.network"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+
+// ## mailserver records for subspace.net ## 
+resource "cloudflare_record" "mailserver_mx_net_1" {
+  name     = "subspace.net"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 1
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_mx_net_2" {
+  name     = "subspace.net"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 5
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt1.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_mx_net_3" {
+  name     = "subspace.net"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 5
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt2.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_mx_net_4" {
+  name     = "subspace.net"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 10
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt3.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_mx__net_5" {
+  name     = "subspace.net"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 10
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "alt4.aspmx.l.google.com"
+  zone_id  = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_net_dmarc" {
+  name    = "_dmarc"
+  comment = "DMARC for communications"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DMARC1; p=reject; adkim=s"
+  zone_id = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_dkim_net_google" {
+  name    = "google._domainkey"
+  comment = "DKIM for mail specific to Gmail"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhV/Ry2nJ1On1URw7A8YICoGP1TVl/PntwJnVobB+51axauDpHd4bGf7BxgA2JeUVHgB4YnUeecwkLxkB/gvRnCdLKUCAIF4cUsDV/e2McgqX2zo63iehtnu99d7hVUDpGql/7icPjh2XQYpCqBlUOPtXMArRtqjN7LgwjmYKXYJJ/9y4jAgKluGirvaIuCoQDxHhXKvElaxhfwDv4Wj27Vu/BXWq/4vDKxIcByxtNr9GVMDnH0XGzhYVxJ3vfz22BqN1E52IRXkb0A0RdJVfwm5+yNM5xuucyXJqax44bNbpXnX0RLodpffco78dAWbXDpaabcYSmJbhHLd/pfCePQIDAQAB"
+  zone_id = data.cloudflare_zone.cloudflare_zone_subspace_net.id
+}
+
+resource "cloudflare_record" "mailserver_net_spf" {
+  name    = "subspace.net"
+  comment = "SPF record"
+  proxied = false
+  ttl     = 3600
+  type    = "TXT"
+  value   = "v=spf1 include:_spf.google.com -all"
+  zone_id = data.cloudflare_zone.cloudflare_zone_subspace_net.id
 }
