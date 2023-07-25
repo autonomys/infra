@@ -199,12 +199,3 @@ resource "cloudflare_record" "mailserver_net_spf" {
   value   = "v=spf1 include:_spf.google.com -all"
   zone_id = data.cloudflare_zone.cloudflare_zone_subspace_net.id
 }
-
-resource "cloudflare_record" "mail_net" {
-  name    = "mail"
-  proxied = true
-  ttl     = 1
-  type    = "CNAME"
-  value   = "subspace.net"
-  zone_id = data.cloudflare_zone.cloudflare_zone_subspace_net.id
-}
