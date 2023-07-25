@@ -274,3 +274,9 @@ resource "cloudflare_record" "terraform_managed_resource_61eda5c4af93ca9d0f50e2f
   value   = "google-site-verification=Fxi1PlaR_c4E2l34q5G5QoiMPc7PeRqY_sLpD4XiAxg"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
+
+
+// ## Subspace.net zone ##
+data "cloudflare_zone" "cloudflare_zone_subspace_net" {
+  name = "subspace.net"
+}
