@@ -43,7 +43,6 @@ resource "aws_instance" "bootstrap_node" {
     inline = [
       "cloud-init status --wait",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -107,7 +106,6 @@ resource "aws_instance" "full_node" {
     inline = [
       "cloud-init status --wait",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -232,7 +230,6 @@ resource "aws_instance" "domain_node" {
     inline = [
       "cloud-init status --wait",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue
@@ -294,7 +291,6 @@ resource "aws_instance" "farmer_node" {
     inline = [
       "cloud-init status --wait",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install curl gnupg openssl net-tools -y",
     ]
 
     on_failure = continue

@@ -28,21 +28,20 @@ resource "null_resource" "setup-domain-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/"
     ]
   }
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "/home/${var.ssh_user}/subspace/install_docker.sh"
+    source      = "${var.path_to_scripts}/installer.sh"
+    destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/install_docker.sh",
-      "sudo bash /home/${var.ssh_user}/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
     ]
   }
 
@@ -73,7 +72,6 @@ resource "null_resource" "prune-domain-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/prune_docker_system.sh",
       "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
@@ -160,7 +158,6 @@ resource "null_resource" "start-domain-nodes" {
       "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[count.index]}",
 
       # start subspace node

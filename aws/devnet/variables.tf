@@ -16,7 +16,7 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  default = "m5a.xlarge"
+  default = "c6a.2xlarge"
   type    = string
 }
 

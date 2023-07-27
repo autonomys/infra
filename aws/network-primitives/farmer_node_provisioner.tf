@@ -29,22 +29,21 @@ resource "null_resource" "setup-farmer-nodes" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
       "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/",
       "sudo chown -R nobody:nogroup /home/${var.ssh_user}/subspace/farmer_data/"
     ]
   }
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "/home/${var.ssh_user}/subspace/install_docker.sh"
+    source      = "${var.path_to_scripts}/installer.sh"
+    destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/install_docker.sh",
-      "sudo /home/${var.ssh_user}/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
     ]
   }
 
@@ -75,7 +74,6 @@ resource "null_resource" "prune-farmer-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/prune_docker_system.sh",
       "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
@@ -153,11 +151,10 @@ resource "null_resource" "start-farmer-nodes" {
       "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
-      # start subspace 
-      # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      # start subspace
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

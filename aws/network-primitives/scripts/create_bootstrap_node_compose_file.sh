@@ -48,12 +48,16 @@ services:
       "--execution", "wasm",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--prune-blocks", "256",
+      "--prune-state", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--in-peers", "1000",
       "--out-peers", "1000",
+      "--pending-in-peers", "1000",
+      "--pending-out-peers", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
@@ -72,6 +76,7 @@ for (( i = 0; i < node_count; i++ )); do
     echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
     echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 

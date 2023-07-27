@@ -52,6 +52,8 @@ services:
       "--execution", "wasm",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--prune-blocks", "256",
+      "--prune-state", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
       "--piece-cache-size", $PIECE_CACHE_SIZE,
@@ -76,20 +78,14 @@ for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--dsn-reserved-peers\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-done
-
-for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
-  echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-reserved-peers\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do

@@ -28,21 +28,20 @@ resource "null_resource" "setup-bootstrap-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 755 /home/${var.ssh_user}/subspace/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/"
     ]
   }
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "/home/${var.ssh_user}/subspace/install_docker.sh"
+    source      = "${var.path_to_scripts}/installer.sh"
+    destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/install_docker.sh",
-      "sudo bash /home/${var.ssh_user}/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
     ]
   }
 
@@ -73,7 +72,6 @@ resource "null_resource" "prune-bootstrap-nodes" {
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/subspace/prune_docker_system.sh",
       "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
@@ -141,7 +139,6 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node

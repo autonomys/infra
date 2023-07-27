@@ -39,9 +39,6 @@ services:
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
-    ports:
-      - "30333:30333"
-      - "\${NODE_DSN_PORT}:30433"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
@@ -74,27 +71,20 @@ for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--dsn-reserved-peers\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-done
-
-for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
-  echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-reserved-peers\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
 done
-
 
 if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml

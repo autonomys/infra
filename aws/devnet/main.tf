@@ -9,11 +9,11 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-27-3"
+    docker-tag         = "snapshot-2023-jul-27"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "9f6e08049721059c4e518743be4a0ef62c4786a1cf1ba0a7d84a5c590b1ec2a9"
-    dsn-listen-port    = 50000
+    genesis-hash       = ""
+    dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -25,7 +25,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-27-3"
+    docker-tag         = "snapshot-2023-jul-27"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -39,7 +39,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-27-3"
+    docker-tag         = "snapshot-2023-jul-27"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -54,7 +54,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-27-3"
+    docker-tag         = "snapshot-2023-jul-27"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -72,7 +72,7 @@ module "devnet" {
     regions                = var.aws_region
     instance-count         = var.instance_count
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-jun-27-3"
+    docker-tag             = "snapshot-2023-jul-27"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
