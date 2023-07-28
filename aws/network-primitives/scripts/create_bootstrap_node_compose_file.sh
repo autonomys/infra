@@ -1,5 +1,9 @@
 #!/bin/bash
 
+reserved_only=${1}
+node_count=${2}
+current_node=${3}
+
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
@@ -33,7 +37,27 @@ services:
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
+      - "--in-peers"
+      - "1000"
+      - "--out-peers"
+      - "1000"
+      - "--pending-in-peers"
+      - "1000"
+      - "--pending-out-peers"
+      - "1000"
+      - "--disable-private-ips"
+EOF
+for (( i = 0; i < node_count; i++ )); do
+  if [ "${current_node}" != "${i}" ]; then
+    dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+    echo "      - \"--reserved-peers\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"--bootstrap-nodes\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+  fi
+done
 
+cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
     image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
     volumes:
@@ -46,37 +70,26 @@ services:
       "--chain", \$NETWORK_NAME,
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
-      "--prune-blocks", "256",
-      "--prune-state", "256",
+      "--state-pruning", "256",
+      "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-disable-private-ips",
       "--piece-cache-size", \$PIECE_CACHE_SIZE,
       "--node-key", \$NODE_KEY,
       "--in-peers", "1000",
       "--out-peers", "1000",
-      "--pending-in-peers", "1000",
-      "--pending-out-peers", "1000",
+      "--in-peers-light", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--in-peers-light", "1000",
-      "--rpc-max-connections", "10000",
 EOF
 
-reserved_only=${1}
-node_count=${2}
-current_node=${3}
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-    echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 
