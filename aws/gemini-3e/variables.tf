@@ -6,13 +6,13 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [1, 2, 3]
+  default     = [0]
 }
 
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["system", "payments", "evm"]
+  default     = ["evm"]
 }
 
 variable "instance_type" {

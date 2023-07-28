@@ -43,7 +43,8 @@ services:
       - "30333:30333"
       - "${NODE_DSN_PORT}:30433"
     labels:
-      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+    #  caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+      caddy_0: \${DOMAIN_PREFIX}.${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     command: [
