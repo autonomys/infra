@@ -1,5 +1,7 @@
 #!/bin/bash
 
+EXTERNAL_IP=`curl -s ifconfig.me`
+
 reserved_only=${1}
 node_count=${2}
 current_node=${3}
@@ -16,7 +18,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     restart: unless-stopped
     environment:
-      - DD_API_KEY=\$DATADOG_API_KEY
+      - DD_API_KEY=\${DATADOG_API_KEY}
       - DD_SITE=datadoghq.com
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -25,15 +27,15 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
 
   dsn-bootstrap-node:
-    image: ghcr.io/\$NODE_ORG/bootstrap-node:\$NODE_TAG
+    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
     restart: unless-stopped
     environment:
       - RUST_LOG=info
     ports:
-      - "\$DSN_LISTEN_PORT:30533"
+      - "30533:30533"
     command:
       - start
-      - \$DSN_NODE_KEY
+      - \${DSN_NODE_KEY}
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
@@ -45,7 +47,8 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
-      - "--disable-private-ips"
+      - "--external-address"
+      - "/ip4/$EXTERNAL_IP/tcp/30533"
 EOF
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
@@ -59,23 +62,24 @@ done
 
 cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
-    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
+    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "\${NODE_DSN_PORT}:30433"
+      - "30433:30433"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-      "--state-pruning", "256",
+    #  "--enable-subspace-block-relay",
+      "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-disable-private-ips",
-      "--piece-cache-size", \$PIECE_CACHE_SIZE,
-      "--node-key", \$NODE_KEY,
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+      "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
       "--in-peers-light", "1000",

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+EXTERNAL_IP=`curl -s ifconfig.me`
+
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
@@ -12,7 +14,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     restart: unless-stopped
     environment:
-      - DD_API_KEY=\$DATADOG_API_KEY
+      - DD_API_KEY=\${DATADOG_API_KEY}
       - DD_SITE=datadoghq.com
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -21,25 +23,24 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
 
   archival-node:
-    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
+    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "\${NODE_DSN_PORT}:30433"
+      - "30433:30433"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
+    #  "--enable-subspace-block-relay",
       "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
-      "--state-pruning", "256",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-disable-private-ips",
-      "--piece-cache-size", \$PIECE_CACHE_SIZE,
-      "--node-key", \$NODE_KEY,
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+      "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
       "--dsn-in-connections", "1000",
