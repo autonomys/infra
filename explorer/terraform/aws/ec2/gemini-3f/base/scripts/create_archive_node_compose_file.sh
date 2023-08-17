@@ -1,10 +1,11 @@
 #!/bin/bash
+EXTERNAL_IP=`curl -s ifconfig.me`
 source /home/ubuntu/.bash_profile
 cat > /home/ubuntu/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
-  archival_node_data: {}
+  archival_node_data_3f: {}
 
 services:
   db:
@@ -24,9 +25,9 @@ services:
     restart: on-failure
     image: subsquid/substrate-ingest:firesquid
     command: [
-      "-e", "ws://node:9944",
+      "-e", "ws://node-3f:9944",
       "-c", "10",
-       "--prom-port", "9090",
+       "--prom-port", "9091",
        "--out", "postgres://postgres:postgres@db:${POSTGRES_PORT}/${POSTGRES_DB}"
     ]
     environment:
@@ -40,7 +41,7 @@ services:
       RUST_LOG: "substrate_gateway=info,actix_server=info"
     command: [
        "--database-url", "postgres://postgres:postgres@db:${POSTGRES_PORT}/${POSTGRES_DB}",
-       "--database-max-connections", "3", # max number of concurrent database connections
+       "--database-max-connections", "6", # max number of concurrent database connections
        # these parameters have to be adjusted depending on machine resources to avoid OOM
        "--scan-start-value", "20", # works as batch size but for a whole archive, default is 100
        "--scan-max-value", "20000" # upper limit for the amount of blocks, default is 100000
@@ -61,21 +62,25 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
     ports:
-      - "4444:3000"
+      - "4445:3000"
 
-  node:
+  node-3f:
     image: ghcr.io/subspace/node:${NODE_TAG}
     volumes:
-      - archival_node_data:/var/subspace:rw
+      - archival_node_data_3f:/var/subspace:rw
     restart: unless-stopped
     command: [
       "--chain", "${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
       "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--rpc-cors", "all",
-      "--rpc-methods", "safe",
-      "--unsafe-rpc-external",
+      "--rpc-methods", "unsafe",
+      "--rpc-external",
+      "--no-private-ipv4",
       "--name", "${NODE_NAME}"
     ]
     healthcheck:
@@ -105,7 +110,7 @@ services:
       SECRET: ${MY_SECRET}
     command: "postgres"
     ports:
-      - 8080:8080
+      - 8081:8080
 
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
@@ -115,5 +120,5 @@ services:
       SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
-      - 7070:7070
+      - 7071:7070
 EOF
