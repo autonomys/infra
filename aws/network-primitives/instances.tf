@@ -35,7 +35,7 @@ resource "aws_instance" "bootstrap_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
@@ -98,7 +98,7 @@ resource "aws_instance" "full_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
@@ -159,7 +159,7 @@ resource "aws_instance" "rpc_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
@@ -222,7 +222,7 @@ resource "aws_instance" "domain_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
@@ -283,7 +283,7 @@ resource "aws_instance" "farmer_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 

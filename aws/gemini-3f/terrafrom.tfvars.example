@@ -1,0 +1,18 @@
+# AWS access key used to create infrastructure
+access_key = ""
+# AWS secret key used to create AWS infrastructure
+secret_key            = ""
+vpc_cidr_block        = "172.34.0.0/16"
+public_subnet_cidrs   = ["172.34.1.0/24"]
+aws_key_name          = "deployer"
+ssh_user              = "ubuntu"
+instance_type         = "m6a.xlarge"
+instance_count        = 1
+disk_volume_size      = 100
+private_key_path      = "~/.ssh/deployer.pem"
+aws_region            = ["us-east-1"]
+azs                   = ["us-east-1a"]
+cloudflare_email      = ""
+cloudflare_api_token  = ""
+datadog_api_key       = ""
+farmer_reward_address = ""

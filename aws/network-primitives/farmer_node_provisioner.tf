@@ -99,7 +99,7 @@ resource "null_resource" "start-farmer-nodes" {
     timeout     = "300s"
   }
 
-  # copy farmer identity files
+  # copy farmer identity files (todo: reset this after)
   provisioner "file" {
     source      = "./identity.bin"
     destination = "/home/${var.ssh_user}/subspace/farmer_data/identity.bin"

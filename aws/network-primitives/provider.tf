@@ -18,7 +18,7 @@ provider "aws" {
   region     = var.aws_region[0]
   default_tags {
     tags = {
-      Environment = "Gemin-3e"
+      Environment = var.network_name
       Owner       = "subspace"
       Project     = "Subspace Gemini network"
     }

@@ -33,13 +33,12 @@ services:
     ports:
       - "30533:30533"
     command: [
-      "--base-path", "/var/subspace",
+      "--farm", "path=/var/subspace,size=${PLOT_SIZE}",
       "farm",
       "--node-rpc-url", "ws://archival-node:9944",
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
-      "--plot-size", "\${PLOT_SIZE}",
     ]
 
   archival-node:
@@ -54,16 +53,17 @@ services:
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-    #  "--enable-subspace-block-relay",
+#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--validator",
       "--rpc-cors", "all",
-      "--unsafe-rpc-external",
+      "--rpc-external",
+      "--rpc-methods", "unsafe",
 EOF
 
 reserved_only=${1}
