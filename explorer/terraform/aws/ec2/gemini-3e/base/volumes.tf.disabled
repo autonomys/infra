@@ -1,3 +1,6 @@
+# // Use this scipt if you want to create secondary disk volumes
+# change the extension from .disabled to .tf
+
 # Create EBS volumes
 resource "aws_ebs_volume" "squid_blue_node_volume" {
   count             = length(var.aws_region) * var.blue-squid-node-config.instance-count-blue
