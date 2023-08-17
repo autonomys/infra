@@ -21,7 +21,7 @@ resource "cloudflare_record" "system-domain" {
 resource "cloudflare_record" "core-domain" {
   count   = length(local.domain_node_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-prefix}-${count.index}.${var.domain-node-config.domain-labels[2]}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix}-${count.index}.${var.domain-node-config.domain-labels[0]}.${var.network_name}"
   value   = local.domain_node_ip_v4[count.index]
   type    = "A"
 }

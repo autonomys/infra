@@ -45,20 +45,20 @@ services:
       - "30333:30333"
       - "30433:30433"
     labels:
-    #  caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
-      caddy_0: \${DOMAIN_PREFIX}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+#      caddy_0: \${DOMAIN_PREFIX}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
-    #  "--enable-subspace-block-relay",
+#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--rpc-cors", "all",
       "--rpc-external",
@@ -90,12 +90,12 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
-# // TODO: make configurable with gemini network as it's not needed for devnet
-# for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
-#   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-#   echo "      \"--dsn-reserved-peers\", \"${dsn)addr}\"," >> ~/subspace/docker-compose.yml
-#   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
-# done
+#// TODO: make configurable with gemini network as it's not needed for devnet
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-reserved-peers\", \"${dsn)addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+done
 
 if [ "${reserved_only}" == "true" ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
@@ -106,6 +106,7 @@ if [ "${enable_domains}" == "true" ]; then
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
+      echo '      "--alice",'
       echo '      "--validator",'
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'

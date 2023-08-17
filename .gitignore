@@ -59,3 +59,11 @@ node_keys.txt
 /aws/gemini-3e/domain_node_keys.txt
 /aws/gemini-3e/farmer_node_keys.txt
 /aws/gemini-3e/keystore/*
+/aws/gemini-3f/relayer_ids.txt
+/aws/gemini-3f/bootstrap_node_keys.txt
+/aws/gemini-3f/full_node_keys.txt
+/aws/gemini-3f/rpc_node_keys.txt
+/aws/gemini-3f/dsn_bootstrap_node_keys.txt
+/aws/gemini-3f/domain_node_keys.txt
+/aws/gemini-3f/farmer_node_keys.txt
+/aws/gemini-3f/keystore/*
