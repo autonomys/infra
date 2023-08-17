@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
@@ -55,7 +55,7 @@ services:
       - db
       - run-migrations
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
   graphql:
     image: ghcr.io/subspace/blockexplorer-api-server:latest
@@ -70,7 +70,7 @@ services:
       # provide DB password
       DB_PASS: ${DB_PASS}
     ports:
-      - "4350:4000"
+      - "4351:4000"
 
   datadog:
     image: datadog/agent
@@ -94,7 +94,7 @@ services:
       SECRET: ${MY_SECRET}
     command: "postgres"
     ports:
-      - 8080:8080
+      - 8081:8080
 
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
@@ -104,5 +104,5 @@ services:
       SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
-      - 7070:7070
+      - 7071:7070
 EOF
