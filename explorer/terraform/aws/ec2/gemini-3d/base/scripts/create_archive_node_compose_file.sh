@@ -1,6 +1,6 @@
 #!/bin/bash
-source /home/ubuntu/.bash_profile
-cat > /home/ubuntu/archive/docker-compose.yml << EOF
+source /home/$USER/.bash_profile
+cat > /home/$USER/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -11,7 +11,7 @@ services:
     image: postgres:14
     restart: always
     volumes:
-      - /home/ubuntu/archive/postgresql:/var/lib/postgresql
+      - /home/$USER/archive/postgresql:/var/lib/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

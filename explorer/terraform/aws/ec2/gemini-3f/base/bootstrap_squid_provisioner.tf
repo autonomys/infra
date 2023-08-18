@@ -233,10 +233,10 @@ resource "null_resource" "start-blue-squid-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.blue-squid-node-config.domain-prefix}.squid.${var.blue-squid-node-config.network-name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.blue-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.blue-squid-node-config.domain-prefix}-squid-${var.blue-squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname squid-${var.blue-squid-node-config.network-name}",
       # create .env file
       "chmod +x /home/${var.ssh_user}/squid/set_env_vars.sh",
       "bash /home/${var.ssh_user}/squid/set_env_vars.sh",
@@ -310,10 +310,10 @@ resource "null_resource" "start-green-squid-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.green-squid-node-config.domain-prefix}.squid.${var.green-squid-node-config.network-name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.green-squid-node-config.domain-prefix}-squid-${var.green-squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname squid-${var.green-squid-node-config.network-name}",
       # create .env file
       "chmod +x /home/${var.ssh_user}/squid/set_env_vars.sh",
       "bash /home/${var.ssh_user}/squid/set_env_vars.sh",

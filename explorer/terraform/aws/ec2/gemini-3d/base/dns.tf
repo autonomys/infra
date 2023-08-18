@@ -41,7 +41,7 @@ resource "cloudflare_record" "squid-main-green" {
 resource "cloudflare_record" "squid-live" {
   count   = var.green-squid-node-config.instance-count-green
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "squid.${var.network-name}"
+  name    = "squid.${var.network_name}"
   value   = local.green_squid_node_ip_v4[count.index]
   type    = "A"
   ttl     = "3600"
@@ -50,7 +50,7 @@ resource "cloudflare_record" "squid-live" {
 resource "cloudflare_record" "squid-live-evm" {
   count   = var.green-squid-node-config.instance-count-green
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.green-squid-node-config.domain-prefix}-squid.${var.network-name}"
+  name    = "${var.green-squid-node-config.domain-prefix}-squid.${var.network_name}"
   value   = local.green_squid_node_ip_v4[count.index]
   type    = "A"
   ttl     = "3600"

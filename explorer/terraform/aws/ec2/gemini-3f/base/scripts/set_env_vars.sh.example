@@ -6,18 +6,18 @@ export NODE_TAG=gemini-3f-2023-aug-17
 export NODE_NAME=SUBSQUID_GEMINI_3f
 export NETWORK_NAME=gemini-3f
 export POSTGRES_HOST=db
-export POSTGRES_PORT=5433
+export POSTGRES_PORT=5432
 export POSTGRES_USER=postgres
 export POSTGRES_DB=squid-archive
 export POSTGRES_PASSWORD=
 export DB_TYPE=postgres
 export DB_HOST=db
-export DB_PORT=5433
+export DB_PORT=5432
 export DB_USER=postgres
 export DB_NAME=squid-archive
 export DB_PASS=
 export ARCHIVE_ENDPOINT="https://archive.gemini-3f.subspace.network/api"
-export CHAIN_RPC_ENDPOINT="wss://rpc.gemini-3f.subspace.network/ws"
+export CHAIN_RPC_ENDPOINT="wss://rpc-0.gemini-3f.subspace.network/ws"
 
 ####################################################################
 
@@ -26,11 +26,11 @@ export DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true"
 export DD_LOGS_ENABLED="true"
 export DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL="true"
 export DD_CONTAINER_EXCLUDE="name:datadog-agent"
-export PROCESSOR_HEALTH_HOST="http://processor:3001"
-export PROCESSOR_HEALTH_PORT="7071"
-export HEALTH_CHECK_PORT="8081"
-export INGEST_HEALTH_HOST="http://ingest:9091"
-export INGEST_HEALTH_PORT="7071"
+export PROCESSOR_HEALTH_HOST="http://processor:3000"
+export PROCESSOR_HEALTH_PORT="7070"
+export HEALTH_CHECK_PORT="8080"
+export INGEST_HEALTH_HOST="http://ingest:9090"
+export INGEST_HEALTH_PORT="7070"
 export MY_SECRET=""
 
 cat << EOF >> ~/.bash_profile
@@ -40,18 +40,18 @@ export NODE_TAG=gemini-3f-2023-aug-17
 export NODE_NAME=SUBSQUID_GEMINI_3f
 export NETWORK_NAME=gemini-3f
 export POSTGRES_HOST=db
-export POSTGRES_PORT=5433
+export POSTGRES_PORT=5432
 export POSTGRES_USER=postgres
 export POSTGRES_DB=squid-archive
 export POSTGRES_PASSWORD=
 export DB_TYPE=postgres
 export DB_HOST=db
-export DB_PORT=5433
+export DB_PORT=5432
 export DB_USER=postgres
 export DB_NAME=squid-archive
 export DB_PASS=
 export ARCHIVE_ENDPOINT="https://archive.gemini-3f.subspace.network/api"
-export CHAIN_RPC_ENDPOINT="wss://rpc.gemini-3f.subspace.network/ws"
+export CHAIN_RPC_ENDPOINT="wss://rpc-0.gemini-3f.subspace.network/ws"
 
 ####################################################################
 
@@ -60,11 +60,11 @@ export DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true"
 export DD_LOGS_ENABLED="true"
 export DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL="true"
 export DD_CONTAINER_EXCLUDE="name:datadog-agent"
-export PROCESSOR_HEALTH_HOST="http://processor:3001"
-export PROCESSOR_HEALTH_PORT="7071"
-export HEALTH_CHECK_PORT="8081"
-export INGEST_HEALTH_HOST="http://ingest:9091"
-export INGEST_HEALTH_PORT="7071"
+export PROCESSOR_HEALTH_HOST="http://processor:3000"
+export PROCESSOR_HEALTH_PORT="7070"
+export HEALTH_CHECK_PORT="8080"
+export INGEST_HEALTH_HOST="http://ingest:9090"
+export INGEST_HEALTH_PORT="7070"
 export MY_SECRET=""
 EOF
 

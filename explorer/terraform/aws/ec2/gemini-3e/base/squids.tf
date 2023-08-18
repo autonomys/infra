@@ -34,7 +34,7 @@ resource "aws_instance" "squid_blue_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
@@ -102,7 +102,7 @@ resource "aws_instance" "squid_green_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 
