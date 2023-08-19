@@ -19,7 +19,6 @@ variable "network_name" {
 }
 
 variable "instance_type" {
-  default = "m6a.2xlarge"
   type    = string
 }
 
