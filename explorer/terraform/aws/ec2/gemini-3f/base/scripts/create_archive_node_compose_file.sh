@@ -22,7 +22,7 @@ services:
     depends_on:
       - db
     restart: on-failure
-    image: subsquid/substrate-ingest:firesquid
+    image: ghcr.io/subspace/substrate-ingest:latest
     command: [
       "-e", "ws://node:9944",
       "-c", "10",
