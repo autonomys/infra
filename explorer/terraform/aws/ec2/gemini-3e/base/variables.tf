@@ -6,7 +6,7 @@ variable "netdata_token" {
 }
 
 variable "instance_type" {
-  default = "m6a.2xlarge"
+  default = "m6a.xlarge"
   type    = string
 }
 
@@ -52,7 +52,7 @@ variable "public_subnet_cidrs" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 800
+  default = 400
 }
 
 variable "disk_volume_type" {

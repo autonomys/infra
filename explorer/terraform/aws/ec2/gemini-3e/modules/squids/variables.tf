@@ -19,7 +19,6 @@ variable "network_name" {
 }
 
 variable "instance_type" {
-  default = "m6a.2xlarge"
   type    = string
 }
 
@@ -84,7 +83,7 @@ variable "private_key_path" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 800
+  default = 400
 }
 
 variable "disk_volume_type" {
