@@ -149,10 +149,10 @@ resource "null_resource" "start-archive-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot certonly --dry-run --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-node-config.domain-prefix}.archive.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d archive.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname ${var.archive-node-config.domain-prefix}-archive-${var.network_name}",
+      "sudo hostnamectl set-hostname archive-${var.network_name}",
       # create .env file
       "chmod +x /home/${var.ssh_user}/archive/set_env_vars.sh",
       "bash /home/${var.ssh_user}/archive/set_env_vars.sh",

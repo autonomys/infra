@@ -34,7 +34,7 @@ resource "aws_instance" "archive_node" {
 
   lifecycle {
 
-    prevent_destroy = true
+    create_before_destroy = true
 
   }
 

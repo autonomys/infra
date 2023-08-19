@@ -1,33 +1,32 @@
 #!/bin/bash
 EXTERNAL_IP=`curl -s ifconfig.me`
-source /home/ubuntu/.bash_profile
-cat > /home/ubuntu/archive/docker-compose.yml << EOF
+source /home/$USER/.bash_profile
+cat > /home/$USER/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
-  archival_node_data_3f: {}
+  archival_node_data: {}
 
 services:
   db:
     image: postgres:14
     restart: always
     volumes:
-      - /home/ubuntu/archive/postgresql:/var/lib/postgresql
+      - /home/$USER/archive/postgresql:/var/lib/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PORT: ${POSTGRES_PORT}
 
   ingest:
     depends_on:
       - db
     restart: on-failure
-    image: subsquid/substrate-ingest:firesquid
+    image: ghcr.io/subspace/substrate-ingest:latest
     command: [
-      "-e", "ws://node-3f:9944",
+      "-e", "ws://node:9944",
       "-c", "10",
-       "--prom-port", "9091",
+       "--prom-port", "9090",
        "--out", "postgres://postgres:postgres@db:${POSTGRES_PORT}/${POSTGRES_DB}"
     ]
     environment:
@@ -62,12 +61,12 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
     ports:
-      - "4445:3000"
+      - "4444:3000"
 
-  node-3f:
+  node:
     image: ghcr.io/subspace/node:${NODE_TAG}
     volumes:
-      - archival_node_data_3f:/var/subspace:rw
+      - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     command: [
       "--chain", "${NETWORK_NAME}",
@@ -110,7 +109,7 @@ services:
       SECRET: ${MY_SECRET}
     command: "postgres"
     ports:
-      - 8081:8080
+      - 8080:8080
 
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
@@ -120,5 +119,5 @@ services:
       SECRET: ${MY_SECRET}
     command: "prometheus"
     ports:
-      - 7071:7070
+      - 7070:7070
 EOF
