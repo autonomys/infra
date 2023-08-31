@@ -1,0 +1,31 @@
+---
+- name: Install Grafana Agent
+  ansible.builtin.include_role:
+    name: grafana_agent
+  vars:
+    grafana_agent_logs_config:
+      configs:
+        - clients:
+            - basic_auth:
+                password: '{{ grafana_cloud_api_key }}'
+                username: '{{ logs_username }}'
+              url: '{{ loki_url }}'
+          name: default
+          positions:
+            filename: /tmp/positions.yaml
+          scrape_configs:
+            - job_name: integrations/node_exporter_direct_scrape
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    instance: hostname
+                    __path__: /var/log/*.log
+                    job: integrations/node_exporter
+          target_config:
+            sync_period: 10s
+
+    vars:
+      grafana_cloud_api_key: <Cloud API Policy token>
+      logs_username: loki
+      loki_url: <loki-push-url> # Example - https://logs-prod-017.grafana.net/loki/api/v1/push

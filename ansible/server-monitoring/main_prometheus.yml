@@ -1,0 +1,7 @@
+---
+- name: Update Prometheus
+  hosts: monitor
+  become: true
+  gather_facts: false
+  roles:
+    - prometheus

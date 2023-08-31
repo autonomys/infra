@@ -1,0 +1,22 @@
+---
+- name: Install essentials
+  apt:
+    name:
+      - net-tools
+      - ncdu
+      - vnstat
+      - tree
+      - htop
+      - zip
+      - zsh
+      - git
+      - ufw
+      - nload
+      - jq
+      - make
+      - build-essential
+      - ca-certificates
+      - wget
+      - bash-completion
+    state: latest
+    update_cache: true

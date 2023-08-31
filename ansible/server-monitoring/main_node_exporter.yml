@@ -1,0 +1,28 @@
+---
+- name: Update Node exporter
+  hosts: monitor
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - name: update and upgrade
+      apt:
+        upgrade: dist
+        update_cache: true
+  roles:
+    - node_exporter
+
+- name: create node_exporter systemd unit
+  copy:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: start node_exporter service
+  systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  changed_when: false

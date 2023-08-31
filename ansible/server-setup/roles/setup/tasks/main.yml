@@ -1,0 +1,32 @@
+---
+- name: Create users
+  import_tasks: create_users.yml
+
+- name: Configure Machine
+  import_tasks: configure_machine.yml
+
+- name: Update machine
+  import_tasks: update_machine.yml
+
+- name: Install essentials
+  import_tasks: install_essentials.yml
+
+- name: Install node exporter
+  import_tasks: install_node_exporter.yml
+  when: node_exporter|default(false)|bool == true
+
+- name: Install promtail
+  import_tasks: install_promtail.yml
+  when: promtail|default(false)|bool == true
+
+- name: Install Grafana Agent
+  import_tasks: install_grafana_agent.yml
+
+- name: Install Docker and Docker Compose
+  import_tasks: install_docker.yml
+
+- name: Install vector
+  import_tasks: install_vector.yml
+
+- name: Install zsh
+  import_tasks: install_zsh.yml

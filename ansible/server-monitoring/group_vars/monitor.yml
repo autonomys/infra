@@ -1,0 +1,18 @@
+---
+prometheus_version: 2.46.0
+grafana_version: 10.1.0
+alert_manager_version: 0.26.0
+loki_version: 2.8.4
+promtail_version: 2.5.0
+node_exporter_version: 1.6.1
+ansible_python_interpreter: /usr/bin/python3
+ansible_ssh_user: root
+ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+deployment_user: "deployer"
+ssh_port: 22
+ansible_port: 22
+disable_root: true
+receiving_email: "alerts@subspace.network"
+notifications_email: "alerts@subspace.network"
+notifications_email_password:
+nginx_user: "www-data"
