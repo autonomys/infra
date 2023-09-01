@@ -56,6 +56,28 @@ resource "cloudflare_record" "status" {
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
 
+// subspace subnomicon
+resource "cloudflare_record" "subnomicon" {
+  name    = "subnomicon"
+  comment = "Redirected subnomicon to Github"
+  proxied = true
+  ttl     = 1
+  type    = "CNAME"
+  value   = "subspace.github.io"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
+// subspace uptime
+resource "cloudflare_record" "uptime" {
+  name    = "uptime"
+  comment = "Subspace uptime status page and monitoring"
+  proxied = true
+  ttl     = 1
+  type    = "A"
+  value   = "35.89.37.220"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
 // subspace block explorer
 resource "cloudflare_record" "block_explorer" {
   comment = "Subspace block explorer"
@@ -66,6 +88,18 @@ resource "cloudflare_record" "block_explorer" {
   value   = "subspace.github.io"
   zone_id = data.cloudflare_zone.cloudflare_zone.id
 }
+
+// subspace blockscout
+resource "cloudflare_record" "blockscout" {
+  name    = "blockscout"
+  comment = "Subspace blockscout evm explorer"
+  proxied = true
+  ttl     = 1
+  type    = "A"
+  value   = "3.145.138.108"
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+}
+
 
 // TODO: the following records needs to be updated with further info on why they exist
 resource "cloudflare_record" "terraform_managed_resource_964bf73d0853cefc64803baef62167a5" {
