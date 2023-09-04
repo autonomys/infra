@@ -3,7 +3,7 @@ resource "aws_instance" "bootstrap_node" {
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone = element(var.azs, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -14,13 +14,14 @@ resource "aws_instance" "bootstrap_node" {
     device_name = "/dev/sda1"
     volume_size = var.bootstrap-node-config.disk-volume-size
     volume_type = var.bootstrap-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
 
 
   tags = {
-    name       = "${var.network_name}-bootstrap"
+    Name       = "${var.network_name}-bootstrap-${count.index}"
+    name       = "${var.network_name}-bootstrap-${count.index}"
     role       = "bootstrap node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -29,13 +30,13 @@ resource "aws_instance" "bootstrap_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
+    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ami]
 
   }
 
@@ -60,14 +61,76 @@ resource "aws_instance" "bootstrap_node" {
 
 }
 
+resource "aws_instance" "bootstrap_node_evm" {
+  count             = length(var.aws_region) * var.bootstrap-node-evm-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.instance_type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
+  # Security Group
+  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  # the Public SSH key
+  key_name                    = var.aws_key_name
+  associate_public_ip_address = true
+  ebs_optimized               = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = var.bootstrap-node-config.disk-volume-size
+    volume_type = var.bootstrap-node-config.disk-volume-type
+    iops        = 3000
+    throughput  = 250
+  }
+
+
+  tags = {
+    Name       = "${var.network_name}-bootstrap-evm-${count.index}"
+    name       = "${var.network_name}-bootstrap-evm-${count.index}"
+    role       = "bootstrap node"
+    os_name    = "ubuntu"
+    os_version = "22.04"
+    arch       = "x86_64"
+  }
+
+  depends_on = [
+    aws_subnet.public_subnets,
+    #aws_nat_gateway.nat_gateway,
+    aws_internet_gateway.gw
+  ]
+
+  lifecycle {
+
+    ignore_changes = [ami]
+
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "cloud-init status --wait",
+      "sudo apt update -y",
+    ]
+
+    on_failure = continue
+
+  }
+
+  # Setting up the ssh connection
+  connection {
+    type        = "ssh"
+    host        = element(self.*.public_ip, count.index)
+    user        = var.ssh_user
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
+  }
+
+}
 
 resource "aws_instance" "full_node" {
-  count             = length(var.aws_region) * var.full-node-config.instance-count
-  ami               = data.aws_ami.ubuntu_amd64.image_id
+  count = length(var.aws_region) * var.full-node-config.instance-count
+  ami   = data.aws_ami.ubuntu_amd64.image_id
   # instance_type     = var.instance_type
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone = element(var.azs, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -78,12 +141,13 @@ resource "aws_instance" "full_node" {
     device_name = "/dev/sda1"
     volume_size = var.full-node-config.disk-volume-size
     volume_type = var.full-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
 
   tags = {
-    name       = "${var.network_name}-full"
+    Name       = "${var.network_name}-full-${count.index}"
+    name       = "${var.network_name}-full-${count.index}"
     role       = "full node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -92,13 +156,13 @@ resource "aws_instance" "full_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
+    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ami]
 
   }
 
@@ -129,7 +193,7 @@ resource "aws_instance" "rpc_node" {
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone = element(var.azs, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -140,11 +204,12 @@ resource "aws_instance" "rpc_node" {
     device_name = "/dev/sda1"
     volume_size = var.rpc-node-config.disk-volume-size
     volume_type = var.rpc-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
   tags = {
-    name       = "${var.network_name}-rpc"
+    Name       = "${var.network_name}-rpc-${count.index}"
+    name       = "${var.network_name}-rpc-${count.index}"
     role       = "rpc node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -153,13 +218,13 @@ resource "aws_instance" "rpc_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
+    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ami]
 
   }
 
@@ -191,7 +256,7 @@ resource "aws_instance" "domain_node" {
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone = element(var.azs, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -202,12 +267,13 @@ resource "aws_instance" "domain_node" {
     device_name = "/dev/sda1"
     volume_size = var.domain-node-config.disk-volume-size
     volume_type = var.domain-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
 
   tags = {
-    name       = "${var.network_name}-domain"
+    Name       = "${var.network_name}-domain-${count.index}"
+    name       = "${var.network_name}-domain-${count.index}"
     role       = "domain node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -216,13 +282,13 @@ resource "aws_instance" "domain_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
+    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ami]
 
   }
 
@@ -253,7 +319,7 @@ resource "aws_instance" "farmer_node" {
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone = element(var.azs, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -264,11 +330,12 @@ resource "aws_instance" "farmer_node" {
     device_name = "/dev/sda1"
     volume_size = var.farmer-node-config.disk-volume-size
     volume_type = var.farmer-node-config.disk-volume-type
-    iops = 3000
-    throughput = 250
+    iops        = 3000
+    throughput  = 250
   }
   tags = {
-    name       = "${var.network_name}-farmer"
+    Name       = "${var.network_name}-farmer-${count.index}"
+    name       = "${var.network_name}-farmer-${count.index}"
     role       = "farmer node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -277,13 +344,13 @@ resource "aws_instance" "farmer_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_nat_gateway.nat_gateway,
+    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ami]
 
   }
 

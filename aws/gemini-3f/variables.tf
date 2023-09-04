@@ -3,12 +3,14 @@ variable "farmer_reward_address" {
   type        = string
 }
 
+//todo change this to a map
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [0]
+  default     = [3]
 }
 
+//todo change this to a map
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
@@ -30,14 +32,21 @@ variable "vpc_cidr_block" {
 }
 
 variable "azs" {
-  type        = list(string)
+  type        = string
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
-  type    = number
-  default = 1
+  type = map(number)
+  default = {
+    bootstrap     = 2
+    rpc           = 2
+    domain        = 2
+    full          = 1
+    farmer        = 1
+    evm_bootstrap = 1
+  }
 }
 
 variable "aws_region" {

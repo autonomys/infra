@@ -7,7 +7,7 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
     docker-tag         = "snapshot-2023-aug-15"
     reserved-only      = false
@@ -23,7 +23,7 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
     docker-tag         = "snapshot-2023-aug-15"
     reserved-only      = false
@@ -37,7 +37,7 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
     docker-tag         = "snapshot-2023-aug-15"
     domain-prefix      = "rpc"
@@ -52,7 +52,7 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
     docker-tag         = "snapshot-2023-aug-15"
     domain-prefix      = "domain"
@@ -70,7 +70,7 @@ module "devnet" {
     instance-type          = var.instance_type
     deployment-version     = 1
     regions                = var.aws_region
-    instance-count         = var.instance_count
+    instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
     docker-tag             = "snapshot-2023-aug-15"
     reserved-only          = false

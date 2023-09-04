@@ -6,7 +6,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count + 1
+    instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     reserved-only      = false
@@ -22,7 +22,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     reserved-only      = false
@@ -36,7 +36,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "rpc"
@@ -51,7 +51,7 @@ module "gemini-3e" {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
-    instance-count     = 1
+    instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3e-2023-jun-30"
     domain-prefix      = "domain"
@@ -69,7 +69,7 @@ module "gemini-3e" {
     instance-type          = var.instance_type
     deployment-version     = 1
     regions                = var.aws_region
-    instance-count         = var.instance_count
+    instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
     docker-tag             = "gemini-3e-2023-jun-30"
     reserved-only          = false

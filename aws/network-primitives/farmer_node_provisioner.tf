@@ -28,8 +28,8 @@ resource "null_resource" "setup-farmer-nodes" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/",
       "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/ && sudo chmod -R 770 /home/${var.ssh_user}/subspace/farmer_data/",
       "sudo chown -R nobody:nogroup /home/${var.ssh_user}/subspace/farmer_data/"
     ]
   }
@@ -105,11 +105,11 @@ resource "null_resource" "start-farmer-nodes" {
     destination = "/home/${var.ssh_user}/subspace/farmer_data/identity.bin"
   }
 
+  # copy node keys file
   provisioner "file" {
-    source      = "./single_disk_plot.json"
-    destination = "/home/${var.ssh_user}/subspace/farmer_data/single_disk_plot.json"
+    source      = "./farmer_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
-
 
   # copy boostrap node keys file
   provisioner "file" {
@@ -132,6 +132,9 @@ resource "null_resource" "start-farmer-nodes" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
+      # inject farmer identity // todo: make configurable as not needed with devnet
+      "sudo cp -rf /home/${var.ssh_user}/identity.bin farmer_data/",
+      "sudo chown nobody:nogroup /home/${var.ssh_user}/farmer_data/identity.bin",
       # stop any running service
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 

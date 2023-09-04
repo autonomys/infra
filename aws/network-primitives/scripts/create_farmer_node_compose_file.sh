@@ -7,6 +7,7 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
+  farmer_data: {}
 
 services:
   datadog:
@@ -28,13 +29,12 @@ services:
         condition: service_healthy
     image: ghcr.io/\${NODE_ORG}/farmer:\${NODE_TAG}
     volumes:
-      - ~/subspace/farmer_data:/var/subspace:rw
+      - /home/$USER/subspace/farmer_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30533:30533"
     command: [
-      "--farm", "path=/var/subspace,size=${PLOT_SIZE}",
-      "farm",
+      "farm", "path=/var/subspace,size=\${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
@@ -72,14 +72,6 @@ current_node=${3}
 bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 force_block_production=${5}
-
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" != "${i}" ]; then
-    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
-    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  fi
-done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)

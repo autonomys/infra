@@ -1,22 +1,22 @@
 locals {
-  bootstrap_nodes_ip_v4 = flatten([
-    [aws_instance.bootstrap_node.*.public_ip]
+  bootstrap_nodes_evm_ip_v4 = flatten([
+    [aws_instance.bootstrap_node_evm.*.public_ip]
     ]
   )
 }
 
-resource "null_resource" "setup-bootstrap-nodes" {
-  count = length(local.bootstrap_nodes_ip_v4)
+resource "null_resource" "setup-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [aws_instance.bootstrap_node]
+  depends_on = [aws_instance.bootstrap_node_evm]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_evm_ip_v4)
   }
 
   connection {
-    host        = local.bootstrap_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -47,16 +47,16 @@ resource "null_resource" "setup-bootstrap-nodes" {
 
 }
 
-resource "null_resource" "prune-bootstrap-nodes" {
-  count      = var.bootstrap-node-config.prune ? length(local.bootstrap_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-bootstrap-nodes]
+resource "null_resource" "prune-bootstrap-nodes-evm" {
+  count      = var.bootstrap-node-evm-config.prune ? length(local.bootstrap_nodes_evm_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   triggers = {
-    prune = var.bootstrap-node-config.prune
+    prune = var.bootstrap-node-evm-config.prune
   }
 
   connection {
-    host        = local.bootstrap_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -77,19 +77,19 @@ resource "null_resource" "prune-bootstrap-nodes" {
   }
 }
 
-resource "null_resource" "start-boostrap-nodes" {
-  count = length(local.bootstrap_nodes_ip_v4)
+resource "null_resource" "start-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [null_resource.setup-bootstrap-nodes]
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.bootstrap-node-config.deployment-version
-    reserved_only      = var.bootstrap-node-config.reserved-only
+    deployment_version = var.bootstrap-node-evm-config.deployment-version
+    reserved_only      = var.bootstrap-node-evm-config.reserved-only
   }
 
   connection {
-    host        = local.bootstrap_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -99,7 +99,7 @@ resource "null_resource" "start-boostrap-nodes" {
 
   # copy bootstrap node keys file
   provisioner "file" {
-    source      = "./bootstrap_node_keys.txt"
+    source      = "./bootstrap_node_evm_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -122,11 +122,11 @@ resource "null_resource" "start-boostrap-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-evm-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -134,12 +134,12 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_SUBSPACE_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_LISTEN_PORT=${var.bootstrap-node-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.bootstrap-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-evm-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index}",
 
       # start subspace node
       # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

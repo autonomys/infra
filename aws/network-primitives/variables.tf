@@ -13,11 +13,11 @@ variable "cloudflare_api_token" {
 }
 
 variable "instance_type" {
-  type    = string
+  type = string
 }
 
 variable "vpc_id" {
-  type    = string
+  type = string
 }
 
 variable "vpc_cidr_block" {
@@ -25,14 +25,21 @@ variable "vpc_cidr_block" {
 }
 
 variable "azs" {
-  type        = list(string)
+  type        = string
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
-  type    = number
-  default = 1
+  type = map(number)
+  default = {
+    bootstrap     = 2
+    rpc           = 2
+    domain        = 2
+    full          = 1
+    farmer        = 1
+    evm_bootstrap = 1
+  }
 }
 
 variable "aws_region" {
@@ -140,6 +147,25 @@ variable "domain-node-config" {
 
 variable "bootstrap-node-config" {
   description = "Bootstrap node deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    reserved-only      = bool
+    prune              = bool
+    genesis-hash       = string
+    dsn-listen-port    = number
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "bootstrap-node-evm-config" {
+  description = "Bootstrap node evm domain deployment config"
   type = object({
     instance-type      = string
     deployment-version = number

@@ -6,7 +6,7 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [0]
+  default     = [3]
 }
 
 variable "domain_labels" {
@@ -16,7 +16,7 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  default = "c6a.2xlarge"
+  default = "m6a.xlarge"
   type    = string
 }
 
@@ -30,14 +30,21 @@ variable "vpc_cidr_block" {
 }
 
 variable "azs" {
-  type        = list(string)
+  type        = string
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
-  type    = number
-  default = 1
+  type = map(number)
+  default = {
+    bootstrap     = 2
+    rpc           = 1
+    domain        = 1
+    full          = 0
+    farmer        = 1
+    evm_bootstrap = 1
+  }
 }
 
 variable "aws_region" {
