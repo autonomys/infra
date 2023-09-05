@@ -18,5 +18,10 @@ variable "cloudflare_api_token" {
 }
 
 variable "domain" {
-  default = "gemini-3f.subspace.network"
+  default = "subspace.network"
+}
+
+variable "network" {
+  type        = string
+  description = "gemini network name"
 }

@@ -1,9 +1,23 @@
-# todo: check if A records exists already before creating resources
+# Fetch the record if it exists
+data "cloudflare_zones" "subspace" {
+  filter {
+    name   = var.domain
+    status = "active"
+  }
+}
+
 # rpc node
+data "cloudflare_record" "existing_rpc_record" {
+  zone_id  = data.cloudflare_zones.subspace.id
+  hostname = "rpc.${var.network}.${var.domain}"
+  type     = "A"
+}
+
 resource "cloudflare_record" "rpc-0" {
+  count   = length(data.cloudflare_record.existing_rpc_record.hostname) > 0 ? 0 : 1
   zone_id = var.zone_id
   name    = "rpc"
-  value   = "198.51.100.15"
+  value   = "52.91.27.239"
   type    = "A"
   proxied = true
   tags    = ["rpc", "us"]
@@ -11,20 +25,26 @@ resource "cloudflare_record" "rpc-0" {
 
 # rpc node
 resource "cloudflare_record" "rpc-1" {
+  count   = length(data.cloudflare_record.existing_rpc_record.hostname) > 0 ? 0 : 1
   zone_id = var.zone_id
   name    = "rpc"
-  value   = "198.51.100.15"
+  value   = "65.108.232.52"
   type    = "A"
   proxied = true
   tags    = ["rpc", "eu"]
 }
 
-# todo: check if A records exists already before creating resources
 # EVM domain node
+data "cloudflare_record" "existing_domain_record" {
+  zone_id  = data.cloudflare_zones.subspace.id
+  hostname = "domain-3.${var.network}.${var.domain}"
+  type     = "A"
+}
 resource "cloudflare_record" "evm-0" {
+  count   = length(data.cloudflare_record.existing_domain_record.hostname) > 0 ? 0 : 1
   zone_id = var.zone_id
   name    = "domain-3"
-  value   = "198.51.100.15"
+  value   = "174.129.202.104"
   type    = "A"
   proxied = true
   tags    = ["domain", "evm", "us"]
@@ -32,58 +52,60 @@ resource "cloudflare_record" "evm-0" {
 
 # EVM domain node
 resource "cloudflare_record" "evm-1" {
+  count   = length(data.cloudflare_record.existing_domain_record.hostname) > 0 ? 0 : 1
   zone_id = var.zone_id
   name    = "domain-3"
-  value   = "198.51.100.15"
+  value   = "65.108.228.84"
   type    = "A"
   proxied = true
   tags    = ["domain", "evm", "eu"]
 }
 
-# todo: check expected body, expected codes, and method POST or GET
+
 # health check monitor RPC
-resource "cloudflare_load_balancer_monitor" "check-rpc-https" {
+resource "cloudflare_load_balancer_monitor" "check-rpc-tcp" {
   account_id     = var.account_id
-  expected_body  = "alive"
-  expected_codes = "200"
-  method         = "GET"
+  type           = "tcp"
+  expected_codes = "2xx"
   timeout        = 5
-  path           = "/http"
   interval       = 60
   retries        = 2
-  description    = "GET / over HTTPS - expect 200"
+  port           = 30333
+  description    = "TCP Check port- expect 2xx"
 }
 
 # health check monitor EVM domain
-resource "cloudflare_load_balancer_monitor" "check-evm-https" {
+resource "cloudflare_load_balancer_monitor" "check-evm-tcp" {
   account_id     = var.account_id
-  expected_body  = "alive"
-  expected_codes = "200"
-  method         = "GET"
+  type           = "tcp"
+  expected_codes = "2xx"
   timeout        = 5
-  path           = "/http"
   interval       = 60
   retries        = 2
-  description    = "GET / over HTTPS - expect 200"
+  port           = 30333
+  description    = "TCP Check port- expect 2xx"
 }
 
 # create the pool of origins for rpc nodes
 resource "cloudflare_load_balancer_pool" "rpc-nodes" {
   account_id = var.account_id
   name       = "rpc-nodes"
-  monitor    = cloudflare_load_balancer_monitor.check-rpc-https.id
+  monitor    = cloudflare_load_balancer_monitor.check-rpc-tcp.id
   origins {
     name    = "rpc-0"
-    address = "203.0.113.10"
+    address = "52.91.27.239"
   }
   origins {
     name    = "rpc-1"
-    address = "198.51.100.15"
+    address = "65.108.232.52"
   }
-  description        = "rpc origins"
-  enabled            = true
-  minimum_origins    = 1
-  steering_policy    = "dynamic_latency"
+  description     = "rpc origins"
+  enabled         = true
+  minimum_origins = 1
+  origin_steering {
+    policy = "least_outstanding_requests"
+  }
+
   notification_email = "alerts@subspace.network"
   check_regions      = ["WNAM", "ENAM", "WEU", "EEU", "SEAS", "NEAS"]
 }
@@ -92,19 +114,22 @@ resource "cloudflare_load_balancer_pool" "rpc-nodes" {
 resource "cloudflare_load_balancer_pool" "evm-nodes" {
   account_id = var.account_id
   name       = "evm-nodes"
-  monitor    = cloudflare_load_balancer_monitor.check-evm-https.id
+  monitor    = cloudflare_load_balancer_monitor.check-evm-tcp.id
   origins {
     name    = "evm-0"
-    address = "203.0.113.10"
+    address = "174.129.202.104"
   }
   origins {
     name    = "evm-1"
-    address = "198.51.100.15"
+    address = "65.108.228.84"
   }
-  description        = "domain evm origins"
-  enabled            = true
-  minimum_origins    = 1
-  steering_policy    = "dynamic_latency"
+  description     = "domain evm origins"
+  enabled         = true
+  minimum_origins = 1
+  origin_steering {
+    policy = "least_outstanding_requests"
+  }
+
   notification_email = "alerts@subspace.network"
   check_regions      = ["WNAM", "ENAM", "WEU", "EEU", "SEAS", "NEAS"]
 }
@@ -119,7 +144,7 @@ resource "cloudflare_load_balancer" "rpc-lb" {
   proxied          = true
 }
 
-# create the load balancer for rpc nodes
+# create the load balancer for domain evm nodes
 resource "cloudflare_load_balancer" "evm-lb" {
   zone_id          = var.zone_id
   name             = "evm-lb"
