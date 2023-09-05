@@ -33,9 +33,9 @@ resource "aws_instance" "windows_codesign_instance" {
 
 
 resource "aws_cloudhsm_v2_cluster" "cloudhsm_v2_cluster" {
-  count             = length(var.private_subnet_cidrs)
+  count      = length(var.private_subnet_cidrs)
   hsm_type   = var.hsm_type
-  subnet_ids  = aws_subnet.cloudhsm_private_subnet.*.id
+  subnet_ids = aws_subnet.cloudhsm_private_subnet.*.id
 
   tags = {
     Name = "aws_cloudhsm_v2_cluster"
@@ -43,8 +43,8 @@ resource "aws_cloudhsm_v2_cluster" "cloudhsm_v2_cluster" {
 }
 
 resource "aws_cloudhsm_v2_hsm" "cloudhsm_v2_hsm" {
-  count             = length(var.private_subnet_cidrs)
+  count      = length(var.private_subnet_cidrs)
   subnet_id  = element(aws_subnet.cloudhsm_private_subnet.*.id, count.index)
   cluster_id = element(aws_cloudhsm_v2_cluster.cloudhsm_v2_cluster.*.cluster_id, count.index)
-  availability_zone = element(var.azs, count.index)
+  # availability_zone = element(var.azs, count.index)
 }
