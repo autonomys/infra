@@ -104,7 +104,6 @@ fi
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
-      echo '      "--validator",'
       echo '      "--node-key", "${EVM_NODE_KEY}",'
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
@@ -112,7 +111,6 @@ fi
       echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
       echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "8944",'
       echo '      "--unsafe-rpc-external",'

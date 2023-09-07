@@ -44,6 +44,7 @@ services:
     ports:
       - "30333:30333"
       - "30433:30433"
+      - "40333:40333"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
@@ -100,13 +101,12 @@ if [ "${enable_domains}" == "true" ]; then
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
-      echo '      "--validator",'
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
       echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
-      echo '      "--keystore-path", "/var/subspace/keystore",'
+      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "8944",'
       echo '      "--unsafe-rpc-external",'
