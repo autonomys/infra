@@ -27,21 +27,23 @@ resource "null_resource" "setup-farmer-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ~/subspace",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/ && sudo chmod -R 770 /home/${var.ssh_user}/subspace/farmer_data/",
+      "sudo chown -R nobody:nogroup /home/${var.ssh_user}/subspace/farmer_data/"
     ]
   }
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "~/subspace/install_docker.sh"
+    source      = "${var.path_to_scripts}/installer.sh"
+    destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/install_docker.sh",
-      "sudo ~/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
     ]
   }
 
@@ -66,14 +68,13 @@ resource "null_resource" "prune-farmer-nodes" {
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "~/subspace/prune_docker_system.sh"
+    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
   }
 
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/prune_docker_system.sh",
-      "sudo bash ~/subspace/prune_docker_system.sh"
+      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
 }
@@ -98,57 +99,65 @@ resource "null_resource" "start-farmer-nodes" {
     timeout     = "300s"
   }
 
+  # copy farmer identity files (todo: reset this after)
+  provisioner "file" {
+    source      = "./identity.bin"
+    destination = "/home/${var.ssh_user}/subspace/farmer_data/identity.bin"
+  }
+
   # copy node keys file
   provisioner "file" {
     source      = "./farmer_node_keys.txt"
-    destination = "~/subspace/node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
-    destination = "~/subspace/bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
   }
 
   # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
-    destination = "~/subspace/dsn_bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_farmer_node_compose_file.sh"
-    destination = "~/subspace/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
   # start docker containers
   provisioner "remote-exec" {
     inline = [
+      # inject farmer identity // todo: make configurable as not needed with devnet
+      "sudo cp -rf /home/${var.ssh_user}/identity.bin farmer_data/",
+      "sudo chown nobody:nogroup /home/${var.ssh_user}/farmer_data/identity.bin",
       # stop any running service
-      "sudo docker compose -f ~/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.farmer-node-config.docker-org} > ~/subspace/.env",
-      "echo NODE_TAG=${var.farmer-node-config.docker-tag} >> ~/subspace/.env",
-      "echo NETWORK_NAME=${var.network_name} >> ~/subspace/.env",
-      "echo NODE_ID=${count.index} >> ~/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' ~/subspace/node_keys.txt) >> ~/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> ~/subspace/.env",
-      "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> ~/subspace/.env",
-      "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> ~/subspace/.env",
-      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> ~/subspace/.env",
-      "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> ~/subspace/.env",
+      "echo NODE_ORG=${var.farmer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.farmer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
+      "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x ~/subspace/create_compose_file.sh",
-      "bash ~/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
-      # start subspace 
-      "sudo docker compose -f ~/subspace/docker-compose.yml up -d",
+      # start subspace
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

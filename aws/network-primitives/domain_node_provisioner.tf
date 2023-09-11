@@ -27,21 +27,21 @@ resource "null_resource" "setup-domain-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ~/subspace",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/",
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/"
     ]
   }
 
   # copy install file
   provisioner "file" {
-    source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "~/subspace/install_docker.sh"
+    source      = "${var.path_to_scripts}/installer.sh"
+    destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/install_docker.sh",
-      "sudo bash ~/subspace/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
     ]
   }
 
@@ -66,14 +66,13 @@ resource "null_resource" "prune-domain-nodes" {
 
   provisioner "file" {
     source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "~/subspace/prune_docker_system.sh"
+    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
   }
 
   # prune network
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/subspace/prune_docker_system.sh",
-      "sudo bash ~/subspace/prune_docker_system.sh"
+      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
     ]
   }
 }
@@ -101,69 +100,69 @@ resource "null_resource" "start-domain-nodes" {
   # copy node keys file
   provisioner "file" {
     source      = "./domain_node_keys.txt"
-    destination = "~/subspace/node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
-    destination = "~/subspace/bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
   }
 
   # copy dsn_boostrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
-    destination = "~/subspace/dsn_bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
   # copy keystore
   provisioner "file" {
     source      = "./keystore"
-    destination = "~/subspace/keystore/"
+    destination = "/home/${var.ssh_user}/subspace/keystore/"
   }
 
   # copy relayer ids
   provisioner "file" {
     source      = "./relayer_ids.txt"
-    destination = "~/subspace/relayer_ids.txt"
+    destination = "/home/${var.ssh_user}/subspace/relayer_ids.txt"
   }
 
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_domain_node_compose_file.sh"
-    destination = "~/subspace/create_compose_file.sh"
+    destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f ~/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.domain-node-config.docker-org} > ~/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> ~/subspace/.env",
-      "echo NETWORK_NAME=${var.network_name} >> ~/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> ~/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[2]} >> ~/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[2]} >> ~/subspace/.env",
-      "echo NODE_ID=${count.index} >> ~/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' ~/subspace/node_keys.txt) >> ~/subspace/.env",
-      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}=//p' ~/subspace/relayer_ids.txt) >> ~/subspace/.env",
-      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index + 1}=//p' ~/subspace/relayer_ids.txt) >> ~/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> ~/subspace/.env",
-      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> ~/subspace/.env",
-      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> ~/subspace/.env",
+      "echo NODE_ORG=${var.domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      # //todo use a map for domain id and labels
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "chmod +x ~/subspace/create_compose_file.sh",
-      "bash ~/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[count.index]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      "sudo docker compose -f ~/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }
@@ -188,7 +187,7 @@ resource "null_resource" "inject-domain-keystore" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo docker cp ~/subspace/keystore/.  subspace-archival-node-1:/var~/subspace/keystore/"
+      "sudo docker cp /home/${var.ssh_user}/subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
     ]
   }
 }

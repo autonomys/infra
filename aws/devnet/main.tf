@@ -2,17 +2,18 @@ module "devnet" {
   source          = "../network-primitives"
   path_to_scripts = "../network-primitives/scripts"
   network_name    = "devnet"
+
   bootstrap-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-aug-15"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "8a94e770a50298516444025b8c075034f8be7745812358d25189175fe504fc66"
-    dsn-listen-port    = 50000
+    genesis-hash       = ""
+    dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -22,9 +23,9 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-aug-15"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -34,11 +35,11 @@ module "devnet" {
 
   rpc-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-aug-15"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -51,9 +52,9 @@ module "devnet" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count
+    instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "snapshot-2023-jun-08-2"
+    docker-tag         = "snapshot-2023-aug-15"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -67,16 +68,16 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = var.aws_region
-    instance-count         = var.instance_count
+    instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "snapshot-2023-jun-08-2"
+    docker-tag             = "snapshot-2023-aug-15"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type
@@ -88,5 +89,9 @@ module "devnet" {
   datadog_api_key      = var.datadog_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
+  vpc_id               = var.vpc_id
+  instance_type        = var.instance_type
+  vpc_cidr_block       = var.vpc_cidr_block
+  public_subnet_cidrs  = var.public_subnet_cidrs
 
 }

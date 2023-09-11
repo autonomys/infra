@@ -6,34 +6,45 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [1, 2, 3]
+  default     = [3]
 }
 
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["system", "payments", "evm"]
+  default     = ["evm"]
 }
 
 variable "instance_type" {
-  default = "m5a.xlarge"
+  default = "m6a.xlarge"
   type    = string
 }
 
 variable "vpc_id" {
-  default = "default"
+  default = "gemini-3d-vpc"
   type    = string
 }
 
+variable "vpc_cidr_block" {
+  type = string
+}
+
 variable "azs" {
-  type        = list(string)
+  type        = string
   description = "Availability Zones"
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
-  type    = number
-  default = 1
+  type = map(number)
+  default = {
+    bootstrap     = 2
+    rpc           = 2
+    domain        = 2
+    full          = 1
+    farmer        = 1
+    evm_bootstrap = 1
+  }
 }
 
 variable "aws_region" {
@@ -45,17 +56,11 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "Private Subnet CIDR values"
-  default     = ["172.31.2.0/24"]
+  default     = ["172.32.1.0/24"]
 }
 
 variable "disk_volume_size" {
-  type    = number
+  type = number
 }
 
 variable "disk_volume_type" {
@@ -87,4 +92,3 @@ variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
 }
-

@@ -2,8 +2,8 @@
 access_key = ""
 # AWS secret key used to create AWS infrastructure
 secret_key            = ""
-vpc_cidr_block        = "172.31.0.0/16"
-public_subnet_cidrs   = ["172.31.1.0/24"]
+vpc_cidr_block        = "172.34.0.0/16"
+public_subnet_cidrs   = ["172.34.1.0/24"]
 aws_key_name          = "deployer"
 ssh_user              = "ubuntu"
 instance_type         = "m6a.xlarge"

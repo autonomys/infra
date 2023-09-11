@@ -1,5 +1,7 @@
 #!/bin/bash
 
+EXTERNAL_IP=`curl -s ifconfig.me`
+
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
@@ -13,7 +15,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     restart: unless-stopped
     environment:
-      - DD_API_KEY=\$DATADOG_API_KEY
+      - DD_API_KEY=\${DATADOG_API_KEY}
       - DD_SITE=datadoghq.com
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -25,44 +27,43 @@ services:
     depends_on:
       archival-node:
         condition: service_healthy
-    image: ghcr.io/\$NODE_ORG/farmer:\$NODE_TAG
+    image: ghcr.io/\${NODE_ORG}/farmer:\${NODE_TAG}
     volumes:
-      - farmer_data:/var/subspace:rw
+      - /home/$USER/subspace/farmer_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30533:30533"
     command: [
-      "--base-path", "/var/subspace",
-      "farm",
+      "farm", "path=/var/subspace,size=\${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
-      "--reward-address", \$REWARD_ADDRESS,
-      "--plot-size", \$PLOT_SIZE,
+      "--reward-address", "\${REWARD_ADDRESS}",
     ]
 
   archival-node:
-    image: ghcr.io/\$NODE_ORG/node:\$NODE_TAG
+    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333"
-      - "\${NODE_DSN_PORT}:30433"
+      - "30433:30433"
     command: [
-      "--chain", \$NETWORK_NAME,
+      "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--execution", "wasm",
+#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
+      "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-disable-private-ips",
-      "--piece-cache-size", \$PIECE_CACHE_SIZE,
-      "--no-private-ipv4",
-      "--node-key", \$NODE_KEY,
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+      "--node-key", "\${NODE_KEY}",
       "--validator",
       "--rpc-cors", "all",
-      "--ws-port", "9944",
-      "--unsafe-ws-external",
+      "--rpc-external",
+      "--rpc-methods", "unsafe",
 EOF
 
 reserved_only=${1}
@@ -72,23 +73,16 @@ bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 force_block_production=${5}
 
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" != "${i}" ]; then
-    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  fi
-done
-
-
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
+# // TODO: make configurable with gemini network
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
-  dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-reserved-peers\", \"${dsn)addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
 done
 

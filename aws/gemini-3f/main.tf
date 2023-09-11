@@ -1,18 +1,34 @@
-module "gemini-3d" {
+module "gemini-3f" {
   source          = "../network-primitives"
   path_to_scripts = "../network-primitives/scripts"
-  network_name    = "gemini-3d"
+  network_name    = "gemini-3f"
   bootstrap-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-jun-14"
-    reserved-only      = false
+    docker-tag         = "gemini-3f-2023-aug-31"
+    reserved-only      = true
     prune              = false
-    genesis-hash       = ""
-    dsn-listen-port    = 50000
+    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
+    dsn-listen-port    = 30533
+    node-dsn-port      = 30433
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+  }
+
+  bootstrap-node-evm-config = {
+    instance-type      = var.instance_type
+    deployment-version = 1
+    regions            = var.aws_region
+    instance-count     = var.instance_count["evm_bootstrap"]
+    docker-org         = "subspace"
+    docker-tag         = "gemini-3f-2023-aug-31"
+    reserved-only      = true
+    prune              = false
+    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
+    dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -20,12 +36,12 @@ module "gemini-3d" {
 
   full-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-jun-14"
-    reserved-only      = false
+    docker-tag         = "gemini-3f-2023-aug-31"
+    reserved-only      = true
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -34,13 +50,13 @@ module "gemini-3d" {
 
   rpc-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-jun-14"
+    docker-tag         = "gemini-3f-2023-aug-31"
     domain-prefix      = "rpc"
-    reserved-only      = false
+    reserved-only      = true
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -49,13 +65,13 @@ module "gemini-3d" {
 
   domain-node-config = {
     instance-type      = var.instance_type
-    deployment-version = 0
+    deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3d-2023-jun-14"
+    docker-tag         = "gemini-3f-2023-aug-31"
     domain-prefix      = "domain"
-    reserved-only      = false
+    reserved-only      = true
     prune              = false
     node-dsn-port      = 30434
     enable-domains     = true
@@ -67,16 +83,16 @@ module "gemini-3d" {
 
   farmer-node-config = {
     instance-type          = var.instance_type
-    deployment-version     = 0
+    deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "gemini-3d-2023-jun-14"
-    reserved-only          = false
+    docker-tag             = "gemini-3f-2023-aug-31"
+    reserved-only          = true
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = false
+    force-block-production = true
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type

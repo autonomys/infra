@@ -21,7 +21,7 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "devnet-vpc"
+  default = "gemini-3e-vpc"
   type    = string
 }
 
@@ -39,9 +39,9 @@ variable "instance_count" {
   type = map(number)
   default = {
     bootstrap     = 2
-    rpc           = 1
-    domain        = 1
-    full          = 0
+    rpc           = 2
+    domain        = 2
+    full          = 1
     farmer        = 1
     evm_bootstrap = 1
   }
@@ -56,7 +56,7 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
+  default     = ["172.31.3.0/24"]
 }
 
 variable "disk_volume_size" {

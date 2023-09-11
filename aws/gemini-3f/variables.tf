@@ -3,12 +3,14 @@ variable "farmer_reward_address" {
   type        = string
 }
 
+//todo change this to a map
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
   default     = [3]
 }
 
+//todo change this to a map
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
@@ -21,7 +23,7 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "devnet-vpc"
+  default = "gemini-3f-vpc"
   type    = string
 }
 
@@ -39,9 +41,9 @@ variable "instance_count" {
   type = map(number)
   default = {
     bootstrap     = 2
-    rpc           = 1
-    domain        = 1
-    full          = 0
+    rpc           = 2
+    domain        = 2
+    full          = 1
     farmer        = 1
     evm_bootstrap = 1
   }
@@ -56,7 +58,7 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
+  default     = ["172.31.4.0/24"]
 }
 
 variable "disk_volume_size" {
