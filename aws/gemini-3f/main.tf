@@ -3,7 +3,7 @@ module "gemini-3f" {
   path_to_scripts = "../network-primitives/scripts"
   network_name    = "gemini-3f"
   bootstrap-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["bootstrap"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
@@ -19,7 +19,7 @@ module "gemini-3f" {
   }
 
   bootstrap-node-evm-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["evm_bootstrap"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
@@ -35,7 +35,7 @@ module "gemini-3f" {
   }
 
   full-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["full"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
@@ -49,7 +49,7 @@ module "gemini-3f" {
   }
 
   rpc-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["rpc"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
@@ -64,7 +64,7 @@ module "gemini-3f" {
   }
 
   domain-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["domain"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
@@ -82,7 +82,7 @@ module "gemini-3f" {
   }
 
   farmer-node-config = {
-    instance-type          = var.instance_type
+    instance-type          = var.instance_type["farmer"]
     deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
