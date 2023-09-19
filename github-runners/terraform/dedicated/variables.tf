@@ -17,22 +17,22 @@ variable "netdata_room" {
 
 variable "gh_runner_version" {
   type    = string
-  default = "2.305.0"
+  default = "2.309.0"
 }
 
 variable "gh_runner_checksums" {
   type = map(string)
   default = {
-    linux_x86_64   = "737bdcef6287a11672d6a5a752d70a7c96b4934de512b7eb283be6f51a563f2f",
-    linux_arm64    = "63d7b0ba495055e390ac057dc67d721ed78113990fa837a20b141a75044e152a",
-    mac_x86_64     = "a7c623e013f97db6c73c27288047c1d02ab6964519020ad0e87e69c328e96534",
-    mac_arm64      = "a2383a869b99793dee5e1ff7c1df4e7bc86f73521ae03f884f0c7aa43830e2cb",
-    windows_x86_64 = "3a4afe6d9056c7c63ecc17f4db32148e946454f2384427b0a4565b7690ef7420"
+    linux_x86_64   = "",
+    linux_arm64    = "",
+    mac_x86_64     = "",
+    mac_arm64      = "",
+    windows_x86_64 = ""
   }
 }
 
 variable "instance_type" {
-  default = ["t3.2xlarge"]
+  default = ["t3.2xlarge", "m6i.2xlarge"]
   type    = list(string)
 }
 
@@ -52,9 +52,9 @@ variable "vpc_id" {
 }
 
 variable "azs" {
-  type        = list(string)
+  type        = string
   description = "Availability Zones"
-  default     = ["us-east-2b", "us-east-1a"]
+  default     = "us-east-2b"
 }
 
 variable "instance_count" {
@@ -80,9 +80,9 @@ variable "secret_key" {
 }
 
 variable "ssh_user" {
-  type = list(string)
-  default = [ "ubuntu", "ec2-user"]
-  
+  type    = list(string)
+  default = ["ubuntu", "ec2-user"]
+
 }
 
 variable "access_key" {
@@ -97,12 +97,11 @@ variable "aws_key_name" {
 }
 
 variable "private_key_path" {
-  type    = string
+  type = string
 }
 
 variable "win_admin_username" {
-  type      = string
-  default = "Administrator"
+  type = string
 }
 
 

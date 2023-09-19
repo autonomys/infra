@@ -12,7 +12,7 @@ resource "aws_subnet" "public_subnets" {
   count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.gh-runners.id
   cidr_block              = element(var.public_subnet_cidrs, count.index)
-  availability_zone       = element(var.azs, count.index)
+  availability_zone       = var.azs
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -123,26 +123,4 @@ resource "aws_security_group" "allow_runner" {
   depends_on = [
     aws_vpc.gh-runners
   ]
-}
-
-## Allocate EIP to NAT Gateway
-
-resource "aws_eip" "public_subnet_eip" {
-  count = length(var.public_subnet_cidrs)
-  vpc   = true
-
-  depends_on = [
-    aws_internet_gateway.gw,
-  ]
-}
-
-# NAT Gateway for public subnet
-resource "aws_nat_gateway" "nat_gateway" {
-  count         = length(var.public_subnet_cidrs)
-  allocation_id = element(aws_eip.public_subnet_eip.*.allocation_id, count.index)
-  subnet_id     = element(aws_subnet.public_subnets.*.id, count.index)
-
-  tags = {
-    Name = "gh-runner-public-subnet-nat-GTW-${count.index}"
-  }
 }
