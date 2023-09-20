@@ -2,8 +2,7 @@
 
 set -e
 
-USER=$USER
-DIRECTORY="/home/${USER}/traefik"
+DIRECTORY="/root/traefik"
 if [ ! -d "$DIRECTORY" ]; then
     mkdir "$DIRECTORY"
     echo "Directory '$DIRECTORY' created."
