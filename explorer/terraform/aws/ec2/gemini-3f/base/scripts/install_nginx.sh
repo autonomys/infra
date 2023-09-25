@@ -55,7 +55,7 @@ http {
 	ssl_dhparam /etc/nginx/ssl/dhparam.pem;
 	ssl_stapling on;
 	ssl_stapling_verify on;
-	
+
 	# Security
 	add_header Strict-Transport-Security "max-age=31536000; includeSubdomains; preload";
 	add_header X-XSS-Protection "1; mode=block";
@@ -67,7 +67,7 @@ http {
 	#add_header Access-Control-Allow-Origin *;
 	#add_header Access-Control-Max-Age 3600;
 	#add_header Access-Control-Expose-Headers Content-Length;
-	
+
 
 	# Proxy settings
 	proxy_read_timeout 120;
@@ -79,36 +79,13 @@ http {
 	# Logging Settings
 	##
 
-	log_format compression '$remote_addr - [$time_local] '
-								'"$request" $status $body_bytes_sent '
-							'"$http_referer" "$http_user_agent" "$gzip_ratio"';
+	log_format compression \'$remote_addr - [$time_local] \'
+							\'"$request" $status $body_bytes_sent \'
+							\'"$http_referer" "$http_user_agent" "$gzip_ratio"\';
 
-	log_format postdata '$remote_addr - [$time_local] '
-                            '"$request" "$request_body" $status $body_bytes_sent '
-                            '"$http_referer" "$http_user_agent"';
-
-	log_format upstream_time '"$time_local" client=$remote_addr '
-		'cluster="$hostname" '
-		'method=$request_method '
-		'request="$request" '
-		'request_body="$request_body" '
-		'request_length=$request_length '
-		'status=$status bytes_sent=$bytes_sent '
-		'body_bytes_sent=$body_bytes_sent '
-		'user_agent="$http_user_agent" '
-		'scheme=$scheme '
-		'http_x_forwarded_proto=$http_x_forwarded_proto '
-		'http_x_forwarded_for=$http_x_forwarded_for '
-		'upstream_addr=$upstream_addr '
-		'upstream_status=$upstream_status '
-		'request_time=$request_time '
-		'upstream_response_time=$upstream_response_time '
-		'upstream_connect_time=$upstream_connect_time '
-		'upstream_header_time=$upstream_header_time';
 
 	access_log /var/log/nginx/access.log;
 	error_log /var/log/nginx/error.log;
-	
 
 	##
 	# Gzip Settings
