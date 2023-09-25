@@ -2,7 +2,7 @@
 
 ##---------------------- GEMINI-3f ---------------------------------##
 export NODE_ORG="subspace"
-export NODE_TAG=gemini-3f-2023-aug-17
+export NODE_TAG=gemini-3f-2023-sep-24
 export NODE_NAME=SUBSQUID_GEMINI_3f
 export NETWORK_NAME=gemini-3f
 export POSTGRES_HOST=db
@@ -32,7 +32,7 @@ export MY_SECRET=""
 cat << EOF >> ~/.bash_profile
 # ##---------------------- GEMINI-3f ---------------------------------##
 export NODE_ORG="subspace"
-export NODE_TAG=gemini-3f-2023-aug-17
+export NODE_TAG=gemini-3f-2023-sep-24
 export NODE_NAME=SUBSQUID_GEMINI_3f
 export NETWORK_NAME=gemini-3f
 export POSTGRES_HOST=db
@@ -52,7 +52,6 @@ export CHAIN_RPC_ENDPOINT="wss://rpc-0.gemini-3f.subspace.network/ws"
 ####################################################################
 
 export NR_API_KEY=""
-export DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true"
 export PROCESSOR_HEALTH_HOST="http://processor:3000"
 export PROCESSOR_HEALTH_PORT="7070"
 export HEALTH_CHECK_PORT="8080"
