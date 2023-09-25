@@ -110,18 +110,6 @@ resource "null_resource" "start-farmer-nodes" {
     timeout     = "300s"
   }
 
-  # copy farmer identity files
-  provisioner "file" {
-    source      = "./identity.bin"
-    destination = "/home/${var.ssh_user}/subspace/farmer_data/identity.bin"
-  }
-
-  provisioner "file" {
-    source      = "./single_disk_plot.json"
-    destination = "/home/${var.ssh_user}/subspace/farmer_data/single_disk_plot.json"
-  }
-
-
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
