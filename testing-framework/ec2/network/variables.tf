@@ -25,6 +25,7 @@ variable "instance_type" {
 variable "network_name" {
   description = "Network name"
   type        = string
+  default     = "ephemeral-devnet"
 }
 
 variable "branch_name" {

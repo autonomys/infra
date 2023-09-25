@@ -153,7 +153,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

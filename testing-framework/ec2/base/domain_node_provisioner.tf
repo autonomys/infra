@@ -193,6 +193,7 @@ resource "null_resource" "inject-domain-keystore" {
     timeout     = "300s"
   }
 
+  # comment if don't need to inject a seed for domain node in testing environment.
   provisioner "remote-exec" {
     inline = [
       "sudo docker cp /home/${var.ssh_user}/subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"

@@ -21,7 +21,7 @@ variable "instance_count" {
   default = {
     bootstrap = 2
     node      = 1
-    domain    = 1
+    domain    = 0
     farmer    = 1
   }
 }
@@ -58,8 +58,7 @@ variable "aws_key_name" {
 }
 
 variable "ssh_user" {
-  default = "ubuntu"
-  type    = string
+  type = string
 }
 
 variable "private_key_path" {
@@ -158,4 +157,9 @@ variable "secret_key" {
 variable "access_key" {
   type      = string
   sensitive = true
+}
+
+variable "branch_name" {
+  description = "name of testing branch"
+  type        = string
 }

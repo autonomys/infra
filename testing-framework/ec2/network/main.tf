@@ -2,6 +2,7 @@ module "network" {
   source          = "../base"
   path_to_scripts = "../base/scripts"
   network_name    = var.network_name
+  branch_name     = var.branch_name
 
   bootstrap-node-config = {
     instance-type      = var.instance_type
@@ -10,7 +11,7 @@ module "network" {
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
     docker-tag         = "bootstrap-node"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     genesis-hash       = ""
     dsn-listen-port    = 30533
@@ -26,7 +27,7 @@ module "network" {
     instance-count     = var.instance_count["node"]
     docker-org         = "subspace"
     docker-tag         = "subspace-node"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -41,10 +42,10 @@ module "network" {
     docker-org         = "subspace"
     docker-tag         = "subspace-node"
     domain-prefix      = "domain"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30434
-    enable-domains     = true
+    enable-domains     = false
     domain-id          = var.domain_id
     domain-labels      = var.domain_labels
     disk-volume-size   = var.disk_volume_size
@@ -58,11 +59,11 @@ module "network" {
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
     docker-tag             = "farmer-node"
-    reserved-only          = true
+    reserved-only          = false
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
-    force-block-production = true
+    force-block-production = false
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type
