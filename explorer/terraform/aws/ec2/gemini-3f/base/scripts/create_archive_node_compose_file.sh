@@ -9,7 +9,7 @@ volumes:
 
 services:
   db:
-    image: postgres:14
+    image: postgres:16
     restart: always
     volumes:
       - /home/$USER/archive/postgresql:/var/lib/postgresql
@@ -23,6 +23,10 @@ services:
       - db
     restart: on-failure
     image: ghcr.io/subspace/substrate-ingest:latest
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
       "-e", "ws://node:9944",
       "-c", "10",
@@ -87,18 +91,21 @@ services:
       interval: 30s
       retries: 5
 
-  datadog:
-    image: datadog/agent
-    environment:
-      DD_API_KEY: ${DD_API_KEY}
-      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
-      DD_LOGS_ENABLED: "true"
-      DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
-      DD_CONTAINER_EXCLUDE: "name:datadog-agent"
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock
-     - /proc/:/host/proc/:ro
-     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_DISPLAY_NAME: "archive-squid-gemini-3f"
+    restart: unless-stopped
 
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest

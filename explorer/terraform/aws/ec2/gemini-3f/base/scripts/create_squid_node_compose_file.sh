@@ -8,7 +8,7 @@ volumes:
 
 services:
   db:
-    image: postgres:14
+    image: postgres:16
     shm_size: 1gb
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -20,8 +20,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
@@ -55,6 +55,10 @@ services:
       - run-migrations
     ports:
       - "3000:3000"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   graphql:
     image: ghcr.io/subspace/blockexplorer-api-server:latest
@@ -71,18 +75,21 @@ services:
     ports:
       - "4350:4000"
 
-  datadog:
-    image: datadog/agent
-    environment:
-      DD_API_KEY: ${DD_API_KEY}
-      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
-      DD_LOGS_ENABLED: "true"
-      DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
-      DD_CONTAINER_EXCLUDE: "name:datadog-agent"
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock
-     - /proc/:/host/proc/:ro
-     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_DISPLAY_NAME: "squid-gemini-3f"
+    restart: unless-stopped
 
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest
