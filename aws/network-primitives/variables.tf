@@ -1,5 +1,6 @@
-variable "datadog_api_key" {
-  description = "Datadog API Key"
+variable "nr_api_key" {
+  description = "New relic API Key"
+  type        = string
 }
 
 variable "cloudflare_email" {

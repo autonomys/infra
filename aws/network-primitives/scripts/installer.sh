@@ -23,3 +23,5 @@ if ! (grep -iq "net.core.somaxconn" /etc/sysctl.conf && sed -i 's/.*net.core.som
 fi
 
 sudo sysctl -p /etc/sysctl.conf
+
+sudo docker plugin install grafana/loki-docker-driver:2.9.1 --alias loki --grant-all-permissions

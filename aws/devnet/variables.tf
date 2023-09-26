@@ -16,7 +16,7 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  type = map(number)
+  type = map(string)
   default = {
     bootstrap     = "c6a.2xlarge"
     rpc           = "m6a.xlarge"

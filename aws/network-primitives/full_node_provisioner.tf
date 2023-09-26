@@ -141,7 +141,7 @@ resource "null_resource" "start-full-nodes" {
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.full-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 

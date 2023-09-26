@@ -14,6 +14,11 @@ output "bootstrap-node-ipv4-addresses" {
   description = "Bootstrap node IPv4 Addresses"
 }
 
+output "bootstrap-node-evm-ipv4-addresses" {
+  value       = module.devnet.bootstrap_node_evm_public_ip
+  description = "EVM Bootstrap node IPv4 Addresses"
+}
+
 output "rpc-node-ipv4-addresses" {
   value       = module.devnet.rpc_node_public_ip
   description = "Domain node IPv4 Addresses"

@@ -22,7 +22,7 @@ resource "cloudflare_record" "rpc" {
 resource "cloudflare_record" "core-domain" {
   count   = length(local.domain_node_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-labels[0]}-${count.index}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix}-${var.domain-node-config.domain-id[0]}.${var.domain-node-config.domain-labels[0]}.${var.network_name}"
   value   = local.domain_node_ip_v4[count.index]
   type    = "A"
 }

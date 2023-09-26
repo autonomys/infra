@@ -115,6 +115,13 @@ resource "null_resource" "start-domain-nodes" {
     destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
   }
 
+
+  # copy boostrap node keys file
+  provisioner "file" {
+    source      = "./bootstrap_node_evm_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_evm_keys.txt"
+  }
+
   # copy dsn_boostrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
@@ -160,15 +167,15 @@ resource "null_resource" "start-domain-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }
