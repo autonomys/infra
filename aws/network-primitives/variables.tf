@@ -13,7 +13,7 @@ variable "cloudflare_api_token" {
 }
 
 variable "instance_type" {
-  type = string
+  type = map(string)
 }
 
 variable "vpc_id" {

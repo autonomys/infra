@@ -4,7 +4,7 @@ module "devnet" {
   network_name    = "devnet"
 
   bootstrap-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["bootstrap"]
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
@@ -20,7 +20,7 @@ module "devnet" {
   }
 
   full-node-config = {
-    instance-type      = var.instance_type
+    instance-type      = var.instance_type["full"]
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
