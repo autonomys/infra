@@ -83,6 +83,11 @@ variable "path_to_scripts" {
   type        = string
 }
 
+variable "path_to_configs" {
+  description = "Path to the configs"
+  type        = string
+}
+
 variable "piece_cache_size" {
   description = "Piece cache size"
   type        = string

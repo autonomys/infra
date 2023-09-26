@@ -40,6 +40,12 @@ resource "null_resource" "setup-farmer-nodes" {
     destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
+  # copy config files
+  provisioner "file" {
+    source      = "${var.path_to_configs}/"
+    destination = "/home/${var.ssh_user}/subspace/"
+  }
+
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [

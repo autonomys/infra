@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXTERNAL_IP=`curl -s ifconfig.me`
+EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -8,8 +8,23 @@ version: "3.7"
 volumes:
   archival_node_data: {}
   farmer_data: {}
+  vmagentdata: {}
 
 services:
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent:latest
+    depends_on:
+      - "archival-node"
+    ports:
+      - 8429:8429
+    volumes:
+      - vmagentdata:/vmagentdata
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+
   agent:
     container_name: newrelic-infra
     image: newrelic/infrastructure:latest
@@ -56,6 +71,7 @@ services:
     ports:
       - "30333:30333"
       - "30433:30433"
+      - "9615:9615"
     logging:
       driver: loki
       options:
@@ -75,6 +91,8 @@ services:
       "--rpc-cors", "all",
       "--rpc-external",
       "--rpc-methods", "unsafe",
+      "--prometheus-port", "9615",
+      "--prometheus-external",
 EOF
 
 reserved_only=${1}
