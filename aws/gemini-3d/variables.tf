@@ -16,8 +16,15 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  default = "m6a.xlarge"
-  type    = string
+  type = map(number)
+  default = {
+    bootstrap     = "c6a.2xlarge"
+    rpc           = "m6a.xlarge"
+    domain        = "m6a.xlarge"
+    full          = "m6a.xlarge"
+    farmer        = "m6a.xlarge"
+    evm_bootstrap = "m6a.xlarge"
+  }
 }
 
 variable "vpc_id" {
