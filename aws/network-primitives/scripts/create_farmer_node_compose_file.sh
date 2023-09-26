@@ -10,18 +10,21 @@ volumes:
   farmer_data: {}
 
 services:
-  datadog:
-    container_name: "datadog_agent"
-    image: gcr.io/datadoghq/agent:7
-    restart: unless-stopped
-    environment:
-      - DD_API_KEY=\${DATADOG_API_KEY}
-      - DD_SITE=datadoghq.com
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - /etc/os-release:/host/etc/os-release:ro
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_DISPLAY_NAME: "farmer-node-${NODE_ID}"
+    restart: unless-stopped
 
   farmer:
     depends_on:
@@ -33,6 +36,10 @@ services:
     restart: unless-stopped
     ports:
       - "30533:30533"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
       "farm", "path=/var/subspace,size=\${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
@@ -49,6 +56,10 @@ services:
     ports:
       - "30333:30333"
       - "30433:30433"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",

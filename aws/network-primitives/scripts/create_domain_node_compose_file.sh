@@ -10,18 +10,21 @@ volumes:
   archival_node_data: {}
 
 services:
-  datadog:
-    container_name: "datadog_agent"
-    image: gcr.io/datadoghq/agent:7
-    restart: unless-stopped
-    environment:
-      - DD_API_KEY=\${DATADOG_API_KEY}
-      - DD_SITE=datadoghq.com
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - /etc/os-release:/host/etc/os-release:ro
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_DISPLAY_NAME: "domain-node-${NODE_ID}"
+    restart: unless-stopped
 
   # caddy reverse proxy with automatic tls management using let encrypt
   caddy:
@@ -52,6 +55,10 @@ services:
       caddy_1: \${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_1.handle_path_0: /ws
       caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",

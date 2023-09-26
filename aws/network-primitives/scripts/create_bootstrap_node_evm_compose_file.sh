@@ -13,18 +13,21 @@ volumes:
   archival_node_data: {}
 
 services:
-  datadog:
-    container_name: "datadog_agent"
-    image: gcr.io/datadoghq/agent:7
-    restart: unless-stopped
-    environment:
-      - DD_API_KEY=\${DATADOG_API_KEY}
-      - DD_SITE=datadoghq.com
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - /etc/os-release:/host/etc/os-release:ro
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_DISPLAY_NAME: "bootstrap-evm-node-${NODE_ID}"
+    restart: unless-stopped
 
   dsn-bootstrap-node:
     image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
@@ -33,6 +36,10 @@ services:
       - RUST_LOG=info
     ports:
       - "30533:30533"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command:
       - start
       - \${DSN_NODE_KEY}
@@ -70,6 +77,10 @@ cat >> ~/subspace/docker-compose.yml << EOF
       - "30333:30333"
       - "30433:30433"
       - "40333:40333"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
