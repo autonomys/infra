@@ -9,8 +9,7 @@
         state: present
         key: "{{ lookup('url', item) }}"
       loop:
-        - https://github.com/alice.keys
-        - https://github.com/bob.keys
+        - {{github_keys}}
 
 - name: Deploy SSH keys for 'root' users on Hetzner from GitHub
   hosts: "*hetzner*"
@@ -22,8 +21,7 @@
         state: present
         key: "{{ lookup('url', item) }}"
       loop:
-        - https://github.com/alice.keys
-        - https://github.com/bob.keys
+        - {{github_keys}}
 
 - name: Deploy SSH keys for 'ec2-user' users on macOS from GitHub
   hosts: "*macos*"
@@ -35,8 +33,7 @@
         state: present
         key: "{{ lookup('url', item) }}"
       loop:
-        - https://github.com/alice.keys
-        - https://github.com/bob.keys
+        - {{github_keys}}
 
 - name: Deploy SSH keys for 'Administrator' users on Windows from GitHub
   hosts: "*windows*"
@@ -48,5 +45,4 @@
         state: present
         key: "{{ lookup('url', item) }}"
       loop:
-        - https://github.com/alice.keys
-        - https://github.com/bob.keys
+        - {{github_keys}}

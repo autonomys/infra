@@ -23,19 +23,23 @@
     port: "{{ ssh_port }}"
     proto: tcp
 
-- name: Deny port 22
+- name: Open http port
   ufw:
-    rule: deny
-    port: 22
+    rule: allow
+    port: '80'
     proto: tcp
 
-- name: Disable port 22 on ssh config
-  lineinfile:
-    dest: '/etc/ssh/sshd_config'
-    regex: '^Port 22'
-    line: 'Port {{ ssh_port }}'
-    state: present
-    create: true
+- name: Open https port
+  ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+
+- name: Deny port 53
+  ufw:
+    rule: deny
+    port: 53
+    proto: tcp
 
 - name: Disable root login over SSH
   lineinfile:
@@ -59,5 +63,5 @@
   changed_when: false
 
 - name: Enable firewall
-  ufw: 
+  ufw:
     state: enabled
