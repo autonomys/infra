@@ -32,6 +32,39 @@ services:
     networks:
       - loki
 
+  mimir:
+    image: grafana/mimir:2.9.0
+    volumes:
+      - /root/mimir/conf:/etc/mimir-config:ro
+    entrypoint:
+      - /bin/mimir
+      - -config.file=/etc/mimir-config/mimir.yml
+    ports:
+      - "9009:9009"
+
+  agent:
+    profiles: [agent]
+    image: grafana/agent:latest
+    volumes:
+      - /root/agent/conf:/etc/agent-config:ro
+    entrypoint:
+      - /bin/grafana-agent
+      - -server.http.address=0.0.0.0:12345
+      - -config.file=/etc/agent-config/agent.yml
+      - -metrics.wal-directory=/tmp/agent/wal
+      - -enable-features=integrations-next
+      - -config.expand-env
+      - -config.enable-read-api
+    environment:
+      HOSTNAME: agent
+      REMOTE_WRITE_HOST: mimir:9009
+      LOKI_HOST: loki:3100
+    ports:
+      - "12345:12345"
+    depends_on:
+      - mimir
+      - loki
+
   grafana:
     environment:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
