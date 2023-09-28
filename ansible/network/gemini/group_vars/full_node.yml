@@ -1,0 +1,2 @@
+docker_compose_file: "docker-compose-full.yml"
+deployment_dir: "{{ lookup('env', 'HOME') }}/subspace"
