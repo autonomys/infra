@@ -1,4 +1,0 @@
-inventory
-hosts
-/roles/prometheus/files/hosts
-/roles/prometheus/files/prometheus.yml

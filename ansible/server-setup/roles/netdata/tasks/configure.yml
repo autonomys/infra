@@ -15,7 +15,7 @@
       mode: u=wrx,g=rx,o=r,+x
     notify: Restart Netdata
     become: true
-  
+
   handlers:
   - name: Restart Netdata
     service:
