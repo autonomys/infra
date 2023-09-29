@@ -35,18 +35,20 @@ services:
   mimir:
     image: grafana/mimir:2.9.0
     volumes:
-      - /root/mimir/conf:/etc/mimir-config:ro
+      - /root/mimir/conf/etc/mimir.yml:/etc/mimir-config/mimir.yml:ro
     entrypoint:
       - /bin/mimir
       - -config.file=/etc/mimir-config/mimir.yml
     ports:
       - "9009:9009"
+    networks:
+      - loki
 
   agent:
     profiles: [agent]
     image: grafana/agent:latest
     volumes:
-      - /root/agent/conf:/etc/agent-config:ro
+      - /root/agent/conf/etc/agent.yml:/etc/agent-config/agent.yml:ro
     entrypoint:
       - /bin/grafana-agent
       - -server.http.address=0.0.0.0:12345
@@ -61,6 +63,8 @@ services:
       LOKI_HOST: loki:3100
     ports:
       - "12345:12345"
+    networks:
+      - loki
     depends_on:
       - mimir
       - loki

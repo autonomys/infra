@@ -10,7 +10,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.36.2
     volumes:
-      - ./etc/prometheus/conf:/etc/prometheus/
+      - ./etc/prometheus/conf/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -65,7 +65,7 @@ services:
     profiles: [agent]
     image: grafana/agent:latest
     volumes:
-      - ./etc/agent/conf:/etc/agent-config:ro
+      - ./etc/agent/conf/agent.yml:/etc/agent-config/agent.yml:ro
     entrypoint:
       - /bin/grafana-agent
       - -server.http.address=0.0.0.0:12345
