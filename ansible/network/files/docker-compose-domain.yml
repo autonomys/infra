@@ -1,0 +1,112 @@
+version: "3.7"
+
+volumes:
+  caddy_data: {}
+  archival_node_data: {}
+  vmagentdata: {}
+
+services:
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent:latest
+    depends_on:
+      - "archival-node"
+    ports:
+      - 8429:8429
+    volumes:
+      - vmagentdata:/vmagentdata
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--httpListenAddr=0.0.0.0:8429"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
+    volumes:
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: "${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "devnet-domain-node-${NODE_ID}"
+    restart: unless-stopped
+
+  # caddy reverse proxy with automatic tls management using let encrypt
+  caddy:
+   image: lucaslorentz/caddy-docker-proxy:latest
+   restart: unless-stopped
+   ports:
+     - "80:80"
+     - "443:443"
+   environment:
+     - CADDY_INGRESS_NETWORKS=subspace_default
+   volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+     - caddy_data:/data
+
+  archival-node:
+    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
+    volumes:
+      - archival_node_data:/var/subspace:rw
+    restart: unless-stopped
+    ports:
+      - "30333:30333"
+      - "30433:30433"
+      - "40333:40333"
+      - "9615:9615"
+      - "8944:8944"
+    labels:
+      caddy_0: ${DOMAIN_PREFIX}-${DOMAIN_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network
+      caddy_0.handle_path_0: /ws
+      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
+    command: [
+      "--chain", "${NETWORK_NAME}",
+      "--base-path", "/var/subspace",
+      "--execution", "wasm",
+#      "--enable-subspace-block-relay",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/35.171.26.12/tcp/30433",
+#      "--piece-cache-size", "${PIECE_CACHE_SIZE}",
+      "--node-key", "${NODE_KEY}",
+      "--rpc-cors", "all",
+      "--rpc-external",
+      "--in-peers", "500",
+      "--out-peers", "250",
+      "--in-peers-light", "500",
+      "--rpc-max-connections", "10000",
+      "--prometheus-port", "9615",
+      "--prometheus-external",
+      "--reserved-nodes", "${BOOTSTRAP_NODE_0}",
+      "--bootnodes", "${BOOTSTRAP_NODE_0}",
+      "--reserved-nodes", "${BOOTSTRAP_NODE_1}",
+      "--bootnodes", "${BOOTSTRAP_NODE_1}",
+      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_0}",
+      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_0}",
+      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_1}",
+      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_1}",
+      "--",
+      "--chain=${NETWORK_NAME}",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--domain-id=${DOMAIN_ID}",
+      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",
+      "--rpc-cors", "all",
+      "--rpc-port", "8944",
+      "--unsafe-rpc-external",
+      "--relayer-id=${RELAYER_DOMAIN_ID}",
+      "--reserved-nodes", "${BOOTSTRAP_NODE_EVM_0}",
+      "--bootnodes", "${BOOTSTRAP_NODE_EVM_0}",
+    ]
