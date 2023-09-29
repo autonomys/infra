@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXTERNAL_IP=`curl -s ifconfig.me`
+EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 
 reserved_only=${1}
 node_count=${2}
@@ -15,8 +15,8 @@ volumes:
 services:
   dsn-bootstrap-node:
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-bootstrap-node
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-bootstrap-node
     image: \${NODE_ORG}/node:\${NODE_TAG}
     restart: unless-stopped
     environment:
@@ -25,7 +25,9 @@ services:
       - "30533:30533"
     command:
       - start
+      - "--keypair"
       - \${DSN_NODE_KEY}
+      - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
@@ -53,8 +55,8 @@ done
 cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-node
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
     image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
@@ -62,6 +64,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
     ports:
       - "30333:30333"
       - "30433:30433"
+      - "9615:9615"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
@@ -80,6 +83,8 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
+      "--prometheus-port", "9615",
+      "--prometheus-external",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do

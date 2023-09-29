@@ -15,8 +15,8 @@ volumes:
 services:
   dsn-bootstrap-node:
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-bootstrap-node
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-bootstrap-node
     image: \${NODE_ORG}/node:\${NODE_TAG}
     restart: unless-stopped
     environment:
@@ -54,7 +54,10 @@ done
 
 cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
+    image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

@@ -15,8 +15,8 @@ services:
       archival-node:
         condition: service_healthy
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-farmer
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-farmer
     image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - /home/$USER/subspace/farmer_data:/var/subspace:rw

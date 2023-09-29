@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXTERNAL_IP=`curl -s ifconfig.me`
+EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -15,8 +15,8 @@ services:
       archival-node:
         condition: service_healthy
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-farmer
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-farmer
     image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - /home/$USER/subspace/farmer_data:/var/subspace:rw
@@ -42,6 +42,7 @@ services:
     ports:
       - "30333:30333"
       - "30433:30433"
+      - "9615:9615"
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
@@ -54,9 +55,12 @@ services:
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--validator",
+      "--timekeeper",
       "--rpc-cors", "all",
       "--rpc-external",
       "--rpc-methods", "unsafe",
+      "--prometheus-port", "9615",
+      "--prometheus-external",
 EOF
 
 reserved_only=${1}
@@ -75,7 +79,7 @@ done
 # // TODO: make configurable with gemini network
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-  echo "      \"--dsn-reserved-peers\", \"${dsn)addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
 done
 

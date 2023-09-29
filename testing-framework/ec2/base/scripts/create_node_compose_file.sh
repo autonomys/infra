@@ -11,8 +11,8 @@ volumes:
 services:
   archival-node:
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-node
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
     image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
@@ -39,7 +39,6 @@ services:
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
       "--in-peers-light", "500",
-      "--rpc-max-connections", "10000",
       "--prometheus-port", "9615",
       "--prometheus-external",
 EOF

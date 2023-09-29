@@ -10,7 +10,10 @@ volumes:
 
 services:
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
+    image: \${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -45,9 +48,8 @@ node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
-bootstrap_node_evm_count=${5}
-enable_domains=${6}
-domain_id=${7}
+enable_domains=${5}
+domain_id=${6}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
