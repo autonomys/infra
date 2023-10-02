@@ -3,7 +3,7 @@ integrations:
   - basic_auth:
       password: ${PROM_PASS}
       username: ${PROM_USER}
-    url: <your_prom_url>
+    url: ${PROM_URL}
   agent:
     enabled: true
     relabel_configs:
@@ -24,7 +24,7 @@ integrations:
   cadvisor:
     enabled: true
     docker_only: true
-    instance: '<your-instance-name>' # must match instance used in logs
+    instance: '${INSTANCE_NAME}' # must match instance used in logs
     relabel_configs:
     - action: replace
       replacement: integrations/docker
@@ -33,9 +33,9 @@ logs:
   configs:
   - clients:
     - basic_auth:
-        password: <your_loki_pass>
-        username: <your_loki_user>
-      url: <your_loki_url>
+        password: ${LOKI_PASS}
+        username: ${LOKI_USER}
+      url: ${LOKI_URL}
     name: integrations
     positions:
       filename: /tmp/positions.yaml
@@ -51,7 +51,7 @@ logs:
         replacement: integrations/docker
         target_label: job
       - action: replace
-        replacement: '<your-instance-name>' # must match instance used in cadvisor
+        replacement: '${INSTANCE_NAME}' # must match instance used in cadvisor
         target_label: instance
       - source_labels:
           - __meta_docker_container_name
@@ -67,7 +67,7 @@ metrics:
     - basic_auth:
         password: ${PROM_PASS}
         username: ${PROM_USER}
-      url: <your_prom_url>
+      url: ${PROM_URL}
     scrape_configs:
       # Add here any snippet that belongs to the `metrics.configs.scrape_configs` section.
       # For a correct indentation, paste snippets copied from Grafana Cloud at the beginning of the line.
