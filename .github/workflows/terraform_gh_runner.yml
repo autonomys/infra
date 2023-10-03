@@ -56,12 +56,12 @@ jobs:
 
       - name: Fetch and write terraform.tfvars
         run: |
-          echo ${{ secrets.TF_VARS_FILE }} > terraform.tfvars
-          chmod 600 terraform.tfvars
+          echo ${{ secrets.TF_VARS_FILE }} > /tmp/terraform.tfvars
+          chmod 600 /tmp/terraform.tfvars
 
       - name: Run Terraform
         working-directory: ./github-runners/terraform/base
         run: |
           terraform init-backend-config="organization=subspace" -backend-config="workspaces=${{ secrets.WORKSPACE_NAME }}"
-          terraform plan -var-file=terraform.tfvars
-          terraform apply -auto-approve -var "gh_token=${{ env.RUNNER_TOKEN }}"
+          terraform plan -var-file=/tmp/terraform.tfvars
+          terraform apply -auto-approve -var "gh_token=${{ env.RUNNER_TOKEN }}" -var-file=/tmp/terraform.tfvars

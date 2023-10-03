@@ -53,8 +53,7 @@ jobs:
 
       - name: Decrypt the secrets
         run: |
-          chmod +x ./scripts/transcrypt
-          scripts/transcrypt -c aes-256-cbc -p ${{ secrets.TRANSCRYPT }} -y
+          bash scripts/transcrypt -c aes-256-cbc -p ${{ secrets.TRANSCRYPT }} -y
 
       - uses: hashicorp/setup-terraform@v2
         with:
@@ -64,11 +63,11 @@ jobs:
 
       - name: Setup Remote Config Backend
         run: |
-          cat > config.remote.tfbackend <<EOT
+          cat > /tmp/config.remote.tfbackend <<EOF
             workspaces { name = "${{ inputs.tf_workspace_name }}"}
             hostname = "app.terraform.io"
             organization = "${{ inputs.tf_organization }}"
-          EOT
+          EOF
 
       - name: Terraform fmt
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
@@ -78,8 +77,8 @@ jobs:
       - name: Terraform Init for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          cat config.remote.tfbackend
-          terraform init -backend-config=config.remote.tfbackend
+          cat /tmp/config.remote.tfbackend
+          terraform init -backend-config=/tmp/config.remote.tfbackend
 
       - name: Terraform Validate
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
@@ -87,24 +86,24 @@ jobs:
 
       - name: Fetch and write terraform.tfvars
         run: |
-          echo ${{ secrets.TF_VARS_FILE }} > terraform.tfvars
-          chmod 600 terraform.tfvars
+          echo ${{ secrets.TF_VARS_FILE }} > /tmp/terraform.tfvars
+          chmod 600 /tmp/terraform.tfvars
 
       - name: Terraform Plan for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         if: ${{ (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform plan -var-file=terraform.tfvars
+          terraform plan -var-file=/tmp/terraform.tfvars
 
       - name: Terraform Apply for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         if: ${{ (inputs.run_apply == 'yes') && (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform apply -auto-approve -var-file=terraform.tfvars
+          terraform apply -auto-approve -var-file=/tmp/terraform.tfvars
 
       - name: Terraform Destroy for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         if: ${{ (inputs.run_destroy == 'yes') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform plan -destroy -var-file=terraform.tfvars
-          terraform destroy -auto-approve -var-file=terraform.tfvars
+          terraform plan -destroy -var-file=/tmp/terraform.tfvars
+          terraform destroy -auto-approve -var-file=/tmp/terraform.tfvars
