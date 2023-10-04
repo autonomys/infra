@@ -61,6 +61,7 @@ services:
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
+      "--cache-percentage", "15",
     ]
 
   archival-node:

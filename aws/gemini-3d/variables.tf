@@ -22,7 +22,7 @@ variable "instance_type" {
     rpc           = "m6a.xlarge"
     domain        = "m6a.xlarge"
     full          = "m6a.xlarge"
-    farmer        = "m6a.xlarge"
+    farmer        = "c7i.2xlarge"
     evm_bootstrap = "m6a.xlarge"
   }
 }
