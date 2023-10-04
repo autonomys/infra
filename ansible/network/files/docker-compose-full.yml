@@ -2,24 +2,24 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
-  farmer_data: {}
   vmagentdata: {}
 
 services:
   vmagent:
     container_name: vmagent
-    image: victoriametrics/vmagent:latest
+    image: victoriametrics/vmagent:v1.93.4
     depends_on:
       - "archival-node"
     ports:
       - 8429:8429
     volumes:
       - vmagentdata:/vmagentdata
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-vmagent.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
       - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+    restart: always
 
   agent:
     container_name: newrelic-infra
@@ -34,31 +34,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-farmer-node-${NODE_ID}"
+      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-full-node-${NODE_ID}"
     restart: unless-stopped
-
-  farmer:
-    depends_on:
-      archival-node:
-        condition: service_healthy
-    image: ghcr.io/${NODE_ORG}/farmer:${NODE_TAG}
-    volumes:
-      - farmer_data:/var/subspace:rw
-    restart: unless-stopped
-    ports:
-      - "30533:30533"
-    logging:
-      driver: loki
-      options:
-        loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command: [
-      "farm", "path=/var/subspace,size=${PLOT_SIZE}",
-      "--node-rpc-url", "ws://archival-node:9944",
-      "--external-address", "/ip4/${EXTERNAL_IP}/tcp/30533",
-      "--listen-on", "/ip4/0.0.0.0/tcp/30533",
-      "--reward-address", "${REWARD_ADDRESS}",
-      "--cache-percentage", "15",
-    ]
 
   archival-node:
     image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
@@ -81,13 +58,16 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/18.206.250.51/tcp/30433",
+      "--dsn-external-address", "/ip4/${EXTERNAL_IP}/tcp/30433",
       "--node-key", "${NODE_KEY}",
-      "--validator",
-      "--timekeeper",
-      "--rpc-cors", "all",
-      "--rpc-external",
-      "--rpc-methods", "unsafe",
+      "--in-peers", "1000",
+      "--out-peers", "1000",
+      "--dsn-in-connections", "1000",
+      "--dsn-out-connections", "1000",
+      "--dsn-pending-in-connections", "1000",
+      "--dsn-pending-out-connections", "1000",
+      "--in-peers-light", "500",
+      "--rpc-max-connections", "10000",
       "--prometheus-port", "9615",
       "--prometheus-external",
       "--reserved-nodes", "${BOOTSTRAP_NODE_0}",
@@ -98,6 +78,4 @@ services:
       "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_0}",
       "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_1}",
       "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_1}",
-      "--force-synced",
-      "--force-authoring",
     ]

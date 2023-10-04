@@ -3,40 +3,7 @@ version: "3.7"
 volumes:
   archival_node_data: {}
   farmer_data: {}
-  vmagentdata: {}
-
 services:
-  vmagent:
-    container_name: vmagent
-    image: victoriametrics/vmagent:latest
-    depends_on:
-      - "archival-node"
-    ports:
-      - 8429:8429
-    volumes:
-      - vmagentdata:/vmagentdata
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    command:
-      - "--httpListenAddr=0.0.0.0:8429"
-      - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
-
-  agent:
-    container_name: newrelic-infra
-    image: newrelic/infrastructure:latest
-    cap_add:
-      - SYS_PTRACE
-    network_mode: bridge
-    pid: host
-    privileged: true
-    volumes:
-      - "/:/host:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    environment:
-      NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "devnet-farmer-node-${NODE_ID}"
-    restart: unless-stopped
-
   farmer:
     depends_on:
       archival-node:
@@ -54,7 +21,7 @@ services:
     command: [
       "farm", "path=/var/subspace,size=${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
-      "--external-address", "/ip4/18.206.250.51/tcp/30533",
+      "--external-address", "/ip4/${EXTERNAL_IP}/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "${REWARD_ADDRESS}",
     ]
@@ -67,7 +34,6 @@ services:
     ports:
       - "30333:30333"
       - "30433:30433"
-      - "9615:9615"
     logging:
       driver: loki
       options:
@@ -80,23 +46,21 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/18.206.250.51/tcp/30433",
+      "--dsn-external-address", "/ip4/${EXTERNAL_IP}/tcp/30433",
       "--node-key", "${NODE_KEY}",
       "--validator",
       "--timekeeper",
       "--rpc-cors", "all",
       "--rpc-external",
       "--rpc-methods", "unsafe",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
-      "--reserved-nodes", "/dns/bootstrap-0.devnet.subspace.network/tcp/30333/p2p/12D3KooWLdPnDksKX43hEgV4N9EeJzm6x8wPWkHCvRaFBZvj4GBg",
-      "--bootnodes", "/dns/bootstrap-0.devnet.subspace.network/tcp/30333/p2p/12D3KooWLdPnDksKX43hEgV4N9EeJzm6x8wPWkHCvRaFBZvj4GBg",
-      "--reserved-nodes", "/dns/bootstrap-1.devnet.subspace.network/tcp/30333/p2p/12D3KooWM4PT6vTWji9y9BmHc1dZKH7EE6nSfX1bZMUejFviJypz",
-      "--bootnodes", "/dns/bootstrap-1.devnet.subspace.network/tcp/30333/p2p/12D3KooWM4PT6vTWji9y9BmHc1dZKH7EE6nSfX1bZMUejFviJypz",
-      "--dsn-reserved-peers", "/dns/bootstrap-0.devnet.subspace.network/tcp/30533/p2p/12D3KooWJgLU8DmkXwBpQtHgSURFfJ4f2SyuNVBgVY96aDJsDWFK",
-      "--dsn-bootstrap-nodes", "/dns/bootstrap-0.devnet.subspace.network/tcp/30533/p2p/12D3KooWJgLU8DmkXwBpQtHgSURFfJ4f2SyuNVBgVY96aDJsDWFK",
-      "--dsn-reserved-peers", "/dns/bootstrap-1.devnet.subspace.network/tcp/30533/p2p/12D3KooWEaTUuF6H36UWu1WrxE3ccGVB8UXavQ2FF1xmJ8SNC38V",
-      "--dsn-bootstrap-nodes", "/dns/bootstrap-1.devnet.subspace.network/tcp/30533/p2p/12D3KooWEaTUuF6H36UWu1WrxE3ccGVB8UXavQ2FF1xmJ8SNC38V",
+      "--reserved-nodes", "${BOOTSTRAP_NODE_0}",
+      "--bootnodes", "${BOOTSTRAP_NODE_0}",
+      "--reserved-nodes", "${BOOTSTRAP_NODE_1}",
+      "--bootnodes", "${BOOTSTRAP_NODE_1}",
+      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_0}",
+      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_0}",
+      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_1}",
+      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_1}",
       "--force-synced",
       "--force-authoring",
     ]

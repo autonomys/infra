@@ -3,40 +3,8 @@ version: "3.7"
 volumes:
   caddy_data: {}
   archival_node_data: {}
-  vmagentdata: {}
 
 services:
-  vmagent:
-    container_name: vmagent
-    image: victoriametrics/vmagent:latest
-    depends_on:
-      - "archival-node"
-    ports:
-      - 8429:8429
-    volumes:
-      - vmagentdata:/vmagentdata
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    command:
-      - "--httpListenAddr=0.0.0.0:8429"
-      - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
-
-  agent:
-    container_name: newrelic-infra
-    image: newrelic/infrastructure:latest
-    cap_add:
-      - SYS_PTRACE
-    network_mode: bridge
-    pid: host
-    privileged: true
-    volumes:
-      - "/:/host:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    environment:
-      NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-rpc-node-${NODE_ID}"
-    restart: unless-stopped
-
   # caddy reverse proxy with automatic tls management using let encrypt
   caddy:
     image: lucaslorentz/caddy-docker-proxy:latest
@@ -59,8 +27,6 @@ services:
       caddy_0: ${DOMAIN_PREFIX}-${NODE_ID}.${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 9944}}"
-    ports:
-      - "9615:9615"
     logging:
       driver: loki
       options:
