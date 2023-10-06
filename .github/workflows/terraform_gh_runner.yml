@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "./github-runners/terraform/base/**"
+      - "github-runners/terraform/base/**"
 
 jobs:
   terraform_gh_runner:
@@ -30,9 +30,10 @@ jobs:
 
       - name: Run Bash Script
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # GitHub repository and access token
+          # GitHub repository and access token for github api calls, since GITHUB_TOKEN can't
+          # be used for this purpose.
           repo="subspace/infra"
           token=${{ secrets.PAT_TOKEN }}
 
@@ -48,10 +49,8 @@ jobs:
           # Export the token as an environment variable
           echo "export RUNNER_TOKEN=$runner_token" >> $GITHUB_ENV
 
-          # Set the runner token as an environment variable
-          export RUNNER_TOKEN="$runner_token"
-
-          # Store the token as a secret in GitHub Actions
+          # Store the token as a secret in GitHub Actions for use
+          # in subsequent steps with terraform for runner registration
           gh secret set RUNNER_TOKEN -r "$repo" -b "$runner_token"
 
       - name: Fetch and write terraform.tfvars
