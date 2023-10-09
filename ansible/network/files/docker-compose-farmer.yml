@@ -51,14 +51,21 @@ services:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command: [
-      "farm", "path=/var/subspace,size=${PLOT_SIZE}",
-      "--node-rpc-url", "ws://archival-node:9944",
-      "--external-address", "/ip4/${EXTERNAL_IP}/tcp/30533",
-      "--listen-on", "/ip4/0.0.0.0/tcp/30533",
-      "--reward-address", "${REWARD_ADDRESS}",
-      "--cache-percentage", "15",
-    ]
+    command:
+      [
+        "farm",
+        "path=/var/subspace,size=${PLOT_SIZE}",
+        "--node-rpc-url",
+        "ws://archival-node:9944",
+        "--external-address",
+        "/ip4/${EXTERNAL_IP}/tcp/30533",
+        "--listen-on",
+        "/ip4/0.0.0.0/tcp/30533",
+        "--reward-address",
+        "${REWARD_ADDRESS}",
+        "--cache-percentage",
+        "15",
+      ]
 
   archival-node:
     image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
@@ -73,31 +80,50 @@ services:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command: [
-      "--chain", "${NETWORK_NAME}",
-      "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/18.206.250.51/tcp/30433",
-      "--node-key", "${NODE_KEY}",
-      "--validator",
-      "--timekeeper",
-      "--rpc-cors", "all",
-      "--rpc-external",
-      "--rpc-methods", "unsafe",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
-      "--reserved-nodes", "${BOOTSTRAP_NODE_0}",
-      "--bootnodes", "${BOOTSTRAP_NODE_0}",
-      "--reserved-nodes", "${BOOTSTRAP_NODE_1}",
-      "--bootnodes", "${BOOTSTRAP_NODE_1}",
-      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_0}",
-      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_0}",
-      "--dsn-reserved-peers", "${DSN_BOOTSTRAP_NODE_1}",
-      "--dsn-bootstrap-nodes", "${DSN_BOOTSTRAP_NODE_1}",
-      "--force-synced",
-      "--force-authoring",
-    ]
+    command:
+      [
+        "--chain",
+        "${NETWORK_NAME}",
+        "--base-path",
+        "/var/subspace",
+        "--execution",
+        "wasm",
+        "--state-pruning",
+        "archive",
+        "--blocks-pruning",
+        "256",
+        "--listen-addr",
+        "/ip4/0.0.0.0/tcp/30333",
+        "--dsn-external-address",
+        "/ip4/18.206.250.51/tcp/30433",
+        "--node-key",
+        "${NODE_KEY}",
+        "--validator",
+        "--timekeeper",
+        "--rpc-cors",
+        "all",
+        "--rpc-external",
+        "--rpc-methods",
+        "unsafe",
+        "--prometheus-port",
+        "9615",
+        "--prometheus-external",
+        "--reserved-nodes",
+        "${BOOTSTRAP_NODE_0}",
+        "--bootnodes",
+        "${BOOTSTRAP_NODE_0}",
+        "--reserved-nodes",
+        "${BOOTSTRAP_NODE_1}",
+        "--bootnodes",
+        "${BOOTSTRAP_NODE_1}",
+        "--dsn-reserved-peers",
+        "${DSN_BOOTSTRAP_NODE_0}",
+        "--dsn-bootstrap-nodes",
+        "${DSN_BOOTSTRAP_NODE_0}",
+        "--dsn-reserved-peers",
+        "${DSN_BOOTSTRAP_NODE_1}",
+        "--dsn-bootstrap-nodes",
+        "${DSN_BOOTSTRAP_NODE_1}",
+        "--force-synced",
+        "--force-authoring",
+      ]

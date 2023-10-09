@@ -1,4 +1,0 @@
----
-- name: Install vector agent
-  shell: |
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.vector.dev | bash -s -- -y

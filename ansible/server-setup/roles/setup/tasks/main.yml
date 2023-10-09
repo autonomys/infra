@@ -24,9 +24,3 @@
 
 - name: Install Docker and Docker Compose
   import_tasks: install_docker.yml
-
-- name: Install vector
-  import_tasks: install_vector.yml
-
-- name: Install zsh
-  import_tasks: install_zsh.yml
