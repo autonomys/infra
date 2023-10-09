@@ -18,10 +18,22 @@ variable "cloudflare_api_token" {
 }
 
 variable "domain" {
-  default = "subspace.network"
+  type = string
 }
 
 variable "network" {
   type        = string
   description = "gemini network name"
+}
+
+variable "rpc_prefix" {
+  type    = string
+  default = "rpc"
+
+}
+
+variable "domain_prefix" {
+  type    = string
+  default = "domain"
+
 }
