@@ -37,8 +37,8 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: ${NR_API_KEY}
-      NRIA_DISPLAY_NAME: "domain-node-${NODE_ID}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-domain-node-\${NODE_ID}"
     restart: unless-stopped
 
   # caddy reverse proxy with automatic tls management using let encrypt
@@ -65,12 +65,9 @@ services:
       - "40333:40333"
       - "9615:9615"
     labels:
-      caddy_0: \${DOMAIN_PREFIX}-\${NODE_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+      caddy_0: \${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
-      caddy_1: \${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
-      caddy_1.handle_path_0: /ws
-      caddy_1.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     logging:
       driver: loki
       options:
@@ -101,8 +98,9 @@ node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
-enable_domains=${5}
-domain_id=${6}
+bootstrap_node_evm_count=${5}
+enable_domains=${6}
+domain_id=${7}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
@@ -131,7 +129,7 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--blocks-pruning", "archive",'
       echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
-      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",
+      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
       echo '      "--rpc-cors", "all",'
       echo '      "--rpc-port", "8944",'
       echo '      "--unsafe-rpc-external",'

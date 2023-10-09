@@ -37,8 +37,8 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: ${NR_API_KEY}
-      NRIA_DISPLAY_NAME: "farmer-node-${NODE_ID}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-farmer-node-\${NODE_ID}"
     restart: unless-stopped
 
   farmer:
@@ -61,6 +61,7 @@ services:
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
+      "--cache-percentage", "15",
     ]
 
   archival-node:
@@ -88,6 +89,7 @@ services:
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--validator",
+      "--timekeeper",
       "--rpc-cors", "all",
       "--rpc-external",
       "--rpc-methods", "unsafe",
@@ -111,7 +113,7 @@ done
 # // TODO: make configurable with gemini network
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-  echo "      \"--dsn-reserved-peers\", \"${dsn)addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
 done
 

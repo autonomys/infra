@@ -136,7 +136,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_SUBSPACE_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -148,7 +148,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

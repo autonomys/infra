@@ -16,13 +16,13 @@ variable "domain_labels" {
 }
 
 variable "instance_type" {
-  type = map(number)
+  type = map(string)
   default = {
     bootstrap     = "c6a.2xlarge"
     rpc           = "m6a.xlarge"
     domain        = "m6a.xlarge"
     full          = "m6a.xlarge"
-    farmer        = "m6a.xlarge"
+    farmer        = "c7i.2xlarge"
     evm_bootstrap = "m6a.xlarge"
   }
 }

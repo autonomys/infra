@@ -109,10 +109,22 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
+  # copy boostrap node keys file
+  provisioner "file" {
+    source      = "./bootstrap_node_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
+  }
+
   # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
+  }
+
+  # copy relayer ids
+  provisioner "file" {
+    source      = "./relayer_ids.txt"
+    destination = "/home/${var.ssh_user}/subspace/relayer_ids.txt"
   }
 
   # copy compose file creation script
@@ -136,7 +148,10 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DATADOG_API_KEY=${var.datadog_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo EVM_NODE_KEY=$(sed -nr 's/NODE_${count.index}_OPERATOR_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_SUBSPACE_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -145,10 +160,10 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
 
       # start subspace node
-      # "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

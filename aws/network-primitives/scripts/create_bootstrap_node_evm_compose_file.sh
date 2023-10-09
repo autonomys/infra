@@ -5,6 +5,8 @@ EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 reserved_only=${1}
 node_count=${2}
 current_node=${3}
+bootstrap_node_count=${4}
+enable_domains=${5}
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -40,8 +42,8 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: ${NR_API_KEY}
-      NRIA_DISPLAY_NAME: "bootstrap-evm-node-${NODE_ID}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-bootstrap-node-evm\${NODE_ID}"
     restart: unless-stopped
 
   dsn-bootstrap-node:
@@ -57,7 +59,9 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command:
       - start
+      - "--keypair"
       - \${DSN_NODE_KEY}
+      - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
@@ -119,17 +123,19 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--prometheus-external",
 EOF
 
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" != "${i}" ]; then
-    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+
+for (( i = 0; i < bootstrap_node_count; i++ )); do
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  fi
 done
 
 if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
+
+if [ "${enable_domains}" == "true" ]; then
+    {
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
@@ -144,9 +150,12 @@ fi
       echo '      "--rpc-port", "8944",'
       echo '      "--unsafe-rpc-external",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
-    for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_evm_keys.txt)
+    for (( i = 0; i <  node_count; i++ )); do
+      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
       echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
+
+    }  >> ~/subspace/docker-compose.yml
+fi
 echo '    ]' >> ~/subspace/docker-compose.yml

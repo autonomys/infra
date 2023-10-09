@@ -26,7 +26,7 @@ module "gemini-3f" {
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3f-2023-aug-31"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
     dsn-listen-port    = 30533
@@ -102,7 +102,7 @@ module "gemini-3f" {
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email
-  datadog_api_key      = var.datadog_api_key
+  nr_api_key           = var.nr_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
   vpc_id               = var.vpc_id

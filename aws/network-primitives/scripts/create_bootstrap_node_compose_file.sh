@@ -40,8 +40,8 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: ${NR_API_KEY}
-      NRIA_DISPLAY_NAME: "bootstrap-node-${NODE_ID}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-bootstrap-node-\${NODE_ID}"
     restart: unless-stopped
 
   dsn-bootstrap-node:
@@ -57,7 +57,9 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command:
       - start
+      - "--keypair"
       - \${DSN_NODE_KEY}
+      - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
