@@ -18,11 +18,26 @@ output "load_balancer_names" {
   value       = zipmap(keys(cloudflare_load_balancer.lb), values(cloudflare_load_balancer.lb)[*].name)
 }
 
-output "dns_records" {
+output "rpc_records" {
   description = "The details of the LB DNS Cloudflare Records"
   value = zipmap(
     keys(cloudflare_record.records),
     [for r in cloudflare_record.records : {
+      id      = r.id,
+      name    = r.name,
+      type    = r.type,
+      value   = r.value,
+      proxied = r.proxied,
+      tags    = r.tags
+    }]
+  )
+}
+
+output "evm_records" {
+  description = "The details of the LB DNS Cloudflare Records"
+  value = zipmap(
+    keys(cloudflare_record.evm_records),
+    [for r in cloudflare_record.evm_records : {
       id      = r.id,
       name    = r.name,
       type    = r.type,

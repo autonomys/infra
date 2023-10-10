@@ -1,7 +1,12 @@
 # Outputs
-output "cloudflare_lb_gemini" {
+output "cloudflare_lb_rpc_records" {
   description = "Cloudflare load balancer details"
-  value       = module.cloudflare_lb_gemini.dns_records
+  value       = module.cloudflare_lb_gemini.rpc_records
+}
+
+output "cloudflare_lb_evm_records" {
+  description = "Cloudflare load balancer details"
+  value       = module.cloudflare_lb_gemini.evm_records
 }
 
 output "cloudflare_monitor_ids" {

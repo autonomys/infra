@@ -37,3 +37,13 @@ variable "domain_prefix" {
   default = "domain"
 
 }
+
+variable "rpc_ips" {
+  type    = list(string)
+  default = ["52.91.27.239", "65.108.232.52"]
+}
+
+variable "evm_domain_ips" {
+  type    = list(string)
+  default = ["174.129.202.104", "65.108.228.84"]
+}

@@ -6,7 +6,28 @@ data "cloudflare_zones" "subspace" {
 }
 
 locals {
-  existing_records_set = try({ for cf in var.records : cf.name => cf }, {})
+  existing_records_set     = try({ for cf in var.records : cf.name => cf }, {})
+  existing_evm_records_set = try({ for cf in var.evm_records : cf.name => cf }, {})
+  flattened_records = flatten([
+    for r in var.records : {
+      name     = r.name,
+      hostname = r.hostname,
+      value    = r.value,
+      type     = r.type,
+      tags     = r.tags,
+      index    = index(var.records, r)
+    }
+  ])
+  flattened_evm_records = flatten([
+    for r in var.evm_records : {
+      name     = r.name,
+      hostname = r.hostname,
+      value    = r.value,
+      type     = r.type,
+      tags     = r.tags,
+      index    = index(var.evm_records, r)
+    }
+  ])
 }
 
 data "cloudflare_record" "existing_records" {
@@ -17,8 +38,27 @@ data "cloudflare_record" "existing_records" {
   type     = each.value.type
 }
 
+data "cloudflare_record" "existing_evm_records" {
+  for_each = local.existing_evm_records_set
+
+  zone_id  = var.zone_id
+  hostname = each.value.hostname
+  type     = each.value.type
+}
+
 resource "cloudflare_record" "records" {
-  for_each = { for cf in var.records : cf.name => cf if !contains(keys(data.cloudflare_record.existing_records), cf.name) }
+  for_each = { for cf in local.flattened_records : "${cf.name}-${cf.index}" => cf if !contains(keys(data.cloudflare_record.existing_records), cf.name) }
+
+  zone_id = var.zone_id
+  name    = each.value.hostname
+  value   = each.value.value
+  type    = each.value.type
+  proxied = true
+  tags    = each.value.tags
+}
+
+resource "cloudflare_record" "evm_records" {
+  for_each = { for cf in local.flattened_evm_records : "${cf.name}-${cf.index}" => cf if !contains(keys(data.cloudflare_record.existing_evm_records), cf.name) }
 
   zone_id = var.zone_id
   name    = each.value.hostname

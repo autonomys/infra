@@ -9,30 +9,34 @@ module "cloudflare_lb_gemini" {
 
   records = [
     {
-      name     = "${var.rpc_prefix}-0",
+      name     = "${var.rpc_prefix}",
       hostname = "${var.rpc_prefix}-0.${var.network}.${var.domain}",
-      value    = "52.91.27.239",
+      value    = var.rpc_ips[0],
       type     = "A",
       tags     = ["rpc", "us"]
     },
     {
-      name     = "${var.rpc_prefix}-1",
-      hostname = "${var.rpc_prefix}-1.${var.network}.${var.domain}",
-      value    = "65.108.232.52",
+      name     = "${var.rpc_prefix}",
+      hostname = "${var.rpc_prefix}-0.${var.network}.${var.domain}",
+      value    = var.rpc_ips[1],
       type     = "A",
       tags     = ["rpc", "eu"]
     },
+  ]
+
+
+  evm_records = [
     {
-      name     = "${var.domain_prefix}-0",
+      name     = "${var.domain_prefix}",
       hostname = "${var.domain_prefix}-3.evm.${var.network}.${var.domain}",
-      value    = "174.129.202.104",
+      value    = var.evm_domain_ips[0],
       type     = "A",
       tags     = ["evm", "us"]
     },
     {
-      name     = "${var.domain_prefix}-3",
+      name     = "${var.domain_prefix}",
       hostname = "${var.domain_prefix}-3.evm.${var.network}.${var.domain}",
-      value    = "65.108.228.84",
+      value    = var.evm_domain_ips[1],
       type     = "A",
       tags     = ["evm", "eu"]
     },

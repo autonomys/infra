@@ -51,6 +51,19 @@ variable "records" {
       type     = "A"
       tags     = ["rpc", "eu"]
     },
+  ]
+}
+
+variable "evm_records" {
+  description = "List of EVM DNS records."
+  type = list(object({
+    name     = string
+    hostname = string
+    value    = string
+    type     = string
+    tags     = list(string)
+  }))
+  default = [
     {
       name     = "evm-0"
       hostname = "domain-3.gemini-3f.subspace.network"
@@ -64,7 +77,7 @@ variable "records" {
       value    = "65.108.228.84"
       type     = "A"
       tags     = ["domain", "evm", "eu"]
-    }
+    },
   ]
 }
 
