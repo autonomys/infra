@@ -46,9 +46,6 @@ jobs:
           # Extract the token value from the response
           runner_token=$(echo "$response" | jq -r '.token')
 
-          # Export the token as an environment variable
-          echo "export RUNNER_TOKEN=$runner_token" >> $GITHUB_ENV
-
           # Store the token as a secret in GitHub Actions for use
           # in subsequent steps with terraform for runner registration
           gh secret set RUNNER_TOKEN -r "$repo" -b "$runner_token"
@@ -63,4 +60,4 @@ jobs:
         run: |
           terraform init-backend-config="organization=subspace" -backend-config="workspaces=${{ secrets.WORKSPACE_NAME }}"
           terraform plan -var-file=/tmp/terraform.tfvars
-          terraform apply -auto-approve -var "gh_token=${{ env.RUNNER_TOKEN }}" -var-file=/tmp/terraform.tfvars
+          terraform apply -auto-approve -var "gh_token=${{ secrets.RUNNER_TOKEN }}" -var-file=/tmp/terraform.tfvars
