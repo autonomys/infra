@@ -57,14 +57,6 @@ jobs:
           terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Setup Remote Config Backend
-        run: |
-          cat > /tmp/config.remote.tfbackend <<EOF
-            workspaces { name = "${{ inputs.tf_workspace_name }}"}
-            hostname = "app.terraform.io"
-            organization = "${{ inputs.tf_organization }}"
-          EOF
-
       - name: Terraform fmt
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: terraform fmt -check
@@ -73,8 +65,7 @@ jobs:
       - name: Terraform Init for ${{ inputs.project }}/${{ inputs.resource }}
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: |
-          cat /tmp/config.remote.tfbackend
-          terraform init -backend-config=/tmp/config.remote.tfbackend
+          terraform init
 
       - name: Terraform Validate
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}

@@ -11,8 +11,8 @@ on:
 jobs:
   terraform_gh_runner:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # env:
+    #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -29,8 +29,8 @@ jobs:
           # Install any dependencies required by your Terraform code
 
       - name: Run Bash Script
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # env:
+        #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # GitHub repository and access token for github api calls, since GITHUB_TOKEN can't
           # be used for this purpose.
@@ -58,6 +58,6 @@ jobs:
       - name: Run Terraform
         working-directory: ./github-runners/terraform/base
         run: |
-          terraform init-backend-config="organization=subspace" -backend-config="workspaces=${{ secrets.WORKSPACE_NAME }}"
+          terraform init
           terraform plan -var-file=/tmp/terraform.tfvars
           terraform apply -auto-approve -var "gh_token=${{ secrets.RUNNER_TOKEN }}" -var-file=/tmp/terraform.tfvars
