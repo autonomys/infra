@@ -47,6 +47,7 @@ services:
     restart: unless-stopped
     ports:
       - "30533:30533"
+      - "9616:9616"
     logging:
       driver: loki
       options:
@@ -65,6 +66,7 @@ services:
         "${REWARD_ADDRESS}",
         "--cache-percentage",
         "15",
+        "--metrics-endpoint=0.0.0.0:9616",
       ]
 
   archival-node:
