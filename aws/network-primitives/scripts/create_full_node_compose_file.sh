@@ -21,7 +21,7 @@ services:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
-      - "httpListenAddr=0.0.0.0:8429"
+      - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
       - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
