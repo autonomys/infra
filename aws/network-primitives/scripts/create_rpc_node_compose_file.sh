@@ -22,8 +22,9 @@ services:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
+      - "httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
   agent:
     container_name: newrelic-infra

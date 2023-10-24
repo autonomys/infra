@@ -22,8 +22,9 @@ services:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
+      - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
   agent:
     container_name: newrelic-infra
@@ -51,6 +52,7 @@ services:
     restart: unless-stopped
     ports:
       - "30533:30533"
+      - "9616:9616"
     logging:
       driver: loki
       options:
@@ -61,6 +63,7 @@ services:
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
+      "--metrics-endpoint=0.0.0.0:9616",
       "--cache-percentage", "15",
     ]
 
