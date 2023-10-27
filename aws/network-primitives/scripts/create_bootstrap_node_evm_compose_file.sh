@@ -98,7 +98,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
     ports:
       - "30333:30333"
       - "30433:30433"
-      - "40333:40333"
+      - "\${OPERATOR_PORT}:40333"
       - "9615:9615"
     logging:
       driver: loki
@@ -146,7 +146,7 @@ if [ "${enable_domains}" == "true" ]; then
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
+      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/\${OPERATOR_PORT}",'
       echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--rpc-cors", "all",'

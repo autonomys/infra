@@ -184,6 +184,7 @@ variable "bootstrap-node-evm-config" {
     genesis-hash       = string
     dsn-listen-port    = number
     node-dsn-port      = number
+    operator-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })
