@@ -34,7 +34,7 @@ variable "rpc_prefix" {
 
 variable "domain_prefix" {
   type    = string
-  default = "domain"
+  default = "nova"
 
 }
 
