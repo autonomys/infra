@@ -133,6 +133,12 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
     echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+done
+
 if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
@@ -142,7 +148,7 @@ if [ "${enable_domains}" == "true" ]; then
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
-      echo '      "--node-key", "${EVM_NODE_KEY}",'
+      echo '      "--node-key", "${NODE_KEY}",'
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
@@ -154,7 +160,7 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--unsafe-rpc-external",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
     for (( i = 0; i <  node_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
       echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
