@@ -47,8 +47,10 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
+      - "30333:30333/tcp"
+      - "30333:30333/udp"
+      - "30433:30433/tcp"
+      - "30433:30433/udp"
       - "9615:9615"
     logging:
       driver: loki
@@ -62,7 +64,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",

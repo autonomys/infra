@@ -78,7 +78,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--rpc-cors", "all",

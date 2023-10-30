@@ -61,9 +61,11 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
-      - "40333:40333"
+      - "30333:30333/tcp"
+      - "30333:30333/udp"
+      - "30433:30433/tcp"
+      - "30433:30433/udp"
+      - "40333:40333/tcp"
       - "9615:9615"
     labels:
       caddy_0: \${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
@@ -81,7 +83,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--rpc-cors", "all",
