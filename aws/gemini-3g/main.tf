@@ -72,7 +72,7 @@ module "gemini-3g" {
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3g-2023-nov-01"
-    domain-prefix      = "domain"
+    domain-prefix      = "nova"
     reserved-only      = true
     prune              = false
     node-dsn-port      = 30434
