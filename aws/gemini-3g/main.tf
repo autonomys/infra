@@ -92,7 +92,7 @@ module "gemini-3g" {
     docker-tag             = "gemini-3g-2023-oct-31"
     reserved-only          = true
     prune                  = false
-    plot-size              = "10G"
+    plot-size              = "2G"
     reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433
