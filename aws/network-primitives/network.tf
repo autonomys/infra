@@ -109,7 +109,7 @@ resource "aws_security_group" "network_sg" {
   }
 
   ingress {
-    description = "Domain Bootstrap Node Port 40333 for VPC"
+    description = "Domain Operator Node Port 40333 for VPC"
     from_port   = 40333
     to_port     = 40333
     protocol    = "tcp"
@@ -121,6 +121,32 @@ resource "aws_security_group" "network_sg" {
     from_port   = 30533
     to_port     = 30533
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # UDP ports
+
+  ingress {
+    description = "Node UDP Port 30333 for VPC"
+    from_port   = 30333
+    to_port     = 30333
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Node UDP Port 30433 for VPC"
+    from_port   = 30433
+    to_port     = 30433
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Farmer UDP Port 30533 for VPC"
+    from_port   = 30533
+    to_port     = 30533
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
