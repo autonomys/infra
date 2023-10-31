@@ -7,7 +7,7 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [3]
+  default     = [0]
 }
 
 //todo change this to a map

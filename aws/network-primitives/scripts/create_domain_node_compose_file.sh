@@ -68,7 +68,7 @@ services:
       - "40333:40333/tcp"
       - "9615:9615"
     labels:
-      caddy_0: \${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network
+      caddy_0: \${DOMAIN_PREFIX}.\${NETWORK_NAME}.subspace.network
       caddy_0.handle_path_0: /ws
       caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
     logging:
@@ -84,6 +84,7 @@ services:
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--rpc-cors", "all",
