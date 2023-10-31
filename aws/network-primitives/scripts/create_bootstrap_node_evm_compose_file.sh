@@ -53,7 +53,8 @@ services:
     environment:
       - RUST_LOG=info
     ports:
-      - "30533:30533"
+      - "30533:30533/tcp"
+      - "30533:30533/udp"
       - "9616:9616"
     logging:
       driver: loki
@@ -64,6 +65,8 @@ services:
       - "--metrics-endpoints=0.0.0.0:9616"
       - "--keypair"
       - \${DSN_NODE_KEY}
+      - "--listen-on"
+      - /ip4/0.0.0.0/udp/30533/quic-v1
       - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
@@ -76,6 +79,8 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
+      - "--external-address"
+      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
       - "--external-address"
       - "/ip4/$EXTERNAL_IP/tcp/30533"
 EOF
@@ -96,9 +101,11 @@ cat >> ~/subspace/docker-compose.yml << EOF
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
-      - "40333:40333"
+      - "30333:30333/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/udp"
+      - "30433:30433/tcp"
+      - "\${OPERATOR_PORT}:40333/tcp"
       - "9615:9615"
     logging:
       driver: loki
@@ -112,6 +119,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
@@ -133,6 +141,12 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
     echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
+for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--dsn-bootstrap-nodes\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+done
+
 if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
@@ -142,11 +156,11 @@ if [ "${enable_domains}" == "true" ]; then
     # core domain
       echo '      "--",'
       echo '      "--chain=${NETWORK_NAME}",'
-      echo '      "--node-key", "${EVM_NODE_KEY}",'
+      echo '      "--node-key", "${NODE_KEY}",'
     #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
+      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
       echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--rpc-cors", "all",'
@@ -154,7 +168,7 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--unsafe-rpc-external",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
     for (( i = 0; i <  node_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
       echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done

@@ -25,7 +25,7 @@ services:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
-      - "httpListenAddr=0.0.0.0:8429"
+      - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
       - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
@@ -103,6 +103,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",

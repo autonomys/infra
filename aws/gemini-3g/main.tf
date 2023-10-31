@@ -1,18 +1,18 @@
-module "gemini-3f" {
+module "gemini-3g" {
   source          = "../network-primitives"
   path_to_scripts = "../network-primitives/scripts"
   path_to_configs = "../network-primitives/configs"
-  network_name    = "gemini-3f"
+  network_name    = "gemini-3g"
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3f-2023-oct-06"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = true
     prune              = false
-    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d065095"
+    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -21,14 +21,14 @@ module "gemini-3f" {
 
   bootstrap-node-evm-config = {
     instance-type      = var.instance_type["evm_bootstrap"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3f-2023-oct-06"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d065095"
+    genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 40333
@@ -38,11 +38,11 @@ module "gemini-3f" {
 
   full-node-config = {
     instance-type      = var.instance_type["full"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3f-2023-oct-06"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = true
     prune              = false
     node-dsn-port      = 30433
@@ -52,11 +52,11 @@ module "gemini-3f" {
 
   rpc-node-config = {
     instance-type      = var.instance_type["rpc"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3f-2023-oct-06"
+    docker-tag         = "gemini-3g-2023-oct-31"
     domain-prefix      = "rpc"
     reserved-only      = true
     prune              = false
@@ -67,12 +67,12 @@ module "gemini-3f" {
 
   domain-node-config = {
     instance-type      = var.instance_type["domain"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3f-2023-oct-06"
-    domain-prefix      = "domain"
+    docker-tag         = "gemini-3g-2023-oct-31"
+    domain-prefix      = "nova"
     reserved-only      = true
     prune              = false
     node-dsn-port      = 30434
@@ -85,14 +85,14 @@ module "gemini-3f" {
 
   farmer-node-config = {
     instance-type          = var.instance_type["farmer"]
-    deployment-version     = 1
+    deployment-version     = 0
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "gemini-3f-2023-oct-06"
+    docker-tag             = "gemini-3g-2023-oct-31"
     reserved-only          = true
     prune                  = false
-    plot-size              = "10G"
+    plot-size              = "2G"
     reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433

@@ -51,7 +51,8 @@ services:
       - /home/$USER/subspace/farmer_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30533:30533"
+      - "30533:30533/udp"
+      - "30533:30533/tcp"
       - "9616:9616"
     logging:
       driver: loki
@@ -60,7 +61,9 @@ services:
     command: [
       "farm", "path=/var/subspace,size=\${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
+      "--external-address", "/ip4/$EXTERNAL_IP/udp/30533/quic-v1",
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
+      "--listen-on", "/ip4/0.0.0.0/udp/30533/quic-v1",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
       "--metrics-endpoint=0.0.0.0:9616",
@@ -73,8 +76,10 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
+      - "30333:30333/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/udp"
+      - "30433:30433/tcp"
       - "9615:9615"
     logging:
       driver: loki
@@ -88,6 +93,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",

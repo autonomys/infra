@@ -129,7 +129,7 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_bootstrap_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_bootstrap_node_evm_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
@@ -148,15 +148,17 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo EVM_NODE_KEY=$(sed -nr 's/NODE_${count.index}_OPERATOR_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_SUBSPACE_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_LISTEN_PORT=${var.bootstrap-node-evm-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file

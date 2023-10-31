@@ -25,7 +25,7 @@ services:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
-      - "httpListenAddr=0.0.0.0:8429"
+      - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
       - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
@@ -78,9 +78,11 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
-      - "40333:40333"
+      - "30333:30333/tcp"
+      - "30333:30333/udp"
+      - "30433:30433/tcp"
+      - "30433:30433/udp"
+      - "40333:40333/tcp"
       - "9615:9615"
     labels:
       - "traefik.enable=true"
@@ -106,6 +108,7 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
@@ -134,7 +137,6 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
-#// TODO: make configurable with gemini network as it's not needed for devnet
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
   echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
