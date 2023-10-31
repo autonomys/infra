@@ -12,10 +12,7 @@ services:
     shm_size: 1gb
     volumes:
       - db_data:/var/lib/postgresql/data
-      - type: bind
-        source: /home/$USER/squid/postgresql/conf/postgresql.conf
-        target: /etc/postgresql/postgresql.conf
-        read_only: true
+      - /home/$USER/squid/postgresql/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

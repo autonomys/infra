@@ -2,17 +2,19 @@
 access_key = ""
 # AWS secret key used to create AWS infrastructure
 secret_key           = ""
-aws_key_name         = "explorer-deployer"
+aws_key_name         = ""
 ssh_user             = "ubuntu"
 vpc_id               = "gemini-3g-vpc"
-vpc_cidr_block       = "172.31.0.0/16"
-public_subnet_cidrs  = ["172.31.1.0/24"]
+vpc_cidr_block       = "172.34.0.0/16"
+public_subnet_cidrs  = ["172.34.1.0/24"]
 network_name         = "gemini-3g"
 instance_type        = "m6a.xlarge"
 instance_count_blue  = 1
-instance_count_green = 0
-disk_volume_size     = 200
-private_key_path     = "~/.ssh/explorer-deployer.pem"
+instance_count_green = 1
+disk_volume_size     = 100
+private_key_path     = "~/.ssh/deployer.pem"
 cloudflare_email     = ""
 cloudflare_api_token = ""
-datadog_api_key      = ""
+nr_api_key           = ""
+netdata_token        = ""
+netdata_room         = ""

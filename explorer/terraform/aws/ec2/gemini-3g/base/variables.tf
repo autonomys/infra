@@ -1,10 +1,3 @@
-variable "netdata_token" {
-  default   = ""
-  type      = string
-  sensitive = true
-
-}
-
 variable "instance_type" {
   default = "m6a.xlarge"
   type    = string
