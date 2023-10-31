@@ -28,17 +28,17 @@ module "cloudflare_lb_gemini" {
   evm_records = [
     {
       name     = "${var.domain_prefix}",
-      hostname = "${var.domain_prefix}-3.evm.${var.network}.${var.domain}",
+      hostname = "${var.domain_prefix}.${var.network}.${var.domain}",
       value    = var.evm_domain_ips[0],
       type     = "A",
-      tags     = ["evm", "us"]
+      tags     = ["evm", "us", "nova"]
     },
     {
       name     = "${var.domain_prefix}",
-      hostname = "${var.domain_prefix}-3.evm.${var.network}.${var.domain}",
+      hostname = "${var.domain_prefix}.${var.network}.${var.domain}",
       value    = var.evm_domain_ips[1],
       type     = "A",
-      tags     = ["evm", "eu"]
+      tags     = ["evm", "eu", "nova"]
     },
   ]
 
@@ -53,13 +53,13 @@ module "cloudflare_lb_gemini" {
       description    = "RPC Monitor"
     },
     {
-      name           = "evm",
+      name           = "nova",
       expected_codes = "2xx",
       timeout        = 5,
       interval       = 60,
       retries        = 2,
       port           = 30333,
-      description    = "EVM Domain Monitor"
+      description    = "Nova Domain Monitor"
     },
   ]
 
@@ -69,8 +69,8 @@ module "cloudflare_lb_gemini" {
       description = "Load Balancer for RPC nodes"
     },
     {
-      name        = "evm",
-      description = "Load Balancer for EVM Domain nodes"
+      name        = "nova",
+      description = "Load Balancer for Nova EVM Domain nodes"
     },
   ]
 }
