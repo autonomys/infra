@@ -175,7 +175,7 @@ resource "null_resource" "start-domain-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

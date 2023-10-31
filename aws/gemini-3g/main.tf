@@ -9,7 +9,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2023-nov-01"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = true
     prune              = false
     genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
@@ -25,7 +25,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2023-nov-01"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = false
     prune              = false
     genesis-hash       = "92e91e657747c41eeabed5129ff51689d2e935b9f6abfbd5dfcb2e1d0d035095"
@@ -42,7 +42,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2023-nov-01"
+    docker-tag         = "gemini-3g-2023-oct-31"
     reserved-only      = true
     prune              = false
     node-dsn-port      = 30433
@@ -56,7 +56,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2023-nov-01"
+    docker-tag         = "gemini-3g-2023-oct-31"
     domain-prefix      = "rpc"
     reserved-only      = true
     prune              = false
@@ -71,7 +71,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2023-nov-01"
+    docker-tag         = "gemini-3g-2023-oct-31"
     domain-prefix      = "nova"
     reserved-only      = true
     prune              = false
@@ -89,7 +89,7 @@ module "gemini-3g" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "gemini-3g-2023-nov-01"
+    docker-tag             = "gemini-3g-2023-oct-31"
     reserved-only          = true
     prune                  = false
     plot-size              = "10G"
