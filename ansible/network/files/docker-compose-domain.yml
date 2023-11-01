@@ -1,9 +1,12 @@
 version: "3.7"
 
 volumes:
-  caddy_data: {}
   archival_node_data: {}
   vmagentdata: {}
+
+networks:
+  traefik-proxy:
+    external: true
 
 services:
   vmagent:
@@ -37,18 +40,32 @@ services:
       NRIA_DISPLAY_NAME: "${NETWORK_NAME}-domain-node-${NODE_ID}"
     restart: unless-stopped
 
-  # caddy reverse proxy with automatic tls management using let encrypt
-  caddy:
-    image: lucaslorentz/caddy-docker-proxy:latest
+  # traefik reverse proxy with automatic tls management using let encrypt
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
     restart: unless-stopped
+    command:
+      - --api=false
+      - --api.dashboard=false
+      - --providers.docker
+      - --log.level=info
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesresolvers.le.acme.email=alerts@subspace.network
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+    networks:
+      - traefik-proxy
     ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - CADDY_INGRESS_NETWORKS=subspace_default
+      - 80:80
+      - 443:443
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - caddy_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
 
   archival-node:
     image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
@@ -62,9 +79,17 @@ services:
       - "9615:9615"
       - "8944:8944"
     labels:
-      caddy_0: ${DOMAIN_PREFIX}-${DOMAIN_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network
-      caddy_0.handle_path_0: /ws
-      caddy_0.handle_path_0.reverse_proxy: "{{upstreams 8944}}"
+      - "traefik.enable=true"
+      - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
+      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}-${DOMAIN_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.tls=true"
+      - "traefik.http.routers.archival-node.tls.certresolver=le"
+      - "traefik.http.routers.archival-node.entrypoints=websecure"
+      - "traefik.http.routers.archival-node.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+    networks:
+      - traefik-proxy
     logging:
       driver: loki
       options:
