@@ -148,27 +148,33 @@ if [ "${reserved_only}" == "true" ]; then
 fi
 
 if [ "${enable_domains}" == "true" ]; then
-    {
+  {
     # core domain
-      echo '      "--",'
-      echo '      "--chain=${NETWORK_NAME}",'
+    echo '      "--",'
+    echo '      "--chain=${NETWORK_NAME}",'
     #  echo '      "--enable-subspace-block-relay",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--domain-id=${DOMAIN_ID}",'
-      echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
-      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "8944",'
-      echo '      "--unsafe-rpc-external",'
-      echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
+    echo '      "--state-pruning", "archive",'
+    echo '      "--blocks-pruning", "archive",'
+    echo '      "--domain-id=${DOMAIN_ID}",'
+
+    if [ "${current_node}" == "0" ]; then
+      echo '      "--operator",'
+    fi
+    echo '      "--keystore-path", "/var/subspace/keystore",'
+    echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
+    echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
+    echo '      "--rpc-cors", "all",'
+    echo '      "--rpc-port", "8944",'
+    echo '      "--unsafe-rpc-external",'
+    echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
+
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_evm_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
       echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
 
-    }  >> ~/subspace/docker-compose.yml
+  } >> ~/subspace/docker-compose.yml
 fi
 
 echo '    ]' >> ~/subspace/docker-compose.yml
