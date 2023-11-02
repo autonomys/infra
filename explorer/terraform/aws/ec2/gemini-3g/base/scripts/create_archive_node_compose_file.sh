@@ -103,7 +103,7 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: ${NR_API_KEY}
+      NRIA_LICENSE_KEY: "${NR_API_KEY}"
       NRIA_DISPLAY_NAME: "archive-squid-gemini-3g"
     restart: unless-stopped
 
