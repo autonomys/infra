@@ -156,12 +156,9 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
     echo '      "--domain-id=${DOMAIN_ID}",'
-
-    if [ "${current_node}" == "0" ]; then
-      echo '      "--operator",'
-    fi
+    echo '      "--operator",'
     echo '      "--keystore-path", "/var/subspace/keystore",'
-    echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
+    echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_${DOMAIN_ID}_domain",'
     echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
     echo '      "--rpc-cors", "all",'
     echo '      "--rpc-port", "8944",'
