@@ -33,7 +33,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-bootstrap-node-${NODE_ID}"
+      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-bootstrap-node-evm-${NODE_ID}"
     restart: unless-stopped
 
   dsn-bootstrap-node:
@@ -73,9 +73,13 @@ services:
       - "--external-address"
       - "/ip4/${EXTERNAL_IP}/tcp/30533"
       - "--reserved-peers"
-      - "${DSN_BOOTSTRAP_NODE_PEER}"
+      - "${DSN_BOOTSTRAP_NODE_0}"
       - "--bootstrap-nodes"
-      - "${DSN_BOOTSTRAP_NODE_PEER}"
+      - "${DSN_BOOTSTRAP_NODE_0}"
+      - "--reserved-peers"
+      - "${DSN_BOOTSTRAP_NODE_1}"
+      - "--bootstrap-nodes"
+      - "${DSN_BOOTSTRAP_NODE_1}"
   archival-node:
     image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
     volumes:
@@ -136,14 +140,6 @@ services:
         "${BOOTSTRAP_NODE_1}",
         "--bootnodes",
         "${BOOTSTRAP_NODE_1}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_1}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_1}",
         "--",
         "--chain=${NETWORK_NAME}",
         "--state-pruning",

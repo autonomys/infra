@@ -68,7 +68,7 @@ services:
       - ./letsencrypt:/letsencrypt
 
   archival-node:
-    image: ghcr.io/${NODE_ORG}/node:${{{NODE_TAG}}}
+    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -155,7 +155,7 @@ services:
         "archive",
         "--domain-id=${DOMAIN_ID}",
         "--base-path",
-        "/var/subspace/core_${DOMAIN_LABEL}_domain",
+        "/var/subspace/core_${DOMAIN_LABEL}_${DOMAIN_ID}_domain",
         "--listen-addr",
         "/ip4/0.0.0.0/tcp/40333",
         "--rpc-cors",
