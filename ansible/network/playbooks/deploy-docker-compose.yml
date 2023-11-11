@@ -7,6 +7,11 @@
       copy:
         src: "../files/{{ docker_compose_file }}"
         dest: "{{ ansible_env.HOME }}/subspace/{{ docker_compose_file }}"
-        mode: '0644'
+        mode: "0644"
+    - name: Copy .env file to the target server
+      copy:
+        src: "../files/{{ env_file }}"
+        dest: "{{ ansible_env.HOME }}/subspace/.env"
+        mode: "0644"
     - name: Deploy with Docker Compose
       shell: "docker-compose -f {{ ansible_env.HOME }}/subspace/{{ docker_compose_file }} up -d"
