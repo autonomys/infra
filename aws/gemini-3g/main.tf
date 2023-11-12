@@ -75,7 +75,7 @@ module "gemini-3g" {
     domain-prefix      = "nova"
     reserved-only      = true
     prune              = false
-    node-dsn-port      = 30434
+    node-dsn-port      = 30433
     enable-domains     = true
     domain-id          = var.domain_id
     domain-labels      = var.domain_labels
