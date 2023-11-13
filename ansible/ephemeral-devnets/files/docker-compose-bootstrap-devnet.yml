@@ -48,8 +48,10 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
+      - "30333:30333/udp"
+      - "30433:30433/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/tcp"
       - "9615:9615"
     logging:
       driver: loki
