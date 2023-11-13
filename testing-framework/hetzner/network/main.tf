@@ -2,7 +2,6 @@ module "network" {
   source          = "../base"
   path_to_scripts = "../base/scripts"
   network_name    = var.network_name
-  branch_name     = var.branch_name
 
   bootstrap-node-config = {
     deployment-version  = 1
@@ -57,4 +56,11 @@ module "network" {
     node-dsn-port          = 30433
 
   }
+
+  tf_token         = var.tf_token
+  private_key_path = var.private_key_path
+  branch_name      = var.branch_name
+  ssh_key_name     = var.ssh_key_name
+  ssh_user         = var.ssh_user
+
 }

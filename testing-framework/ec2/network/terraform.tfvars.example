@@ -10,4 +10,13 @@ ssh_user            = "ubuntu"
 instance_type       = "m6a.xlarge"
 disk_volume_size    = 100
 tf_token            = ""
-branch_name         = "value"
+branch_name         = ""
+farmer_reward_address = ""
+network_name          = "devnet"
+private_key_path      = ""
+instance_count = {
+  bootstrap = 2
+  node      = 1
+  farmer    = 1
+  domain    = 0
+}

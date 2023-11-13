@@ -28,11 +28,6 @@ variable "network_name" {
   default     = "ephemeral-devnet"
 }
 
-variable "branch_name" {
-  description = "name of testing branch"
-  type        = string
-}
-
 variable "vpc_id" {
   type = string
 }
@@ -50,9 +45,10 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap = 2
+    bootstrap = 1
     node      = 1
-    farmer    = 0
+    farmer    = 1
+    domain    = 1
   }
 }
 
@@ -92,12 +88,22 @@ variable "aws_key_name" {
   type    = string
 }
 
-variable "ssh_user" {
-  default = "ubuntu"
-  type    = string
-}
-
 variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
+}
+
+variable "ssh_user" {
+  type    = string
+  default = "ubuntu"
+}
+
+variable "tf_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "branch_name" {
+  description = "name of testing branch"
+  type        = string
 }

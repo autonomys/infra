@@ -2,7 +2,6 @@ module "network" {
   source          = "../base"
   path_to_scripts = "../base/scripts"
   network_name    = var.network_name
-  branch_name     = var.branch_name
 
   bootstrap-node-config = {
     instance-type      = var.instance_type
@@ -76,5 +75,8 @@ module "network" {
   instance_type       = var.instance_type
   vpc_cidr_block      = var.vpc_cidr_block
   public_subnet_cidrs = var.public_subnet_cidrs
+  tf_token            = var.tf_token
+  private_key_path    = var.private_key_path
+  branch_name         = var.branch_name
 
 }

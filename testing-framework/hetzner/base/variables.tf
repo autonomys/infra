@@ -80,18 +80,20 @@ variable "farmer-node-config" {
 }
 
 variable "ssh_key_name" {
-  default = "hetzner"
-  type    = string
+  type = string
 }
 
 variable "ssh_user" {
-  default = "root"
-  type    = string
+  type = string
+}
+
+variable "tf_token" {
+  type      = string
+  sensitive = true
 }
 
 variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/hetzner"
+  type = string
 }
 
 variable "branch_name" {

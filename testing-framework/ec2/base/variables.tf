@@ -52,20 +52,6 @@ variable "path_to_scripts" {
   type        = string
 }
 
-variable "aws_key_name" {
-  default = "deployer"
-  type    = string
-}
-
-variable "ssh_user" {
-  type = string
-}
-
-variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/deployer.pem"
-}
-
 variable "piece_cache_size" {
   description = "Piece cache size"
   type        = string
@@ -157,6 +143,25 @@ variable "secret_key" {
 variable "access_key" {
   type      = string
   sensitive = true
+}
+
+variable "aws_key_name" {
+  default = "deployer"
+  type    = string
+}
+
+variable "private_key_path" {
+  type = string
+}
+
+variable "tf_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
 }
 
 variable "branch_name" {

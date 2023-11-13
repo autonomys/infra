@@ -50,6 +50,7 @@ resource "null_resource" "setup-domain-nodes" {
     inline = [
       "cd /home/${var.ssh_user}/subspace/",
       "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
       "git checkout ${var.branch_name}"
     ]
   }
@@ -146,7 +147,7 @@ resource "null_resource" "start-domain-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
@@ -170,7 +171,8 @@ resource "null_resource" "start-domain-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "cp -f /home/${var.ssh_user}/.env /home/${var.ssh_user}/subspace/subspace/.env",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }
