@@ -22,11 +22,14 @@ services:
     environment:
       - RUST_LOG=info
     ports:
-      - "30533:30533"
+      - "30533:30533/udp"
+      - "30533:30533/tcp"
     command:
       - start
       - "--keypair"
       - \${DSN_NODE_KEY}
+      - "--listen-on"
+      - /ip4/0.0.0.0/udp/30533/quic-v1
       - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
       - --protocol-version
@@ -39,6 +42,8 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
+      - "--external-address"
+      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
       - "--external-address"
       - "/ip4/$EXTERNAL_IP/tcp/30533"
 EOF
@@ -62,8 +67,10 @@ cat >> ~/subspace/subspace/docker-compose.yml << EOF
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333"
-      - "30433:30433"
+      - "30333:30333/udp"
+      - "30433:30433/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/tcp"
       - "9615:9615"
     command: [
       "--chain", "\${NETWORK_NAME}",
@@ -73,6 +80,7 @@ cat >> ~/subspace/subspace/docker-compose.yml << EOF
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
       "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
