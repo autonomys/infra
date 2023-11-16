@@ -7,7 +7,7 @@ module "squids" {
   blue-squid-node-config = {
     deployment-color    = "blue"
     network-name        = "${var.network_name}"
-    domain-prefix       = "squid"
+    domain-prefix       = "squid.blue"
     docker-tag          = "latest"
     instance-type       = var.instance_type
     deployment-version  = 0
@@ -22,7 +22,7 @@ module "squids" {
   green-squid-node-config = {
     deployment-color     = "green"
     network-name         = "${var.network_name}"
-    domain-prefix        = "squid"
+    domain-prefix        = "squid.green"
     docker-tag           = "latest"
     instance-type        = var.instance_type
     deployment-version   = 0
@@ -37,7 +37,7 @@ module "squids" {
   nova-blue-squid-node-config = {
     deployment-color    = "blue"
     network-name        = "${var.network_name}"
-    domain-prefix       = "nova"
+    domain-prefix       = "nova.blue"
     docker-tag          = "evm-domain"
     instance-type       = var.instance_type
     deployment-version  = 0
@@ -52,7 +52,7 @@ module "squids" {
   nova-green-squid-node-config = {
     deployment-color     = "green"
     network-name         = "${var.network_name}"
-    domain-prefix        = "nova"
+    domain-prefix        = "nova.green"
     docker-tag           = "evm-domain"
     instance-type        = var.instance_type
     deployment-version   = 0

@@ -1,5 +1,5 @@
 resource "aws_instance" "squid_blue_node" {
-  count             = length(var.aws_region) * var.blue-squid-node-config.instance-count-blue ? var.blue-squid-node-config.instance-count-blue : 0
+  count             = length(var.aws_region) * var.blue-squid-node-config.instance-count-blue > 0 ? var.blue-squid-node-config.instance-count-blue : 0
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.blue-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
@@ -69,7 +69,7 @@ resource "aws_instance" "squid_blue_node" {
 
 
 resource "aws_instance" "squid_green_node" {
-  count             = length(var.aws_region) * var.green-squid-node-config.instance-count-green ? var.green-squid-node-config.instance-count-green : 0
+  count             = length(var.aws_region) * var.green-squid-node-config.instance-count-green > 0 ? var.green-squid-node-config.instance-count-green : 0
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.green-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
@@ -138,7 +138,7 @@ resource "aws_instance" "squid_green_node" {
 }
 
 resource "aws_instance" "nova_squid_blue_node" {
-  count             = length(var.aws_region) * var.nova-blue-squid-node-config.instance-count-blue ? var.nova-blue-squid-node-config.instance-count-blue : 0
+  count             = length(var.aws_region) * var.nova-blue-squid-node-config.instance-count-blue > 0 ? var.nova-blue-squid-node-config.instance-count-blue : 0
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.nova-blue-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
@@ -207,7 +207,7 @@ resource "aws_instance" "nova_squid_blue_node" {
 }
 
 resource "aws_instance" "nova_squid_green_node" {
-  count             = length(var.aws_region) * var.nova-green-squid-node-config.instance-count-green ? var.nova-green-squid-node-config.instance-count-green : 0
+  count             = length(var.aws_region) * var.nova-green-squid-node-config.instance-count-green > 0 ? var.nova-green-squid-node-config.instance-count-green : 0
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.nova-green-squid-node-config.instance-type
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
