@@ -101,6 +101,10 @@ output "nova_archive_node_ami" {
   value = aws_instance.nova_archive_node.*.ami
 }
 
+output "nova_blockscout_node_public_ip" {
+  value = aws_instance.blockscout_node.*.public_ip
+}
+
 output "dns-records" {
   value = [
     cloudflare_record.squid-blue[*].hostname,
@@ -109,5 +113,6 @@ output "dns-records" {
     cloudflare_record.nova-squid-blue[*].hostname,
     cloudflare_record.nova-squid-green[*].hostname,
     cloudflare_record.nova-archive[*].hostname,
+    cloudflare_record.nova[*].hostname,
   ]
 }
