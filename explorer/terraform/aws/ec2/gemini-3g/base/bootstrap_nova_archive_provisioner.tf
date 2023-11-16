@@ -1,23 +1,22 @@
 locals {
-  archive_node_ip_v4 = flatten([
-    [aws_instance.archive_node.*.public_ip],
+  nova_archive_node_ip_v4 = flatten([
+    [aws_instance.nova_archive_node.*.public_ip],
     ]
   )
 }
 
+resource "null_resource" "setup-nova-archive-nodes" {
+  count = length(local.nova_archive_node_ip_v4)
 
-resource "null_resource" "setup-archive-nodes" {
-  count = length(local.archive_node_ip_v4)
-
-  depends_on = [aws_security_group.gemini-squid-sg, cloudflare_record.archive]
+  depends_on = [aws_security_group.gemini-squid-sg, cloudflare_record.nova-archive]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.archive_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_archive_node_ip_v4)
   }
 
   connection {
-    host           = local.archive_node_ip_v4[count.index]
+    host           = local.nova_archive_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -44,7 +43,7 @@ resource "null_resource" "setup-archive-nodes" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_archive_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_nova_archive_node_compose_file.sh"
     destination = "/home/${var.ssh_user}/archive/create_compose_file.sh"
   }
 
@@ -73,16 +72,16 @@ resource "null_resource" "setup-archive-nodes" {
 
 }
 
-resource "null_resource" "prune-archive-nodes" {
-  count      = var.archive-node-config.prune ? length(local.archive_node_ip_v4) : 0
-  depends_on = [null_resource.setup-archive-nodes]
+resource "null_resource" "prune-nova-archive-nodes" {
+  count      = var.nova-archive-node-config.prune ? length(local.nova_archive_node_ip_v4) : 0
+  depends_on = [null_resource.setup-nova-archive-nodes]
 
   triggers = {
-    prune = var.archive-node-config.prune
+    prune = var.nova-archive-node-config.prune
   }
 
   connection {
-    host           = local.archive_node_ip_v4[count.index]
+    host           = local.nova_archive_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -102,18 +101,18 @@ resource "null_resource" "prune-archive-nodes" {
 }
 
 
-resource "null_resource" "start-archive-nodes" {
-  count = length(local.archive_node_ip_v4)
+resource "null_resource" "start-nova-archive-nodes" {
+  count = length(local.nova_archive_node_ip_v4)
 
-  depends_on = [null_resource.setup-archive-nodes]
+  depends_on = [null_resource.setup-nova-archive-nodes]
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_version = var.archive-node-config.deployment-version
+    deployment_version = var.nova-archive-node-config.deployment-version
   }
 
   connection {
-    host           = local.archive_node_ip_v4[count.index]
+    host           = local.nova_archive_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -133,13 +132,12 @@ resource "null_resource" "start-archive-nodes" {
     ]
   }
 
-
   # install deployments
   provisioner "remote-exec" {
     inline = [
       # copy files
       "sudo cp -f /home/${var.ssh_user}/archive/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sed -i -e 's/server_name _/server_name ${var.archive-node-config.domain-prefix}.${var.network_name}.subspace.network/g' /home/${var.ssh_user}/archive/backend.conf",
+      "sed -i -e 's/server_name _/server_name ${var.nova-archive-node-config.domain-prefix}.${var.network_name}.subspace.network/g' /home/${var.ssh_user}/archive/backend.conf",
       "sudo cp -f /home/${var.ssh_user}/archive/backend.conf /etc/nginx/backend.conf",
       # start systemd services
       "sudo systemctl daemon-reload",
@@ -147,18 +145,17 @@ resource "null_resource" "start-archive-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.archive-node-config.domain-prefix}.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.nova-archive-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
       "sudo hostnamectl set-hostname archive-${var.network_name}",
-
       # create .env file
-      "echo NODE_ORG=${var.archive-node-config.node-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.archive-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.nova-archive-node-config.node-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.nova-archive-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.archive-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.nova-archive-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.archive-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.nova-archive-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_NAME=SUBSQUID_GEMINI_3g >> /home/${var.ssh_user}/subspace/.env",
       "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subspace/.env",
       "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",

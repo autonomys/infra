@@ -28,11 +28,11 @@ services:
     image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
     restart: on-failure:5
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       # provide DB name
-      DB_NAME: ${DB_NAME}
+      DB_NAME: squid-archive
       # provide DB password
-      DB_PASS: ${DB_PASS}
+      DB_PASS: postgres
     depends_on:
       - db
     command: "npm run db:migrate"

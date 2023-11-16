@@ -80,7 +80,9 @@ http {
 	# Logging Settings
 	##
 
-	log_format compression '\$remote_addr - [\$time_local] \$request \$status \$body_bytes_sent \$http_referer \$http_user_agent \$gzip_ratio';
+	log_format compression '\$remote_addr - [\$time_local] '
+                                '"\$request" \$status \$body_bytes_sent '
+                                '"\$http_referer" "\$http_user_agent" "\$gzip_ratio"';
 
 	access_log /var/log/nginx/access.log;
 	error_log /var/log/nginx/error.log;

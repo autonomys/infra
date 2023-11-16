@@ -25,20 +25,20 @@ services:
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
-    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-processor:${DOMAIN_TAG}
     restart: on-failure:5
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       # provide DB name
-      DB_NAME: ${DB_NAME}
+      DB_NAME: squid-archive
       # provide DB password
-      DB_PASS: ${DB_PASS}
+      DB_PASS: postgres
     depends_on:
       - db
     command: "npm run db:migrate"
 
   processor:
-    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-processor:${DOMAIN_TAG}
     restart: on-failure
     environment:
       # provide archive endpoint
@@ -61,7 +61,7 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   graphql:
-    image: ghcr.io/subspace/blockexplorer-api-server:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-api-server:${DOMAIN_TAG}
     depends_on:
       - db
       - run-migrations
@@ -88,7 +88,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "squid-${NETWORK_NAME}"
+      NRIA_DISPLAY_NAME: "squid-gemini-3g"
     restart: unless-stopped
 
   pg-health-check:

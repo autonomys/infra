@@ -101,6 +101,7 @@ variable "blue-squid-node-config" {
     deployment-color    = string
     network-name        = string
     domain-prefix       = string
+    docker-tag          = string
     instance-type       = string
     deployment-version  = number
     regions             = list(string)
@@ -118,6 +119,43 @@ variable "green-squid-node-config" {
     deployment-color     = string
     network-name         = string
     domain-prefix        = string
+    docker-tag           = string
+    instance-type        = string
+    deployment-version   = number
+    regions              = list(string)
+    instance-count-green = number
+    prune                = bool
+    disk-volume-size     = number
+    disk-volume-type     = string
+    environment          = string
+  })
+}
+
+variable "nova-blue-squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color    = string
+    network-name        = string
+    domain-prefix       = string
+    docker-tag          = string
+    instance-type       = string
+    deployment-version  = number
+    regions             = list(string)
+    instance-count-blue = number
+    prune               = bool
+    disk-volume-size    = number
+    disk-volume-type    = string
+    environment         = string
+  })
+}
+
+variable "nova-green-squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color     = string
+    network-name         = string
+    domain-prefix        = string
+    docker-tag           = string
     instance-type        = string
     deployment-version   = number
     regions              = list(string)
@@ -134,6 +172,9 @@ variable "archive-node-config" {
   type = object({
     network-name       = string
     domain-prefix      = string
+    node-org           = string
+    node-tag           = string
+    docker-tag         = string
     instance-type      = string
     deployment-version = number
     regions            = list(string)
@@ -142,4 +183,48 @@ variable "archive-node-config" {
     disk-volume-size   = number
     disk-volume-type   = string
   })
+}
+
+variable "nova-archive-node-config" {
+  description = "nova archive squid configuration"
+  type = object({
+    network-name       = string
+    domain-prefix      = string
+    node-org           = string
+    node-tag           = string
+    docker-tag         = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    prune              = bool
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "nova-blockscout-node-config" {
+  description = "Nova blockscout configuration"
+  type = object({
+    network-name       = string
+    domain-prefix      = string
+    docker-tag         = string
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    prune              = bool
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "postgres_password" {
+  sensitive = true
+  type      = string
+}
+
+variable "prometheus_secret" {
+  sensitive = true
+  type      = string
 }
