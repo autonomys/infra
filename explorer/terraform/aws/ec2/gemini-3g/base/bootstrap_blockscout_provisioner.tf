@@ -84,11 +84,15 @@ resource "null_resource" "start-blockscout-node" {
   # install deployments
   provisioner "remote-exec" {
     inline = [
+      # copy files
+      "sudo cp -f /home/${var.ssh_user}/configs/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sed -i -e 's/server_name _/server_name ${var.nova-blockscout-node-config.domain-prefix}.subspace.network/g' /home/${var.ssh_user}/archive/backend.conf",
+      "sudo cp -f /home/${var.ssh_user}/configs/backend.conf /etc/nginx/backend.conf",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx
       "sudo systemctl enable --now nginx",
-      "sudo systemctl restart nginx",
+      "sudo systemctl start nginx",
       # install certbot & generate domain
       "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.nova-blockscout-node-config.domain-prefix}.subspace.network",
       "sudo systemctl restart nginx",
