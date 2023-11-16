@@ -37,7 +37,7 @@ resource "null_resource" "setup-nova-blue-squid-nodes" {
       "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql",
       "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/conf",
       "sudo mkdir -p /home/${var.ssh_user}/squid/postgresql/data",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 755 /home/${var.ssh_user}/squid/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 750 /home/${var.ssh_user}/squid/"
     ]
   }
 
@@ -103,7 +103,7 @@ resource "null_resource" "setup-nova-green-squid-nodes" {
       "mkdir -p /home/${var.ssh_user}/squid",
       "mkdir -p /home/${var.ssh_user}/squid/postgresql",
       "mkdir -p /home/${var.ssh_user}/squid/postgresql/{conf,data}",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 755 /home/${var.ssh_user}/squid/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/squid/ && sudo chmod -R 750 /home/${var.ssh_user}/squid/"
     ]
   }
 

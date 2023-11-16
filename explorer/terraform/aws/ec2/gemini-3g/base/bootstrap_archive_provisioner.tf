@@ -32,7 +32,7 @@ resource "null_resource" "setup-archive-nodes" {
       "sudo mkdir -p /home/${var.ssh_user}/archive/",
       "sudo mkdir -p /home/${var.ssh_user}/archive/postgresql/data",
       "sudo mkdir -p /home/${var.ssh_user}/archive/node-data",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/archive/ && sudo chmod -R 755 /home/${var.ssh_user}/archive/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/archive/ && sudo chmod -R 750 /home/${var.ssh_user}/archive/"
     ]
   }
 
