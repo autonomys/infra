@@ -1,27 +1,27 @@
 locals {
-  blue_squid_node_ip_v4 = flatten([
-    [aws_instance.squid_blue_node.*.public_ip],
+  nova_blue_squid_node_ip_v4 = flatten([
+    [aws_instance.nova_squid_blue_node.*.public_ip],
     ]
   )
 
-  green_squid_node_ip_v4 = flatten([
-    [aws_instance.squid_green_node.*.public_ip],
+  nova_green_squid_node_ip_v4 = flatten([
+    [aws_instance.nova_squid_green_node.*.public_ip],
     ]
   )
 }
 
-resource "null_resource" "setup-blue-squid-nodes" {
-  count = length(local.blue_squid_node_ip_v4)
+resource "null_resource" "setup-nova-blue-squid-nodes" {
+  count = length(local.nova_blue_squid_node_ip_v4)
 
-  depends_on = [aws_instance.squid_blue_node]
+  depends_on = [aws_instance.nova_squid_blue_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.blue_squid_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_blue_squid_node_ip_v4)
   }
 
   connection {
-    host           = local.blue_squid_node_ip_v4[count.index]
+    host           = local.nova_blue_squid_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -77,18 +77,18 @@ resource "null_resource" "setup-blue-squid-nodes" {
 
 }
 
-resource "null_resource" "setup-green-squid-nodes" {
-  count = length(local.green_squid_node_ip_v4)
+resource "null_resource" "setup-nova-green-squid-nodes" {
+  count = length(local.nova_green_squid_node_ip_v4)
 
-  depends_on = [aws_instance.squid_green_node]
+  depends_on = [aws_instance.nova_squid_green_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.green_squid_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_green_squid_node_ip_v4)
   }
 
   connection {
-    host           = local.green_squid_node_ip_v4[count.index]
+    host           = local.nova_green_squid_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -149,16 +149,16 @@ resource "null_resource" "setup-green-squid-nodes" {
 }
 
 
-resource "null_resource" "prune-blue-squid-nodes" {
-  count      = var.blue-squid-node-config.prune ? length(local.blue_squid_node_ip_v4) : 0
-  depends_on = [null_resource.setup-blue-squid-nodes]
+resource "null_resource" "prune-nova-blue-squid-nodes" {
+  count      = var.nova-blue-squid-node-config.prune ? length(local.nova_blue_squid_node_ip_v4) : 0
+  depends_on = [null_resource.setup-nova-blue-squid-nodes]
 
   triggers = {
-    prune = var.blue-squid-node-config.prune
+    prune = var.nova-blue-squid-node-config.prune
   }
 
   connection {
-    host           = local.blue_squid_node_ip_v4[count.index]
+    host           = local.nova_blue_squid_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -177,16 +177,16 @@ resource "null_resource" "prune-blue-squid-nodes" {
   }
 }
 
-resource "null_resource" "prune-green-squid-nodes" {
-  count      = var.green-squid-node-config.prune ? length(local.green_squid_node_ip_v4) : 0
-  depends_on = [null_resource.setup-green-squid-nodes]
+resource "null_resource" "prune-nova-green-squid-nodes" {
+  count      = var.nova-green-squid-node-config.prune ? length(local.nova_green_squid_node_ip_v4) : 0
+  depends_on = [null_resource.setup-nova-green-squid-nodes]
 
   triggers = {
-    prune = var.green-squid-node-config.prune
+    prune = var.nova-green-squid-node-config.prune
   }
 
   connection {
-    host           = local.green_squid_node_ip_v4[count.index]
+    host           = local.nova_green_squid_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -205,103 +205,18 @@ resource "null_resource" "prune-green-squid-nodes" {
   }
 }
 
-resource "null_resource" "start-blue-squid-nodes" {
-  count = length(local.blue_squid_node_ip_v4)
+resource "null_resource" "start-nova-blue-squid-nodes" {
+  count = length(local.nova_blue_squid_node_ip_v4)
 
-  depends_on = [null_resource.setup-blue-squid-nodes]
-
-  # trigger on node deployment environment change
-  triggers = {
-    deployment_color = var.blue-squid-node-config.deployment-color
-  }
-
-  connection {
-    host           = local.blue_squid_node_ip_v4[count.index]
-    user           = var.ssh_user
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    private_key    = file("${var.private_key_path}")
-    timeout        = "300s"
-
-  }
-
-  # install deployments
-  provisioner "remote-exec" {
-    inline = [
-      # install nginx, certbot, docker and docker compose
-      "chmod +x /home/${var.ssh_user}/squid/install_docker.sh",
-      "sudo bash /home/${var.ssh_user}/squid/install_docker.sh",
-      # copy files
-      "sudo cp -f /home/${var.ssh_user}/squid/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f /home/${var.ssh_user}/squid/backend.conf /etc/nginx/backend.conf",
-      "chmod +x /home/${var.ssh_user}/squid/install_nginx.sh",
-      "sudo bash /home/${var.ssh_user}/squid/install_nginx.sh",
-      # start systemd services
-      "sudo systemctl daemon-reload",
-      # start nginx
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx",
-      # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.blue-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
-      "sudo systemctl restart nginx",
-      # install netdata
-      "sudo sh -c \"curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud\"",
-      # set hostname
-      "sudo hostnamectl set-hostname squid-${var.blue-squid-node-config.network-name}",
-
-      # create .env file
-      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.blue-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.blue-squid-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_NAME=SUBSQUID_GEMINI_3g >> /home/${var.ssh_user}/subspace/.env",
-      "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subspace/.env",
-      "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",
-      "echo POSTGRES_USER=postgres >> /home/${var.ssh_user}/subspace/.env",
-      "echo POSTGRES_DB=squid-archive >> /home/${var.ssh_user}/subspace/.env",
-      "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_TYPE=postgres >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_HOST=db >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_USER=postgres >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_NAME=squid-archive >> /home/${var.ssh_user}/subspace/.env",
-      "echo DB_PASS=${var.postgres_password} >> /home/${var.ssh_user}/subspace/.env",
-      "echo ARCHIVE_ENDPOINT=https://archive.gemini-3g.subspace.network/api >> /home/${var.ssh_user}/subspace/.env",
-      "echo CHAIN_RPC_ENDPOINT=wss://rpc-0.gemini-3g.subspace.network/ws >> /home/${var.ssh_user}/subspace/.env",
-      "echo PROCESSOR_HEALTH_HOST=http://processor:3000 >> /home/${var.ssh_user}/subspace/.env",
-      "echo PROCESSOR_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subspace/.env",
-      "echo HEALTH_CHECK_PORT=8080 >> /home/${var.ssh_user}/subspace/.env",
-      "echo INGEST_HEALTH_HOST=http://ingest:9090 >> /home/${var.ssh_user}/subspace/.env",
-      "echo INGEST_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subspace/.env",
-      "echo MY_SECRET=${var.prometheus_secret} >> /home/${var.ssh_user}/subspace/.env",
-
-      # create docker compose file
-      "chmod +x /home/${var.ssh_user}/squid/create_compose_file.sh",
-      "bash /home/${var.ssh_user}/squid/create_compose_file.sh",
-      # start docker daemon
-      "sudo systemctl enable --now docker.service",
-      "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./squid/docker-compose.yml up -d",
-      "echo 'Installation Complete'",
-    ]
-  }
-
-}
-
-
-resource "null_resource" "start-green-squid-nodes" {
-  count = length(local.green_squid_node_ip_v4)
-
-  depends_on = [null_resource.setup-green-squid-nodes]
+  depends_on = [null_resource.setup-nova-blue-squid-nodes]
 
   # trigger on node deployment environment change
   triggers = {
-    deployment_color = var.green-squid-node-config.deployment-color
+    deployment_color = var.nova-blue-squid-node-config.deployment-color
   }
 
   connection {
-    host           = local.green_squid_node_ip_v4[count.index]
+    host           = local.nova_blue_squid_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -328,23 +243,23 @@ resource "null_resource" "start-green-squid-nodes" {
       # copy files
       "sudo cp -f /home/${var.ssh_user}/squid/cors-settings.conf /etc/nginx/cors-settings.conf",
       "sudo cp -f /home/${var.ssh_user}/squid/backend.conf /etc/nginx/backend.conf",
-      "chmod +x /home/${var.ssh_user}/squid/install_nginx.sh",
-      "sudo bash /home/${var.ssh_user}/squid/install_nginx.sh",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.nova-blue-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
+      # install netdata
+      "sudo sh -c \"curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud\"",
       # set hostname
-      "sudo hostnamectl set-hostname squid-${var.green-squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname squid-${var.nova-blue-squid-node-config.network-name}",
       # create .env file
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.green-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.nova-blue-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.green-squid-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.nova-blue-squid-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_NAME=SUBSQUID_GEMINI_3g >> /home/${var.ssh_user}/subspace/.env",
       "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subspace/.env",
       "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",
@@ -378,4 +293,86 @@ resource "null_resource" "start-green-squid-nodes" {
     ]
   }
 
+}
+
+
+resource "null_resource" "start-nova-green-squid-nodes" {
+  count = length(local.nova_green_squid_node_ip_v4)
+
+  depends_on = [null_resource.setup-nova-green-squid-nodes]
+
+  # trigger on node deployment environment change
+  triggers = {
+    deployment_color = var.nova-green-squid-node-config.deployment-color
+  }
+
+  connection {
+    host           = local.nova_green_squid_node_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.aws_key_name
+    private_key    = file("${var.private_key_path}")
+    timeout        = "300s"
+
+  }
+
+  # install deployments
+  provisioner "remote-exec" {
+    inline = [
+      # install nginx, certbot, docker and docker compose
+      "chmod +x /home/${var.ssh_user}/squid/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_docker.sh",
+      # copy files
+      "sudo cp -f /home/${var.ssh_user}/squid/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sudo cp -f /home/${var.ssh_user}/squid/backend.conf /etc/nginx/backend.conf",
+      "chmod +x /home/${var.ssh_user}/squid/install_nginx.sh",
+      "sudo bash /home/${var.ssh_user}/squid/install_nginx.sh",
+      # start systemd services
+      "sudo systemctl daemon-reload",
+      # start nginx
+      "sudo systemctl enable nginx",
+      "sudo systemctl start nginx",
+      # install certbot & generate domain
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.nova-green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
+      "sudo systemctl restart nginx",
+      # set hostname
+      "sudo hostnamectl set-hostname squid-${var.nova-green-squid-node-config.network-name}",
+      # create .env file
+      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.nova-green-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.nova-green-squid-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_NAME=SUBSQUID_GEMINI_3g >> /home/${var.ssh_user}/subspace/.env",
+      "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subspace/.env",
+      "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",
+      "echo POSTGRES_USER=postgres >> /home/${var.ssh_user}/subspace/.env",
+      "echo POSTGRES_DB=squid-archive >> /home/${var.ssh_user}/subspace/.env",
+      "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_TYPE=postgres >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_HOST=db >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_PORT=5432 >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_USER=postgres >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_NAME=squid-archive >> /home/${var.ssh_user}/subspace/.env",
+      "echo DB_PASS=${var.postgres_password} >> /home/${var.ssh_user}/subspace/.env",
+      "echo ARCHIVE_ENDPOINT=https://archive.gemini-3g.subspace.network/api >> /home/${var.ssh_user}/subspace/.env",
+      "echo CHAIN_RPC_ENDPOINT=wss://rpc-0.gemini-3g.subspace.network/ws >> /home/${var.ssh_user}/subspace/.env",
+      "echo PROCESSOR_HEALTH_HOST=http://processor:3000 >> /home/${var.ssh_user}/subspace/.env",
+      "echo PROCESSOR_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subspace/.env",
+      "echo HEALTH_CHECK_PORT=8080 >> /home/${var.ssh_user}/subspace/.env",
+      "echo INGEST_HEALTH_HOST=http://ingest:9090 >> /home/${var.ssh_user}/subspace/.env",
+      "echo INGEST_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subspace/.env",
+      "echo MY_SECRET=${var.prometheus_secret} >> /home/${var.ssh_user}/subspace/.env",
+
+      # create docker compose file
+      "chmod +x /home/${var.ssh_user}/squid/create_compose_file.sh",
+      "bash /home/${var.ssh_user}/squid/create_compose_file.sh",
+
+      # start docker daemon
+      "sudo systemctl enable --now docker.service",
+      "sudo systemctl restart docker.service",
+      "sudo docker compose -f ./squid/docker-compose.yml up -d",
+      "echo 'Installation Complete'",
+    ]
+  }
 }
