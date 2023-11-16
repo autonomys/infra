@@ -2,7 +2,7 @@
 access_key = ""
 # AWS secret key used to create AWS infrastructure
 secret_key           = ""
-aws_key_name         = ""
+aws_key_name         = "explorer-deployer"
 ssh_user             = "ubuntu"
 vpc_id               = "gemini-3g-vpc"
 vpc_cidr_block       = "172.34.0.0/16"
@@ -12,9 +12,10 @@ instance_type        = "m6a.xlarge"
 instance_count_blue  = 1
 instance_count_green = 1
 disk_volume_size     = 100
-private_key_path     = "~/.ssh/deployer.pem"
+private_key_path     = ""
 cloudflare_email     = ""
 cloudflare_api_token = ""
 nr_api_key           = ""
 netdata_token        = ""
-netdata_room         = ""
+postgres_password    = ""
+prometheus_secret    = ""
