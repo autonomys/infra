@@ -68,7 +68,7 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3g-nov-15"
+    node-tag           = "gemini-3g-nov-19"
     docker-tag         = "latest"
     instance-type      = var.instance_type
     deployment-version = 0
@@ -83,7 +83,7 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "nova.archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3g-nov-15"
+    node-tag           = "gemini-3g-nov-19"
     docker-tag         = "evm-domain"
     instance-type      = var.instance_type
     deployment-version = 0
