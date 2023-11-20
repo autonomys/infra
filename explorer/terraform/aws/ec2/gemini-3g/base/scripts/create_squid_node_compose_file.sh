@@ -1,6 +1,6 @@
 #!/bin/sh
-source /home/$USER/.bash_profile
-cat > /home/$USER/squid/docker-compose.yml << EOF
+source $HOME/.bash_profile
+cat > $HOME/squid/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -12,17 +12,20 @@ services:
     shm_size: 1gb
     volumes:
       - db_data:/var/lib/postgresql/data
-      - /home/$USER/squid/postgresql/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - type: bind
+        source: $HOME/squid/postgresql/conf/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: squid-archive
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     expose:
       - "5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
-    image: ghcr.io/subspace/blockexplorer-processor:latest
+    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
     restart: on-failure:5
     environment:
       DB_HOST: ${DB_HOST}
@@ -35,7 +38,7 @@ services:
     command: "npm run db:migrate"
 
   processor:
-    image: ghcr.io/subspace/blockexplorer-processor:latest
+    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
     restart: on-failure
     environment:
       # provide archive endpoint
@@ -58,7 +61,7 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   graphql:
-    image: ghcr.io/subspace/blockexplorer-api-server:latest
+    image: ghcr.io/subspace/blockexplorer-api-server:${DOCKER_TAG}
     depends_on:
       - db
       - run-migrations
@@ -85,7 +88,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "squid-gemini-3g"
+      NRIA_DISPLAY_NAME: "squid-${NETWORK_NAME}"
     restart: unless-stopped
 
   pg-health-check:

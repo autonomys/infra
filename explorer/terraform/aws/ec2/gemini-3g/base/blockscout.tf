@@ -1,5 +1,5 @@
-resource "aws_instance" "archive_node" {
-  count             = 1
+resource "aws_instance" "blockscout_node" {
+  count             = var.nova-blockscout-node-config.instance-count > 0 ? var.nova-blockscout-node-config.instance-count : 0
   ami               = data.aws_ami.ubuntu_amd64.image_id
   instance_type     = var.instance_type
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
@@ -20,8 +20,8 @@ resource "aws_instance" "archive_node" {
   }
 
   tags = {
-    name       = "squid-archive-${var.archive-node-config.network-name}"
-    role       = "archive"
+    name       = "nova-${var.nova-blockscout-node-config.network-name}"
+    role       = "blockscout"
     os_name    = "ubuntu"
     os_version = "22.04"
     arch       = "x86_64"
@@ -44,10 +44,9 @@ resource "aws_instance" "archive_node" {
       "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install wget gnupg openssl net-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install wget gnupg openssl net-tools git -y",
       # install monitoring
       "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
-
     ]
 
     on_failure = continue

@@ -1,7 +1,7 @@
 #!/bin/bash
 EXTERNAL_IP=`curl -s ifconfig.me`
-source /home/$USER/.bash_profile
-cat > /home/$USER/archive/docker-compose.yml << EOF
+source $HOME/.bash_profile
+cat > $HOME/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -12,7 +12,7 @@ services:
     image: postgres:16
     restart: always
     volumes:
-      - /home/$USER/archive/postgresql:/var/lib/postgresql
+      - $HOME/archive/postgresql:/var/lib/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -22,7 +22,7 @@ services:
     depends_on:
       - db
     restart: on-failure
-    image: ghcr.io/subspace/substrate-ingest:latest
+    image: ghcr.io/subspace/substrate-ingest:${DOCKER_TAG}
     logging:
       driver: loki
       options:
@@ -104,7 +104,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "archive-squid-gemini-3g"
+      NRIA_DISPLAY_NAME: "archive-squid-${NETWORK_NAME}"
     restart: unless-stopped
 
   pg-health-check:

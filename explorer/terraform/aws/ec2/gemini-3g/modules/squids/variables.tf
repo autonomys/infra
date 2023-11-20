@@ -4,12 +4,6 @@ variable "netdata_token" {
 
 }
 
-variable "netdata_room" {
-  type      = string
-  sensitive = true
-
-}
-
 variable "nr_api_key" {
   description = "New relic API Key"
   type        = string
@@ -102,4 +96,14 @@ variable "disk_volume_size" {
 variable "disk_volume_type" {
   type    = string
   default = "gp3"
+}
+
+variable "postgres_password" {
+  sensitive = true
+  type      = string
+}
+
+variable "prometheus_secret" {
+  sensitive = true
+  type      = string
 }

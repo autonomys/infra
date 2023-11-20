@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-nginx --no-install-recommends -y
 cat /dev/null > /etc/nginx/nginx.conf
 cat << EOF >> /etc/nginx/nginx.conf
 user www-data;
@@ -79,9 +80,7 @@ http {
 	# Logging Settings
 	##
 
-	log_format compression '\$remote_addr - [\$time_local] '
-                                '"\$request" \$status \$body_bytes_sent '
-                                '"\$http_referer" "\$http_user_agent" "\$gzip_ratio"';
+	log_format compression '\$remote_addr - [\$time_local] \$request \$status \$body_bytes_sent \$http_referer \$http_user_agent \$gzip_ratio';
 
 	access_log /var/log/nginx/access.log;
 	error_log /var/log/nginx/error.log;
