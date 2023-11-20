@@ -77,7 +77,7 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
-## comment external addresses using IP format for now
+## comment to disable external addresses using IP format for now
 #      - "--external-address"
 #      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
 #      - "--external-address"
