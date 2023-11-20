@@ -7,7 +7,7 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [0]
+  default     = [1]
 }
 
 //todo change this to a map
@@ -51,7 +51,7 @@ variable "instance_count" {
     rpc           = 2
     domain        = 2
     full          = 1
-    farmer        = 1
+    farmer        = 0
     evm_bootstrap = 1
   }
 }
