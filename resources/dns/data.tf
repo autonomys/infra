@@ -12,3 +12,8 @@ data "cloudflare_zone" "subspace_net" {
 data "cloudflare_zone" "continuim_cc" {
   name = "continuim.cc"
 }
+
+// ## continuum.co zone ##
+data "cloudflare_zone" "continuum_co" {
+  name = "continuum.co"
+}
