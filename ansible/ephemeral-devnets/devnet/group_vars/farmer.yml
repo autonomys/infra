@@ -1,2 +1,3 @@
 docker_compose_file: "docker-compose-farmer-devnet.yml"
 deployment_dir: "{{ lookup('env', 'HOME') }}/subspace"
+env_file: ".env.farmer"

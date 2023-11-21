@@ -2,7 +2,6 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
-  farmer_data: {}
   vmagentdata: {}
 
 services:
@@ -12,7 +11,7 @@ services:
     depends_on:
       - "archival-node"
     ports:
-      - 8429:8429
+      - "0.0.0.0:8429:8429"
     volumes:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -34,17 +33,14 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-farmer-node-${NODE_ID}"
+      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-bootstrap-node-evm-${NODE_ID}"
     restart: unless-stopped
 
-  farmer:
-    depends_on:
-      archival-node:
-        condition: service_healthy
-    image: ghcr.io/${NODE_ORG}/farmer:${NODE_TAG}
-    volumes:
-      - farmer_data:/var/subspace:rw
+  dsn-bootstrap-node:
+    image: ghcr.io/${NODE_ORG}/bootstrap-node:${NODE_TAG}
     restart: unless-stopped
+    environment:
+      - RUST_LOG=info
     ports:
       - "30533:30533/udp"
       - "30533:30533/tcp"
@@ -54,26 +50,36 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command:
-      [
-        "farm",
-        "path=/var/subspace,size=${PLOT_SIZE}",
-        "--node-rpc-url",
-        "ws://archival-node:9944",
-        "--external-address",
-        "/ip4/${EXTERNAL_IP}/udp/30533/quic-v1",
-        "--listen-on",
-        "/ip4/0.0.0.0/udp/30533/quic-v1",
-        "--external-address",
-        "/ip4/${EXTERNAL_IP}/tcp/30533",
-        "--listen-on",
-        "/ip4/0.0.0.0/tcp/30533",
-        "--reward-address",
-        "${REWARD_ADDRESS}",
-        "--cache-percentage",
-        "15",
-        "--metrics-endpoint=0.0.0.0:9616",
-      ]
-
+      - start
+      - "--metrics-endpoints=0.0.0.0:9616"
+      - "--keypair"
+      - ${DSN_NODE_KEY}
+      - "--listen-on"
+      - /ip4/0.0.0.0/udp/30533/quic-v1
+      - "--listen-on"
+      - /ip4/0.0.0.0/tcp/30533
+      - --protocol-version
+      - ${GENESIS_HASH}
+      - "--in-peers"
+      - "1000"
+      - "--out-peers"
+      - "1000"
+      - "--pending-in-peers"
+      - "1000"
+      - "--pending-out-peers"
+      - "1000"
+      - "--external-address"
+      - "/ip4/${EXTERNAL_IP}/udp/30533/quic-v1"
+      - "--external-address"
+      - "/ip4/${EXTERNAL_IP}/tcp/30533"
+      - "--reserved-peers"
+      - "${DSN_BOOTSTRAP_NODE_0}"
+      - "--bootstrap-nodes"
+      - "${DSN_BOOTSTRAP_NODE_0}"
+      - "--reserved-peers"
+      - "${DSN_BOOTSTRAP_NODE_1}"
+      - "--bootstrap-nodes"
+      - "${DSN_BOOTSTRAP_NODE_1}"
   archival-node:
     image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
     volumes:
@@ -109,13 +115,20 @@ services:
         "/ip4/${EXTERNAL_IP}/tcp/30433",
         "--node-key",
         "${NODE_KEY}",
-        "--validator",
-        "--timekeeper",
-        "--rpc-cors",
-        "all",
-        "--rpc-external",
-        "--rpc-methods",
-        "unsafe",
+        "--in-peers",
+        "1000",
+        "--out-peers",
+        "1000",
+        "--in-peers-light",
+        "1000",
+        "--dsn-in-connections",
+        "1000",
+        "--dsn-out-connections",
+        "1000",
+        "--dsn-pending-in-connections",
+        "1000",
+        "--dsn-pending-out-connections",
+        "1000",
         "--prometheus-port",
         "9615",
         "--prometheus-external",
@@ -127,14 +140,25 @@ services:
         "${BOOTSTRAP_NODE_1}",
         "--bootnodes",
         "${BOOTSTRAP_NODE_1}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_1}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_1}",
-        "--force-synced",
-        "--force-authoring",
+        "--",
+        "--chain=${NETWORK_NAME}",
+        "--state-pruning",
+        "archive",
+        "--blocks-pruning",
+        "archive",
+        "--domain-id=${DOMAIN_ID}",
+        "--base-path",
+        "/var/subspace/core_${DOMAIN_LABEL}_domain",
+        "--listen-addr",
+        "/ip4/0.0.0.0/tcp/40333",
+        "--rpc-cors",
+        "all",
+        "--rpc-port",
+        "8944",
+        "--unsafe-rpc-external",
+        "--relayer-id=${RELAYER_DOMAIN_ID}",
+        "--reserved-nodes",
+        "${BOOTSTRAP_NODE_EVM_0}",
+        "--bootnodes",
+        "${BOOTSTRAP_NODE_EVM_0}",
       ]
