@@ -5,7 +5,10 @@ volumes:
 
 services:
   archival-node:
-    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
+    image: ghcr.io/subspace/node:latest
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
