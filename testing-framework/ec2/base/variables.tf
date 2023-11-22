@@ -52,20 +52,6 @@ variable "path_to_scripts" {
   type        = string
 }
 
-variable "aws_key_name" {
-  default = "deployer"
-  type    = string
-}
-
-variable "ssh_user" {
-  type = string
-}
-
-variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/deployer.pem"
-}
-
 variable "piece_cache_size" {
   description = "Piece cache size"
   type        = string
@@ -79,8 +65,8 @@ variable "node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     reserved-only      = bool
     prune              = bool
     node-dsn-port      = number
@@ -96,8 +82,8 @@ variable "domain-node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     domain-prefix      = string
     reserved-only      = bool
     prune              = bool
@@ -117,8 +103,8 @@ variable "bootstrap-node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     reserved-only      = bool
     prune              = bool
     genesis-hash       = string
@@ -136,8 +122,8 @@ variable "farmer-node-config" {
     deployment-version     = number
     regions                = list(string)
     instance-count         = number
-    docker-org             = string
-    docker-tag             = string
+    repo-org               = string
+    node-tag               = string
     reserved-only          = bool
     prune                  = bool
     plot-size              = string
@@ -157,6 +143,25 @@ variable "secret_key" {
 variable "access_key" {
   type      = string
   sensitive = true
+}
+
+variable "aws_key_name" {
+  default = "deployer"
+  type    = string
+}
+
+variable "private_key_path" {
+  type = string
+}
+
+variable "tf_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "ssh_user" {
+  default = "ubuntu"
+  type    = string
 }
 
 variable "branch_name" {

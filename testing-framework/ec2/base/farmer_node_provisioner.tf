@@ -53,6 +53,7 @@ resource "null_resource" "setup-farmer-nodes" {
     inline = [
       "cd /home/${var.ssh_user}/subspace/",
       "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
       "git checkout ${var.branch_name}"
     ]
   }
@@ -110,6 +111,12 @@ resource "null_resource" "start-farmer-nodes" {
     timeout     = "300s"
   }
 
+  # copy node keys file
+  provisioner "file" {
+    source      = "./farmer_node_keys.txt"
+    destination = "/root/subspace/node_keys.txt"
+  }
+
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
@@ -132,14 +139,14 @@ resource "null_resource" "start-farmer-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.farmer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.farmer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REPO_ORG=${var.farmer-node-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.farmer-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -153,7 +160,8 @@ resource "null_resource" "start-farmer-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
       # start subspace
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "cp -f /home/${var.ssh_user}/.env /home/${var.ssh_user}/subspace/subspace/.env",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }

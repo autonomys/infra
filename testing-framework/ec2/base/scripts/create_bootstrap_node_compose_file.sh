@@ -6,7 +6,7 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 
-cat > ~/subspace/docker-compose.yml << EOF
+cat > ~/subspace/subspace/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: $HOME/subspace/subspace/Dockerfile-bootstrap-node
-    image: \${NODE_ORG}/node:\${NODE_TAG}
+    image: \${REPO_ORG}/\${NODE_TAG}:latest
     restart: unless-stopped
     environment:
       - RUST_LOG=info
@@ -50,19 +50,19 @@ EOF
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-    echo "      - \"--reserved-peers\"" >> ~/subspace/docker-compose.yml
-    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
-    echo "      - \"--bootstrap-nodes\"" >> ~/subspace/docker-compose.yml
-    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"--reserved-peers\"" >> ~/subspace/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/subspace/docker-compose.yml
+    echo "      - \"--bootstrap-nodes\"" >> ~/subspace/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/subspace/docker-compose.yml
   fi
 done
 
-cat >> ~/subspace/docker-compose.yml << EOF
+cat >> ~/subspace/subspace/docker-compose.yml << EOF
   archival-node:
     build:
       context: .
       dockerfile: $HOME/subspace/subspace/Dockerfile-node
-    image: \${NODE_ORG}/node:\${NODE_TAG}
+    image: \${REPO_ORG}/node:latest
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
@@ -98,13 +98,13 @@ EOF
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
+    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
   fi
 done
 
 if [ "${reserved_only}" == true ]; then
-    echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--reserved-only\"," >> ~/subspace/subspace/docker-compose.yml
 fi
 
-echo '    ]' >> ~/subspace/docker-compose.yml
+echo '    ]' >> ~/subspace/subspace/docker-compose.yml

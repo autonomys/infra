@@ -19,8 +19,8 @@ variable "node-config" {
   type = object({
     deployment-version  = number
     instance-count      = number
-    docker-org          = string
-    docker-tag          = string
+    repo-org            = string
+    node-tag            = string
     additional-node-ips = list(string)
     reserved-only       = bool
     prune               = bool
@@ -33,8 +33,8 @@ variable "domain-node-config" {
   type = object({
     deployment-version  = number
     instance-count      = number
-    docker-org          = string
-    docker-tag          = string
+    repo-org            = string
+    node-tag            = string
     additional-node-ips = list(string)
     domain-prefix       = string
     reserved-only       = bool
@@ -51,8 +51,8 @@ variable "bootstrap-node-config" {
   type = object({
     deployment-version  = number
     instance-count      = number
-    docker-org          = string
-    docker-tag          = string
+    repo-org            = string
+    node-tag            = string
     additional-node-ips = list(string)
     reserved-only       = bool
     prune               = bool
@@ -67,8 +67,8 @@ variable "farmer-node-config" {
   type = object({
     deployment-version     = number
     instance-count         = number
-    docker-org             = string
-    docker-tag             = string
+    repo-org               = string
+    node-tag               = string
     additional-node-ips    = list(string)
     reserved-only          = bool
     prune                  = bool
@@ -79,19 +79,17 @@ variable "farmer-node-config" {
   })
 }
 
-variable "ssh_key_name" {
-  default = "hetzner"
-  type    = string
+variable "ssh_user" {
+  type = string
 }
 
-variable "ssh_user" {
-  default = "root"
-  type    = string
+variable "tf_token" {
+  type      = string
+  sensitive = true
 }
 
 variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/hetzner"
+  type = string
 }
 
 variable "branch_name" {

@@ -49,6 +49,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
     inline = [
       "cd /root/subspace/",
       "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
       "git checkout ${var.branch_name}"
     ]
   }
@@ -128,14 +129,14 @@ resource "null_resource" "start-boostrap-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f /root/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-config.docker-tag} >> /root/subspace/.env",
+      "echo REPO_ORG=${var.bootstrap-node-config.repo-org} > /root/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-config.node-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
       "echo NODE_ID=${count.index} >> /root/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
@@ -151,7 +152,8 @@ resource "null_resource" "start-boostrap-nodes" {
       "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      "sudo docker compose -f /root/subspace/docker-compose.yml up -d",
+      "cp -f /root/subspace/.env /root/subspace/subspace/.env",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }

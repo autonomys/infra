@@ -22,18 +22,13 @@ variable "domain_labels" {
   default     = ["evm"]
 }
 
-variable "azs" {
-  type        = string
-  description = "Availability Zones"
-  default     = "us-east-1a"
-}
-
 variable "instance_count" {
   type = map(number)
   default = {
     bootstrap = 2
     node      = 1
-    farmer    = 0
+    farmer    = 1
+    domain    = 1
   }
 }
 
@@ -43,17 +38,13 @@ variable "additional_node_ips" {
     bootstrap = [""]
     node      = [""]
     farmer    = [""]
+    domain    = [""]
   }
 }
 
-variable "ssh_key_name" {
-  default = "hetzner"
-  type    = string
-}
-
 variable "ssh_user" {
-  default = "root"
   type    = string
+  default = "root"
 }
 
 variable "private_key_path" {
@@ -62,7 +53,8 @@ variable "private_key_path" {
 }
 
 variable "tf_token" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "branch_name" {

@@ -2,6 +2,9 @@ ssh_key_name = "hetzner"
 ssh_user     = "root"
 tf_token     = ""
 branch_name  = ""
+farmer_reward_address = ""
+network_name          = "devnet"
+private_key_path      = ""
 additional_node_ips = {
   bootstrap = [""]
   node      = [""]
@@ -11,4 +14,5 @@ instance_count = {
   bootstrap = 2
   node      = 1
   farmer    = 1
+  domain    = 0
 }

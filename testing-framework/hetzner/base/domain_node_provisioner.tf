@@ -47,6 +47,7 @@ resource "null_resource" "setup-domain-nodes" {
     inline = [
       "cd /root/subspace/",
       "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
       "git checkout ${var.branch_name}"
     ]
   }
@@ -143,14 +144,14 @@ resource "null_resource" "start-domain-nodes" {
   provisioner "remote-exec" {
     inline = [
       # stop any running service
-      "sudo docker compose -f /root/subspace/docker-compose.yml down ",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.domain-node-config.docker-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /root/subspace/.env",
+      "echo REPO_ORG=${var.domain-node-config.repo-org} > /root/subspace/.env",
+      "echo NODE_TAG=${var.domain-node-config.node-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /root/subspace/.env",
       # //todo use a map for domain id and labels
@@ -167,7 +168,8 @@ resource "null_resource" "start-domain-nodes" {
       "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      "sudo docker compose -f /root/subspace/docker-compose.yml up -d",
+      "cp -f /root/subspace/.env /root/subspace/subspace/.env",
+      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }

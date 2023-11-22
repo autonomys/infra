@@ -2,15 +2,14 @@ module "network" {
   source          = "../base"
   path_to_scripts = "../base/scripts"
   network_name    = var.network_name
-  branch_name     = var.branch_name
 
   bootstrap-node-config = {
     instance-type      = var.instance_type
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
-    docker-org         = "subspace"
-    docker-tag         = "bootstrap-node"
+    repo-org           = "subspace"
+    node-tag           = "bootstrap-node"
     reserved-only      = false
     prune              = false
     genesis-hash       = ""
@@ -25,8 +24,8 @@ module "network" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["node"]
-    docker-org         = "subspace"
-    docker-tag         = "subspace-node"
+    repo-org           = "subspace"
+    node-tag           = "subspace-node"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -39,8 +38,8 @@ module "network" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
-    docker-org         = "subspace"
-    docker-tag         = "subspace-node"
+    repo-org           = "subspace"
+    node-tag           = "subspace-node"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -57,8 +56,8 @@ module "network" {
     deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
-    docker-org             = "subspace"
-    docker-tag             = "farmer-node"
+    repo-org               = "subspace"
+    node-tag               = "farmer-node"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
@@ -76,5 +75,8 @@ module "network" {
   instance_type       = var.instance_type
   vpc_cidr_block      = var.vpc_cidr_block
   public_subnet_cidrs = var.public_subnet_cidrs
+  tf_token            = var.tf_token
+  private_key_path    = var.private_key_path
+  branch_name         = var.branch_name
 
 }
