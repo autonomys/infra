@@ -143,8 +143,8 @@ resource "null_resource" "start-nodes" {
       "sudo hostnamectl set-hostname ${var.network_name}-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REPO_ORG=${var.node-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",

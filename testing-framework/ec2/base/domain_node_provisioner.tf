@@ -153,8 +153,8 @@ resource "null_resource" "start-domain-nodes" {
       "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REPO_ORG=${var.domain-node-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.domain-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       # //todo use a map for domain id and labels

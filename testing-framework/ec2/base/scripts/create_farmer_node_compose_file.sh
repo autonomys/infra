@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: $HOME/subspace/subspace/Dockerfile-farmer
-    image: \${NODE_ORG}/\${NODE_TAG}:latest
+    image: \${REPO_ORG}/\${NODE_TAG}:latest
     volumes:
       - farmer_data:/var/subspace
     restart: unless-stopped
@@ -38,7 +38,7 @@ services:
     build:
       context: $HOME/subspace/subspace/
       dockerfile: Dockerfile-node
-    image: \${NODE_ORG}/node:\${NODE_TAG}
+    image: \${REPO_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

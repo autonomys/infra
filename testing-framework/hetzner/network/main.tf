@@ -6,8 +6,8 @@ module "network" {
   bootstrap-node-config = {
     deployment-version  = 1
     instance-count      = var.instance_count["bootstrap"]
-    docker-org          = "subspace"
-    docker-tag          = "bootstrap-node"
+    repo-org            = "subspace"
+    node-tag            = "bootstrap-node"
     additional-node-ips = var.additional_node_ips["bootstrap"]
     reserved-only       = true
     prune               = false
@@ -19,8 +19,8 @@ module "network" {
   node-config = {
     deployment-version  = 1
     instance-count      = var.instance_count["node"]
-    docker-org          = "subspace"
-    docker-tag          = "subspace-node"
+    repo-org            = "subspace"
+    node-tag            = "subspace-node"
     additional-node-ips = var.additional_node_ips["node"]
     reserved-only       = true
     prune               = false
@@ -30,8 +30,8 @@ module "network" {
   domain-node-config = {
     deployment-version  = 1
     instance-count      = var.instance_count["domain"]
-    docker-org          = "subspace"
-    docker-tag          = "subspace-node"
+    repo-org            = "subspace"
+    node-tag            = "subspace-node"
     additional-node-ips = var.additional_node_ips["domain"]
     domain-prefix       = "domain"
     reserved-only       = true
@@ -45,8 +45,8 @@ module "network" {
   farmer-node-config = {
     deployment-version     = 1
     instance-count         = var.instance_count["farmer"]
-    docker-org             = "subspace"
-    docker-tag             = "farmer-node"
+    repo-org               = "subspace"
+    node-tag               = "farmer-node"
     additional-node-ips    = var.additional_node_ips["farmer"]
     reserved-only          = true
     prune                  = false
@@ -60,7 +60,6 @@ module "network" {
   tf_token         = var.tf_token
   private_key_path = var.private_key_path
   branch_name      = var.branch_name
-  ssh_key_name     = var.ssh_key_name
   ssh_user         = var.ssh_user
 
 }

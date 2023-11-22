@@ -8,8 +8,8 @@ module "network" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
-    docker-org         = "subspace"
-    docker-tag         = "bootstrap-node"
+    repo-org           = "subspace"
+    node-tag           = "bootstrap-node"
     reserved-only      = false
     prune              = false
     genesis-hash       = ""
@@ -24,8 +24,8 @@ module "network" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["node"]
-    docker-org         = "subspace"
-    docker-tag         = "subspace-node"
+    repo-org           = "subspace"
+    node-tag           = "subspace-node"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -38,8 +38,8 @@ module "network" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
-    docker-org         = "subspace"
-    docker-tag         = "subspace-node"
+    repo-org           = "subspace"
+    node-tag           = "subspace-node"
     domain-prefix      = "domain"
     reserved-only      = false
     prune              = false
@@ -56,8 +56,8 @@ module "network" {
     deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
-    docker-org             = "subspace"
-    docker-tag             = "farmer-node"
+    repo-org               = "subspace"
+    node-tag               = "farmer-node"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"

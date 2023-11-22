@@ -65,8 +65,8 @@ variable "node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     reserved-only      = bool
     prune              = bool
     node-dsn-port      = number
@@ -82,8 +82,8 @@ variable "domain-node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     domain-prefix      = string
     reserved-only      = bool
     prune              = bool
@@ -103,8 +103,8 @@ variable "bootstrap-node-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
-    docker-tag         = string
+    repo-org           = string
+    node-tag           = string
     reserved-only      = bool
     prune              = bool
     genesis-hash       = string
@@ -122,8 +122,8 @@ variable "farmer-node-config" {
     deployment-version     = number
     regions                = list(string)
     instance-count         = number
-    docker-org             = string
-    docker-tag             = string
+    repo-org               = string
+    node-tag               = string
     reserved-only          = bool
     prune                  = bool
     plot-size              = string

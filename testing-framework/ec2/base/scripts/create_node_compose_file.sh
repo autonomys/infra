@@ -13,7 +13,7 @@ services:
     build:
       context: .
       dockerfile: $HOME/subspace/subspace/Dockerfile-node
-    image: \${NODE_ORG}/\${NODE_TAG}:latest
+    image: \${REPO_ORG}/\${NODE_TAG}:latest
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

@@ -42,11 +42,6 @@ variable "additional_node_ips" {
   }
 }
 
-variable "ssh_key_name" {
-  type    = string
-  default = "hetzner"
-}
-
 variable "ssh_user" {
   type    = string
   default = "root"
