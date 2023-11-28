@@ -126,9 +126,6 @@ Note: if you need to create new ones, the format of the files should be the same
 Terraform will apply changes and generate/update the **.tfstate** file.
 Be aware that state files can contain sensitive information. Do not expose it to the public repository.
 
-Note: When creating a new workspace for a project, ensure to change plan execution from remote to local from the workspace->settings->Execution Mode. Please contact the devops engineer to do this for you if you don't have access to Terraform cloud.
-Choose local so only the state is store and tracked and execution can be done from the local instead of terraform cloud.
-
 ## Installation via Github Actions
 
 (coming soon)
