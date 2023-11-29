@@ -36,8 +36,8 @@ services:
 
   archival-node:
     build:
-      context: $HOME/subspace/subspace/
-      dockerfile: Dockerfile-node
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
     image: \${REPO_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
