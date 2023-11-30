@@ -5,7 +5,10 @@ volumes:
 
 services:
   dsn-bootstrap-node:
-    image: ghcr.io/${NODE_ORG}/bootstrap-node:${NODE_TAG}
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-bootstrap-node
+    image: ghcr.io/subspace/bootstrap-node:latest
     restart: unless-stopped
     environment:
       - RUST_LOG=info
@@ -43,7 +46,10 @@ services:
       - "--bootstrap-nodes"
       - "${DSN_BOOTSTRAP_NODE_PEER}"
   archival-node:
-    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
+    image: ghcr.io/subspace/node:latest
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
