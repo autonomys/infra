@@ -9,7 +9,7 @@ on:
     branches:
       - "!main"
     paths:
-      - "aws/gemini-3f/**"
+      - "aws/gemini-3g/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,8 +20,8 @@ jobs:
     uses: ./.github/workflows/terraform_template_deploy.yml
     with:
       project: aws
-      resource: gemini-3f
-      tf_workspace_name: gemini-3f
+      resource: gemini-3g
+      tf_workspace_name: gemini-3g
       tf_version: 1.5.7
       tf_organization: subspace
     secrets:
