@@ -71,26 +71,21 @@ jobs:
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: terraform validate
 
-      - name: Fetch and write terraform.tfvars
-        run: |
-          echo ${{ secrets.TF_VARS_FILE }} > /tmp/terraform.tfvars
-          chmod 600 /tmp/terraform.tfvars
-
       - name: Terraform Plan for ${{ inputs.project }}/${{ inputs.resource }}
         if: ${{ (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: |
-          terraform plan -var-file=/tmp/terraform.tfvars
+          terraform plan -var-file=terraform.tfvars
 
       - name: Terraform Apply for ${{ inputs.project }}/${{ inputs.resource }}
         if: ${{ (inputs.run_apply == 'yes') && (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: |
-          terraform apply -auto-approve -var-file=/tmp/terraform.tfvars
+          terraform apply -auto-approve -var-file=terraform.tfvars
 
       - name: Terraform Destroy for ${{ inputs.project }}/${{ inputs.resource }}
         if: ${{ (inputs.run_destroy == 'yes') }}
         working-directory: ${{ inputs.project }}/${{ inputs.resource }}
         run: |
-          terraform plan -destroy -var-file=/tmp/terraform.tfvars
-          terraform destroy -auto-approve -var-file=/tmp/terraform.tfvars
+          terraform plan -destroy -var-file=terraform.tfvars
+          terraform destroy -auto-approve -var-file=terraform.tfvars

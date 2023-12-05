@@ -2,6 +2,10 @@ name: Main CD for Ephememeral Devnet Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        required: true
+        type: string
   pull_request:
     branches:
       - main
@@ -20,6 +24,7 @@ jobs:
     uses: ./.github/workflows/terraform_template_ephemeral_deploy.yml
     with:
       project: testing-framework
+      branch: ${{ github.event.inputs.branch }}
       instance: ec2
       resource: network
       tf_workspace_name: ephemeral-devnet

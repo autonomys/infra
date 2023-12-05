@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "github-runners/terraform/base/**"
+      - "github-runners/terraform/dedicated/**"
 
 jobs:
   terraform_gh_runner:
@@ -22,11 +22,11 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: "1.5.7"
-          cli_config_credentials_token: ${{ secrets.TF_CLOUD_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Install dependencies
+      - name: Decrypt the secrets
         run: |
-          # Install any dependencies required by your Terraform code
+          bash scripts/transcrypt -c aes-256-cbc -p ${{ secrets.TRANSCRYPT }} -y
 
       - name: Run Bash Script
         id: generate_runner_token
@@ -54,14 +54,9 @@ jobs:
           # in subsequent steps with terraform for runner registration
           echo "::set-output name=runner_token::$runner_token"
 
-      - name: Fetch and write terraform.tfvars
-        run: |
-          echo ${{ secrets.TF_VARS_FILE }} > /tmp/terraform.tfvars
-          chmod 600 /tmp/terraform.tfvars
-
       - name: Run Terraform
-        working-directory: ./github-runners/terraform/base
+        working-directory: ./github-runners/terraform/dedicated
         run: |
           terraform init
-          terraform plan -var-file=/tmp/terraform.tfvars
-          terraform apply -auto-approve -var "gh_token=${{ steps.generate_runner_token.outputs.runner_token }}" -var-file=/tmp/terraform.tfvars
+          terraform plan -var-file=terraform.tfvars
+          terraform apply -auto-approve -var "gh_token=${{ steps.generate_runner_token.outputs.runner_token }}" -var-file=terraform.tfvars
