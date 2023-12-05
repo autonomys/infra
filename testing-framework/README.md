@@ -128,4 +128,31 @@ Be aware that state files can contain sensitive information. Do not expose it to
 
 ## Installation via Github Actions
 
-(coming soon)
+To deploy a ephemeral devnet with Github CI/CD the workflow `.github/workflows/ephemeral_devnet_aws_deploy.yml` can be triggered for AWS and `.github/workflows/ephemeral_devnet_aws_deploy.yml` to trigger the workflow for hetzner deployment.
+
+Before deploying to hetzner, please make sure there are machines available, and also not being used by other devs. If necessary, check first with the devops engineer, but a list of servers will remain dedicated for this workflow. If the IPs need to be updated, change the variable below in the terraform.tfvars file and open a pull request to have it merged.
+
+```
+additional_node_ips = {
+bootstrap = ["1.1.1.1"]
+node = ["2.2.2.2"]
+farmer = ["3.3.3.3"]
+domain = ["4.4.4.4"]
+}
+
+```
+
+The `branch` input variable is required and should have the value of the branch name you want to deploy. i.e bob/feature-1
+
+The workflow will decrypt the terraform.tfvars file in the working directory of the terraform resource, which is encrypted with AES-256 using the transcrypt encryption/decryption tool. This prevents leaking of sensitive data.
+
+Additionally, an SSH deployment key is needed to work with the terraform provisioner `remote-exec`, which should also be included in the working directory of the terraform resource. This file should be encrypted with transcrypt for security,
+and the workflow will decrypt the file on each run.
+
+## Workflow Steps
+
+1. Go to _Actions_ tab of the repository
+2. Select the workflow you want to execute
+3. In the right panel click on **Run workflow** button to drop down the options.
+4. Input the branch name to use for the deployment.
+5. Run the workflow
