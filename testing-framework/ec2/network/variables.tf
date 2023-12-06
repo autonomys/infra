@@ -7,7 +7,7 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [3]
+  default     = [0]
 }
 
 //todo change this to a map
@@ -45,10 +45,11 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap = 1
-    node      = 1
-    farmer    = 1
-    domain    = 1
+    bootstrap     = 1
+    node          = 1
+    farmer        = 1
+    domain        = 1
+    evm_bootstrap = 1
   }
 }
 
@@ -105,5 +106,10 @@ variable "tf_token" {
 
 variable "branch_name" {
   description = "name of testing branch"
+  type        = string
+}
+
+variable "genesis_hash" {
+  description = "Genesis hash"
   type        = string
 }
