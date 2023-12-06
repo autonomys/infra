@@ -9,6 +9,9 @@ on:
       branch:
         required: true
         type: string
+      genesis_hash:
+        required: true
+        type: string
       instance:
         required: true
         type: string
@@ -82,17 +85,17 @@ jobs:
         if: ${{ (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform plan -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}"
+          terraform plan -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}" -var "genesis_hash=${{ inputs.genesis_hash }}"
 
       - name: Terraform Apply for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         if: ${{ (inputs.run_apply == 'yes') && (inputs.run_destroy == 'no') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform apply -auto-approve -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}"
+          terraform apply -auto-approve -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}" -var "genesis_hash=${{ inputs.genesis_hash }}"
 
       - name: Terraform Destroy for ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         if: ${{ (inputs.run_destroy == 'yes') }}
         working-directory: ${{ inputs.project }}/${{ inputs.instance }}/${{ inputs.resource }}
         run: |
-          terraform plan -destroy -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}"
-          terraform destroy -auto-approve -var-file=terraform.tfvars -var "branch_name=${{ inputs.branch }}"
+          terraform plan -destroy -var-file=terraform.tfvars
+          terraform destroy -auto-approve -var-file=terraform.tfvars
