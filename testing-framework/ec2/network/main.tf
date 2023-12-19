@@ -96,3 +96,8 @@ module "network" {
   branch_name         = var.branch_name
   genesis_hash        = var.genesis_hash
 }
+
+# External data source to run the shell command and extract the value of the operator bootnode connection parameter
+data "external" "operator_peer_multiaddr" {
+  program = ["bash", "-c", "echo '{\"OPERATOR_MULTI_ADDR\": \"'$(sed -nr 's/^NODE_0_OPERATOR_MULTI_ADDR=(.*)/\\1/p' ./bootstrap_node_evm_keys.txt)'\"}'"]
+}
