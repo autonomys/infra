@@ -128,7 +128,7 @@ Be aware that state files can contain sensitive information. Do not expose it to
 
 ## Installation via Github Actions
 
-To deploy a ephemeral devnet with Github CI/CD the workflow `.github/workflows/ephemeral_devnet_aws_deploy.yml` can be triggered for AWS and `.github/workflows/ephemeral_devnet_aws_deploy.yml` to trigger the workflow for hetzner deployment.
+To deploy a ephemeral devnet with Github CI/CD the workflow `.github/workflows/ephemeral_devnet_aws_deploy.yml` can be triggered for AWS and `.github/workflows/ephemeral_devnet_hetzner_deploy.yml` to trigger the workflow for hetzner deployment.
 
 Before deploying to hetzner, please make sure there are machines available, and also not being used by other devs. If necessary, check first with the devops engineer, but a list of servers will remain dedicated for this workflow. If the IPs need to be updated, change the variable below in the terraform.tfvars file and open a pull request to have it merged.
 
