@@ -115,6 +115,26 @@ variable "bootstrap-node-config" {
   })
 }
 
+variable "bootstrap-node-evm-config" {
+  description = "Bootstrap node evm domain deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    reserved-only      = bool
+    prune              = bool
+    genesis-hash       = string
+    dsn-listen-port    = number
+    node-dsn-port      = number
+    operator-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
 variable "farmer-node-config" {
   description = "Farmer and Node configuration"
   type = object({
@@ -167,4 +187,10 @@ variable "ssh_user" {
 variable "branch_name" {
   description = "name of testing branch"
   type        = string
+}
+
+variable "genesis_hash" {
+  description = "Genesis hash"
+  type        = string
+
 }

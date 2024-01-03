@@ -62,6 +62,23 @@ variable "bootstrap-node-config" {
   })
 }
 
+variable "bootstrap-node-evm-config" {
+  description = "Bootstrap node evm domain deployment config"
+  type = object({
+    deployment-version  = number
+    instance-count      = number
+    repo-org            = string
+    node-tag            = string
+    additional-node-ips = list(string)
+    reserved-only       = bool
+    prune               = bool
+    genesis-hash        = string
+    dsn-listen-port     = number
+    node-dsn-port       = number
+    operator-port       = number
+  })
+}
+
 variable "farmer-node-config" {
   description = "Farmer and Node configuration"
   type = object({
@@ -94,5 +111,10 @@ variable "private_key_path" {
 
 variable "branch_name" {
   description = "name of testing branch"
+  type        = string
+}
+
+variable "genesis_hash" {
+  description = "Genesis hash"
   type        = string
 }

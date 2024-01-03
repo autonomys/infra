@@ -11,9 +11,23 @@ module "network" {
     additional-node-ips = var.additional_node_ips["bootstrap"]
     reserved-only       = true
     prune               = false
-    genesis-hash        = ""
+    genesis-hash        = var.genesis_hash
     dsn-listen-port     = 30533
     node-dsn-port       = 30433
+  }
+
+  bootstrap-node-evm-config = {
+    deployment-version  = 1
+    instance-count      = var.instance_count["bootstrap"]
+    repo-org            = "subspace"
+    node-tag            = "bootstrap-node"
+    additional-node-ips = var.additional_node_ips["bootstrap"]
+    reserved-only       = true
+    prune               = false
+    genesis-hash        = var.genesis_hash
+    dsn-listen-port     = 30533
+    node-dsn-port       = 30433
+    operator-port       = 40333
   }
 
   node-config = {
@@ -36,7 +50,7 @@ module "network" {
     domain-prefix       = "domain"
     reserved-only       = true
     prune               = false
-    node-dsn-port       = 30434
+    node-dsn-port       = 30433
     enable-domains      = true
     domain-id           = var.domain_id
     domain-labels       = var.domain_labels
@@ -61,5 +75,10 @@ module "network" {
   private_key_path = var.private_key_path
   branch_name      = var.branch_name
   ssh_user         = var.ssh_user
+  genesis_hash     = var.genesis_hash
+}
 
+# External data source to run the shell command and extract the value of the operator bootnode connection parameter
+data "external" "operator_peer_multiaddr" {
+  program = ["bash", "-c", "echo '{\"OPERATOR_MULTI_ADDR\": \"'$(sed -nr 's/^NODE_0_OPERATOR_MULTI_ADDR=(.*)/\\1/p' ./bootstrap_node_evm_keys.txt)'\"}'"]
 }
