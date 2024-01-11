@@ -17,7 +17,7 @@ subjects:
 # Kubernetes service account
   - kind: ServiceAccount
     name: service-account-pod-read
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: pod-reader-role
   apiGroup: rbac.authorization.k8s.io
@@ -42,7 +42,7 @@ subjects:
 # Kubernetes service account
   - kind: ServiceAccount
     name: serviceaccount-explorer-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: deployment-manager-role
   apiGroup: rbac.authorization.k8s.io
@@ -82,7 +82,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: serviceaccount-explorer
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
     namespace: explorer-network
 ---
 kind: RoleBinding
@@ -96,10 +96,10 @@ subjects:
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: explorer-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: serviceaccount-explorer-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: admin
@@ -118,11 +118,11 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   - kind: User
     name: muhammad@subspace.network
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: explorer-admin
     apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: serviceaccount-explorer-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
     namespace: explorer-network

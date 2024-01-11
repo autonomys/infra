@@ -1,20 +1,24 @@
-apiVersion: apps/v1
+apiVersion: v1
 kind: Deployment
 metadata:
-  name: {{ include "archive-squid.fullname" . }}-app
-  namespace: {{ Release.Namespace}}
+  name: archive-app
+  namespace: explorer-network
   labels:
-    {{- include "archive-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "archive"
-    app.kubernetes.io/part-of: "explorer"
-    app.kubernetes.io/arch: {{.Values.arch}}
+    app.kubernetes.io/name: "archive-squid"
+    app.kubernetes.io/instance: "archive-squid"
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/component: "explorer"
+    app.kubernetes.io/part-of: "archive-squid"
+    app.kubernetes.io/managed-by: "kubectl"
+    app.kubernetes.io/arch: "x86_64"
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
-      {{- include "archive-squid.selectorLabels" . | nindent 6 }} # has to match .spec.template.metadata.labels
+      app: archive-app # has to match .spec.template.metadata.labels
+  serviceName: archive-app-svc
+  replicas: 1 # by default is 1
+  minReadySeconds: 5
+  replicas: 1
   minReadySeconds: 5
   strategy:
     type: RollingUpdate
@@ -24,59 +28,58 @@ spec:
 
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      annotations: {}
       labels:
-        {{- include "archive-squid.selectorLabels" . | nindent 8 }}
+        app: archive-app # has to match .spec.selector.matchLabels
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "archive-squid.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10
+      imagePullSecrets: []
+      serviceAccountName: ""
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: postgres
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
         image: postgres:14
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
         volumeMounts:
           - mountPath: "/var/lib/postgresql/data"
-            name: {{ include "archive-squid.fullname" . }}-data
+            name: archive-data
           - mountPath: "/var/lib/postgresql/postgres.conf"
-            name: {{ include "archive-squid.fullname" . }}-postgres-config
+            name: archive-postgres-config
             subPath: postgres.conf
         ports:
           - name: db
             containerPort: 5432
             protocol: TCP
         resources:
-        {{- toYaml .Values.resources | nindent 12 }}
+          requests:
+            cpu: 2
+            memory: 200Mi
         env:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: POSTGRES_HOST
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: POSTGRES_DB
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
+                  name: archive-configmap
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-postgres-secret
+                  name: archive-configmap
                   key: POSTGRES_PASSWORD
         livenessProbe:
             exec:
@@ -102,10 +105,10 @@ spec:
             timeoutSeconds: 5
 
       - name: node
-        image: "{{ .Values.image_node.repository }}:{{ .Values.image_api.tag | default .Chart.AppVersion }}"
+        image: ghcr.io/subspace/node:snapshot-DATE
         securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
         volumeMounts:
           - mountPath: "/var/subspace"
             name: archive-data
@@ -113,29 +116,36 @@ spec:
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_HOST
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_NAME
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-migration-secret
+                  name: archive-configmap
                   key: DB_USER
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-migration-secret
+                  name: archive-configmap
                   key: DB_PASS
+        resources:
+          requests:
+            cpu: 2
+            memory: 1000Mi
+          limits:
+            cpu: 8
+            memory: 8000Mi
 
       - name: ingest
-        image: "{{ .Values.image_ingest.repository }}:{{ .Values.image_ingest.tag | default .Chart.AppVersion }}"
+        image: ghcr.io/subspace/blockarchive-ingest:latest
         securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
         ports:
           - name: ingest
             containerPort: 3000
@@ -146,19 +156,21 @@ spec:
               - --prom-port 9090
               - --out postgres://postgres:postgres@db:5432/squid-archive
         resources:
-        {{- toYaml .Values.resources | nindent 12 }}
+          requests:
+            cpu: 2
+            memory: 250Mi
         env:
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_HONODE_TLS_REJECT_UNAUTHORIZEDST
 
       - name: explorer
         image: subsquid/substrate-explorer:firesquid
         securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+          allowPrivilegeEscalation: false
+        imagePullPolicy: Always
         ports:
           - name: explorer
             containerPort: 3000
@@ -167,27 +179,27 @@ spec:
             - name: DB_TYPE
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_TYPE
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_HOST
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
+                  name: archive-configmap
                   key: DB_NAME
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-migration-secret
+                  name: archive-configmap
                   key: DB_USER
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "archive-squid.fullname" . }}-migration-secret
+                  name: archive-configmap
                   key: DB_PASS
         # livenessProbe:
         #     httpGet:
@@ -209,24 +221,41 @@ spec:
             initialDelaySeconds: 6
             periodSeconds: 30
         resources:
-        {{- toYaml .Values.resources | nindent 12 }}
+          requests:
+            cpu: 1
+            memory: 100Mi
       volumes:
-        - name: {{ include "archive-squid.fullname" . }}-data
+        - name: archive-data
           persistentVolumeClaim:
-            claimName: {{ include "archive-squid.fullname" . }}-data-pvc
-        - name: {{ include "archive-squid.fullname" . }}-postgres-config
+            claimName: archive-data-pvc
+        - name: archive-postgres-config
           configMap:
-            name: {{ include "archive-squid.fullname" . }}-postgres-configmap
-
-      nodeSelector:{{}}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
+            name: archive-postgres-configmap
+      #nodeSelector: {}
+      #affinity: {}
+      nodeSelector:
+        subspace.network/role: archive-squid-node
       affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: subspace.network/role
+                operator: In
+                values:
+                - archive-squid-node
+          #preferredDuringSchedulingIgnoredDuringExecution:
+          #- weight: 1
+          #  preference:
+          #    matchExpressions:
+          #    - key: node-label-key
+          #      operator: In
+          #      values:
+          #      - node-label-value
+      #tolerations: []
       tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      - key: "subspace.network/role"
+        operator: "Equal"
+        value: "archive-squid-node"
+        effect: "NoSchedule"
       restartPolicy: Always

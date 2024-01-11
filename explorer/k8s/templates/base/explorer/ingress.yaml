@@ -1,0 +1,77 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: explorer-network
+  annotations:
+#    nginx.ingress.kubernetes.io/upstream-hash-by
+#    nginx.ingress.kubernetes.io/proxy-set-header: "Host $host"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "http_504"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "3s"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "on"
+    nginx.ingress.kubernetes.io/auth-keepalive-timeout: "120s"
+    nginx.ingress.kubernetes.io/client-max-body-size: "8m"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "1024m"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.0"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ALL:!aNULL:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP"
+    nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers: "true"
+    nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For, X-REAL-IP"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+#    nginx.ingress.kubernetes.io/limit-connections: 10
+    nginx.ingress.kubernetes.io/limit-rps: "250"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier:
+#   nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/websocket-services: "ws-svc"
+#    nginx.ingress.kubernetes.io/affinity: "cookie"
+#    nginx.com/sticky-cookie-services: "serviceName=api-svc srv_id expires=1h path=/api;serviceName=explorer-svc srv_id expires=1h path=/graphql"
+#    nginx.ingress.kubernetes.io/server-snippets: |
+#      location / {
+#        return 302 /en;
+#      }
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - squid.gemini-3h.subspace.network
+    secretName: TLS_SECRET
+
+  rules:
+  - host: squid.gemini-3h.subspace.network
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: explorer-svc
+            port:
+              number: 80
+
+      - path: /graphql
+        pathType: Prefix
+        backend:
+          service:
+            name: explorer-svc
+            port:
+              number: 4000
+
+--
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: TLS_SECRET
+data:
+  tls.crt:
+  tls.key:

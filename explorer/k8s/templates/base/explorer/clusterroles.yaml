@@ -7,7 +7,7 @@ metadata:
   namespace: explorer-network
 subjects:
   - kind: Group
-    name: manager  # Name is case sensitive
+    name: manager # Name is case sensitive
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -45,11 +45,11 @@ kind: ClusterRole
 metadata:
   name: role-grantor
 rules:
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["rolebindings"]
-  verbs: ["create"]
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterroles"]
-  verbs: ["bind"]
-  # omit resourceNames to allow binding any ClusterRole
-  resourceNames: ["admin","edit","view"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings"]
+    verbs: ["create"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles"]
+    verbs: ["bind"]
+    # omit resourceNames to allow binding any ClusterRole
+    resourceNames: ["admin", "edit", "view"]

@@ -1,11 +1,10 @@
-# pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-     name: {{ include "explorer-squid.fullname" . }}-pvc
+     name: {{ include "archive-squid.fullname" . }}-pvc
      namespace: {{ Release.Namespace}}
      labels:
-       app: {{ include "explorer-squid.fullname" . }}-app
+       app: {{ include "archive-squid.fullname" . }}-app
 spec:
   accessModes:
     - ReadWriteOnce

@@ -17,7 +17,7 @@ spec:
       readOnly: true  # only allow read-only mounts
     - pathPrefix: "/graphql"
       readOnly: true  # only allow read-only mounts
-  privileged: false # Required to prevent escalations to root. 
+  privileged: false # Required to prevent escalations to root.
   allowPrivilegeEscalation: false
   requiredDropCapabilities:
       - ALL

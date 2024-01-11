@@ -44,10 +44,6 @@ securityContext:
 service:
   type: ClusterIP
   ports:
-    - port: 80
-      name: nginx
-      targetPort: 80
-      protocol: TCP
     - port: 5432
       name: db
       targetPort: 5432
@@ -60,26 +56,10 @@ service:
       name: graphql
       targetPort: 4000
       protocol: TCP
-    - port: 8080
-      name: pghealth
-      targetPort: 8080
-      protocol: TCP
-    - port: 7070
-      name: processorhealth
-      targetPort: 7070
-      protocol: TCP
 
 lb_service:
   type: LoadBalancer
   lb_ports:
-    - port: 80
-      name: nginx
-      targetPort: 80
-      protocol: TCP
-    # - port: 5432
-    #   name: db
-    #   targetPort: 5432
-    #   protocol: TCP
     - port: 3000
       name: processor
       targetPort: 3000
@@ -87,14 +67,6 @@ lb_service:
     - port: 4350
       name: graphql
       targetPort: 4000
-      protocol: TCP
-    - port: 8080
-      name: pghealth
-      targetPort: 8080
-      protocol: TCP
-    - port: 7070
-      name: processorhealth
-      targetPort: 7070
       protocol: TCP
 
 ingress:
@@ -137,7 +109,7 @@ ingress:
 #    nginx.ingress.kubernetes.io/server-snippets: |
 #      location / {
 #        return 302 /en;
-#      }      
+#      }
   }
 
   hosts:
@@ -165,10 +137,7 @@ ingress:
 resources:
   requests:
     cpu: 2
-    memory: 4000Mi
-  limits:
-    cpu: 8
-    memory: 16000Mi
+    memory: 200Mi
 
 
 autoscaling:
@@ -207,7 +176,7 @@ persistence:
   existingClaim: ""
   accessModes:
     - ReadWriteOnce
-  size: 400G
+  size: 150G
   storageClass: ""
 
 

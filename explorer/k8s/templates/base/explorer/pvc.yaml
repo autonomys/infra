@@ -1,0 +1,16 @@
+# pvc.yaml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: explorer-data-pvc
+  namespace: explorer-network
+  labels:
+    app: explorer-squid-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 150Gi

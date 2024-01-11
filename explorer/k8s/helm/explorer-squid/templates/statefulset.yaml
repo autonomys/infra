@@ -40,42 +40,6 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10
       containers:
-      - name: nginx
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: nginx:latest
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        volumeMounts:
-          - mountPath: "/etc/nginx/nginx.conf"
-            name: explorer-nginx-config
-            subPath: nginx.conf
-          - mountPath: "/etc/nginx/proxy.conf"
-            name: explorer-nginx-config
-            subPath: proxy.conf
-        ports:
-          - name: nginx
-            containerPort: 80
-            protocol: TCP
-        # livenessProbe:
-        #     httpGet:
-        #       path: /health
-        #       port: 80
-        #     initialDelaySeconds: 15
-        #     periodSeconds: 15
-        #     timeoutSeconds: 5
-        #     successThreshold: 1
-        #     failureThreshold: 3
-        livenessProbe:
-            tcpSocket:
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
-        readinessProbe:
-            tcpSocket:
-              port: 80
-            initialDelaySeconds: 6
-            periodSeconds: 10
-
       - name: postgres
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
@@ -173,8 +137,8 @@ spec:
           - name: processor
             containerPort: 3000
             protocol: TCP
-        {{- toYaml .Values.resources | nindent 12 }}
-        {{ end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
         env:
             - name: DB_HOST
               valueFrom:
@@ -236,150 +200,10 @@ spec:
             initialDelaySeconds: 6
             periodSeconds: 30
 
-      - name: datadog
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: datadog/agent
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        volumeMounts:
-          - name: dockersocket
-            mountPath: /var/run/docker.sock
-          - name: procdir
-            mountPath: /host/proc
-            readOnly: true
-          - name: cgroups
-            mountPath: /host/sys/fs/cgroup
-            readOnly: true
-        env:
-            - name: DD_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-datadog-secret
-                  key: DD_API_KEY
-            - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
-            - name: DD_LOGS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: DD_LOGS_ENABLED
-            - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
-            - name: DD_CONTAINER_EXCLUDE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: DD_CONTAINER_EXCLUDE
-
-      - name: pg-health-check
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: ghcr.io/subspace/health-check:latest
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-          - name: pghealth
-            containerPort: 8080
-            protocol: TCP
-        env:
-            - name: POSTGRES_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}configmap
-                  key: POSTGRES_HOST
-            - name: POSTGRES_DB
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}configmap
-                  key: POSTGRES_DB
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-postgres-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-postgres-secret
-                  key: POSTGRES_PASSWORD
-            - name: PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: HEALTH_CHECK PORT
-            - name: SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-health-auth-secret
-                  key: HEALTH_AUTH_SECRET
-        livenessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 30
-        readinessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 6
-            periodSeconds: 30
-
-      - name: prom-health-check
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: ghcr.io/subspace/health-check:latest
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-          - name: processorhealth
-            containerPort: 7070
-            protocol: TCP
-        env:
-            - name: PROCESSOR_HEALTH_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: PROCESSOR_HEALTH_HOST
-            - name: PROCESSOR_HEALTH_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-configmap
-                  key: PROCESSOR_HEALTH_PORT
-            - name: SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "explorer-squid.fullname" . }}-health-auth-secret
-                  key: HEALTH_AUTH_SECRET
-        livenessProbe:
-            tcpSocket:
-              port: 7070
-            initialDelaySeconds: 5
-            periodSeconds: 30
-        readinessProbe:
-            tcpSocket:
-              port: 7070
-            initialDelaySeconds: 6
-            periodSeconds: 30
-
       volumes:
         - name: {{ include "explorer-squid.fullname" . }}-data
           persistentVolumeClaim:
             claimName: {{ include "explorer-squid.fullname" . }}-data-pvc
-        - hostPath:
-            path: /var/run/docker.sock
-          name: dockersocket
-        - hostPath:
-            path: /proc
-          name: procdir
-        - hostPath:
-            path: /sys/fs/cgroup
-          name: cgroups
-        - name: {{ include "explorer-squid.fullname" . }}-proxy-config
-          configMap:
-            name: {{ include "explorer-squid.fullname" . }}-proxy-configmap
         - name: {{ include "explorer-squid.fullname" . }}-postgres-config
           configMap:
             name: {{ include "explorer-squid.fullname" . }}-postgres-configmap

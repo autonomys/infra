@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: pod-reader-role
-  namespace: archive-network
+  namespace: explorer-network
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -12,12 +12,12 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: pod-reader-binding
-  namespace: archive-network
+  namespace: explorer-network
 subjects:
 # Kubernetes service account
   - kind: ServiceAccount
     name: service-account-pod-read
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: pod-reader-role
   apiGroup: rbac.authorization.k8s.io
@@ -27,7 +27,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: deployment-manager-role
-  namespace: archive-network
+  namespace: explorer-network
 rules:
   - apiGroups: [""]
     resources: ["deployments"]
@@ -37,12 +37,12 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: deployment-manager-role-binding
-  namespace: archive-network
+  namespace: explorer-network
 subjects:
 # Kubernetes service account
   - kind: ServiceAccount
     name: serviceaccount-archive-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: deployment-manager-role
   apiGroup: rbac.authorization.k8s.io
@@ -51,7 +51,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: role-viewer
-  namespace: archive-network
+  namespace: explorer-network
 rules:          # Authorization rules for this role
   - apiGroups:  # 1st API group
       - ''      # An empty string designates the core API group.
@@ -74,7 +74,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: rolebinding-viewer
-  namespace: archive-network
+  namespace: explorer-network
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -82,24 +82,24 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: serviceaccount-archive
-    apiGroup: rbac.authorization.k8s.io 
-    namespace: archive-network
+    apiGroup: rbac.authorization.k8s.io
+    namespace: explorer-network
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: archive-admin
-  namespace: archive-network
+  namespace: explorer-network
 subjects:
   - kind: User
     name: muhammad@subspace.network
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: archive-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: serviceaccount-archive-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: admin
@@ -109,7 +109,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: role-grantor-binding
-  namespace: archive-network
+  namespace: explorer-network
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -118,11 +118,11 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   - kind: User
     name: muhammad@subspace.network
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: archive-admin
     apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: serviceaccount-archive-admin
-    apiGroup: rbac.authorization.k8s.io 
-    namespace: archive-network
+    apiGroup: rbac.authorization.k8s.io
+    namespace: explorer-network

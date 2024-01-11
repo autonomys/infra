@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: archive-loadbal-svc
+  namespace: explorer-network
+  labels:
+    name: archive-squid-app
+    app: archive-squid-app
+spec:
+  selector:
+    app: archive-squid-app
+  type: LoadBalancer
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    - port: 8888
+      name: gateway
+      targetPort: 8000
+      protocol: TCP
+    - port: 4444
+      name: explorer
+      targetPort: 3000
+      protocol: TCP
