@@ -114,14 +114,11 @@ cat >> ~/subspace/docker-compose.yml << EOF
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
@@ -130,15 +127,14 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--prometheus-listen-on", "9615",
 EOF
 
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
@@ -155,22 +151,19 @@ if [ "${enable_domains}" == "true" ]; then
     {
     # core domain
       echo '      "--",'
-      echo '      "--chain=${NETWORK_NAME}",'
+      echo '      "--domain-id=${DOMAIN_ID}",'
       echo '      "--node-key", "${NODE_KEY}",'
-    #  echo '      "--enable-subspace-block-relay",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
-      echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
-      echo '      "--domain-id=${DOMAIN_ID}",'
+      echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
       echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
       echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-port", "8944",'
-      echo '      "--unsafe-rpc-external",'
+      echo '      "--rpc-listen-on", "8944",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
     for (( i = 0; i <  node_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
 
     }  >> ~/subspace/docker-compose.yml

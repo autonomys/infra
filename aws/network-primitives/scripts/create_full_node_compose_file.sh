@@ -59,14 +59,11 @@ services:
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
@@ -76,8 +73,7 @@ services:
       "--dsn-pending-out-connections", "1000",
       "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--prometheus-listen-on", "9615",
 EOF
 
 reserved_only=${1}
@@ -89,7 +85,7 @@ dsn_bootstrap_node_count=${4}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 # // TODO: make configurable with gemini network as it's not needed for devnet

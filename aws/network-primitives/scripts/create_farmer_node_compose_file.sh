@@ -88,22 +88,18 @@ services:
     command: [
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
-      "--validator",
+      "--farmer",
       "--timekeeper",
       "--rpc-cors", "all",
-      "--rpc-external",
-      "--rpc-methods", "unsafe",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--rpc-listen-on",
+      "--rpc-methods", "auto",
+      "--prometheus-listen-on", "9615",
 EOF
 
 reserved_only=${1}
@@ -116,7 +112,7 @@ force_block_production=${5}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 # // TODO: make configurable with gemini network
