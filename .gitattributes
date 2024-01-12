@@ -1,0 +1,6 @@
+#pattern  filter=crypt diff=crypt merge=crypt
+hosts.yml  filter=crypt diff=crypt merge=crypt
+*.txt  filter=crypt diff=crypt merge=crypt
+testing-framework/hetzner/network/keystore/*  filter=crypt diff=crypt merge=crypt
+*.tfvars  filter=crypt diff=crypt merge=crypt
+*.pem  filter=crypt diff=crypt merge=crypt

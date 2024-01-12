@@ -1,0 +1,6 @@
+.terraform*
+*.tfstate*
+*.tfplan
+.DS_Store
+backend_config.hcl
+*.tfvars

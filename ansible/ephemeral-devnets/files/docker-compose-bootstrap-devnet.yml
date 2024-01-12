@@ -1,0 +1,107 @@
+version: "3.7"
+
+volumes:
+  archival_node_data: {}
+
+services:
+  dsn-bootstrap-node:
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-bootstrap-node
+    image: ghcr.io/subspace/bootstrap-node:latest
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+    ports:
+      - "30533:30533/udp"
+      - "30533:30533/tcp"
+      - "9616:9616"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
+    command:
+      - start
+      - "--keypair"
+      - "--metrics-endpoints=0.0.0.0:9616"
+      - ${DSN_NODE_KEY}
+      - "--listen-on"
+      - /ip4/0.0.0.0/udp/30533/quic-v1
+      - "--listen-on"
+      - /ip4/0.0.0.0/tcp/30533
+      - --protocol-version
+      - ${GENESIS_HASH}
+      - "--in-peers"
+      - "1000"
+      - "--out-peers"
+      - "1000"
+      - "--pending-in-peers"
+      - "1000"
+      - "--pending-out-peers"
+      - "1000"
+      - "--external-address"
+      - "/ip4/${EXTERNAL_IP}/tcp/30533"
+      - "--reserved-peers"
+      - "${DSN_BOOTSTRAP_NODE_PEER}"
+      - "--bootstrap-nodes"
+      - "${DSN_BOOTSTRAP_NODE_PEER}"
+  archival-node:
+    build:
+      context: .
+      dockerfile: $HOME/subspace/subspace/Dockerfile-node
+    image: ghcr.io/subspace/node:latest
+    volumes:
+      - archival_node_data:/var/subspace:rw
+    restart: unless-stopped
+    ports:
+      - "30333:30333/udp"
+      - "30433:30433/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/tcp"
+      - "9615:9615"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
+    command:
+      [
+        "--chain",
+        "${NETWORK_NAME}",
+        "--base-path",
+        "/var/subspace",
+        "--execution",
+        "wasm",
+        "--state-pruning",
+        "archive",
+        "--blocks-pruning",
+        "256",
+        "--listen-addr",
+        "/ip4/0.0.0.0/tcp/30333",
+        "--dsn-external-address",
+        "/ip4/${EXTERNAL_IP}/udp/30433/quic-v1",
+        "--dsn-external-address",
+        "/ip4/${EXTERNAL_IP}/tcp/30433",
+        "--node-key",
+        "${NODE_KEY}",
+        "--in-peers",
+        "1000",
+        "--out-peers",
+        "1000",
+        "--in-peers-light",
+        "1000",
+        "--dsn-in-connections",
+        "1000",
+        "--dsn-out-connections",
+        "1000",
+        "--dsn-pending-in-connections",
+        "1000",
+        "--dsn-pending-out-connections",
+        "1000",
+        "--prometheus-port",
+        "9615",
+        "--prometheus-external",
+        "--reserved-nodes",
+        "${BOOTSTRAP_NODE_PEER}",
+        "--bootnodes",
+        "${BOOTSTRAP_NODE_PEER}",
+      ]

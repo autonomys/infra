@@ -1,0 +1,58 @@
+name: Terraform Workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - './github-runners/terraform/base/**'
+  workflow_dispatch:
+
+jobs:
+  terraform_gh_runner:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: "1.4.2"
+          cli_config_credentials_token: ${{ secrets.TF_CLOUD_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          # Install any dependencies required by your Terraform code
+
+      - name: Run Bash Script
+        run: |
+            # GitHub repository and access token
+            repo="subspace/infra"
+            token=${{ secrets.PAT_TOKEN }}
+
+            # API endpoint
+            url="https://api.github.com/repos/$repo/actions/runners/registration-token"
+
+            # Send POST request to get the registration token
+            response=$(curl -X POST -H "Authorization: token $token" -s "$url")
+
+            # Extract the token value from the response
+            runner_token=$(echo "$response" | jq -r '.token')
+
+            # Export the token as an environment variable
+            echo "export RUNNER_TOKEN=$runner_token" >> $GITHUB_ENV
+
+            # Set the runner token as an environment variable
+            export RUNNER_TOKEN="$runner_token"
+
+            # Store the token as a secret in GitHub Actions
+            gh secret set RUNNER_TOKEN -r "$repo" -b "$runner_token"
+
+      - name: Run Terraform
+        working-directory: ./github-runners/terraform/base
+        run: |
+          terraform init-backend-config="organization=${{ secrets.ORGANIZATION_NAME }}" -backend-config="workspaces=${{ secrets.WORKSPACE_NAME }}"
+          terraform plan -var-file=${{ secrets.VAR_FILE }}
+          terraform apply -auto-approve -var "gh_token=${{ secrets.RUNNER_TOKEN }}"
