@@ -73,7 +73,7 @@ services:
       "--dsn-pending-out-connections", "1000",
       "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
-      "--prometheus-listen-on", "9615",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 reserved_only=${1}

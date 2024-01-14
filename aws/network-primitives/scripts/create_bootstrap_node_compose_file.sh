@@ -137,7 +137,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--prometheus-listen-on", "9615",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do

@@ -127,7 +127,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--prometheus-listen-on", "9615",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 
@@ -151,14 +151,14 @@ if [ "${enable_domains}" == "true" ]; then
     {
     # core domain
       echo '      "--",'
-      echo '      "--domain-id=${DOMAIN_ID}",'
+      echo '      "--domain-id", "${DOMAIN_ID}",'
       echo '      "--node-key", "${NODE_KEY}",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
       echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
-      echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_domain",'
+      echo '      "--base-path", "/var/subspace/",'
       echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-listen-on", "8944",'
+      echo '      "--rpc-listen-on", "127.0.0.1:8944",'
       echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
     for (( i = 0; i <  node_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)

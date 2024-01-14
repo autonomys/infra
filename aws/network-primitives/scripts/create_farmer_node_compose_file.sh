@@ -97,9 +97,9 @@ services:
       "--farmer",
       "--timekeeper",
       "--rpc-cors", "all",
-      "--rpc-listen-on",
-      "--rpc-methods", "auto",
-      "--prometheus-listen-on", "9615",
+      "--rpc-listen-on", "127.0.0.1:9944",
+      "--rpc-methods", "safe",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 reserved_only=${1}
