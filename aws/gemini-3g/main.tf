@@ -1,7 +1,7 @@
 module "gemini-3g" {
-  source          = "../network-primitives"
-  path_to_scripts = "../network-primitives/scripts"
-  path_to_configs = "../network-primitives/configs"
+  source          = "../network-primitives-archive"
+  path_to_scripts = "../network-primitives-archive/scripts"
+  path_to_configs = "../network-primitives-archive/configs"
   network_name    = "gemini-3g"
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
@@ -9,7 +9,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-03"
+    docker-tag         = "gemini-3g-2024-jan-08"
     reserved-only      = true
     prune              = false
     genesis-hash       = "418040fc282f5e5ddd432c46d05297636f6f75ce68d66499ff4cbda69ccd180b"
@@ -25,7 +25,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-03"
+    docker-tag         = "gemini-3g-2024-jan-08"
     reserved-only      = false
     prune              = false
     genesis-hash       = "418040fc282f5e5ddd432c46d05297636f6f75ce68d66499ff4cbda69ccd180b"
@@ -42,7 +42,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-03"
+    docker-tag         = "gemini-3g-2024-jan-08"
     reserved-only      = true
     prune              = false
     node-dsn-port      = 30433
@@ -56,7 +56,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-03"
+    docker-tag         = "gemini-3g-2024-jan-08"
     domain-prefix      = "rpc"
     reserved-only      = true
     prune              = false
@@ -71,7 +71,7 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-03"
+    docker-tag         = "gemini-3g-2024-jan-08"
     domain-prefix      = "nova"
     reserved-only      = true
     prune              = false
@@ -89,7 +89,7 @@ module "gemini-3g" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "gemini-3g-2024-jan-03"
+    docker-tag             = "gemini-3g-2024-jan-08"
     reserved-only          = true
     prune                  = false
     plot-size              = "2G"
