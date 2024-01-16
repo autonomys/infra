@@ -256,7 +256,7 @@ spec:
         - name: {{ include "explorer-squid.fullname" . }}-postgres-config
           configMap:
             name: {{ include "explorer-squid.fullname" . }}-postgres-configmap
-
+      {{- with .Values.nodeSelector }}
       nodeSelector:{{}}
         {{- toYaml . | nindent 8 }}
       {{- end }}

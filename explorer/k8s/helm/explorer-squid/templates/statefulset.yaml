@@ -56,7 +56,7 @@ spec:
             containerPort: 5432
             protocol: TCP
         resources:
-        {{- toYaml .Values.resources | nindent 12 }}
+          {{- toYaml .Values.resources | nindent 12 }}
         env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -207,7 +207,7 @@ spec:
         - name: {{ include "explorer-squid.fullname" . }}-postgres-config
           configMap:
             name: {{ include "explorer-squid.fullname" . }}-postgres-configmap
-
+      {{- with .Values.nodeSelector }}
       nodeSelector:{{}}
         {{- toYaml . | nindent 8 }}
       {{- end }}
