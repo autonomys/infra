@@ -43,7 +43,7 @@ blockscout:
   ## Image parametes
   ##
   image:
-    repository: blockscout/blockscout
+    repository: ghcr.io/subspace/blockscout-backend:subspace
     pullPolicy: IfNotPresent
     tag: "latest"
   ## Init container configuration (used to run DB migrations)
@@ -58,8 +58,35 @@ blockscout:
   ## Blockscout ENV vars
   ## ref: https://docs.blockscout.com/for-developers/information-and-settings/env-variables
   ##
-  env: []
-    # NAME: VALUE
+  env:
+    ETHEREUM_JSONRPC_VARIANT=ganache
+    ETHEREUM_JSONRPC_HTTP_URL=https://nova.gemini-3g.subspace.network/ws
+    DATABASE_URL=postgresql://localhost:7432/blockscout?ssl=false
+    ETHEREUM_JSONRPC_TRACE_URL=https://nova.gemini-3g.subspace.network/ws
+    ETHEREUM_JSONRPC_WS_URL=wss://nova.gemini-3g.subspace.network/ws
+    NETWORK=Subspace
+    SUBNETWORK=Gemini 3g
+    LOGO=/images/blockscout_logo.svg
+    ETHEREUM_JSONRPC_TRANSPORT=http
+    ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES=false
+    CHAIN_ID=1337
+    COIN=TSSC
+    ETHEREUM_JSONRPC_TRANSPORT=http
+    ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES=false
+    PORT=4000
+    POOL_SIZE=80
+    POOL_SIZE_API=10
+    ECTO_USE_SSL=false
+    HEART_BEAT_TIMEOUT=30
+    DISABLE_WEBAPP=false
+    DISABLE_INDEXER=false
+    DISABLE_REALTIME_INDEXER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_REALTIME_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_RETRY_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_SANITIZE_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_LEGACY_SANITIZE_FETCHER=false
+    INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER=true
+    INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER=true
   ## Set ENV vars via secret, this can be usefull for DB connection params, api keys, etc.
   ##
   envFromSecret: []
@@ -200,8 +227,32 @@ frontend:
   ## Frontend ENV vars
   ## ref: https://github.com/blockscout/frontend/blob/main/docs/ENVS.md
   ##
-  env: []
-    # NAME: VALUE
+  env:
+    NEXT_PUBLIC_API_HOST=nova.subspace.network
+    NEXT_PUBLIC_API_PROTOCOL=https
+    NEXT_PUBLIC_STATS_API_HOST=http://localhost:8080
+    NEXT_PUBLIC_NETWORK_NAME=Gemini 3g Nova
+    NEXT_PUBLIC_NETWORK_SHORT_NAME=Gemini 3g Nova
+    NEXT_PUBLIC_NETWORK_ID=1002
+    NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Subspace
+    NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=TSSC
+    NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS=18
+    NEXT_PUBLIC_API_BASE_PATH=/
+    NEXT_PUBLIC_FEATURED_NETWORKS=
+    NEXT_PUBLIC_APP_HOST=nova.subspace.network
+    NEXT_PUBLIC_APP_PROTOCOL=https
+    NEXT_PUBLIC_HOMEPAGE_CHARTS=['daily_txs']
+    NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:8081
+    NEXT_PUBLIC_IS_TESTNET=true
+    NEXT_PUBLIC_NETWORK_LOGO=https://static.r2.subspace.network/logo.svg
+    NEXT_PUBLIC_NETWORK_ICON=https://static.r2.subspace.network/logo-small.svg
+    NEXT_PUBLIC_NETWORK_ICON_DARK=https://static.r2.subspace.network/logo-small.svg
+    NEXT_PUBLIC_HOMEPAGE_PLATE_TEXT_COLOR=rgb(255, 255, 255)
+    NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL=wss
+    NEXT_PUBLIC_WEB3_WALLETS=['metamask']
+    NEXT_PUBLIC_WEB3_DISABLE_ADD_TOKEN_TO_WALLET=false
+    NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=b989b4df40c7db4da07ff951dd48cac6
+    NEXT_PUBLIC_NETWORK_RPC_URL=https://nova.gemini-3g.subspace.network/ws
   envFromSecret: []
     # NAME: VALUE
 
