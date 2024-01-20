@@ -122,6 +122,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
@@ -132,7 +133,6 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
-      "--in-peers-light", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",

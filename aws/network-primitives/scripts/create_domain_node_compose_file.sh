@@ -82,7 +82,7 @@ services:
       - "30333:30333/udp"
       - "30433:30433/tcp"
       - "30433:30433/udp"
-      - "40333:40333/tcp"
+      - "30334:30334/tcp"
       - "9615:9615"
     labels:
       - "traefik.enable=true"
@@ -101,6 +101,7 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
@@ -114,7 +115,7 @@ services:
       "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
       "--rpc-cors", "all",
-      "--rpc-listen-on", "127.0.0.1:9944",
+      "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
@@ -151,13 +152,11 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--domain-id", "${DOMAIN_ID}",'
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
-    echo '      "--operator",'
-    echo '      "--keystore-path", "/var/subspace/keystore",'
-    echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_${DOMAIN_ID}_domain",'
+    echo '      "--operator-id", "0",'
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
     echo '      "--rpc-cors", "all",'
-    echo '      "--rpc-listen-on", "127.0.0.1:8944",'
-    echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
+    echo '      "--rpc-methods", "safe",'
+    echo '      "--rpc-listen-on", "0.0.0.0:8944",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)

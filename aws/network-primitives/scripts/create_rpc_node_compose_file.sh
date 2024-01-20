@@ -96,6 +96,7 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
@@ -106,10 +107,9 @@ services:
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
       "--rpc-cors", "all",
-      "--rpc-listen-on", "127.0.0.1:9944",
+      "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
 EOF

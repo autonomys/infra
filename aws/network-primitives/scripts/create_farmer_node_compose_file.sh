@@ -86,6 +86,7 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
@@ -97,8 +98,8 @@ services:
       "--farmer",
       "--timekeeper",
       "--rpc-cors", "all",
-      "--rpc-listen-on", "127.0.0.1:9944",
-      "--rpc-methods", "safe",
+      "--rpc-listen-on", "0.0.0.0:9944",
+      "--rpc-methods", "unsafe",
       "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 

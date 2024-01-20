@@ -105,13 +105,14 @@ cat >> ~/subspace/docker-compose.yml << EOF
       - "30333:30333/tcp"
       - "30433:30433/udp"
       - "30433:30433/tcp"
-      - "\${OPERATOR_PORT}:40333/tcp"
+      - "\${OPERATOR_PORT}:30334/tcp"
       - "9615:9615"
     logging:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
@@ -152,14 +153,11 @@ if [ "${enable_domains}" == "true" ]; then
     # core domain
       echo '      "--",'
       echo '      "--domain-id", "${DOMAIN_ID}",'
-      echo '      "--node-key", "${NODE_KEY}",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
       echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
-      echo '      "--base-path", "/var/subspace/",'
       echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-listen-on", "127.0.0.1:8944",'
-      echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
+      echo '      "--rpc-listen-on", "0.0.0.0:8944",'
     for (( i = 0; i <  node_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
