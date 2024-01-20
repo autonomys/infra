@@ -1,6 +1,7 @@
 #!/bin/bash
 
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -82,7 +83,7 @@ services:
       - "30333:30333/udp"
       - "30433:30433/tcp"
       - "30433:30433/udp"
-      - "40333:40333/tcp"
+      - "30334:30334/tcp"
       - "9615:9615"
     labels:
       - "traefik.enable=true"
@@ -101,25 +102,27 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
 #      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
-      "--rpc-cors", "all",
-      "--rpc-external",
       "--in-peers", "500",
       "--out-peers", "250",
       "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:9944",
+      "--rpc-methods", "safe",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 reserved_only=${1}
@@ -134,7 +137,7 @@ domain_id=${7}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
@@ -151,24 +154,20 @@ if [ "${enable_domains}" == "true" ]; then
   {
     # core domain
     echo '      "--",'
-    echo '      "--chain=${NETWORK_NAME}",'
-    #  echo '      "--enable-subspace-block-relay",'
+    echo '      "--domain-id", "${DOMAIN_ID}",'
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
-    echo '      "--domain-id=${DOMAIN_ID}",'
-    echo '      "--operator",'
-    echo '      "--keystore-path", "/var/subspace/keystore",'
-    echo '      "--base-path", "/var/subspace/core_${DOMAIN_LABEL}_${DOMAIN_ID}_domain",'
-    echo '      "--listen-addr", "/ip4/0.0.0.0/tcp/40333",'
+    echo '      "--operator-id", "0",'
+    echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
+    echo '      "--listen-on", "/ip6/::/tcp/30334",'
     echo '      "--rpc-cors", "all",'
-    echo '      "--rpc-port", "8944",'
-    echo '      "--unsafe-rpc-external",'
-    echo '      "--relayer-id=${RELAYER_DOMAIN_ID}",'
+    echo '      "--rpc-methods", "safe",'
+    echo '      "--rpc-listen-on", "0.0.0.0:8944",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
 
   } >> ~/subspace/docker-compose.yml

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -63,8 +64,12 @@ services:
       "--node-rpc-url", "ws://archival-node:9944",
       "--external-address", "/ip4/$EXTERNAL_IP/udp/30533/quic-v1",
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/udp/30533/quic-v1",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30533",
       "--listen-on", "/ip4/0.0.0.0/udp/30533/quic-v1",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
+      "--listen-on", "/ip6/::/udp/30533/quic-v1",
+      "--listen-on", "/ip6/::/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
       "--metrics-endpoint=0.0.0.0:9616",
       "--cache-percentage", "15",
@@ -86,24 +91,24 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--node-key", "\${NODE_KEY}",
-      "--validator",
+      "--farmer",
       "--timekeeper",
       "--rpc-cors", "all",
-      "--rpc-external",
+      "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "unsafe",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 reserved_only=${1}
@@ -116,7 +121,7 @@ force_block_production=${5}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 # // TODO: make configurable with gemini network

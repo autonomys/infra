@@ -1,6 +1,7 @@
 #!/bin/bash
 
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 reserved_only=${1}
 node_count=${2}
@@ -67,6 +68,10 @@ services:
       - /ip4/0.0.0.0/udp/30533/quic-v1
       - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
+      - "--listen-on"
+      - /ip6/::/udp/30533/quic-v1
+      - "--listen-on"
+      - /ip6/::/tcp/30533
       - --protocol-version
       - \${GENESIS_HASH}
       - "--in-peers"
@@ -82,6 +87,10 @@ services:
 #      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
 #      - "--external-address"
 #      - "/ip4/$EXTERNAL_IP/tcp/30533"
+#      - "--external-address"
+#      - "/ip6/$EXTERNAL_IP_V6/udp/30533/quic-v1"
+#      - "--external-address"
+#      - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
@@ -122,33 +131,32 @@ cat >> ~/subspace/docker-compose.yml << EOF
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
-      "--in-peers-light", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+    echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   fi
 done
 
