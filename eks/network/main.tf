@@ -51,7 +51,7 @@ data "aws_route53_zone" "root" {
   name = local.hosted_zone_name
 }
 
-# Create Sub HostedZone four our deployment
+# Create Sub HostedZone for our deployment
 resource "aws_route53_zone" "sub" {
   name = "${local.name}.${local.hosted_zone_name}"
 }
@@ -61,7 +61,7 @@ resource "aws_route53_record" "ns" {
   zone_id = data.aws_route53_zone.root.zone_id
   name    = "${local.name}.${local.hosted_zone_name}"
   type    = "NS"
-  ttl     = "30"
+  ttl     = "300"
   records = aws_route53_zone.sub.name_servers
 }
 
