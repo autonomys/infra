@@ -113,19 +113,19 @@ ingress:
   }
 
   hosts:
-    - host: squid.gemini-3d.subspace.network
+    - host: squid.gemini-3h.subspace.network
       path: /
       pathType: ImplementationSpecific
       # port: 80
 
-    - host: squid.gemini-3d.subspace.network
+    - host: squid.gemini-3h.subspace.network
       path: /graphql
       pathType: ImplementationSpecific
       # port: 4000
 
   tls:
     - secretName: acme-tls-secret
-      hosts: squid.gemini-3d.subspace.network
+      hosts: squid.gemini-3h.subspace.network
 
   proxySetHeaders: {}
   # -- Will add custom headers before sending response traffic to the client according to: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#add-headers
@@ -149,11 +149,11 @@ autoscaling:
 
 
 nodeSelector:
-  squid.gemini-3d.subspace.network/role: explorer-squid-node
+  squid.gemini-3h.subspace.network/role: explorer-squid-node
 
 
 tolerations:
-- key: "squid.gemini-3d.subspace.network/role"
+- key: "squid.gemini-3h.subspace.network/role"
   operator: "Equal"
   value: "explorer-squid-node"
   effect: "NoSchedule"
@@ -164,7 +164,7 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: squid.gemini-3d.subspace.network/role
+        - key: squid.gemini-3h.subspace.network/role
           operator: In
           values:
           - explorer-squid-node

@@ -4,7 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: secret-reader-cluster-binding
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace}}
 subjects:
   - kind: Group
     name: manager  # Name is case sensitive
@@ -29,11 +29,11 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ include "explorer-squid.fullname" . }}-admin
-  namespace: {{ Release.Namespace}}
+  name: {{ include "archive-squid.fullname" . }}-admin
+  namespace: {{ .Values.namespace}}
 subjects:
   - kind: Group
-    name: {{ include "explorer-squid.fullname" . }}-admin
+    name: {{ include "archive-squid.fullname" . }}-admin
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole

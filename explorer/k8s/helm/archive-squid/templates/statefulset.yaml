@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Statefulset
 metadata:
   name: {{ include "archive-squid.fullname" . }}-app
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace}}
   labels:
     {{- include "archive-squid.labels" . | nindent 4 }}
     app.kubernetes.io/component: "archive"
@@ -43,7 +43,7 @@ spec:
       - name: postgres
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
-        image: postgres:14
+        image: postgres:16
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         volumeMounts:
           - mountPath: "/var/lib/postgresql/data"
@@ -102,7 +102,7 @@ spec:
             timeoutSeconds: 5
 
       - name: node
-        image: "{{ .Values.image_node.repository }}:{{ .Values.image_api.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.image_node.repository }}:{{ .Values.image_node.tag | default .Chart.AppVersion }}"
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -155,7 +155,7 @@ spec:
                   key: DB_HONODE_TLS_REJECT_UNAUTHORIZEDST
 
       - name: archive
-        image: subsquid/substrate-archive:firesquid
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -219,7 +219,7 @@ spec:
           configMap:
             name: {{ include "archive-squid.fullname" . }}-postgres-configmap
       {{- with .Values.nodeSelector }}
-      nodeSelector:{{}}
+      nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.affinity }}

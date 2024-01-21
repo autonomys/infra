@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
-  namespace: {{ .Release.Name }}
+  name: {{ .Values.namespace }}-configmap
+  namespace: {{ .Values.namespace }}
 data:
   files:
   - config/archive-env-file.properties

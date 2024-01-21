@@ -2,13 +2,18 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+administrator:
+  email: "who@example.org"
+
+namespace: archive-squid
+
 replicaCount: 1
 
 image:
-  repository: ghcr.io/subspace/blockexplorer-processor
+  repository: subsquid/substrate-archive
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "firesquid"
 
 image_ingest:
   repository: ghcr.io/subspace/blockarchive-ingest
@@ -120,19 +125,16 @@ ingress:
   }
 
   hosts:
-    - host: archive.gemini-3d.subspace.network
-      path: /
-      pathType: ImplementationSpecific
-      # port: 80
-
-    - host: archive.gemini-3d.subspace.network
+    - host: archive.gemini-3h.subspace.network
       path: /graphql
       pathType: ImplementationSpecific
-      # port: 4444
+      port: 4444
 
   tls:
-    - secretName: acme-tls-secret
-      hosts: archive.gemini-3d.subspace.network
+      secretName: acme-tls-secret
+      hosts: archive.gemini-3h.subspace.network
+      certificate: {}
+      key: {}
 
   proxySetHeaders: {}
   # -- Will add custom headers before sending response traffic to the client according to: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#add-headers
@@ -156,11 +158,11 @@ autoscaling:
 
 
 nodeSelector:
-  archive.gemini-3d.subspace/role: archive-squid-node
+  archive.gemini-3h.subspace/role: archive-squid-node
 
 
 tolerations:
-- key: "archive.gemini-3d.subspace/role"
+- key: "archive.gemini-3h.subspace/role"
   operator: "Equal"
   value: "archive-squid-node"
   effect: "NoSchedule"
@@ -171,7 +173,7 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: archive.gemini-3d.subspace/role
+        - key: archive.gemini-3h.subspace/role
           operator: In
           values:
           - archive-squid-node
@@ -183,7 +185,7 @@ persistence:
   existingClaim: ""
   accessModes:
     - ReadWriteOnce
-  size: 150G
+  size: 150Gi
   storageClass: ""
 
 

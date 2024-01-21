@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "explorer-squid.fullname" . }}-loadbal-svc
-  namespace: {{ Release.Namespace}}
+  name: {{ include "archive-squid.fullname" . }}-loadbal-svc
+  namespace: {{ .Values.namespace}}
   labels:
-    {{- include "explorer-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "explorer"
-    app.kubernetes.io/part-of: "squid-explorer"
+    {{- include "archive-squid.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "archive"
+    app.kubernetes.io/part-of: "squid-archive"
     app.kubernetes.io/arch: {{.Values.arch}}
-    app: {{ include "explorer-squid.fullname" . }}
-    app: {{ include "explorer-squid.fullname" . }}-app
+    app: {{ include "archive-squid.fullname" . }}
+    app: {{ include "archive-squid.fullname" . }}-app
 spec:
   selector:
-    name: {{ include "explorer-squid.fullname" . }}-app
-    app: {{ include "explorer-squid.fullname" . }}-app
+    name: {{ include "archive-squid.fullname" . }}-app
+    app: {{ include "archive-squid.fullname" . }}-app
     type: {{ .Values.lb_service.type }}
   sessionAffinity: None
   sessionAffinityConfig:

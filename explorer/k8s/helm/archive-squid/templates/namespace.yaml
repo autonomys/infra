@@ -1,5 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: { { .Release.Name } }
-  labels: { { - include "archive-squid.labels" . | nindent 4 } }
+  name: {{ .Values.namespace }}

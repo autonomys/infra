@@ -2,59 +2,67 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: pod-reader-role
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "watch", "list"]
+
 ---
-kind: RoleBinding
+
 apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: pod-reader-binding
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 subjects:
-# Kubernetes service account
   - kind: ServiceAccount
     name: {{ include "archive-squid.serviceAccountName" . }}-pod-read
-    apiGroup: rbac.authorization.k8s.io 
+    namespace: {{ .Values.namespace | quote }}
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
   kind: Role
   name: pod-reader-role
   apiGroup: rbac.authorization.k8s.io
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: deployment-manager-role
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 rules:
   - apiGroups: [""]
     resources: ["deployments"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
 ---
-kind: RoleBinding
+
 apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: deployment-manager-role-binding
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 subjects:
-# Kubernetes service account
   - kind: ServiceAccount
     name: {{ include "archive-squid.serviceAccountName" . }}-admin
-    apiGroup: rbac.authorization.k8s.io 
+    namespace: {{ .Values.namespace | quote }}
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
   kind: Role
   name: deployment-manager-role
   apiGroup: rbac.authorization.k8s.io
+
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: role-viewer
-  namespace: {{ Release.Namespace}}
-rules:          # Authorization rules for this role
-  - apiGroups:  # 1st API group
-      - ''      # An empty string designates the core API group.
+  namespace: {{ .Values.namespace | quote }}
+rules:
+  - apiGroups: [""]
     resources:
       - services
       - ingress
@@ -63,18 +71,19 @@ rules:          # Authorization rules for this role
     verbs:
       - get
       - list
-  - apiGroups: # 2nd API group
-      - apiextensions.k8s.io
+  - apiGroups: [apiextensions.k8s.io]
     resources:
       - customresourcedefinitions
     verbs:
       - list
+
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: rolebinding-viewer
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -82,47 +91,51 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "archive-squid.serviceAccountName" . }}
-    apiGroup: rbac.authorization.k8s.io 
-    namespace: {{ Release.Namespace}}
+    namespace: {{ .Values.namespace | quote }}
+    apiGroup: rbac.authorization.k8s.io
+
 ---
-kind: RoleBinding
+
 apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: {{ include "archive-squid.fullname" . }}-admin-role-binding
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 subjects:
   - kind: User
-    name: muhammad@subspace.network
+    name: {{ .Values.administrator.email }}
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: {{ include "archive-squid.fullname" . }}-admin
-    apiGroup: rbac.authorization.k8s.io 
+    apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: {{ include "archive-squid.serviceAccountName" . }}-admin
-    apiGroup: rbac.authorization.k8s.io 
+    namespace: {{ .Values.namespace | quote }}
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: admin
   apiGroup: rbac.authorization.k8s.io
+
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: role-grantor-binding
-  namespace: {{ Release.Namespace}}
+  namespace: {{ .Values.namespace | quote }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: role-grantor
 subjects:
-- apiGroup: rbac.authorization.k8s.io
   - kind: User
-    name: muhammad@subspace.network
-    apiGroup: rbac.authorization.k8s.io 
+    name: {{ .Values.administrator.email }}
+    apiGroup: rbac.authorization.k8s.io
   - kind: Group
     name: {{ include "archive-squid.fullname" . }}-admin
     apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
     name: {{ include "archive-squid.serviceAccountName" . }}-admin
-    apiGroup: rbac.authorization.k8s.io 
-    namespace: {{ Release.Namespace}}
+    namespace: {{ .Values.namespace | quote }}
+    apiGroup: rbac.authorization.k8s.io
