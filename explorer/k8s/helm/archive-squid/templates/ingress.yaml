@@ -4,14 +4,13 @@ metadata:
   name: {{ include "archive-squid.fullname" . }}-ingress
   namespace: {{ .Values.namespace }}
   labels:
-    {{- include "archive-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "archive"
-    app.kubernetes.io/part-of: "squid-archive"
-    app.kubernetes.io/arch: {{ .Values.arch | quote }}
-    app: {{ include "archive-squid.fullname" . | quote }}
-  {{- with .Values.ingress.annotations }}
-    annotations:
-      {{- toYaml . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "archive-squid.name" . }}
+    helm.sh/chart: {{ include "archive-squid.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   ingressClassName: nginx

@@ -1,15 +1,17 @@
-# pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-     name: {{ include "explorer-squid.fullname" . }}-pvc
-     namespace: {{ Release.Namespace}}
-     labels:
-       app: {{ include "explorer-squid.fullname" . }}-app
+  name: {{ include "explorer-squid.fullname" . }}-pvc
+  namespace: {{ .Values.namespace | quote }}
+  labels:
+    app: {{ include "explorer-squid.name" . }}
+    chart: {{ include "explorer-squid.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
 spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: efs-sc
   resources:
     requests:
-      storage: {{ .Values.persistence.size}}
+      storage: {{ .Values.persistence.size | quote }}

@@ -1,63 +1,35 @@
 apiVersion: apps/v1
-kind: Statefulset
+kind: StatefulSet
 metadata:
   name: {{ include "explorer-squid.fullname" . }}-app
-  namespace: {{ Release.Namespace}}
-  labels:
-    {{- include "explorer-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "explorer"
-    app.kubernetes.io/part-of: "squid-explorer"
-    app.kubernetes.io/arch: {{.Values.arch}}
+  namespace: {{ .Values.namespace | quote }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  selector:
-    matchLabels:
-      {{- include "explorer-squid.selectorLabels" . | nindent 6 }} # has to match .spec.template.metadata.labels
   minReadySeconds: 5
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-
+  serviceName: {{ include "explorer-squid.fullname" . }}-app
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "explorer-squid.selectorLabels" . | nindent 8 }}
+        app: {{ include "explorer-squid.name" . }}
+        release: {{ .Release.Name }}
+    matchLabels:
+      app: {{ include "explorer-squid.name" . }}
+      release: {{ .Release.Name }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       serviceAccountName: {{ include "explorer-squid.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      terminationGracePeriodSeconds: 10
       containers:
-      - name: postgres
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: postgres:14
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        volumeMounts:
-          - mountPath: "/var/lib/postgresql/data"
-            name: {{ include "explorer-squid.fullname" . }}-data
-          - mountPath: "/var/lib/postgresql/postgres.conf"
-            name: {{ include "explorer-squid.fullname" . }}-postgres-config
-            subPath: postgres.conf
-        ports:
-          - name: db
-            containerPort: 5432
-            protocol: TCP
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-        env:
+        - name: postgres
+          image: postgres:16
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          ports:
+            - name: db
+              containerPort: 5432
+              protocol: TCP
+          env:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
@@ -78,35 +50,44 @@ spec:
                 secretKeyRef:
                   name: {{ include "explorer-squid.fullname" . }}-postgres-secret
                   key: POSTGRES_PASSWORD
-        livenessProbe:
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: {{ include "explorer-squid.fullname" . }}-data
+            - mountPath: "/var/lib/postgresql/postgres.conf"
+              name: config
+              subPath: postgres.conf
+          livenessProbe:
             exec:
               command:
-              - /bin/sh
-              - -c
-              - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+                - pg_isready
+                - -U
+                - postgres
+                - -h
+                - 127.0.0.1
+                - -p
+                - "5432"
             initialDelaySeconds: 30
             periodSeconds: 10
-            failureThreshold: 6
-            successThreshold: 1
-            timeoutSeconds: 5
-        readinessProbe:
+          readinessProbe:
             exec:
               command:
-              - /bin/sh
-              - -c
-              - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
-            failureThreshold: 6
+                - pg_isready
+                - -U
+                - postgres
+                - -h
+                - 127.0.0.1
+                - -p
+                - "5432"
             initialDelaySeconds: 5
             periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
-
-      - name: run-migrations
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: run-migrations
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          env:
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
@@ -127,19 +108,18 @@ spec:
                 secretKeyRef:
                   name: {{ include "explorer-squid.fullname" . }}-migration-secret
                   key: DB_PASS
-
-      - name: processor
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-          - name: processor
-            containerPort: 3000
-            protocol: TCP
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-        env:
+        - name: processor
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          ports:
+            - name: processor
+              containerPort: 3000
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
@@ -160,63 +140,45 @@ spec:
                 secretKeyRef:
                   name: {{ include "explorer-squid.fullname" . }}-migration-secret
                   key: DB_PASS
-        livenessProbe:
+          livenessProbe:
             tcpSocket:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 30
-        readinessProbe:
+          readinessProbe:
             tcpSocket:
               port: 3000
             initialDelaySeconds: 6
             periodSeconds: 30
-
-      - name: graphql
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: "{{ .Values.image_api.repository }}:{{ .Values.image_api.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-          - name: graphql
-            containerPort: 4000
-            protocol: TCP
-        # livenessProbe:
-        #     httpGet:
-        #       path: /graphql
-        #       port: 4000
-        #     initialDelaySeconds: 5
-        #     periodSeconds: 10
-        #     timeoutSeconds: 5
-        #     successThreshold: 1
-        #     failureThreshold: 3
-        livenessProbe:
+          volumeMounts:
+            - mountPath: "/var/processor"
+              name: {{ include "explorer-squid.fullname" . }}-data
+        - name: graphql
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image_api.repository }}:{{ .Values.image_api.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          ports:
+            - name: graphql
+              containerPort: 4000
+              protocol: TCP
+          livenessProbe:
             tcpSocket:
               port: 4000
             initialDelaySeconds: 5
             periodSeconds: 30
-        readinessProbe:
+          readinessProbe:
             tcpSocket:
               port: 4000
             initialDelaySeconds: 6
             periodSeconds: 30
-
+          volumeMounts:
+            - mountPath: "/var/graphql"
+              name: {{ include "explorer-squid.fullname" . }}-data
       volumes:
+        - name: config
+          configMap:
+            name: {{ include "explorer-squid.fullname" . }}-postgres-configmap
         - name: {{ include "explorer-squid.fullname" . }}-data
           persistentVolumeClaim:
             claimName: {{ include "explorer-squid.fullname" . }}-data-pvc
-        - name: {{ include "explorer-squid.fullname" . }}-postgres-config
-          configMap:
-            name: {{ include "explorer-squid.fullname" . }}-postgres-configmap
-      {{- with .Values.nodeSelector }}
-      nodeSelector:{{}}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      restartPolicy: Always

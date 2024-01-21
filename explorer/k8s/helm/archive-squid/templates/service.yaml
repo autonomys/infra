@@ -4,18 +4,16 @@ metadata:
   name: {{ include "archive-squid.fullname" . }}-svc
   namespace: {{ .Values.namespace}}
   labels:
-    {{- include "archive-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "archive"
-    app.kubernetes.io/part-of: "squid-archive"
-    app.kubernetes.io/arch: {{.Values.arch}}
-    name: {{ include "archive-squid.fullname" . }}-app
     app: {{ include "archive-squid.fullname" . }}-app
+    chart: {{ include "archive-squid.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 
 spec:
   selector:
     name: {{ include "archive-squid.fullname" . }}-app
     app: {{ include "archive-squid.fullname" . }}-app
-    type: {{ .Values.service.type }}
+  type: {{ .Values.service.type }}
   ports:
     {{- range .Values.service.ports }}
     - port: {{ .port }}

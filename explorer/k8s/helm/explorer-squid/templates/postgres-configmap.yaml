@@ -2,23 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "explorer-squid.fullname" . }}-postgres-configmap
-  namespace: {{ Release.Namespace}}
-  labels:
-    {{- include "explorer-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "explorer"
-    app.kubernetes.io/part-of: "squid-explorer"
-    app.kubernetes.io/arch: {{.Values.arch}}
-    app: {{ include "explorer-squid.fullname" . }}
-    app: {{ include "explorer-squid.fullname" . }}-app
+  namespace: {{ .Values.namespace }}
 data:
   postgres.conf: |-
-    # DB Version: 14
-    # OS Type: linux
-    # DB Type: web
-    # Total Memory (RAM): 32 GB
-    # CPUs num: 16
-    # Data Storage: ssd
-
     max_connections = 200
     shared_buffers = 8GB
     effective_cache_size = 24GB

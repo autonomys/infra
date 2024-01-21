@@ -1,8 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
-  namespace: {{ .Release.Name }}
+  name: {{ .Values.namespace }}-configmap
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ include "explorer-squid.fullname" . }}
 data:
+  POSTGRES_PORT: {{ .Values.postgres.postgresPort }}
+  POSTGRES_DB: {{ .Values.postgres.postgresDatabase }}
+  DB_HOST : {{ .Values.postgres.postgresHost }}
+  DB_PORT : {{ .Values.postgres.postgresPort }}
+  DB_NAME : {{ .Values.postgres.postgresDatabase }}
   files:
-  - config/explorer-env-file.properties
+  - ../config/explorer-env-file

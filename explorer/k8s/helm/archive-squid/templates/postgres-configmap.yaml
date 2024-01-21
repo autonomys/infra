@@ -3,22 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "archive-squid.fullname" . }}-postgres-configmap
   namespace: {{ .Values.namespace}}
-  labels:
-    {{- include "archive-squid.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "archive"
-    app.kubernetes.io/part-of: "squid-archive"
-    app.kubernetes.io/arch: {{.Values.arch}}
-    app: {{ include "archive-squid.fullname" . }}
-    app: {{ include "archive-squid.fullname" . }}-app
 data:
   postgres.conf: |-
-    # DB Version: 14
-    # OS Type: linux
-    # DB Type: web
-    # Total Memory (RAM): 32 GB
-    # CPUs num: 16
-    # Data Storage: ssd
-
     max_connections = 200
     shared_buffers = 8GB
     effective_cache_size = 24GB

@@ -1,18 +1,14 @@
-# pv.yaml
-# https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html
-# uses efs csi driver and storage class
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: archive-data-pv
+  name: explorer-squid-data-pv
 spec:
   capacity:
-    storage: 150Gi
+    storage: {{ .Values.persistence.size }}
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce
-  storageClassName: efs-sc
+{{ toYaml .Values.persistence.accessModes | indent 4 }}
+  storageClassName: {{ default "efs-sc" .Values.persistence.storageClass | quote }}
   persistentVolumeReclaimPolicy: Retain
   csi:
     driver: efs.csi.aws.com

@@ -7,7 +7,11 @@ administrator:
 
 namespace: archive-squid
 
-replicaCount: 1
+network_name: "gemini-3h"
+
+node_name: "archive-squid-node"
+
+externalIP: " "
 
 image:
   repository: subsquid/substrate-archive
@@ -16,7 +20,7 @@ image:
   tag: "firesquid"
 
 image_ingest:
-  repository: ghcr.io/subspace/blockarchive-ingest
+  repository: ghcr.io/subspace/substrate-ingest
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -27,6 +31,17 @@ image_node:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "snapshot-DATE"
 
+image_gateway:
+  repository: subsquid/substrate-gateway
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: firesquid
+
+image_explorer:
+  repository: subsquid/substrate-explorer
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: firesquid
 
 imagePullSecrets: []
 nameOverride: ""
@@ -67,6 +82,14 @@ service:
       name: explorer
       targetPort: 3000
       protocol: TCP
+    - port: 9944
+      name: rpc
+      targetPort: 9944
+      protocol: TCP
+    # - port: 8000
+    #   name: ingest
+    #   targetPort: 8000
+    #   protocol: TCP
 
 
 lb_service:
@@ -81,48 +104,36 @@ lb_service:
       targetPort: 3000
       protocol: TCP
 
+annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/proxy-set-header: "Host $host"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120s"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "http_504"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "3s"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "on"
+    nginx.ingress.kubernetes.io/auth-keepalive-timeout: "120s"
+    nginx.ingress.kubernetes.io/client-max-body-size: "8m"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "1024m"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.0"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ALL:!aNULL:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP"
+    nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers: "true"
+    nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For, X-REAL-IP"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-max-age: "3600"
+
 ingress:
   enabled: false
   className: "nginx"
-  annotations: {
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-    # nginx.ingress.kubernetes.io/upstream-hash-by,
-    # nginx.ingress.kubernetes.io/proxy-set-header: "Host $host",
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "120s",
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "120s",
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "120s",
-    nginx.ingress.kubernetes.io/proxy-next-upstream: "http_504",
-    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "3s",
-    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3",
-    nginx.ingress.kubernetes.io/proxy-request-buffering: "on",
-    nginx.ingress.kubernetes.io/auth-keepalive-timeout: "120s",
-    nginx.ingress.kubernetes.io/client-max-body-size: "8m",
-    nginx.ingress.kubernetes.io/proxy-buffering: "on",
-    nginx.ingress.kubernetes.io/proxy-buffers-number: "4",
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k",
-    nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "1024m",
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.0",
-    nginx.ingress.kubernetes.io/ssl-ciphers: "ALL:!aNULL:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP",
-    nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers: "true",
-    nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive",
-    nginx.ingress.kubernetes.io/enable-cors: "true",
-    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS",
-    nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For, X-REAL-IP",
-    nginx.ingress.kubernetes.io/rewrite-target: /,
-    # nginx.ingress.kubernetes.io/limit-connections: 10,
-    nginx.ingress.kubernetes.io/limit-rps: "250",
-    # nginx.ingress.kubernetes.io/limit-burst-multiplier:,
-    # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS",
-    nginx.ingress.kubernetes.io/ssl-redirect: "false",
-    nginx.ingress.kubernetes.io/websocket-services: "ws-svc",
-    # nginx.ingress.kubernetes.io/affinity: "cookie",
-    # nginx.com/sticky-cookie-services: "serviceName=api-svc srv_id expires=1h path=/api;serviceName=explorer-svc srv_id expires=1h path=/graphql",
-#    nginx.ingress.kubernetes.io/server-snippets: |
-#      location / {
-#        return 302 /en;
-#      }
-  }
 
   hosts:
     - host: archive.gemini-3h.subspace.network
@@ -156,6 +167,7 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
+replicaCount: 1
 
 nodeSelector:
   archive.gemini-3h.subspace/role: archive-squid-node
@@ -188,7 +200,14 @@ persistence:
   size: 150Gi
   storageClass: ""
 
-
 prometheus:
   enabled: true
   interval: 15s
+
+# make sure to change this to secure password in production
+postgres:
+  postgresUser: postgres
+  postgresPassword: postgres
+  postgresDatabase: squid-archive
+  postgresPort: 5432
+  postgresHost: localhost

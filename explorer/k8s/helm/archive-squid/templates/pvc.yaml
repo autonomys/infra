@@ -4,7 +4,10 @@ metadata:
   name: {{ include "archive-squid.fullname" . }}-pvc
   namespace: {{ .Values.namespace | quote }}
   labels:
-    app: {{ include "archive-squid.fullname" . }}-app
+    app: {{ include "archive-squid.name" . }}
+    chart: {{ include "archive-squid.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
 spec:
   accessModes:
     - ReadWriteOnce
