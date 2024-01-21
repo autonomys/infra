@@ -60,10 +60,10 @@ blockscout:
   ##
   env:
     ETHEREUM_JSONRPC_VARIANT=ganache
-    ETHEREUM_JSONRPC_HTTP_URL=https://nova.gemini-3g.subspace.network/ws
+    ETHEREUM_JSONRPC_HTTP_URL=https://nova.gemini-3h.subspace.network/ws
     DATABASE_URL=postgresql://localhost:7432/blockscout?ssl=false
-    ETHEREUM_JSONRPC_TRACE_URL=https://nova.gemini-3g.subspace.network/ws
-    ETHEREUM_JSONRPC_WS_URL=wss://nova.gemini-3g.subspace.network/ws
+    ETHEREUM_JSONRPC_TRACE_URL=https://nova.gemini-3h.subspace.network/ws
+    ETHEREUM_JSONRPC_WS_URL=wss://nova.gemini-3h.subspace.network/ws
     NETWORK=Subspace
     SUBNETWORK=Gemini 3g
     LOGO=/images/blockscout_logo.svg
@@ -252,7 +252,7 @@ frontend:
     NEXT_PUBLIC_WEB3_WALLETS=['metamask']
     NEXT_PUBLIC_WEB3_DISABLE_ADD_TOKEN_TO_WALLET=false
     NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=b989b4df40c7db4da07ff951dd48cac6
-    NEXT_PUBLIC_NETWORK_RPC_URL=https://nova.gemini-3g.subspace.network/ws
+    NEXT_PUBLIC_NETWORK_RPC_URL=https://nova.gemini-3h.subspace.network/ws
   envFromSecret: []
     # NAME: VALUE
 

@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: archive-configmap
-  namespace: explorer-network
-data:
-  files:
-    - config/archive-env-file.properties
