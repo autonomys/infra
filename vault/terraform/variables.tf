@@ -1,65 +1,96 @@
-# Variables
-variable "access_key" {}
-variable "secret_key" {}
-
-variable "owner" {
-  description = "The ami image owner i.e canonical"
-  type        = string
-  default     = "099720109477"
-}
-variable "aws_region" {
-  description = "The region to run the AWS resources"
-  type        = string
-  default     = "us-east-2"
+variable "region" {
+  type = string
 }
 
-variable "aws_az" {
-  description = "The availability to run the AWS resources"
-  type        = string
-  default     = "us-east-2a"
+variable "az" {
+  type    = list(string)
+  default = ["us-west-2a", "us-west-2b", "us-west-2c"]
 }
 
-variable "vault_version" {
+variable "vpc_cidr_block" {
+  type = string
+}
+
+variable "eks_cluster_name" {
   type    = string
-  default = "1.13.2"
+  default = "vault"
 }
-variable "vault_admin_token" {
-  description = "The region to run the AWS resources"
+
+variable "acm_vault_arn" {
+  type = string
+}
+
+variable "private_network_config" {
+  type = map(object({
+    cidr_block               = string
+    associated_public_subnet = string
+  }))
+
+  default = {
+    "private-vault-1" = {
+      cidr_block               = "10.0.0.0/23"
+      associated_public_subnet = "public-vault-1"
+    },
+    "private-vault-2" = {
+      cidr_block               = "10.0.2.0/23"
+      associated_public_subnet = "public-vault-2"
+    },
+    "private-vault-3" = {
+      cidr_block               = "10.0.4.0/23"
+      associated_public_subnet = "public-vault-3"
+    }
+  }
+}
+
+locals {
+  private_nested_config = flatten([
+    for name, config in var.private_network_config : [
+      {
+        name                     = name
+        cidr_block               = config.cidr_block
+        associated_public_subnet = config.associated_public_subnet
+      }
+    ]
+  ])
+}
+
+variable "public_network_config" {
+  type = map(object({
+    cidr_block = string
+  }))
+
+  default = {
+    "public-vault-1" = {
+      cidr_block = "10.0.8.0/23"
+    },
+    "public-vault-2" = {
+      cidr_block = "10.0.10.0/23"
+    },
+    "public-vault-3" = {
+      cidr_block = "10.0.12.0/23"
+    }
+  }
+}
+
+locals {
+  public_nested_config = flatten([
+    for name, config in var.public_network_config : [
+      {
+        name       = name
+        cidr_block = config.cidr_block
+      }
+    ]
+  ])
+}
+
+variable "hosted_zone" {
   type        = string
-  default     = ""
+  default     = "eks.subspace.network"
+  description = "eks hosted zone"
 }
 
-variable "ssh_key_name" {
-  description = "The name of an EC2 Key Pair that can be used to SSH to the EC2 Instances in this cluster. Set to an empty string to not associate a Key Pair."
+variable "authorized_source_ranges" {
   type        = string
-  default     = "deployer"
-}
-
-variable "private_key_path" {
-  type    = string
-  default = ""
-}
-
-variable "vault_instance_type" {
-  description = "The type of EC2 Instance to run in the Vault ASG"
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "vpc_id" {
-  description = "The ID of the VPC to deploy into. Leave an empty string to use the Default VPC in this region."
-  type        = string
-  default     = null
-}
-
-variable "s3_bucket_name" {
-  description = "The name of an S3 bucket to create and use as a storage backend (if configured). Note: S3 bucket names must be *globally* unique."
-  type        = string
-  default     = "vault_storage"
-}
-
-variable "force_destroy_s3_bucket" {
-  description = "If you set this to true, when you run terraform destroy, this tells Terraform to delete all the objects in the S3 bucket used for backend storage (if configured). You should NOT set this to true in production or you risk losing all your data! This property is only here so automated tests of this module can clean up after themselves."
-  type        = bool
-  default     = false
+  description = "Addresses or CIDR blocks which are allowed to connect to the Vault IP address. The default behavior is to allow anyone (0.0.0.0/0) access. You should restrict access to external IPs that need to access the Vault cluster."
+  default     = "0.0.0.0/0"
 }

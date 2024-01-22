@@ -1,206 +1,215 @@
-resource "aws_s3_bucket" "vault_storage" {
-  bucket        = "vault-subspace-network"
-  force_destroy = true
+resource "kubernetes_namespace" "vault-server" {
+  metadata {
+    name = "vault-server"
+  }
+}
+
+data "template_file" "vault-values" {
+  template = <<EOF
+        global:
+          tlsDisable: false
+        ui:
+          enabled: true
+          externalPort: 443
+          serviceType: "LoadBalancer"
+          loadBalancerSourceRanges:
+          - ${var.authorized_source_ranges}
+          - ${aws_eip.nat["public-vault-1"].public_ip}/32
+          - ${aws_eip.nat["public-vault-2"].public_ip}/32
+          - ${aws_eip.nat["public-vault-3"].public_ip}/32
+          annotations: |
+            service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${var.acm_vault_arn}
+            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: https
+            service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8200"
+            service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ui/"
+            service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+            external-dns.alpha.kubernetes.io/hostname: "vault.${var.hosted_zone}"
+            external-dns.alpha.kubernetes.io/ttl: "30"
+        server:
+          nodeSelector: |
+            eks.amazonaws.com/nodegroup: private-node-group-vault
+          extraEnvironmentVars:
+            VAULT_CACERT: /vault/userconfig/vault-server-tls/vault.ca
+          extraVolumes:
+          - type: secret
+            name: vault-server-tls
+          image:
+            repository: "vault"
+            tag: "1.6.0"
+          logLevel: "debug"
+          serviceAccount:
+            annotations: |
+              eks.amazonaws.com/role-arn: "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/vault-unseal"
+          extraEnvironmentVars:
+            AWS_ROLE_SESSION_NAME: some_name
+          ha:
+            enabled: true
+            nodes: 3
+            raft:
+              enabled: true
+              setNodeId: true
+              config: |
+                ui = true
+
+                listener "tcp" {
+                  tls_disable = 0
+                  tls_cert_file = "/vault/userconfig/vault-server-tls/vault.crt"
+                  tls_key_file  = "/vault/userconfig/vault-server-tls/vault.key"
+                  tls_client_ca_file = "/vault/userconfig/vault-server-tls/vault.ca"
+                  address = "[::]:8200"
+                  cluster_address = "[::]:8201"
+                }
+
+                storage "raft" {
+                  path    = "/vault/data"
+                }
+
+                service_registration "kubernetes" {}
+
+                seal "awskms" {
+                  region     = "${var.region}"
+                  kms_key_id = "${aws_kms_key.vault-kms.key_id}"
+                }
+   EOF
+}
+
+resource "helm_release" "vault" {
+  name = "vault"
+
+  chart  = "hashicorp/vault"
+  values = [data.template_file.vault-values.rendered]
+
+  namespace = "vault-server"
+
+  depends_on = [kubernetes_job.vault-certificate]
+}
+
+resource "kubernetes_cluster_role" "boot-vault" {
+  metadata {
+    name = "boot-vault"
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods/exec", "pods", "pods/log", "secrets", "tmp/secrets"]
+    verbs      = ["get", "list", "create"]
+  }
+
+  rule {
+    api_groups = ["certificates.k8s.io"]
+    resources  = ["certificatesigningrequests", "certificatesigningrequests/approval"]
+    verbs      = ["get", "list", "create", "update"]
+  }
+}
+
+resource "kubernetes_service_account" "boot-vault" {
+  metadata {
+    name      = "boot-vault"
+    namespace = "vault-server"
+    labels = {
+      "app.kubernetes.io/name" = "boot-vault"
+    }
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.vault.arn
+    }
+  }
+}
+
+resource "kubernetes_job" "vault-initialization" {
+  metadata {
+    name      = "boot-vault"
+    namespace = "vault-server"
+  }
+  spec {
+    template {
+      metadata {}
+      spec {
+        container {
+          name    = "boot-vault"
+          image   = "amazonlinux"
+          command = ["/bin/bash", "-c"]
+          args    = ["sleep 15; yum install -y awscli 2>&1 > /dev/null; export AWS_REGION=${var.region}; aws sts get-caller-identity; aws s3 cp $(S3_SCRIPT_URL) ./script.sh; chmod +x ./script.sh; ./script.sh"]
+          env {
+            name  = "S3_SCRIPT_URL"
+            value = "s3://${aws_s3_bucket.vault-scripts.id}/scripts/bootstrap.sh"
+          }
+          env {
+            name  = "VAULT_SECRET"
+            value = aws_secretsmanager_secret.vault-secret.arn
+          }
+        }
+        service_account_name = "boot-vault"
+        restart_policy       = "Never"
+      }
+    }
+    backoff_limit = 0
+  }
+
   depends_on = [
-    aws_iam_user.vault,
-    aws_kms_key.vault
+    kubernetes_job.vault-certificate,
+    helm_release.vault,
+    aws_s3_bucket_object.vault-script-bootstrap
   ]
+}
 
-  # Enable MFA delete protection
-  lifecycle {
-    prevent_destroy = false
+resource "kubernetes_job" "vault-certificate" {
+  metadata {
+    name      = "certificate-vault"
+    namespace = "vault-server"
   }
-}
-
-resource "aws_s3_bucket_versioning" "versioning_vault_storage" {
-  bucket = aws_s3_bucket.vault_storage.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_iam_user" "vault" {
-  name = "vault-admin"
-
-  tags = {
-    Name = "Vault IAM User"
-  }
-}
-
-resource "aws_iam_access_key" "vault" {
-  user = aws_iam_user.vault.name
-}
-
-resource "aws_iam_instance_profile" "vault" {
-  name = "vault-instance-profile"
-  role = aws_iam_role.vault.name
-}
-
-resource "aws_iam_role" "vault" {
-  name               = "vault-role"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
+  spec {
+    template {
+      metadata {}
+      spec {
+        container {
+          name    = "certificate-vault"
+          image   = "amazonlinux"
+          command = ["/bin/bash", "-c"]
+          args    = ["sleep 15; yum install -y awscli 2>&1 > /dev/null; export AWS_REGION=${var.region}; export NAMESPACE='vault-server'; aws sts get-caller-identity; aws s3 cp $(S3_SCRIPT_URL) ./script.sh; chmod +x ./script.sh; ./script.sh"]
+          env {
+            name  = "S3_SCRIPT_URL"
+            value = "s3://${aws_s3_bucket.vault-scripts.id}/scripts/certificates.sh"
+          }
+        }
+        service_account_name = "boot-vault"
+        restart_policy       = "Never"
+      }
     }
+    backoff_limit = 0
+  }
+
+  depends_on = [
+    aws_eks_node_group.private,
+    aws_s3_bucket_object.vault-script-certificates
   ]
 }
-EOF
-}
 
-resource "aws_iam_role_policy_attachment" "vault" {
-  role       = aws_iam_role.vault.name
-  policy_arn = aws_iam_policy.vault.arn
-}
-
-resource "aws_iam_policy" "vault" {
-  name        = "vault-policy"
-  description = "Policy for Vault backend access"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket",
-        "s3:GetBucketLocation",
-        "s3:ListBucketMultipartUploads",
-        "s3:ListBucketVersions"
-      ],
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.vault_storage.bucket}"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject",
-        "s3:ListMultipartUploadParts"
-      ],
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.vault_storage.bucket}/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Resource": "*"
+resource "kubernetes_cluster_role_binding" "boot-vault" {
+  metadata {
+    name = "boot-vault"
+    labels = {
+      "app.kubernetes.io/name" : "boot-vault"
     }
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "boot-vault"
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = "boot-vault"
+    namespace = "vault-server"
+  }
+}
+
+data "kubernetes_service" "vault-ui" {
+  metadata {
+    name      = "vault-ui"
+    namespace = "vault-server"
+  }
+  depends_on = [
+    kubernetes_job.vault-initialization,
+    helm_release.vault
   ]
-}
-EOF
-}
-
-resource "aws_iam_user_policy_attachment" "vault" {
-  user       = aws_iam_user.vault.name
-  policy_arn = aws_iam_policy.vault.arn
-  depends_on = [aws_iam_policy.vault]
-}
-
-resource "aws_kms_key" "vault" {
-  description             = "Vault encryption key"
-  enable_key_rotation     = true
-  deletion_window_in_days = 30
-}
-
-resource "aws_kms_alias" "vault" {
-  name          = "alias/vault-key"
-  target_key_id = aws_kms_key.vault.key_id
-}
-
-resource "aws_security_group_rule" "vault_http" {
-  security_group_id = aws_security_group.vault_sg.id
-  type              = "ingress"
-  from_port         = 8200
-  to_port           = 8200
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # Restrict the CIDR block as needed
-}
-
-# Read private key file and assign it to a variable
-data "local_file" "private_key" {
-  filename = var.private_key_path
-}
-
-resource "aws_instance" "vault" {
-  ami                         = data.aws_ami.ubuntu_amd64.id # Update with the desired Vault AMI ID
-  instance_type               = var.vault_instance_type    # Update with the desired instance type
-  key_name                    = var.ssh_key_name           # Update with your SSH key pair
-  subnet_id                   = aws_subnet.vault_subnet.id
-  availability_zone           = var.aws_az
-  associate_public_ip_address = true
-
-  # Attach the IAM role to the instance
-  iam_instance_profile = aws_iam_instance_profile.vault.name
-
-  vpc_security_group_ids = [aws_security_group.vault_sg.id]
-
-  tags = {
-    Name = "vault-server"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "export DEBIAN_FRONTEND=noninteractive",
-      "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install curl gnupg openssl net-tools unzip nginx certbot python3-certbot-nginx -y",
-      "sudo bash -c 'cat <<EOF > /etc/nginx/conf.d/vault.conf",
-      "server {",
-      "  listen 80;",
-      "  server_name vault.subspace.network;",
-      "  location / {",
-      "    proxy_pass http://127.0.0.1:8200;",
-      "    proxy_set_header Host $host;",
-      "    proxy_set_header X-Real-IP $remote_addr;",
-      "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
-      "    proxy_set_header X-Forwarded-Proto $scheme;",
-      "  }",
-      "}",
-      "EOF'",
-      "sudo systemctl restart nginx",
-      "echo 'export VAULT_ADDR=http://localhost:8200' | sudo tee -a /etc/environment",
-      "echo 'export VAULT_SKIP_VERIFY=true' | sudo tee -a /etc/environment",
-      "echo 'export vault_storage=s3' | sudo tee -a /etc/environment",
-      "echo 'export VAULT_BUCKET=${aws_s3_bucket.vault_storage.bucket}' | sudo tee -a /etc/environment",
-      "echo 'export VAULT_BUCKET_REGION=${var.aws_region}' | sudo tee -a /etc/environment",
-      "echo 'export AWS_ACCESS_KEY_ID=${aws_iam_access_key.vault.id}' | sudo tee -a /etc/environment",
-      "echo 'export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.vault.secret}' | sudo tee -a /etc/environment",
-      "echo 'export VAULT_KMS_KEY_ID=${aws_kms_alias.vault.target_key_id}' | sudo tee -a /etc/environment",
-      "echo 'export VAULT_TLS_DISABLE=true' | sudo tee -a /etc/environment",
-      "curl -LO https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
-      "unzip vault_${var.vault_version}_linux_amd64.zip",
-      "sudo mv vault /usr/local/bin/",
-      "sudo chmod +x /usr/local/bin/vault",
-      "sudo nohup vault server -config=/etc/vault-config/vault.hcl &",
-      "echo 'Installation complete'"
-    ]
-
-    on_failure = continue
-
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    private_key = data.local_file.private_key.content
-    host        = self.public_ip
-    timeout     = "90s"
-  }
 }
