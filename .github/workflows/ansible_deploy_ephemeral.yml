@@ -18,4 +18,4 @@ jobs:
       - name: Deploy using Ansible
         working-directory: ./ansible/ephemeral-devnets
         run: |
-          ansible-playbook -i inventories/${{ github.event.inputs.environment }}/hosts.yml playbooks/deploy-docker-compose.yml
+          ansible-playbook -i inventories/${{ github.event.inputs.environment }}/hosts.yml playbooks/main.yml
