@@ -31,8 +31,9 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+## comment to disable dsn external addresses using IP format for now
+#      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
+#      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
@@ -50,6 +51,15 @@ bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 enable_domains=${5}
 domain_id=${6}
+
+for (( i = 0; i < node_count; i++ )); do
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      - \"--dsn-external-address\"" >> ~/subspace/docker-compose.yml
+  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR_TCP=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      - \"--dsn-external-address\"" >> ~/subspace/docker-compose.yml
+  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
