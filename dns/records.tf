@@ -118,17 +118,27 @@ resource "cloudflare_record" "block_explorer" {
   zone_id = data.cloudflare_zone.subspace_network.id
 }
 
-// subspace blockscout
-resource "cloudflare_record" "blockscout" {
-  name    = "blockscout"
-  comment = "Subspace blockscout evm explorer"
+// subspace telemetry
+resource "cloudflare_record" "telemetry" {
+  comment = "Subspace Telemetry"
+  name    = "telemetry"
   proxied = true
   ttl     = 1
   type    = "A"
-  value   = "3.145.138.108"
+  value   = "35.89.37.220"
   zone_id = data.cloudflare_zone.subspace_network.id
 }
 
+// subspace telemetry (substation)
+resource "cloudflare_record" "substation" {
+  comment = "Subspace Telemetry (Substation)"
+  name    = "substation"
+  proxied = true
+  ttl     = 1
+  type    = "A"
+  value   = "35.89.37.220"
+  zone_id = data.cloudflare_zone.subspace_network.id
+}
 
 // TODO: the following records needs to be updated with further info on why they exist
 resource "cloudflare_record" "terraform_managed_resource_964bf73d0853cefc64803baef62167a5" {
