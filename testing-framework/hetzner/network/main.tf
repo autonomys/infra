@@ -27,7 +27,7 @@ module "network" {
     genesis-hash        = var.genesis_hash
     dsn-listen-port     = 30533
     node-dsn-port       = 30433
-    operator-port       = 40333
+    operator-port       = 30334
   }
 
   node-config = {
