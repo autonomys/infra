@@ -1,6 +1,7 @@
 #!/bin/bash
 
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -107,9 +108,12 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-## comment to disable external addresses using IP format for now
-#      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
-#      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--listen-on", "/ip6/::/tcp/30333",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
+#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
@@ -164,6 +168,7 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--blocks-pruning", "archive",'
     echo '      "--operator-id", "0",'
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
+    echo '      "--listen-on", "/ip6/::/tcp/30334",'
     echo '      "--rpc-cors", "all",'
     echo '      "--rpc-methods", "safe",'
     echo '      "--rpc-listen-on", "0.0.0.0:8944",'
