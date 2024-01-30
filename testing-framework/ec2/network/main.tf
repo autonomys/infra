@@ -31,6 +31,7 @@ module "network" {
     genesis-hash       = var.genesis_hash
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
+    operator-port      = 30334
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
