@@ -42,10 +42,24 @@ services:
       - "--pending-out-peers"
       - "1000"
       - "--external-address"
-      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
-      - "--external-address"
-      - "/ip4/$EXTERNAL_IP/tcp/30533"
+## comment to disable external addresses using IP format for now
+#      - "--external-address"
+#      - "/ip4/$EXTERNAL_IP/udp/30533/quic-v1"
+#      - "--external-address"
+#      - "/ip4/$EXTERNAL_IP/tcp/30533"
 EOF
+
+for (( i = 0; i < node_count; i++ )); do
+  if [ "${current_node}" == "${i}" ]; then
+    dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+    echo "      - \"--external-address\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+    dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR_TCP=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+    echo "      - \"--external-address\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+  fi
+done
+
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
@@ -72,33 +86,29 @@ cat >> ~/subspace/subspace/docker-compose.yml << EOF
       - "30433:30433/tcp"
       - "9615:9615"
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
-#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "1000",
       "--out-peers", "1000",
-      "--in-peers-light", "1000",
       "--dsn-in-connections", "1000",
       "--dsn-out-connections", "1000",
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
-      "--prometheus-port", "9615",
-      "--prometheus-external",
+      "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
     echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
-    echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
+    echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
   fi
 done
 

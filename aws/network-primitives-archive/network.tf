@@ -16,7 +16,7 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = "true"
 
   tags = {
-    Name = "${var.network_name}-test-subnet-${count.index}"
+    Name = "${var.network_name}-public-subnet-${count.index}"
   }
 }
 
@@ -26,7 +26,7 @@ resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.network_vpc.id
 
   tags = {
-    Name = "${var.network_name}-igw-test-subnet-${count.index}"
+    Name = "${var.network_name}-igw-public-subnet-${count.index}"
   }
 
   lifecycle {
@@ -109,14 +109,6 @@ resource "aws_security_group" "network_sg" {
   }
 
   ingress {
-    description = "Node Port 30334 Domain port for VPC"
-    from_port   = 30334
-    to_port     = 30334
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
     description = "Domain Operator Node Port 40333 for VPC"
     from_port   = 40333
     to_port     = 40333
@@ -151,15 +143,6 @@ resource "aws_security_group" "network_sg" {
   }
 
   ingress {
-    description = "Node UDP Port 30334 Domain port for VPC"
-    from_port   = 30334
-    to_port     = 30334
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-
-  ingress {
     description = "Farmer UDP Port 30533 for VPC"
     from_port   = 30533
     to_port     = 30533
@@ -183,3 +166,25 @@ resource "aws_security_group" "network_sg" {
     aws_vpc.network_vpc
   ]
 }
+
+## Allocate EIP to NAT Gateway (NOTE: Disable for now since not using private VPC)
+
+# resource "aws_eip" "public_subnet_eip" {
+#   count = length(var.public_subnet_cidrs)
+#   vpc   = true
+
+#   depends_on = [
+#     aws_internet_gateway.gw,
+#   ]
+# }
+
+# # NAT Gateway for public subnet
+# resource "aws_nat_gateway" "nat_gateway" {
+#   count         = length(var.public_subnet_cidrs)
+#   allocation_id = element(aws_eip.public_subnet_eip.*.allocation_id, count.index)
+#   subnet_id     = element(aws_subnet.public_subnets.*.id, count.index)
+
+#   tags = {
+#     Name = "${var.network_name}-public-subnet-nat-GTW-${count.index}"
+#   }
+# }

@@ -1,7 +1,7 @@
 module "gemini-3g" {
-  source          = "../network-primitives"
-  path_to_scripts = "../network-primitives/scripts"
-  path_to_configs = "../network-primitives/configs"
+  source          = "../network-primitives-archive"
+  path_to_scripts = "../network-primitives-archive/scripts"
+  path_to_configs = "../network-primitives-archive/configs"
   network_name    = "gemini-3g"
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]

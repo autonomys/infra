@@ -1,7 +1,6 @@
 #!/bin/bash
 
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
-EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -9,10 +8,6 @@ version: "3.7"
 volumes:
   archival_node_data: {}
   vmagentdata: {}
-
-networks:
-  traefik-proxy:
-    external: true
 
 services:
   vmagent:
@@ -43,79 +38,46 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "\${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-rpc-node-\${NODE_ID}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-full-node-\${NODE_ID}"
     restart: unless-stopped
-
-  # traefik reverse proxy with automatic tls management using let encrypt
-  traefik:
-    image: traefik:v2.10
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - --api=false
-      - --api.dashboard=false
-      - --providers.docker
-      - --log.level=info
-      - --entrypoints.web.address=:80
-      - --entrypoints.web.http.redirections.entryPoint.to=websecure
-      - --entrypoints.websecure.address=:443
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --certificatesresolvers.le.acme.email=alerts@subspace.network
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
-    networks:
-      - traefik-proxy
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt:/letsencrypt
 
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.archival-node.loadbalancer.server.port=9944"
-      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}-${NODE_ID}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
-      - "traefik.http.routers.archival-node.tls=true"
-      - "traefik.http.routers.archival-node.tls.certresolver=le"
-      - "traefik.http.routers.archival-node.entrypoints=websecure"
-      - "traefik.http.routers.archival-node.middlewares=redirect-https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
     ports:
+      - "30333:30333/udp"
+      - "30333:30333/tcp"
+      - "30433:30433/udp"
+      - "30433:30433/tcp"
       - "9615:9615"
-    networks:
-      - traefik-proxy
     logging:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
-      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
+      "--execution", "wasm",
+#      "--enable-subspace-block-relay",
       "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
-      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-      "--listen-on", "/ip6/::/tcp/30333",
+      "--blocks-pruning", "256",
+      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
-      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
+#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
-      "--in-peers", "500",
-      "--out-peers", "250",
+      "--in-peers", "1000",
+      "--out-peers", "1000",
+      "--dsn-in-connections", "1000",
+      "--dsn-out-connections", "1000",
+      "--dsn-pending-in-connections", "1000",
+      "--dsn-pending-out-connections", "1000",
+      "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
-      "--rpc-cors", "all",
-      "--rpc-listen-on", "0.0.0.0:9944",
-      "--rpc-methods", "safe",
-      "--prometheus-listen-on", "0.0.0.0:9615",
+      "--prometheus-port", "9615",
+      "--prometheus-external",
 EOF
 
 reserved_only=${1}
@@ -127,7 +89,7 @@ dsn_bootstrap_node_count=${4}
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 # // TODO: make configurable with gemini network as it's not needed for devnet
