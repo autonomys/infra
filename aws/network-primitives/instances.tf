@@ -54,7 +54,7 @@ resource "aws_instance" "bootstrap_node" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
@@ -118,7 +118,7 @@ resource "aws_instance" "bootstrap_node_evm" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
@@ -181,7 +181,7 @@ resource "aws_instance" "full_node" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
@@ -245,7 +245,7 @@ resource "aws_instance" "rpc_node" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
@@ -309,7 +309,7 @@ resource "aws_instance" "domain_node" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
@@ -372,7 +372,7 @@ resource "aws_instance" "farmer_node" {
   # Setting up the ssh connection
   connection {
     type        = "ssh"
-    host        = coalesc(element(self.*.public_ip, count.index), element(self.*.ipv6_address, count.index))
+    host        = element(self.*.public_ip, count.index)
     user        = var.ssh_user
     private_key = file("${var.private_key_path}")
     timeout     = "300s"

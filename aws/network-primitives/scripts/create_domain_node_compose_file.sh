@@ -88,7 +88,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}-${DOMAIN_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${DOMAIN_LABEL}.\${NETWORK_NAME}.subspace.network\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -107,17 +107,12 @@ services:
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
-      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
-#      "--piece-cache-size", "\${PIECE_CACHE_SIZE}",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--in-peers-light", "500",
       "--rpc-max-connections", "10000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
@@ -135,16 +130,14 @@ enable_domains=${6}
 domain_id=${7}
 
 for (( i = 0; i < node_count; i++ )); do
-  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-  echo "      - \"--dsn-external-address\"" >> ~/subspace/docker-compose.yml
-  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
-  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSTRATE_MULTI_ADDR_TCP=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-  echo "      - \"--dsn-external-address\"" >> ~/subspace/docker-compose.yml
-  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+  if [ "${current_node}" == "${i}" ]; then
+    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+    echo "      \"--dsn-external-address\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
+  fi
 done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
@@ -174,9 +167,9 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--rpc-listen-on", "0.0.0.0:8944",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace/bootstrap_node_evm_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
 
   } >> ~/subspace/docker-compose.yml

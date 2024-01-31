@@ -219,3 +219,8 @@ variable "access_key" {
   type      = string
   sensitive = true
 }
+
+variable "pot_external_entropy" {
+  description = "External entropy, used initially when PoT chain starts to derive the first seed"
+  type        = string
+}

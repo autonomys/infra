@@ -47,25 +47,25 @@ services:
     restart: unless-stopped
 
   # traefik reverse proxy with automatic tls management using let encrypt
-  traefik:
-    image: traefik:v2.10
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - --api=false
-      - --api.dashboard=false
-      - --providers.docker
-      - --log.level=info
-      - --entrypoints.web.address=:80
-      - --entrypoints.web.http.redirections.entryPoint.to=websecure
-      - --entrypoints.websecure.address=:443
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --certificatesresolvers.le.acme.email=alerts@subspace.network
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
-    networks:
-      - traefik-proxy
+  # traefik:
+  #   image: traefik:v2.10
+  #   container_name: traefik
+  #   restart: unless-stopped
+  #   command:
+  #     - --api=false
+  #     - --api.dashboard=false
+  #     - --providers.docker
+  #     - --log.level=info
+  #     - --entrypoints.web.address=:80
+  #     - --entrypoints.web.http.redirections.entryPoint.to=websecure
+  #     - --entrypoints.websecure.address=:443
+  #     - --providers.docker=true
+  #     - --providers.docker.exposedbydefault=false
+  #     - --certificatesresolvers.le.acme.email=alerts@subspace.network
+  #     - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+  #     - --certificatesresolvers.le.acme.tlschallenge=true
+  #   networks:
+  #     - traefik-proxy
     ports:
       - 80:80
       - 443:443
@@ -81,7 +81,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=9944"
-      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}-${NODE_ID}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -102,6 +102,7 @@ services:
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",

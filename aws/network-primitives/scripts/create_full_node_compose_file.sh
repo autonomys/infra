@@ -63,8 +63,9 @@ services:
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
+      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-      "--listen-on", "/ip4/::/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
@@ -87,7 +88,7 @@ bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done

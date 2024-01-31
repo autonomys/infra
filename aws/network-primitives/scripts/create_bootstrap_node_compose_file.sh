@@ -136,6 +136,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
+      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
@@ -153,11 +154,9 @@ cat >> ~/subspace/docker-compose.yml << EOF
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" != "${i}" ]; then
-    addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-    echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-  fi
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+  echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 if [ "${reserved_only}" == true ]; then

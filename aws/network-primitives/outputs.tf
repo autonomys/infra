@@ -104,5 +104,6 @@ output "dns-records" {
     cloudflare_record.bootstrap.*.hostname,
     cloudflare_record.rpc.*.hostname,
     cloudflare_record.core-domain.*.hostname,
+    cloudflare_record.nova.*.hostname,
   ]
 }
