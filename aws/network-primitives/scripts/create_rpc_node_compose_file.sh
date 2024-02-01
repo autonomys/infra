@@ -12,7 +12,6 @@ volumes:
 
 networks:
   traefik-proxy:
-    external: true
 
 services:
   vmagent:
@@ -47,31 +46,31 @@ services:
     restart: unless-stopped
 
   # traefik reverse proxy with automatic tls management using let encrypt
-  # traefik:
-  #   image: traefik:v2.10
-  #   container_name: traefik
-  #   restart: unless-stopped
-  #   command:
-  #     - --api=false
-  #     - --api.dashboard=false
-  #     - --providers.docker
-  #     - --log.level=info
-  #     - --entrypoints.web.address=:80
-  #     - --entrypoints.web.http.redirections.entryPoint.to=websecure
-  #     - --entrypoints.websecure.address=:443
-  #     - --providers.docker=true
-  #     - --providers.docker.exposedbydefault=false
-  #     - --certificatesresolvers.le.acme.email=alerts@subspace.network
-  #     - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-  #     - --certificatesresolvers.le.acme.tlschallenge=true
-  #   networks:
-  #     - traefik-proxy
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --api=false
+      - --api.dashboard=false
+      - --providers.docker
+      - --log.level=info
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesresolvers.le.acme.email=alerts@subspace.network
+      - --certificatesresolvers.le.acme.storage=/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+    networks:
+      - traefik-proxy
     ports:
       - 80:80
       - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt:/letsencrypt
+      - ./letsencrypt/acme.json:/acme.json
 
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
@@ -88,6 +87,7 @@ services:
       - "traefik.http.routers.archival-node.middlewares=redirect-https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.docker.network=traefik-proxy"
     ports:
       - "9615:9615"
     networks:
@@ -131,7 +131,6 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
   echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
-# // TODO: make configurable with gemini network as it's not needed for devnet
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
   echo "      \"--dsn-reserved-peers\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
