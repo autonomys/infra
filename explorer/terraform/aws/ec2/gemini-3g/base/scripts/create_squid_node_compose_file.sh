@@ -18,8 +18,8 @@ services:
         read_only: true
     environment:
       POSTGRES_DB: squid-archive
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     expose:
       - "5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
