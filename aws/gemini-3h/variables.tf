@@ -31,7 +31,7 @@ variable "instance_type" {
     domain        = "m6a.xlarge"
     full          = "m6a.xlarge"
     farmer        = "c7a.2xlarge"
-    evm_bootstrap = "m6a.xlarge"
+    evm_bootstrap = "c7a.xlarge"
   }
 }
 
