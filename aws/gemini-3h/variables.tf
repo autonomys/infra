@@ -26,10 +26,10 @@ variable "domain_labels" {
 variable "instance_type" {
   type = map(string)
   default = {
-    bootstrap     = "c7a.2xlarge"
+    bootstrap     = "c7a.4xlarge"
     rpc           = "m6a.xlarge"
     domain        = "m6a.xlarge"
-    full          = "m6a.xlarge"
+    full          = "c7a.2xlarge"
     farmer        = "c7a.2xlarge"
     evm_bootstrap = "c7a.xlarge"
   }

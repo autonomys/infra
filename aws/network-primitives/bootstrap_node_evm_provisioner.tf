@@ -3,6 +3,11 @@ locals {
     [aws_instance.bootstrap_node_evm.*.public_ip]
     ]
   )
+
+  bootstrap_nodes_evm_ip_v6 = flatten([
+    [aws_instance.bootstrap_node_evm.*.ipv6_addresses]
+    ]
+  )
 }
 
 resource "null_resource" "setup-bootstrap-nodes-evm" {
@@ -160,13 +165,12 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
 
       # start subspace node
-      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

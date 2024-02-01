@@ -1,22 +1,26 @@
 locals {
-  full_node_ip_v4 = flatten([
+  full_nodes_ip_v4 = flatten([
     [aws_instance.full_node.*.public_ip]
+    ]
+  )
+  full_nodes_ip_v6 = flatten([
+    [aws_instance.full_node.*.ipv6_addresses]
     ]
   )
 }
 
 resource "null_resource" "setup-full-nodes" {
-  count = length(local.full_node_ip_v4)
+  count = length(local.full_nodes_ip_v4)
 
   depends_on = [aws_instance.full_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.full_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.full_nodes_ip_v4)
   }
 
   connection {
-    host        = local.full_node_ip_v4[count.index]
+    host        = local.full_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -54,7 +58,7 @@ resource "null_resource" "setup-full-nodes" {
 }
 
 resource "null_resource" "prune-full-nodes" {
-  count      = var.full-node-config.prune ? length(local.full_node_ip_v4) : 0
+  count      = var.full-node-config.prune ? length(local.full_nodes_ip_v4) : 0
   depends_on = [null_resource.setup-full-nodes]
 
   triggers = {
@@ -62,7 +66,7 @@ resource "null_resource" "prune-full-nodes" {
   }
 
   connection {
-    host        = local.full_node_ip_v4[count.index]
+    host        = local.full_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -84,7 +88,7 @@ resource "null_resource" "prune-full-nodes" {
 }
 
 resource "null_resource" "start-full-nodes" {
-  count = length(local.full_node_ip_v4)
+  count = length(local.full_nodes_ip_v4)
 
   depends_on = [null_resource.setup-full-nodes]
 
@@ -95,7 +99,7 @@ resource "null_resource" "start-full-nodes" {
   }
 
   connection {
-    host        = local.full_node_ip_v4[count.index]
+    host        = local.full_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -147,10 +151,10 @@ resource "null_resource" "start-full-nodes" {
       "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.full_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.full_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
 
       # start subspace node
-      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

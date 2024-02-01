@@ -3,6 +3,11 @@ locals {
     [aws_instance.bootstrap_node.*.public_ip]
     ]
   )
+
+  bootstrap_nodes_ip_v6 = flatten([
+    [aws_instance.bootstrap_node.*.ipv6_addresses]
+    ]
+  )
 }
 
 resource "null_resource" "setup-bootstrap-nodes" {
@@ -149,7 +154,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }

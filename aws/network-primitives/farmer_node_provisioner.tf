@@ -1,22 +1,26 @@
 locals {
-  farmer_node_ipv4 = flatten([
+  farmer_nodes_ipv4 = flatten([
     [aws_instance.farmer_node.*.public_ip]
+    ]
+  )
+  farmer_nodes_ipv6 = flatten([
+    [aws_instance.farmer_node.*.ipv6_addresses]
     ]
   )
 }
 
 resource "null_resource" "setup-farmer-nodes" {
-  count = length(local.farmer_node_ipv4)
+  count = length(local.farmer_nodes_ipv4)
 
   depends_on = [aws_instance.farmer_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.farmer_node_ipv4)
+    cluster_instance_ipv4s = join(",", local.farmer_nodes_ipv4)
   }
 
   connection {
-    host        = local.farmer_node_ipv4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -55,7 +59,7 @@ resource "null_resource" "setup-farmer-nodes" {
 }
 
 resource "null_resource" "prune-farmer-nodes" {
-  count      = var.farmer-node-config.prune ? length(local.farmer_node_ipv4) : 0
+  count      = var.farmer-node-config.prune ? length(local.farmer_nodes_ipv4) : 0
   depends_on = [null_resource.setup-farmer-nodes]
 
   triggers = {
@@ -63,7 +67,7 @@ resource "null_resource" "prune-farmer-nodes" {
   }
 
   connection {
-    host        = local.farmer_node_ipv4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -85,7 +89,7 @@ resource "null_resource" "prune-farmer-nodes" {
 }
 
 resource "null_resource" "start-farmer-nodes" {
-  count = length(local.farmer_node_ipv4)
+  count = length(local.farmer_nodes_ipv4)
 
   depends_on = [null_resource.setup-farmer-nodes]
 
@@ -96,7 +100,7 @@ resource "null_resource" "start-farmer-nodes" {
   }
 
   connection {
-    host        = local.farmer_node_ipv4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -160,10 +164,10 @@ resource "null_resource" "start-farmer-nodes" {
       "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_node_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_nodes_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
       # start subspace
-      #"sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }
 }
