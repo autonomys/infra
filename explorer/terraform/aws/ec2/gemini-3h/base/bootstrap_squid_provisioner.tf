@@ -336,7 +336,7 @@ resource "null_resource" "start-green-squid-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.green-squid-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
       "sudo hostnamectl set-hostname squid-${var.green-squid-node-config.network-name}",
