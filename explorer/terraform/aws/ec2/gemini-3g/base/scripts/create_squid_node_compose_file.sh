@@ -18,38 +18,38 @@ services:
         read_only: true
     environment:
       POSTGRES_DB: squid-archive
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: \${POSTGRES_USER}
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
     expose:
       - "5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   run-migrations:
-    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-processor:\${DOCKER_TAG}
     restart: on-failure:5
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: \${DB_HOST}
       # provide DB name
-      DB_NAME: ${DB_NAME}
+      DB_NAME: \${DB_NAME}
       # provide DB password
-      DB_PASS: ${DB_PASS}
+      DB_PASS: \${DB_PASS}
     depends_on:
       - db
     command: "npm run db:migrate"
 
   processor:
-    image: ghcr.io/subspace/blockexplorer-processor:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-processor:\${DOCKER_TAG}
     restart: on-failure
     environment:
       # provide archive endpoint
-      ARCHIVE_ENDPOINT: ${ARCHIVE_ENDPOINT}
+      ARCHIVE_ENDPOINT: \${ARCHIVE_ENDPOINT}
       # provide chain RPC endpoint
-      CHAIN_RPC_ENDPOINT: ${CHAIN_RPC_ENDPOINT}
-      DB_HOST: ${DB_HOST}
+      CHAIN_RPC_ENDPOINT: \${CHAIN_RPC_ENDPOINT}
+      DB_HOST: \${DB_HOST}
       # provide DB name
-      DB_NAME: ${DB_NAME}
+      DB_NAME: \${DB_NAME}
       # provide DB password
-      DB_PASS: ${DB_PASS}
+      DB_PASS: \${DB_PASS}
     depends_on:
       - db
       - run-migrations
@@ -61,17 +61,17 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   graphql:
-    image: ghcr.io/subspace/blockexplorer-api-server:${DOCKER_TAG}
+    image: ghcr.io/subspace/blockexplorer-api-server:\${DOCKER_TAG}
     depends_on:
       - db
       - run-migrations
       - processor
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: \${DB_HOST}
       # provide DB name
-      DB_NAME: ${DB_NAME}
+      DB_NAME: \${DB_NAME}
       # provide DB password
-      DB_PASS: ${DB_PASS}
+      DB_PASS: \${DB_PASS}
     ports:
       - "4350:4000"
 
@@ -87,17 +87,17 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "squid-${NETWORK_NAME}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "squid-\${NETWORK_NAME}"
     restart: unless-stopped
 
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      PORT: ${HEALTH_CHECK_PORT}
-      SECRET: ${MY_SECRET}
+      POSTGRES_HOST: \${POSTGRES_HOST}
+      POSTGRES_PORT: \${POSTGRES_PORT}
+      PORT: \${HEALTH_CHECK_PORT}
+      SECRET: \${MY_SECRET}
     command: "postgres"
     ports:
       - 8080:8080
@@ -105,9 +105,9 @@ services:
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      PROMETHEUS_HOST: ${PROCESSOR_HEALTH_HOST}
-      PORT: ${PROCESSOR_HEALTH_PORT}
-      SECRET: ${MY_SECRET}
+      PROMETHEUS_HOST: \${PROCESSOR_HEALTH_HOST}
+      PORT: \${PROCESSOR_HEALTH_PORT}
+      SECRET: \${MY_SECRET}
     command: "prometheus"
     ports:
       - 7070:7070

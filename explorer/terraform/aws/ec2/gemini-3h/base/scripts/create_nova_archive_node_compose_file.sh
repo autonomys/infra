@@ -1,18 +1,23 @@
 #!/bin/bash
 EXTERNAL_IP=`curl -s ifconfig.me`
-source $HOME/.bash_profile
-cat > $HOME/archive/docker-compose.yml << EOF
+source /home/$USER/.bash_profile
+cat > /home/$USER/archive/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
   archival_node_data: {}
+  db_data: {}
 
 services:
   db:
     image: postgres:16
     restart: always
     volumes:
-      - $HOME/archive/postgresql:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
+      - type: bind
+        source: $HOME/archive/postgresql/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     environment:
       POSTGRES_USER: \${POSTGRES_USER}
       POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
@@ -67,31 +72,6 @@ services:
     ports:
       - "4444:3000"
 
-  node:
-    image: ghcr.io/subspace/node:\${NODE_TAG}
-    volumes:
-      - archival_node_data:/var/subspace:rw
-    restart: unless-stopped
-    command: [
-      "--chain", "\${NETWORK_NAME}",
-      "--base-path", "/var/subspace",
-      "--execution", "wasm",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
-      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
-      "--rpc-cors", "all",
-      "--rpc-listen-on", "0.0.0.0:9944",
-      "--rpc-methods", "unsafe",
-      "--rpc-external",
-      "--no-private-ipv4",
-      "--name", "\${NODE_NAME}"
-    ]
-    healthcheck:
-      timeout: 5s
-      interval: 30s
-      retries: 5
-
   agent:
     container_name: newrelic-infra
     image: newrelic/infrastructure:latest
@@ -105,7 +85,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "\${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "archive-squid-\${NETWORK_NAME}"
+      NRIA_DISPLAY_NAME: "nova-archive-squid-\${NETWORK_NAME}"
     restart: unless-stopped
 
   pg-health-check:

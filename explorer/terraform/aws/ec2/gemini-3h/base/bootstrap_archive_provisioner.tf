@@ -159,7 +159,7 @@ resource "null_resource" "start-archive-nodes" {
       "echo DOMAIN_PREFIX=${var.archive-node-config.domain-prefix} >> /home/${var.ssh_user}/archive/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/archive/.env",
       "echo DOCKER_TAG=${var.archive-node-config.docker-tag} >> /home/${var.ssh_user}/archive/.env",
-      "echo NODE_NAME=SUBSQUID_GEMINI_3g >> /home/${var.ssh_user}/archive/.env",
+      "echo NODE_NAME=SUBSQUID_GEMINI_3h >> /home/${var.ssh_user}/archive/.env",
       "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/archive/.env",
       "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/archive/.env",
       "echo POSTGRES_USER=postgres >> /home/${var.ssh_user}/archive/.env",

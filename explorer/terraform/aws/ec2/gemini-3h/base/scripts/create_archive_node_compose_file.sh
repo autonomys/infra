@@ -6,13 +6,18 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
+  db_data: {}
 
 services:
   db:
     image: postgres:16
     restart: always
     volumes:
-      - $HOME/archive/postgresql:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
+      - type: bind
+        source: $HOME/archive/postgresql/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     environment:
       POSTGRES_USER: \${POSTGRES_USER}
       POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
@@ -73,18 +78,16 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     command: [
+      "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--execution", "wasm",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
-      "--rpc-methods", "unsafe",
-      "--rpc-external",
-      "--no-private-ipv4",
+      "--rpc-methods", "safe",
       "--name", "\${NODE_NAME}"
     ]
     healthcheck:
