@@ -21,10 +21,10 @@ resource "cloudflare_record" "squid-green" {
 }
 
 resource "cloudflare_record" "squid-live" {
-  count   = var.green-squid-node-config.instance-count-green > 0 ? var.green-squid-node-config.instance-count-green : 0
+  count   = var.blue-squid-node-config.instance-count-blue > 0 ? var.blue-squid-node-config.instance-count-blue : 0
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "squid.${var.network_name}"
-  value   = local.green_squid_node_ip_v4[count.index]
+  value   = local.blue_squid_node_ip_v4[count.index]
   type    = "A"
   ttl     = "3600"
 }
