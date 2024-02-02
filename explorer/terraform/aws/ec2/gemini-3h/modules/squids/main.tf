@@ -27,7 +27,7 @@ module "squids" {
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
-    instance-count-green = var.instance_count_green
+    instance-count-green = 0 #var.instance_count_green
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     prune                = false
@@ -42,7 +42,7 @@ module "squids" {
     instance-type       = var.instance_type
     deployment-version  = 0
     regions             = var.aws_region
-    instance-count-blue = var.instance_count_blue
+    instance-count-blue = 0 #var.instance_count_blue
     disk-volume-size    = var.disk_volume_size
     disk-volume-type    = var.disk_volume_type
     prune               = false
@@ -57,7 +57,7 @@ module "squids" {
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
-    instance-count-green = var.instance_count_green
+    instance-count-green = 0 #var.instance_count_green
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     prune                = false
@@ -68,7 +68,7 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3h-nov-19"
+    node-tag           = "gemini-3h-2024-feb-01"
     docker-tag         = "latest"
     instance-type      = var.instance_type
     deployment-version = 0
@@ -83,12 +83,12 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "nova.archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3h-nov-19"
+    node-tag           = "gemini-3h-2024-feb-01"
     docker-tag         = "evm-domain"
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = 1
+    instance-count     = 0
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
     prune              = false
@@ -101,7 +101,7 @@ module "squids" {
     instance-type      = var.instance_type
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = 1
+    instance-count     = 0
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
     prune              = false

@@ -6,23 +6,28 @@ version: "3.7"
 
 volumes:
   archival_node_data: {}
+  db_data: {}
 
 services:
   db:
     image: postgres:16
     restart: always
     volumes:
-      - $HOME/archive/postgresql:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
+      - type: bind
+        source: $HOME/archive/postgresql/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: \${POSTGRES_USER}
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
+      POSTGRES_DB: \${POSTGRES_DB}
 
   ingest:
     depends_on:
       - db
     restart: on-failure
-    image: ghcr.io/subspace/substrate-ingest:${DOCKER_TAG}
+    image: ghcr.io/subspace/substrate-ingest:\${DOCKER_TAG}
     logging:
       driver: loki
       options:
@@ -31,7 +36,7 @@ services:
       "-e", "ws://node:9944",
       "-c", "10",
        "--prom-port", "9090",
-       "--out", "postgres://postgres:postgres@db:${POSTGRES_PORT}/${POSTGRES_DB}"
+       "--out", "postgres://postgres:postgres@db:\${POSTGRES_PORT}/\${POSTGRES_DB}"
     ]
     environment:
       NODE_TLS_REJECT_UNAUTHORIZED: 0
@@ -43,7 +48,7 @@ services:
     environment:
       RUST_LOG: "substrate_gateway=info,actix_server=info"
     command: [
-       "--database-url", "postgres://postgres:postgres@db:${POSTGRES_PORT}/${POSTGRES_DB}",
+       "--database-url", "postgres://postgres:postgres@db:\${POSTGRES_PORT}/\${POSTGRES_DB}",
        "--database-max-connections", "6", # max number of concurrent database connections
        # these parameters have to be adjusted depending on machine resources to avoid OOM
        "--scan-start-value", "20", # works as batch size but for a whole archive, default is 100
@@ -58,30 +63,32 @@ services:
   explorer:
     image: subsquid/substrate-explorer:firesquid
     environment:
-      DB_TYPE: ${DB_TYPE}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
+      DB_TYPE: \${DB_TYPE}
+      DB_HOST: \${DB_HOST}
+      DB_PORT: \${DB_PORT}
+      DB_NAME: \${DB_NAME}
+      DB_USER: \${DB_USER}
+      DB_PASS: \${DB_PASS}
     ports:
       - "4444:3000"
 
   node:
-    image: ghcr.io/subspace/node:${NODE_TAG}
+    image: ghcr.io/subspace/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     command: [
-      "--chain", "${NETWORK_NAME}",
+      "run",
+      "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
-      "--listen-addr", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
       "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
-      "--name", "${NODE_NAME}"
+      "--name", "\${NODE_NAME}"
     ]
     healthcheck:
       timeout: 5s
@@ -100,17 +107,17 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: "${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "archive-squid-${NETWORK_NAME}"
+      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "archive-squid-\${NETWORK_NAME}"
     restart: unless-stopped
 
   pg-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      PORT: ${HEALTH_CHECK_PORT}
-      SECRET: ${MY_SECRET}
+      POSTGRES_HOST: \${POSTGRES_HOST}
+      POSTGRES_PORT: \${POSTGRES_PORT}
+      PORT: \${HEALTH_CHECK_PORT}
+      SECRET: \${MY_SECRET}
     command: "postgres"
     ports:
       - 8080:8080
@@ -118,9 +125,9 @@ services:
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
     environment:
-      PROMETHEUS_HOST: ${INGEST_HEALTH_HOST}
-      PORT: ${INGEST_HEALTH_PORT}
-      SECRET: ${MY_SECRET}
+      PROMETHEUS_HOST: \${INGEST_HEALTH_HOST}
+      PORT: \${INGEST_HEALTH_PORT}
+      SECRET: \${MY_SECRET}
     command: "prometheus"
     ports:
       - 7070:7070
