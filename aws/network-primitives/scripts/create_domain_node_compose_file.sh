@@ -170,7 +170,7 @@ if [ "${enable_domains}" == "true" ]; then
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace/bootstrap_node_evm_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
 
   } >> ~/subspace/docker-compose.yml
