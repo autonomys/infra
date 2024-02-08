@@ -37,7 +37,7 @@ resource "aws_instance" "bootstrap_node" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
@@ -101,7 +101,7 @@ resource "aws_instance" "bootstrap_node_evm" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
@@ -164,7 +164,7 @@ resource "aws_instance" "full_node" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
@@ -227,7 +227,7 @@ resource "aws_instance" "rpc_node" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
@@ -292,7 +292,7 @@ resource "aws_instance" "domain_node" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
@@ -355,7 +355,7 @@ resource "aws_instance" "farmer_node" {
 
   lifecycle {
 
-    ignore_changes = [ami]
+    ignore_changes = [ami, ipv6_address_count]
 
   }
 
