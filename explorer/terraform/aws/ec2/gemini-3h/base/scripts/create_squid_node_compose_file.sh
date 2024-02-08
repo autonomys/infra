@@ -23,6 +23,10 @@ services:
     expose:
       - "5432"
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:\${DOCKER_TAG}
@@ -74,6 +78,10 @@ services:
       DB_PASS: \${DB_PASS}
     ports:
       - "4350:4000"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   agent:
     container_name: newrelic-infra
