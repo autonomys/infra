@@ -22,6 +22,10 @@ services:
       POSTGRES_USER: \${POSTGRES_USER}
       POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
       POSTGRES_DB: \${POSTGRES_DB}
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   ingest:
     depends_on:
@@ -56,6 +60,10 @@ services:
     ]
     ports:
       - "8888:8000"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   # Explorer service is optional.
   # It provides rich GraphQL API for querying archived data.
@@ -71,6 +79,10 @@ services:
       DB_PASS: \${DB_PASS}
     ports:
       - "4444:3000"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   node:
     image: ghcr.io/subspace/node:\${NODE_TAG}
@@ -94,6 +106,10 @@ services:
       timeout: 5s
       interval: 30s
       retries: 5
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   agent:
     container_name: newrelic-infra

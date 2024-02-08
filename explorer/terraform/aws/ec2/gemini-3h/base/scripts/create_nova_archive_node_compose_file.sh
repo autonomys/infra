@@ -22,6 +22,10 @@ services:
       POSTGRES_USER: \${POSTGRES_USER}
       POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
       POSTGRES_DB: \${POSTGRES_DB}
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   ingest:
     depends_on:
@@ -56,6 +60,10 @@ services:
     ]
     ports:
       - "8888:8000"
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   # Explorer service is optional.
   # It provides rich GraphQL API for querying archived data.
