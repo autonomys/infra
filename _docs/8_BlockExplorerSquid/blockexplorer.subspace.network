@@ -2,7 +2,7 @@ server {
     root /var/www/html;
     index index.html index.htm index.nginx-debian.html;
 
-    server_name blockexplorer.subspace.network;
+    server_name squid.gemini-3h.subspace.network;
 
     location ~* \.(?:css|js|json)$ {
         try_files $uri $uri/ @backend;
