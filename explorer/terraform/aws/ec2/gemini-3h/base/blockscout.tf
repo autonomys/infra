@@ -20,7 +20,8 @@ resource "aws_instance" "blockscout_node" {
   }
 
   tags = {
-    name       = "nova-${var.nova-blockscout-node-config.network-name}"
+    name       = "nova-${var.nova-blockscout-node-config.network-name}-blockscout"
+    Name       = "nova-${var.nova-blockscout-node-config.network-name}-blockscout"
     role       = "blockscout"
     os_name    = "ubuntu"
     os_version = "22.04"

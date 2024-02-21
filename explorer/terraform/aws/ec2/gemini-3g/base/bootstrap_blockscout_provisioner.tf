@@ -37,18 +37,18 @@ resource "null_resource" "setup-blockscout-node" {
   # copy docker install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_docker.sh"
-    destination = "/home/${var.ssh_user}/configs/install_docker.sh"
+    destination = "/home/${var.ssh_user}/install_docker.sh"
   }
 
   provisioner "file" {
     source      = "${var.path_to_configs}/nginx-blockscout.conf"
-    destination = "/home/${var.ssh_user}/configs/backend.conf"
+    destination = "/home/${var.ssh_user}/backend.conf"
   }
 
   # copy nginx install file
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "/home/${var.ssh_user}/configs/install_nginx.sh"
+    destination = "/home/${var.ssh_user}/install_nginx.sh"
   }
 
 }
@@ -76,8 +76,8 @@ resource "null_resource" "start-blockscout-node" {
   # install nginx, certbot, docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/${var.ssh_user}/configs/install_docker.sh",
-      "sudo bash /home/${var.ssh_user}/configs/install_docker.sh",
+      "chmod +x /home/${var.ssh_user}/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/install_docker.sh",
     ]
   }
 
@@ -85,9 +85,9 @@ resource "null_resource" "start-blockscout-node" {
   provisioner "remote-exec" {
     inline = [
       # copy files
-      "sudo cp -f /home/${var.ssh_user}/configs/cors-settings.conf /etc/nginx/cors-settings.conf",
+      "sudo cp -f /home/${var.ssh_user}/cors-settings.conf /etc/nginx/cors-settings.conf",
       "sed -i -e 's/server_name _/server_name ${var.nova-blockscout-node-config.domain-prefix}.subspace.network/g' /home/${var.ssh_user}/archive/backend.conf",
-      "sudo cp -f /home/${var.ssh_user}/configs/backend.conf /etc/nginx/backend.conf",
+      "sudo cp -f /home/${var.ssh_user}/backend.conf /etc/nginx/backend.conf",
       # start systemd services
       "sudo systemctl daemon-reload",
       # start nginx

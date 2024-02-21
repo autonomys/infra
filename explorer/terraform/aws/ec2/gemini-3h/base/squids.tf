@@ -21,6 +21,7 @@ resource "aws_instance" "squid_blue_node" {
 
   tags = {
     name       = "squid-${var.blue-squid-node-config.network-name}"
+    Name       = "squid-${var.blue-squid-node-config.network-name}-${var.blue-squid-node-config.domain-prefix}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -91,6 +92,7 @@ resource "aws_instance" "squid_green_node" {
 
   tags = {
     name       = "squid-${var.green-squid-node-config.network-name}"
+    Name       = "squid-${var.green-squid-node-config.network-name}-${var.green-squid-node-config.domain-prefix}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -160,6 +162,7 @@ resource "aws_instance" "nova_squid_blue_node" {
 
   tags = {
     name       = "squid-${var.nova-blue-squid-node-config.network-name}"
+    Name       = "squid-${var.nova-blue-squid-node-config.network-name}-${var.nova-blue-squid-node-config.domain-prefix}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -229,6 +232,7 @@ resource "aws_instance" "nova_squid_green_node" {
 
   tags = {
     name       = "squid-${var.nova-green-squid-node-config.network-name}"
+    Name       = "squid-${var.nova-green-squid-node-config.network-name}-${var.nova-green-squid-node-config.domain-prefix}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"

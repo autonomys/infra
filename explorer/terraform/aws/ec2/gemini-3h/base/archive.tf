@@ -21,6 +21,7 @@ resource "aws_instance" "archive_node" {
 
   tags = {
     name       = "squid-archive-${var.archive-node-config.network-name}"
+    Name       = "squid-archive-${var.archive-node-config.network-name}"
     role       = "archive"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -90,6 +91,7 @@ resource "aws_instance" "nova_archive_node" {
 
   tags = {
     name       = "nova-archive-${var.nova-archive-node-config.network-name}"
+    Name       = "nova-archive-${var.nova-archive-node-config.network-name}"
     role       = "archive"
     os_name    = "ubuntu"
     os_version = "22.04"
