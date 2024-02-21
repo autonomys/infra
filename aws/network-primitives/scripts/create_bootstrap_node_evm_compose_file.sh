@@ -96,7 +96,10 @@ EOF
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" == "${i}" ]; then
-    dsn_addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+    echo "      - \"--external-address\"" >> ~/subspace/docker-compose.yml
+    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
+    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_MULTI_ADDR_TCP=//p" ~/subspace/node_keys.txt)
     echo "      - \"--external-address\"" >> ~/subspace/docker-compose.yml
     echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
   fi
