@@ -34,7 +34,7 @@ resource "aws_instance" "archive_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami ]
 
   }
 
@@ -103,7 +103,7 @@ resource "aws_instance" "nova_archive_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami ]
 
   }
 

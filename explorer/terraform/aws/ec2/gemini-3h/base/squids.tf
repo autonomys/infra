@@ -36,7 +36,7 @@ resource "aws_instance" "squid_blue_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
 
@@ -105,7 +105,7 @@ resource "aws_instance" "squid_green_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
 
@@ -174,7 +174,7 @@ resource "aws_instance" "nova_squid_blue_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
 
@@ -243,7 +243,7 @@ resource "aws_instance" "nova_squid_green_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
 
