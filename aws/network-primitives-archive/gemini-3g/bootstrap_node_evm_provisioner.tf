@@ -1,26 +1,22 @@
 locals {
-  rpc_nodes_ip_v4 = flatten([
-    [aws_instance.rpc_node.*.public_ip]
-    ]
-  )
-  rpc_nodes_ip_v6 = flatten([
-    [aws_instance.rpc_node.*.ipv6_addresses]
+  bootstrap_nodes_evm_ip_v4 = flatten([
+    [aws_instance.bootstrap_node_evm.*.public_ip]
     ]
   )
 }
 
-resource "null_resource" "setup-rpc-nodes" {
-  count = length(local.rpc_nodes_ip_v4)
+resource "null_resource" "setup-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [aws_instance.rpc_node]
+  depends_on = [aws_instance.bootstrap_node_evm]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.rpc_nodes_ip_v4)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_evm_ip_v4)
   }
 
   connection {
-    host        = local.rpc_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -48,31 +44,25 @@ resource "null_resource" "setup-rpc-nodes" {
     destination = "/home/${var.ssh_user}/subspace/"
   }
 
-  # copy LE script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/acme.sh"
-    destination = "/home/${var.ssh_user}/subspace/acme.sh"
-  }
-
-  # install docker and docker compose and LE script
+  # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
-      "bash /home/${var.ssh_user}/subspace/acme.sh",
     ]
   }
+
 }
 
-resource "null_resource" "prune-rpc-nodes" {
-  count      = var.rpc-node-config.prune ? length(local.rpc_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-rpc-nodes]
+resource "null_resource" "prune-bootstrap-nodes-evm" {
+  count      = var.bootstrap-node-evm-config.prune ? length(local.bootstrap_nodes_evm_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   triggers = {
-    prune = var.rpc-node-config.prune
+    prune = var.bootstrap-node-evm-config.prune
   }
 
   connection {
-    host        = local.rpc_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -93,19 +83,19 @@ resource "null_resource" "prune-rpc-nodes" {
   }
 }
 
-resource "null_resource" "start-rpc-nodes" {
-  count = length(local.rpc_nodes_ip_v4)
+resource "null_resource" "start-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [null_resource.setup-rpc-nodes]
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
-    reserved_only      = var.rpc-node-config.reserved-only
+    deployment_version = var.bootstrap-node-evm-config.deployment-version
+    reserved_only      = var.bootstrap-node-evm-config.reserved-only
   }
 
   connection {
-    host        = local.rpc_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -113,9 +103,9 @@ resource "null_resource" "start-rpc-nodes" {
     timeout     = "300s"
   }
 
-  # copy node keys file
+  # copy bootstrap node keys file
   provisioner "file" {
-    source      = "./rpc_node_keys.txt"
+    source      = "./bootstrap_node_evm_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -131,12 +121,6 @@ resource "null_resource" "start-rpc-nodes" {
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
-  # copy keystore
-  provisioner "file" {
-    source      = "./keystore"
-    destination = "/home/${var.ssh_user}/subspace/keystore/"
-  }
-
   # copy relayer ids
   provisioner "file" {
     source      = "./relayer_ids.txt"
@@ -145,7 +129,7 @@ resource "null_resource" "start-rpc-nodes" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_rpc_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_bootstrap_node_evm_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
@@ -156,44 +140,32 @@ resource "null_resource" "start-rpc-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-rpc-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.rpc-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.rpc-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-evm-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.rpc-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-evm-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
-  }
-}
-
-resource "null_resource" "inject-keystore" {
-  # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.rpc_nodes_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-rpc-nodes]
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
-  }
-
-  connection {
-    host        = local.rpc_node_ip_v4[0]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
   }
 }

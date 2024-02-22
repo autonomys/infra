@@ -3,6 +3,11 @@ locals {
     [aws_instance.bootstrap_node.*.public_ip]
     ]
   )
+
+  bootstrap_nodes_ip_v6 = flatten([
+    [aws_instance.bootstrap_node.*.ipv6_addresses]
+    ]
+  )
 }
 
 resource "null_resource" "setup-bootstrap-nodes" {
@@ -143,6 +148,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "echo DSN_LISTEN_PORT=${var.bootstrap-node-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.bootstrap-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
+      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",

@@ -1,18 +1,18 @@
-module "gemini-3g" {
-  source          = "../network-primitives-archive/gemini-3g"
-  path_to_scripts = "../network-primitives-archive/gemini-3g/scripts"
-  path_to_configs = "../network-primitives-archive/gemini-3g/configs"
-  network_name    = "gemini-3g"
+module "gemini-3h" {
+  source          = "../network-primitives"
+  path_to_scripts = "../network-primitives/scripts"
+  path_to_configs = "../network-primitives/configs"
+  network_name    = var.network_name
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-29"
-    reserved-only      = true
+    docker-tag         = "gemini-3h-2024-feb-05"
+    reserved-only      = false
     prune              = false
-    genesis-hash       = "418040fc282f5e5ddd432c46d05297636f6f75ce68d66499ff4cbda69ccd180b"
+    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -25,13 +25,13 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-29"
+    docker-tag         = "gemini-3h-2024-feb-05"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "418040fc282f5e5ddd432c46d05297636f6f75ce68d66499ff4cbda69ccd180b"
+    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
-    operator-port      = 40333
+    operator-port      = 30334
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
@@ -42,8 +42,8 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-29"
-    reserved-only      = true
+    docker-tag         = "gemini-3h-2024-feb-05"
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -56,9 +56,9 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-29"
+    docker-tag         = "gemini-3h-2024-feb-05"
     domain-prefix      = "rpc"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -71,9 +71,9 @@ module "gemini-3g" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3g-2024-jan-29"
+    docker-tag         = "gemini-3h-2024-feb-05"
     domain-prefix      = "nova"
-    reserved-only      = true
+    reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
     enable-domains     = true
@@ -89,10 +89,10 @@ module "gemini-3g" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "subspace"
-    docker-tag             = "gemini-3g-2024-jan-29"
-    reserved-only          = true
+    docker-tag             = "gemini-3h-2024-feb-05"
+    reserved-only          = false
     prune                  = false
-    plot-size              = "2G"
+    plot-size              = "100G"
     reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433
@@ -110,5 +110,6 @@ module "gemini-3g" {
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
+  pot_external_entropy = var.pot_external_entropy
 
 }

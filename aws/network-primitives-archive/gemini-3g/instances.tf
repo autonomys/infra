@@ -1,10 +1,9 @@
 resource "aws_instance" "bootstrap_node" {
-  count              = length(var.aws_region) * var.bootstrap-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.bootstrap-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.bootstrap-node-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -37,7 +36,7 @@ resource "aws_instance" "bootstrap_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 
@@ -63,12 +62,11 @@ resource "aws_instance" "bootstrap_node" {
 }
 
 resource "aws_instance" "bootstrap_node_evm" {
-  count              = length(var.aws_region) * var.bootstrap-node-evm-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.bootstrap-node-evm-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.bootstrap-node-evm-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.bootstrap-node-evm-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -101,7 +99,7 @@ resource "aws_instance" "bootstrap_node_evm" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 
@@ -127,12 +125,11 @@ resource "aws_instance" "bootstrap_node_evm" {
 }
 
 resource "aws_instance" "full_node" {
-  count              = length(var.aws_region) * var.full-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.full-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.full-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.full-node-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -164,7 +161,7 @@ resource "aws_instance" "full_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 
@@ -191,12 +188,11 @@ resource "aws_instance" "full_node" {
 
 
 resource "aws_instance" "rpc_node" {
-  count              = length(var.aws_region) * var.rpc-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.rpc-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.rpc-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.rpc-node-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -227,7 +223,7 @@ resource "aws_instance" "rpc_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 
@@ -255,12 +251,11 @@ resource "aws_instance" "rpc_node" {
 
 
 resource "aws_instance" "domain_node" {
-  count              = length(var.aws_region) * var.domain-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.domain-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.domain-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.domain-node-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -292,7 +287,7 @@ resource "aws_instance" "domain_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 
@@ -319,12 +314,11 @@ resource "aws_instance" "domain_node" {
 
 
 resource "aws_instance" "farmer_node" {
-  count              = length(var.aws_region) * var.farmer-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.farmer-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
-  availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count             = length(var.aws_region) * var.farmer-node-config.instance-count
+  ami               = data.aws_ami.ubuntu_amd64.image_id
+  instance_type     = var.farmer-node-config.instance-type
+  subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone = var.azs
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -355,7 +349,7 @@ resource "aws_instance" "farmer_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami]
 
   }
 

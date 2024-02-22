@@ -1,22 +1,26 @@
 locals {
-  domain_node_ip_v4 = flatten([
+  domain_nodes_ip_v4 = flatten([
     [aws_instance.domain_node.*.public_ip]
+    ]
+  )
+  domain_nodes_ip_v6 = flatten([
+    [aws_instance.domain_node.*.ipv6_addresses]
     ]
   )
 }
 
 resource "null_resource" "setup-domain-nodes" {
-  count = length(local.domain_node_ip_v4)
+  count = length(local.domain_nodes_ip_v4)
 
   depends_on = [aws_instance.domain_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.domain_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.domain_nodes_ip_v4)
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.domain_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -44,17 +48,24 @@ resource "null_resource" "setup-domain-nodes" {
     destination = "/home/${var.ssh_user}/subspace/"
   }
 
-  # install docker and docker compose
+  # copy LE script
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/acme.sh"
+    destination = "/home/${var.ssh_user}/subspace/acme.sh"
+  }
+
+  # install docker and docker compose and LE script
   provisioner "remote-exec" {
     inline = [
       "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
+      "bash /home/${var.ssh_user}/subspace/acme.sh",
     ]
   }
 
 }
 
 resource "null_resource" "prune-domain-nodes" {
-  count      = var.domain-node-config.prune ? length(local.domain_node_ip_v4) : 0
+  count      = var.domain-node-config.prune ? length(local.domain_nodes_ip_v4) : 0
   depends_on = [null_resource.setup-domain-nodes]
 
   triggers = {
@@ -62,7 +73,7 @@ resource "null_resource" "prune-domain-nodes" {
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.domain_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -84,7 +95,7 @@ resource "null_resource" "prune-domain-nodes" {
 }
 
 resource "null_resource" "start-domain-nodes" {
-  count = length(local.domain_node_ip_v4)
+  count = length(local.domain_nodes_ip_v4)
 
   depends_on = [null_resource.setup-domain-nodes]
 
@@ -95,7 +106,7 @@ resource "null_resource" "start-domain-nodes" {
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.domain_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -170,9 +181,10 @@ resource "null_resource" "start-domain-nodes" {
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
@@ -182,7 +194,7 @@ resource "null_resource" "start-domain-nodes" {
 
 resource "null_resource" "inject-domain-keystore" {
   # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.domain_node_ip_v4) > 0 ? 1 : 0
+  count      = length(local.domain_nodes_ip_v4) > 0 ? 1 : 0
   depends_on = [null_resource.start-domain-nodes]
   # trigger on node deployment version change
   triggers = {
@@ -196,11 +208,5 @@ resource "null_resource" "inject-domain-keystore" {
     agent       = true
     private_key = file("${var.private_key_path}")
     timeout     = "300s"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo docker cp /home/${var.ssh_user}/subspace/keystore-${count.index}/.  subspace-archival-node-1:/var/subspace/keystore/"
-    ]
   }
 }

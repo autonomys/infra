@@ -3,6 +3,11 @@ locals {
     [aws_instance.bootstrap_node_evm.*.public_ip]
     ]
   )
+
+  bootstrap_nodes_evm_ip_v6 = flatten([
+    [aws_instance.bootstrap_node_evm.*.ipv6_addresses]
+    ]
+  )
 }
 
 resource "null_resource" "setup-bootstrap-nodes-evm" {

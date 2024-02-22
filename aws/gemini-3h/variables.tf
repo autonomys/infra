@@ -1,3 +1,9 @@
+variable "network_name" {
+  description = "Network name"
+  type        = string
+  default     = "gemini-3h"
+
+}
 variable "farmer_reward_address" {
   description = "Farmer's reward address"
   type        = string
@@ -7,7 +13,7 @@ variable "farmer_reward_address" {
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
-  default     = [1]
+  default     = [0]
 }
 
 //todo change this to a map
@@ -20,17 +26,17 @@ variable "domain_labels" {
 variable "instance_type" {
   type = map(string)
   default = {
-    bootstrap     = "c7a.2xlarge"
+    bootstrap     = "c7a.4xlarge"
     rpc           = "m6a.xlarge"
     domain        = "m6a.xlarge"
-    full          = "m6a.xlarge"
+    full          = "c7a.2xlarge"
     farmer        = "c7a.2xlarge"
-    evm_bootstrap = "m6a.xlarge"
+    evm_bootstrap = "c7a.xlarge"
   }
 }
 
 variable "vpc_id" {
-  default = "gemini-3g-vpc"
+  default = "gemini-3h-vpc"
   type    = string
 }
 
@@ -100,4 +106,10 @@ variable "ssh_user" {
 variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
+}
+
+variable "pot_external_entropy" {
+  description = "External entropy, used initially when PoT chain starts to derive the first seed"
+  type        = string
+  default     = "test"
 }
