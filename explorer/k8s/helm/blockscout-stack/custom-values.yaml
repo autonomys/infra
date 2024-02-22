@@ -1,0 +1,426 @@
+# Default values for blockscout-stack.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## Provide a name in place of blockscout-stack for `app:` labels
+##
+nameOverride: ""
+## Provide a name to substitute for the full names of resources
+##
+fullnameOverride: ""
+## Reference to one or more secrets to be used when pulling images
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+##
+imagePullSecrets: []
+## Blockscout configuration options. See frontend Docs
+## ref: https://github.com/blockscout/frontend/blob/main/docs/ENVS.md#blockchain-parameters
+##
+config:
+  network:
+    id: 1
+    name: Ether
+    shortname: Ether
+    currency:
+      name: Ether
+      symbol: ETH
+      decimals: 18
+      # if network uses dual token model like gnosis (in most case it should be set to false)
+      dualToken: false
+  account:
+    enabled: false
+  testnet: false
+  ## If set to true will create service monitors for blockscout and stats
+  ##
+  prometheus:
+    enabled: true
+## Configuration options for backend
+##
+blockscout:
+  enabled: true
+  ## Currently only one replica is supported
+  ##
+  replicaCount: 1
+  ## Image parametes
+  ##
+  image:
+    repository: ghcr.io/subspace/blockscout-backend:subspace
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  ## Init container configuration (used to run DB migrations)
+  ##
+  init:
+    enabled: true
+    command:
+      - /bin/sh
+    args:
+      - -c
+      - bin/blockscout eval "Elixir.Explorer.ReleaseTasks.create_and_migrate()"
+  ## Blockscout ENV vars
+  ## ref: https://docs.blockscout.com/for-developers/information-and-settings/env-variables
+  ##
+  env:
+    ETHEREUM_JSONRPC_VARIANT=ganache
+    ETHEREUM_JSONRPC_HTTP_URL=https://nova.gemini-3h.subspace.network/ws
+    DATABASE_URL=postgresql://localhost:7432/blockscout?ssl=false
+    ETHEREUM_JSONRPC_TRACE_URL=https://nova.gemini-3h.subspace.network/ws
+    ETHEREUM_JSONRPC_WS_URL=wss://nova.gemini-3h.subspace.network/ws
+    NETWORK=Subspace
+    SUBNETWORK=Gemini 3g
+    LOGO=/images/blockscout_logo.svg
+    ETHEREUM_JSONRPC_TRANSPORT=http
+    ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES=false
+    CHAIN_ID=1337
+    COIN=TSSC
+    ETHEREUM_JSONRPC_TRANSPORT=http
+    ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES=false
+    PORT=4000
+    POOL_SIZE=80
+    POOL_SIZE_API=10
+    ECTO_USE_SSL=false
+    HEART_BEAT_TIMEOUT=30
+    DISABLE_WEBAPP=false
+    DISABLE_INDEXER=false
+    DISABLE_REALTIME_INDEXER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_REALTIME_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_RETRY_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_SANITIZE_FETCHER=false
+    INDEXER_DISABLE_TOKEN_INSTANCE_LEGACY_SANITIZE_FETCHER=false
+    INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER=true
+    INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER=true
+  ## Set ENV vars via secret, this can be usefull for DB connection params, api keys, etc.
+  ##
+  envFromSecret: []
+    # NAME: VALUE
+  ## Command to start blockscout instance
+  ##
+  command:
+    - /bin/sh
+  args:
+    - -c
+    - bin/blockscout start
+  ## Annotations to add to blockscout pod
+  podAnnotations: {}
+
+  podSecurityContext: {}
+  ## SecurityContext holds pod-level security attributes and common container settings.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ##
+  securityContext: {}
+  terminationGracePeriodSeconds: 300
+  ## Liveness probe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /api/v1/health/liveness
+    params:
+      initialDelaySeconds: 100
+      periodSeconds: 100
+      timeoutSeconds: 30
+  ## Readiness probe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /api/v1/health/readiness
+    params:
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 60
+
+  service:
+    type: ClusterIP
+    port: 80
+  ## Configure ingress resource that allow you to access the blockscout installation.
+  ## ref: http://kubernetes.io/docs/user-guide/ingress/
+  ##
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hostname: chart-example.local
+    tls:
+      enabled: false
+      #secretName:
+    paths:
+      - path: /api
+        pathType: Prefix
+      - path: /socket
+        pathType: Prefix
+      - path: /sitemap.xml
+        pathType: Prefix
+      - path: /auth/auth0
+        pathType: Exact
+      - path: /auth/auth0/callback
+        pathType: Exact
+      - path: /auth/logout
+        pathType: Exact
+
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+## Configuration options for frontend
+##
+frontend:
+  enabled: true
+  ## Image parametes
+  image:
+    repository: ghcr.io/blockscout/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+  ## Annotations to add to frontend pod
+  ##
+  podAnnotations: {}
+
+  podSecurityContext: {}
+  ## SecurityContext holds pod-level security attributes and common container settings.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ##
+  securityContext: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+  ## Configure ingress resource that allow you to access the frontend installation.
+  ## ref: http://kubernetes.io/docs/user-guide/ingress/
+  ##
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hostname: chart-example.local
+    tls:
+      enabled: false
+      #secretName:
+    paths:
+      - path: /
+
+  resources:
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+  ## Liveness probe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /api/healthz
+    params:
+      initialDelaySeconds: 100
+      periodSeconds: 100
+      timeoutSeconds: 30
+  ## Readiness probe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /api/healthz
+    params:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 30
+  ## Frontend ENV vars
+  ## ref: https://github.com/blockscout/frontend/blob/main/docs/ENVS.md
+  ##
+  env:
+    NEXT_PUBLIC_API_HOST=nova.subspace.network
+    NEXT_PUBLIC_API_PROTOCOL=https
+    NEXT_PUBLIC_STATS_API_HOST=http://localhost:8080
+    NEXT_PUBLIC_NETWORK_NAME=Gemini 3g Nova
+    NEXT_PUBLIC_NETWORK_SHORT_NAME=Gemini 3g Nova
+    NEXT_PUBLIC_NETWORK_ID=1002
+    NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Subspace
+    NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=TSSC
+    NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS=18
+    NEXT_PUBLIC_API_BASE_PATH=/
+    NEXT_PUBLIC_FEATURED_NETWORKS=
+    NEXT_PUBLIC_APP_HOST=nova.subspace.network
+    NEXT_PUBLIC_APP_PROTOCOL=https
+    NEXT_PUBLIC_HOMEPAGE_CHARTS=['daily_txs']
+    NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:8081
+    NEXT_PUBLIC_IS_TESTNET=true
+    NEXT_PUBLIC_NETWORK_LOGO=https://static.r2.subspace.network/logo.svg
+    NEXT_PUBLIC_NETWORK_ICON=https://static.r2.subspace.network/logo-small.svg
+    NEXT_PUBLIC_NETWORK_ICON_DARK=https://static.r2.subspace.network/logo-small.svg
+    NEXT_PUBLIC_HOMEPAGE_PLATE_TEXT_COLOR=rgb(255, 255, 255)
+    NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL=wss
+    NEXT_PUBLIC_WEB3_WALLETS=['metamask']
+    NEXT_PUBLIC_WEB3_DISABLE_ADD_TOKEN_TO_WALLET=false
+    NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=b989b4df40c7db4da07ff951dd48cac6
+    NEXT_PUBLIC_NETWORK_RPC_URL=https://nova.gemini-3h.subspace.network/ws
+  envFromSecret: []
+    # NAME: VALUE
+
+stats:
+  enabled: false
+  ## Image parametes
+  ##
+  image:
+    repository: ghcr.io/blockscout/stats
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicasCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+    metricsPort: 6060
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  ## Configure ingress resource that allow you to access the stats installation.
+  ## ref: http://kubernetes.io/docs/user-guide/ingress/
+  ##
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hostname: chart-example-stats.local
+    tls:
+      enabled: false
+      #secretName:
+    paths:
+      - path: /
+        pathType: Prefix
+
+  resources:
+    limits:
+      memory: "512Mi"
+      cpu: 250m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+  ## Files to mount to stats pod
+  ##
+  files:
+    enabled: false
+    list: {}
+      # file.txt: |
+      #   test
+    mountPath: /tmp/path
+
+  ## Liveness probe
+  ##
+  livenessProbe:
+    enabled: false
+    path: /health
+    params:
+      initialDelaySeconds: 100
+      periodSeconds: 100
+      timeoutSeconds: 30
+  ## Readiness probe
+  ##
+  readinessProbe:
+    enabled: false
+    path: /health
+    params:
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 60
+  ## Stats ENV vars
+  ## ref: https://github.com/blockscout/blockscout-rs/tree/main/stats#env
+  env: []
+    # NAME: VALUE
+  envFromSecret: []
+    # NAME: VALUE
+
+userOpsIndexer:
+  enabled: false
+    ## Image parametes
+  ##
+  image:
+    repository: ghcr.io/blockscout/user-ops-indexer
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicasCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+    grpc:
+      enabled: true
+      port: 8051
+    metricsPort: 6060
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  ## Configure ingress resource that allow you to access the stats installation.
+  ## ref: http://kubernetes.io/docs/user-guide/ingress/
+  ##
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hostname: chart-example-stats.local
+    tls:
+      enabled: false
+      #secretName:
+    paths:
+      - path: /
+        pathType: Prefix
+
+  resources:
+    limits:
+      memory: "512Mi"
+      cpu: 250m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+
+  ## Liveness probe
+  ##
+  livenessProbe:
+    enabled: false
+    path: /health
+    params:
+      initialDelaySeconds: 100
+      periodSeconds: 100
+      timeoutSeconds: 30
+  ## Readiness probe
+  ##
+  readinessProbe:
+    enabled: false
+    path: /health
+    params:
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 60
+  ## Stats ENV vars
+  ## ref: https://github.com/blockscout/blockscout-rs/tree/main/stats#env
+  env: []
+    # NAME: VALUE
+  envFromSecret: []
+    # NAME: VALUE
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+## Node labels for blockscout-stack pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+nodeSelector: {}
+
+tolerations: []
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
