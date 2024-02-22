@@ -24,4 +24,4 @@ data:
     shared_preload_libraries='pg_stat_statements'
     pg_stat_statements.track=all
     # Replace with particular IP addresses in production
-    listen_addresses = 'REPLACE_IP_ADDRESS'
+    listen_addresses = '0.0.0.0'
