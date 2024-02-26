@@ -148,7 +148,7 @@ resource "null_resource" "start-nova-archive-nodes" {
       "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.nova-archive-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname archive-${var.network_name}",
+      "sudo hostnamectl set-hostname nova-archive-${var.network_name}",
       # create .env file
       "echo NODE_ORG=${var.nova-archive-node-config.node-org} > /home/${var.ssh_user}/archive/.env",
       "echo NODE_TAG=${var.nova-archive-node-config.node-tag} >> /home/${var.ssh_user}/archive/.env",

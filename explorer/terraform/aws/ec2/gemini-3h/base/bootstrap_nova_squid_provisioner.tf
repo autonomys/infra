@@ -337,7 +337,7 @@ resource "null_resource" "start-nova-green-squid-nodes" {
       "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.nova-green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname squid-${var.nova-green-squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname nova-squid-${var.nova-green-squid-node-config.network-name}",
       # create .env file
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/squid/.env",
       "echo DOMAIN_PREFIX=${var.nova-green-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/squid/.env",
