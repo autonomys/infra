@@ -37,7 +37,7 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command: [
-      "-e", "ws://node:9944",
+      "-e", "wss://nova-0.\{NETWORK_NAME}.subspace.network/ws",
       "-c", "10",
        "--prom-port", "9090",
        "--out", "postgres://postgres:postgres@db:\${POSTGRES_PORT}/\${POSTGRES_DB}"

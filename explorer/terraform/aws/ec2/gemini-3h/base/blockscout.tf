@@ -20,7 +20,8 @@ resource "aws_instance" "blockscout_node" {
   }
 
   tags = {
-    name       = "nova-${var.nova-blockscout-node-config.network-name}"
+    name       = "nova-${var.nova-blockscout-node-config.network-name}-blockscout"
+    Name       = "nova-${var.nova-blockscout-node-config.network-name}-blockscout"
     role       = "blockscout"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -34,9 +35,10 @@ resource "aws_instance" "blockscout_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
+
 
   # # base installation
   provisioner "remote-exec" {

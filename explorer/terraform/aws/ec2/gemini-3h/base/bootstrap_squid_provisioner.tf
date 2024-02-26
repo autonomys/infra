@@ -20,6 +20,9 @@ resource "null_resource" "setup-blue-squid-nodes" {
     cluster_instance_ipv4s = join(",", local.blue_squid_node_ip_v4)
   }
 
+  lifecycle {
+    ignore_changes = [triggers]
+  }
   connection {
     host           = local.blue_squid_node_ip_v4[count.index]
     user           = var.ssh_user
@@ -85,6 +88,10 @@ resource "null_resource" "setup-green-squid-nodes" {
   # trigger on node ip changes
   triggers = {
     cluster_instance_ipv4s = join(",", local.green_squid_node_ip_v4)
+  }
+
+  lifecycle {
+    ignore_changes = [triggers]
   }
 
   connection {

@@ -337,7 +337,7 @@ resource "null_resource" "start-nova-green-squid-nodes" {
       "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d squid.${var.network_name}.subspace.network -d ${var.nova-green-squid-node-config.domain-prefix}.squid.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname squid-${var.nova-green-squid-node-config.network-name}",
+      "sudo hostnamectl set-hostname nova-squid-${var.nova-green-squid-node-config.network-name}",
       # create .env file
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/squid/.env",
       "echo DOMAIN_PREFIX=${var.nova-green-squid-node-config.domain-prefix} >> /home/${var.ssh_user}/squid/.env",
@@ -355,8 +355,8 @@ resource "null_resource" "start-nova-green-squid-nodes" {
       "echo DB_USER=postgres >> /home/${var.ssh_user}/squid/.env",
       "echo DB_NAME=squid-archive >> /home/${var.ssh_user}/squid/.env",
       "echo DB_PASS=${var.postgres_password} >> /home/${var.ssh_user}/squid/.env",
-      "echo ARCHIVE_ENDPOINT=https://archive.gemini-3h.subspace.network/api >> /home/${var.ssh_user}/squid/.env",
-      "echo CHAIN_RPC_ENDPOINT=wss://rpc-0.gemini-3h.subspace.network/ws >> /home/${var.ssh_user}/squid/.env",
+      "echo ARCHIVE_ENDPOINT=https://${var.nova-archive-node-config.domain-prefix}.${var.network_name}.subspace.network/api >> /home/${var.ssh_user}/squid/.env",
+      "echo CHAIN_RPC_ENDPOINT=wss://nova-0.${var.network_name}.subspace.network/ws >> /home/${var.ssh_user}/squid/.env",
       "echo PROCESSOR_HEALTH_HOST=http://processor:3000 >> /home/${var.ssh_user}/squid/.env",
       "echo PROCESSOR_HEALTH_PORT=7070 >> /home/${var.ssh_user}/squid/.env",
       "echo HEALTH_CHECK_PORT=8080 >> /home/${var.ssh_user}/squid/.env",

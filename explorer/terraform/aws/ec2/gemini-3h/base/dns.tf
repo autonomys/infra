@@ -47,6 +47,15 @@ resource "cloudflare_record" "nova-squid-green" {
   ttl     = "3600"
 }
 
+resource "cloudflare_record" "nova-squid-live" {
+  count   = var.nova-blue-squid-node-config.instance-count-blue > 0 ? var.nova-blue-squid-node-config.instance-count-blue : 0
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+  name    = "nova.squid.${var.network_name}"
+  value   = local.nova_blue_squid_node_ip_v4[count.index]
+  type    = "A"
+  ttl     = "3600"
+}
+
 resource "cloudflare_record" "nova" {
   count   = var.nova-blockscout-node-config.instance-count > 0 ? var.nova-blockscout-node-config.instance-count : 0
   zone_id = data.cloudflare_zone.cloudflare_zone.id
