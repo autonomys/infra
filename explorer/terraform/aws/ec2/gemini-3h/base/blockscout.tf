@@ -35,9 +35,10 @@ resource "aws_instance" "blockscout_node" {
 
   lifecycle {
 
-    create_before_destroy = true
+    ignore_changes = [ ami, instance_type]
 
   }
+
 
   # # base installation
   provisioner "remote-exec" {
