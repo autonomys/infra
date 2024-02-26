@@ -109,9 +109,11 @@ output "dns-records" {
   value = [
     cloudflare_record.squid-blue[*].hostname,
     cloudflare_record.squid-green[*].hostname,
+    cloudflare_record.squid-live[*].hostname,
     cloudflare_record.archive[*].hostname,
     cloudflare_record.nova-squid-blue[*].hostname,
     cloudflare_record.nova-squid-green[*].hostname,
+    cloudflare_record.nova-squid-live[*].hostname,
     cloudflare_record.nova-archive[*].hostname,
     cloudflare_record.nova[*].hostname,
   ]
