@@ -27,7 +27,7 @@ module "squids" {
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
-    instance-count-green = var.instance_count_green
+    instance-count-green = 0# var.instance_count_green
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     prune                = false
@@ -57,7 +57,7 @@ module "squids" {
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
-    instance-count-green = 0 #var.instance_count_green
+    instance-count-green = var.instance_count_green
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     prune                = false
