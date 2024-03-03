@@ -1,7 +1,7 @@
 module "gemini-3g" {
-  source          = "../network-primitives-archive/gemini-3g"
-  path_to_scripts = "../network-primitives-archive/gemini-3g/scripts"
-  path_to_configs = "../network-primitives-archive/gemini-3g/configs"
+  source          = "../../templates/terraform/network-primitives-archive/gemini-3g"
+  path_to_scripts = "../../templates/terraform/network-primitives-archive/gemini-3g/scripts"
+  path_to_configs = "../../templates/terraform/network-primitives-archive/gemini-3g/configs"
   network_name    = "gemini-3g"
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
