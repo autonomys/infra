@@ -1,7 +1,7 @@
 module "squids" {
-  source          = "../../base/"
-  path_to_scripts = "../../base/scripts"
-  path_to_configs = "../../base/config"
+  source          = "../../../../templates/terraform/explorer/base/"
+  path_to_scripts = "../../../../templates/terraform/explorer/base/scripts"
+  path_to_configs = "../../../../templates/terraform/explorer/base/config"
   network_name    = var.network_name
 
   blue-squid-node-config = {
