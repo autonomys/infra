@@ -1,5 +1,5 @@
 module "cloudflare_lb_gemini" {
-  source = "../cloudflare_lb_module"
+  source = "../../templates/terraform/cloudflare_lb_module"
 
   domain               = var.domain
   network              = var.network
