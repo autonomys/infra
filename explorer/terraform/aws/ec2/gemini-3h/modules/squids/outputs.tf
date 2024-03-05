@@ -8,6 +8,16 @@ output "squid-node-green-ipv4-addresses" {
   description = "Squid green node IPv4 Addresses"
 }
 
+output "reward-squid-node-blue-ipv4-addresses" {
+  value       = module.squids.reward_squid_blue_node_public_ip
+  description = "Reward squid blue node IPv4 Addresses"
+}
+
+output "reward-squid-node-green-ipv4-addresses" {
+  value       = module.squids.reward_squid_green_node_public_ip
+  description = "Reward squid green node IPv4 Addresses"
+}
+
 output "nova-squid-node-blue-ipv4-addresses" {
   value       = module.squids.nova_squid_blue_node_public_ip
   description = "Nova Squid blue node IPv4 Addresses"

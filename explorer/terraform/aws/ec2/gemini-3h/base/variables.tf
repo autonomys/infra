@@ -131,6 +131,42 @@ variable "green-squid-node-config" {
   })
 }
 
+variable "blue-reward-squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color    = string
+    network-name        = string
+    domain-prefix       = string
+    docker-tag          = string
+    instance-type       = string
+    deployment-version  = number
+    regions             = list(string)
+    instance-count-blue = number
+    prune               = bool
+    disk-volume-size    = number
+    disk-volume-type    = string
+    environment         = string
+  })
+}
+
+variable "green-reward-squid-node-config" {
+  description = "squid blue configuration"
+  type = object({
+    deployment-color     = string
+    network-name         = string
+    domain-prefix        = string
+    docker-tag           = string
+    instance-type        = string
+    deployment-version   = number
+    regions              = list(string)
+    instance-count-green = number
+    prune                = bool
+    disk-volume-size     = number
+    disk-volume-type     = string
+    environment          = string
+  })
+}
+
 variable "nova-blue-squid-node-config" {
   description = "squid blue configuration"
   type = object({

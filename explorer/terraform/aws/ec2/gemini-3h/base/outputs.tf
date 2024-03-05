@@ -20,6 +20,38 @@ output "squid_blue_node_ami" {
   value = aws_instance.squid_blue_node.*.ami
 }
 
+output "reward_squid_blue_node_server_id" {
+  value = aws_instance.reward_squid_blue_node.*.id
+}
+
+output "reward_squid_blue_node_public_ip" {
+  value = aws_instance.reward_squid_blue_node.*.public_ip
+}
+
+output "reward_squid_blue_node_private_ip" {
+  value = aws_instance.reward_squid_blue_node.*.private_ip
+}
+
+output "reward_squid_blue_node_ami" {
+  value = aws_instance.reward_squid_blue_node.*.ami
+}
+
+output "reward_squid_green_node_server_id" {
+  value = aws_instance.reward_squid_green_node.*.id
+}
+
+output "reward_squid_green_node_public_ip" {
+  value = aws_instance.reward_squid_green_node.*.public_ip
+}
+
+output "reward_squid_green_node_private_ip" {
+  value = aws_instance.reward_squid_green_node.*.private_ip
+}
+
+output "reward_squid_green_node_ami" {
+  value = aws_instance.reward_squid_green_node.*.ami
+}
+
 output "nova_squid_blue_node_server_id" {
   value = aws_instance.nova_squid_blue_node.*.id
 }
@@ -110,6 +142,9 @@ output "dns-records" {
     cloudflare_record.squid-blue[*].hostname,
     cloudflare_record.squid-green[*].hostname,
     cloudflare_record.squid-live[*].hostname,
+    cloudflare_record.reward-squid-blue[*].hostname,
+    cloudflare_record.reward-squid-green[*].hostname,
+    cloudflare_record.reward-squid-live[*].hostname,
     cloudflare_record.archive[*].hostname,
     cloudflare_record.nova-squid-blue[*].hostname,
     cloudflare_record.nova-squid-green[*].hostname,

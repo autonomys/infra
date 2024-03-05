@@ -20,6 +20,33 @@ resource "cloudflare_record" "squid-green" {
   ttl     = "3600"
 }
 
+resource "cloudflare_record" "reward-squid-blue" {
+  count   = var.blue-reward-squid-node-config.instance-count-blue > 0 ? var.blue-reward-squid-node-config.instance-count-blue : 0
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+  name    = "${var.blue-reward-squid-node-config.domain-prefix}.${var.blue-reward-squid-node-config.network-name}"
+  value   = local.blue_reward_squid_node_ip_v4[count.index]
+  type    = "A"
+  ttl     = "3600"
+}
+
+resource "cloudflare_record" "reward-squid-green" {
+  count   = var.green-reward-squid-node-config.instance-count-green > 0 ? var.green-reward-squid-node-config.instance-count-green : 0
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+  name    = "${var.green-reward-squid-node-config.domain-prefix}.${var.green-reward-squid-node-config.network-name}"
+  value   = local.green_reward_squid_node_ip_v4[count.index]
+  type    = "A"
+  ttl     = "3600"
+}
+
+resource "cloudflare_record" "reward-squid-live" {
+  count   = var.blue-reward-squid-node-config.instance-count-blue > 0 ? var.blue-reward-squid-node-config.instance-count-blue : 0
+  zone_id = data.cloudflare_zone.cloudflare_zone.id
+  name    = "squid.${var.network_name}"
+  value   = local.blue_squid_node_ip_v4[count.index]
+  type    = "A"
+  ttl     = "3600"
+}
+
 resource "cloudflare_record" "squid-live" {
   count   = var.blue-squid-node-config.instance-count-blue > 0 ? var.blue-squid-node-config.instance-count-blue : 0
   zone_id = data.cloudflare_zone.cloudflare_zone.id
