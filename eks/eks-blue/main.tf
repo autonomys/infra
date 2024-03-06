@@ -1,5 +1,5 @@
 module "eks_cluster" {
-  source = "../modules/eks_cluster"
+  source = "../../templates/terraform/aws/eks/eks_cluster"
 
   aws_region      = var.aws_region
   service_name    = "blue"

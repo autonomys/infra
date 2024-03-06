@@ -12,13 +12,13 @@ locals {
 
 # EKS managed node group - bottlerocket
 module "eks_mng_bottlerocket_no_op" {
-  source = "../modules/_user_data"
+  source = "../../templates/terraform/aws/eks/_user_data"
 
   platform = "bottlerocket"
 }
 
 module "eks_mng_bottlerocket_additional" {
-  source = "../modules/_user_data"
+  source = "../../templates/terraform/aws/eks/_user_data"
 
   platform = "bottlerocket"
 
@@ -26,7 +26,7 @@ module "eks_mng_bottlerocket_additional" {
 }
 
 module "eks_mng_bottlerocket_custom_ami" {
-  source = "../modules/_user_data"
+  source = "../../templates/terraform/aws/eks/_user_data"
 
   platform = "bottlerocket"
 
@@ -40,7 +40,7 @@ module "eks_mng_bottlerocket_custom_ami" {
 }
 
 module "eks_mng_bottlerocket_custom_template" {
-  source = "../modules/_user_data"
+  source = "../../templates/terraform/aws/eks/_user_data"
 
   platform = "bottlerocket"
 
