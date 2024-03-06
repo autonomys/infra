@@ -1,7 +1,7 @@
 module "devnet" {
-  source          = "../network-primitives"
-  path_to_scripts = "../network-primitives/scripts"
-  path_to_configs = "../network-primitives/configs"
+  source          = "../../templates/terraform/network-primitives"
+  path_to_scripts = "../../templates/terraform/network-primitives/scripts"
+  path_to_configs = "../../templates/terraform/network-primitives/configs"
   network_name    = "devnet"
 
   bootstrap-node-config = {
@@ -111,5 +111,6 @@ module "devnet" {
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
+  pot_external_entropy = ""
 
 }
