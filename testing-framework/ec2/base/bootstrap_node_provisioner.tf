@@ -130,15 +130,12 @@ resource "null_resource" "start-boostrap-nodes" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
-      # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml down ",
-
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
 
       # create .env file
       "echo REPO_ORG=${var.bootstrap-node-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.bootstrap-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -153,9 +150,9 @@ resource "null_resource" "start-boostrap-nodes" {
       "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
-      # start subspace node
-      "cp -f /home/${var.ssh_user}/.env /home/${var.ssh_user}/subspace/subspace/.env",
-      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
+      # start subspace bootstrap node
+      "cp -f /home/${var.ssh_user}/subspace/.env /home/${var.ssh_user}/subspace/subspace/.env",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }

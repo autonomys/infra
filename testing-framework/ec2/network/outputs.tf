@@ -14,6 +14,10 @@ output "bootstrap-node-ipv4-addresses" {
   description = "Bootstrap node IPv4 Addresses"
 }
 
+output "bootstrap-node-evm-ipv4-addresses" {
+  value       = module.network.bootstrap_node_evm_public_ip
+  description = "Bootstrap node evm IPv4 Addresses"
+}
 
 output "domain-node-ipv4-addresses" {
   value       = module.network.domain_node_public_ip
@@ -22,5 +26,5 @@ output "domain-node-ipv4-addresses" {
 
 # Output the operator_peer_multiaddr value
 output "operator_peer_multiaddr" {
-  value = data.external.operator_peer_multiaddr.result["operator_peer_multiaddr"]
+  value = data.external.operator_peer_multiaddr.result
 }
