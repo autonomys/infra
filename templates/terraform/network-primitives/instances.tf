@@ -4,7 +4,7 @@ resource "aws_instance" "bootstrap_node" {
   instance_type      = var.bootstrap-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -68,7 +68,7 @@ resource "aws_instance" "bootstrap_node_evm" {
   instance_type      = var.bootstrap-node-evm-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -132,7 +132,7 @@ resource "aws_instance" "full_node" {
   instance_type      = var.full-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -196,7 +196,7 @@ resource "aws_instance" "rpc_node" {
   instance_type      = var.rpc-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -260,7 +260,7 @@ resource "aws_instance" "domain_node" {
   instance_type      = var.domain-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
@@ -324,7 +324,7 @@ resource "aws_instance" "farmer_node" {
   instance_type      = var.farmer-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
-  ipv6_address_count = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
   # the Public SSH key
