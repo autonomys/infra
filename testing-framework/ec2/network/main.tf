@@ -1,6 +1,6 @@
 module "network" {
-  source          = "../base"
-  path_to_scripts = "../base/scripts"
+  source          = "../../../templates/terraform/testing-framework/aws"
+  path_to_scripts = "../../../templates/terraform/testing-framework/scripts"
   network_name    = var.network_name
 
   bootstrap-node-config = {
