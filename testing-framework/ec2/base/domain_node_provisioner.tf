@@ -38,6 +38,12 @@ resource "null_resource" "setup-domain-nodes" {
     destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
+  # copy acme.sh file
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/acme.sh"
+    destination = "/home/${var.ssh_user}/subspace/acme.sh"
+  }
+
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [

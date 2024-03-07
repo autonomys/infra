@@ -38,6 +38,12 @@ resource "null_resource" "setup-nodes" {
     destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
+  # copy acme.sh file
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/acme.sh"
+    destination = "/home/${var.ssh_user}/subspace/acme.sh"
+  }
+
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
@@ -151,6 +157,9 @@ resource "null_resource" "start-nodes" {
       # create docker compose file
       "chmod +x /home/${var.ssh_user}/subspace/create_compose_file.sh",
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+
+      # create acme.json file
+      "bash /home/${var.ssh_user}/subspace/acme.sh",
 
       # start subspace node
       "cp -f /home/${var.ssh_user}/subspace/.env /home/${var.ssh_user}/subspace/subspace/.env",
