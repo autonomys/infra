@@ -77,6 +77,7 @@ services:
     image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
+      - ./keystore:/var/subspace/keystore:ro
     restart: unless-stopped
     ports:
       - "30333:30333/tcp"
