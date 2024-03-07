@@ -146,15 +146,12 @@ resource "null_resource" "start-domain-nodes" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
-      # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml down ",
-
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
 
       # create .env file
       "echo REPO_ORG=${var.domain-node-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.node-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       # //todo use a map for domain id and labels
@@ -170,35 +167,9 @@ resource "null_resource" "start-domain-nodes" {
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
-      # start subspace node
-      "cp -f /home/${var.ssh_user}/.env /home/${var.ssh_user}/subspace/subspace/.env",
-      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
-    ]
-  }
-}
-
-resource "null_resource" "inject-domain-keystore" {
-  # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.domain_node_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-domain-nodes]
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.domain-node-config.deployment-version
-  }
-
-  connection {
-    host        = local.domain_node_ip_v4[0]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-
-  # comment if don't need to inject a seed for domain node in testing environment.
-  provisioner "remote-exec" {
-    inline = [
-      "sudo docker cp /home/${var.ssh_user}/subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
+      # start subspace  domain node
+      "cp -f /home/${var.ssh_user}/subspace/.env /home/${var.ssh_user}/subspace/subspace/.env",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }
