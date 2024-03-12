@@ -178,22 +178,3 @@ resource "null_resource" "start-rpc-nodes" {
     ]
   }
 }
-
-resource "null_resource" "inject-keystore" {
-  # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.rpc_nodes_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-rpc-nodes]
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.rpc-node-config.deployment-version
-  }
-
-  connection {
-    host        = local.rpc_node_ip_v4[0]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-}
