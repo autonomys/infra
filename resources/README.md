@@ -16,9 +16,9 @@ Before using this framework, ensure you have the following installed:
 
 We use **Terraform** and **AWS** to provision the infrastructure.
 
-Clone the repository and navigate to the testing framework directory **aws**:
+Clone the repository and navigate to the testing framework directory **resources**:
 
-### Terraform AWS Folder Structure:
+### Terraform Resources Folder Structure:
 
 ```
 .
@@ -77,7 +77,7 @@ Clone the repository and navigate to the testing framework directory **aws**:
 
 ## Getting started.
 
-- Go to **aws/<network_name>/**
+- Go to **resources/<network_name>/**
 - rename the terraform.tfvars.example file inside the child module to terraform.tfvars.
 - modify the main.tf file if any further changes are needed to customize
 - Add your personal AWS access and secret in the terraform.tfvars file
@@ -88,7 +88,7 @@ Clone the repository and navigate to the testing framework directory **aws**:
 
 ## Generate Node keys
 
-Each network will need it's own keys, which you can gather from bitwarden, and extract the zip folder into **aws/<network_name>/**. The files should be named the following.
+Each network will need it's own keys, which you can gather from bitwarden, and extract the zip folder into **resources/<network_name>/**. The files should be named the following.
 
 ```
 .
@@ -105,7 +105,7 @@ Each network will need it's own keys, which you can gather from bitwarden, and e
 
 ## Deploy resources.
 
-1. Go to **aws/<network_name>/** directory and run the following commands to init terraform:
+1. Go to **resources/<network_name>/** directory and run the following commands to init terraform:
 
    ```
    terraform init
