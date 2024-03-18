@@ -74,7 +74,7 @@ module "acm" {
 
   subject_alternative_names = [
     "${local.hosted_zone_name}",
-    "*.${local.hosted_zone_name}",
+    "${local.name}.${local.hosted_zone_name}",
     "*.${local.name}.${local.hosted_zone_name}"
   ]
 
