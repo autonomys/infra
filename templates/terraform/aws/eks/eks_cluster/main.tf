@@ -82,7 +82,7 @@ locals {
   }
   addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
-    #----------------------------------------------------------------
+  #----------------------------------------------------------------
   # GitOps Bridge, define metadatas to pass from Terraform to ArgoCD
   #----------------------------------------------------------------
 
@@ -487,7 +487,7 @@ module "eks_addons" {
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
   enable_karpenter                      = try(local.aws_addons.enable_karpenter, false)
   enable_velero                         = try(local.aws_addons.enable_velero, false)
-  enable_aws_gateway_api_controller = try(local.aws_addons.enable_aws_gateway_api_controller, false)
+  enable_aws_gateway_api_controller     = try(local.aws_addons.enable_aws_gateway_api_controller, false)
   #enable_aws_secrets_store_csi_driver_provider = try(local.enable_aws_secrets_store_csi_driver_provider, false)
 
   tags = local.tags
