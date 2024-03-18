@@ -1,7 +1,7 @@
 variable "environment_name" {
   description = "The name of environment Infrastructure stack. Used for cluster and VPC names."
   type        = string
-  default     = "subspace-eks-prod"
+  default     = "subspace"
 }
 
 variable "aws_region" {

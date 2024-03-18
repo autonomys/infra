@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "environment_name" {
   description = "The name of Environment Infrastructure stack, feel free to rename it. Used for cluster and VPC names."
   type        = string
-  default     = "subspace-prod"
+  default     = "subspace"
 }
 
 variable "ingress_type" {
@@ -31,7 +31,7 @@ variable "eks_admin_role_name" {
 variable "aws_secret_manager_git_private_ssh_key_name" {
   type        = string
   description = "Secret Manager secret name for hosting Github SSH-Key to Access private repository"
-  default     = "github-blueprint-ssh-key"
+  default     = "github-subspace-ssh-key"
 }
 
 variable "argocd_secret_manager_name_suffix" {

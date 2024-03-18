@@ -73,10 +73,12 @@ module "acm" {
   zone_id     = aws_route53_zone.sub.zone_id
 
   subject_alternative_names = [
+    "${local.hosted_zone_name}",
+    "*.${local.hosted_zone_name}",
     "*.${local.name}.${local.hosted_zone_name}"
   ]
 
-  wait_for_validation = true
+  wait_for_validation = false
 
   tags = {
     Name = "${local.name}.${local.hosted_zone_name}"
