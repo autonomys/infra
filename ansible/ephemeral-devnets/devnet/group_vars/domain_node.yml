@@ -1,3 +1,0 @@
-docker_compose_file: "docker-compose-domain-devnet.yml"
-deployment_dir: "{{ lookup('env', 'HOME') }}/subspace/subspace"
-env_file: ".env.domain"

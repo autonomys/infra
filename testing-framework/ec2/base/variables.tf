@@ -13,23 +13,24 @@ variable "vpc_cidr_block" {
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-west-2a"
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap = 2
-    node      = 1
-    domain    = 0
-    farmer    = 1
+    bootstrap     = 1
+    node          = 1
+    domain        = 1
+    farmer        = 1
+    evm_bootstrap = 1
   }
 }
 
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-west-2"]
+  default     = ["us-east-1"]
 }
 
 variable "public_subnet_cidrs" {
@@ -66,7 +67,7 @@ variable "node-config" {
     regions            = list(string)
     instance-count     = number
     repo-org           = string
-    node-tag           = string
+    docker-tag         = string
     reserved-only      = bool
     prune              = bool
     node-dsn-port      = number
@@ -83,7 +84,7 @@ variable "domain-node-config" {
     regions            = list(string)
     instance-count     = number
     repo-org           = string
-    node-tag           = string
+    docker-tag         = string
     domain-prefix      = string
     reserved-only      = bool
     prune              = bool
@@ -104,7 +105,7 @@ variable "bootstrap-node-config" {
     regions            = list(string)
     instance-count     = number
     repo-org           = string
-    node-tag           = string
+    docker-tag         = string
     reserved-only      = bool
     prune              = bool
     genesis-hash       = string
@@ -122,7 +123,7 @@ variable "bootstrap-node-evm-config" {
     deployment-version = number
     regions            = list(string)
     instance-count     = number
-    docker-org         = string
+    repo-org           = string
     docker-tag         = string
     reserved-only      = bool
     prune              = bool
@@ -143,7 +144,7 @@ variable "farmer-node-config" {
     regions                = list(string)
     instance-count         = number
     repo-org               = string
-    node-tag               = string
+    docker-tag             = string
     reserved-only          = bool
     prune                  = bool
     plot-size              = string
