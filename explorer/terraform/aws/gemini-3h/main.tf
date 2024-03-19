@@ -27,7 +27,7 @@ module "squids" {
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
-    instance-count-green = 0# var.instance_count_green
+    instance-count-green = 0 # var.instance_count_green
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     prune                = false
@@ -68,7 +68,7 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3h-2024-feb-19"
+    node-tag           = var.node_tag
     docker-tag         = "latest"
     instance-type      = var.instance_type
     deployment-version = 0
@@ -83,7 +83,7 @@ module "squids" {
     network-name       = "${var.network_name}"
     domain-prefix      = "nova.archive"
     node-org           = "subspace"
-    node-tag           = "gemini-3h-2024-feb-19"
+    node-tag           = var.node_tag
     docker-tag         = "latest"
     instance-type      = var.instance_type
     deployment-version = 0
