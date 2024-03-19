@@ -366,15 +366,13 @@ resource "kubernetes_secret" "git_secrets" {
 
   for_each = {
     git-addons = {
-      type = "git"
-      url  = local.gitops_addons_url
-      # comment if you want to uses public repo wigh syntax "https://github.com/xxx" syntax, uncomment when using syntax "git@github.com:xxx"
+      type          = "git"
+      url           = local.gitops_addons_url
       sshPrivateKey = data.aws_secretsmanager_secret_version.workload_repo_secret.secret_string
     }
     git-workloads = {
-      type = "git"
-      url  = local.gitops_workloads_url
-      # comment if you want to uses public repo wigh syntax "https://github.com/xxx" syntax, uncomment when using syntax "git@github.com:xxx"
+      type          = "git"
+      url           = local.gitops_workloads_url
       sshPrivateKey = data.aws_secretsmanager_secret_version.workload_repo_secret.secret_string
     }
   }
