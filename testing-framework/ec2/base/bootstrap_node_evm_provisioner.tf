@@ -41,7 +41,18 @@ resource "null_resource" "setup-bootstrap-nodes-evm" {
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
+      "chmod +x /home/${var.ssh_user}/subspace/installer.sh",
       "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
+    ]
+  }
+
+  # clone testing branch
+  provisioner "remote-exec" {
+    inline = [
+      "cd /home/${var.ssh_user}/subspace/",
+      "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
+      "git checkout ${var.branch_name}"
     ]
   }
 
@@ -130,15 +141,12 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
-      # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
-
       # set hostname
       "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-evm-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REPO_ORG=${var.bootstrap-node-evm-config.repo-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -157,8 +165,9 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
 
-      # start subspace node
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      # start subspace bootstrap evm node
+      "cp -f /home/${var.ssh_user}/subspace/.env /home/${var.ssh_user}/subspace/subspace/.env",
+      "sudo docker compose -f /home/${var.ssh_user}/subspace/subspace/docker-compose.yml up -d",
     ]
   }
 }
