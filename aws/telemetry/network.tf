@@ -1,5 +1,7 @@
-resource "aws_vpc" "telemetry-vpc" {
-  cidr_block           = "172.31.0.0/16"
+module "telemetry_vpc" {
+  source = "../../terraform/aws/vpc"
+
+  cidr_block           = var.public_subnet_cidrs
   enable_dns_support   = true
   enable_dns_hostnames = true
 
@@ -10,7 +12,7 @@ resource "aws_vpc" "telemetry-vpc" {
 
 
 resource "aws_subnet" "public_subnets" {
-  vpc_id                  = aws_vpc.telemetry-vpc.id
+  vpc_id                  = module.telemetry-vpc.id
   cidr_block              = var.public_subnet_cidrs
   availability_zone       = var.azs
   map_public_ip_on_launch = "true"
@@ -21,7 +23,7 @@ resource "aws_subnet" "public_subnets" {
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.telemetry-vpc.id
+  vpc_id = module.telemetry-vpc.id
 
   tags = {
     Name = "telemetry-igw-public-subnet"
@@ -33,7 +35,7 @@ resource "aws_internet_gateway" "gw" {
 }
 
 resource "aws_route_table" "public_route_table" {
-  vpc_id = aws_vpc.telemetry-vpc.id
+  vpc_id = module.telemetry-vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -61,7 +63,7 @@ resource "aws_route_table_association" "public_route_table_subnets_association" 
 resource "aws_security_group" "telemetry-subspace-sg" {
   name        = "telemetry-subspace-sg"
   description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = aws_vpc.telemetry-vpc.id
+  vpc_id      = module.telemetry-vpc.id
 
   ingress {
     description = "HTTPS for VPC"
@@ -100,6 +102,6 @@ resource "aws_security_group" "telemetry-subspace-sg" {
   }
 
   depends_on = [
-    aws_vpc.telemetry-vpc
+    module.telemetry_vpc
   ]
 }

@@ -1,8 +1,10 @@
 variable "instance_type" {
+  default = "m6a.4xlarge"
   type    = string
 }
 
 variable "vpc_id" {
+  default = "telemetry-vpc"
   type    = string
 }
 
@@ -13,7 +15,7 @@ variable "vpc_cidr_block" {
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-west-2a"
+  default     = "us-west-2c"
 }
 
 variable "instance_count" {
@@ -30,11 +32,26 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = string
   description = "Public Subnet CIDR values"
+  default     = "172.31.1.0/24"
+}
+
+variable "disk_volume_size" {
+  type = number
 }
 
 variable "disk_volume_type" {
   type    = string
   default = "gp3"
+}
+
+variable "secret_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "access_key" {
+  type      = string
+  sensitive = true
 }
 
 variable "aws_key_name" {
@@ -52,37 +69,10 @@ variable "private_key_path" {
   default = "~/.ssh/deployer.pem"
 }
 
-variable "path_to_scripts" {
-  description = "Path to the scripts"
-  type        = string
-}
+variable "domain_prefix" {
+  type    = string
+  default = "telemetry"
 
-variable "path_to_configs" {
-  description = "Path to the configs"
-  type        = string
-}
-
-variable "secret_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "access_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "telemetry-subspace-node-config" {
-  description = "telemetry node deployment config"
-  type = object({
-    domain-prefix      = string
-    instance-type      = string
-    deployment-version = number
-    regions            = string
-    instance-count     = number
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
 }
 
 variable "cloudflare_email" {
@@ -93,4 +83,26 @@ variable "cloudflare_email" {
 variable "cloudflare_api_token" {
   type        = string
   description = "cloudflare api token"
+}
+
+variable "path_to_scripts" {
+  description = "Path to the scripts"
+  type        = string
+  default     = "../../templates/scripts"
+}
+
+variable "path_to_configs" {
+  description = "Path to the configs"
+  type        = string
+  default     = "../../templates/configs"
+}
+
+variable "secret_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "access_key" {
+  type      = string
+  sensitive = true
 }
