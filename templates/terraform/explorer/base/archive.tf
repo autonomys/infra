@@ -35,7 +35,7 @@ resource "aws_instance" "archive_node" {
 
   lifecycle {
 
-    ignore_changes = [ ami ]
+    ignore_changes = [ami, instance_type]
 
   }
 
@@ -105,7 +105,7 @@ resource "aws_instance" "nova_archive_node" {
 
   lifecycle {
 
-    ignore_changes = [ ami ]
+    ignore_changes = [ami, instance_type]
 
   }
 
