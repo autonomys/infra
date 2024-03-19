@@ -50,18 +50,15 @@ locals {
     enable_cert_manager          = true
     enable_aws_ebs_csi_resources = true # generate gp2 and gp3 storage classes for ebs-csi
     #enable_aws_efs_csi_driver                    = true
-    #enable_aws_fsx_csi_driver                    = true
     enable_aws_cloudwatch_metrics = true
     #enable_aws_privateca_issuer                  = true
     #enable_cluster_autoscaler                    = true
     enable_external_dns                 = true
     enable_external_secrets             = true
     enable_aws_load_balancer_controller = true
-    #enable_fargate_fluentbit                     = true
-    enable_aws_for_fluentbit = true
+    enable_aws_for_fluentbit            = true
     #enable_aws_node_termination_handler          = true
     enable_karpenter = true
-    #enable_velero                                = true
     #enable_aws_gateway_api_controller            = true
     #enable_aws_secrets_store_csi_driver_provider = true
   }
@@ -70,7 +67,6 @@ locals {
     #enable_argo_workflows                        = true
     #enable_cluster_proportional_autoscaler       = true
     #enable_gatekeeper                            = true
-    #enable_gpu_operator                          = true
     enable_ingress_nginx = true
     enable_kyverno       = true
     #enable_kube_prometheus_stack                 = true
@@ -78,7 +74,6 @@ locals {
     #enable_prometheus_adapter                    = true
     #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true
-    #enable_foo                                   = true # you can add any addon here, make sure to update the gitops repo with the corresponding application set
   }
   addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
@@ -467,7 +462,6 @@ module "eks_addons" {
   enable_cert_manager = try(local.aws_addons.enable_cert_manager, false)
   #enable_aws_ebs_csi_resources  = try(local.aws_addons.enable_aws_ebs_csi_resources, false)
   enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
-  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
   enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
   enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
   enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
@@ -479,12 +473,10 @@ module "eks_addons" {
     service_account_name = "aws-lb-sa"
   }
 
-  enable_fargate_fluentbit              = try(local.aws_addons.enable_fargate_fluentbit, false)
   enable_aws_for_fluentbit              = try(local.aws_addons.enable_aws_for_fluentbit, false)
   enable_aws_node_termination_handler   = try(local.aws_addons.enable_aws_node_termination_handler, false)
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
   enable_karpenter                      = try(local.aws_addons.enable_karpenter, false)
-  enable_velero                         = try(local.aws_addons.enable_velero, false)
   enable_aws_gateway_api_controller     = try(local.aws_addons.enable_aws_gateway_api_controller, false)
   #enable_aws_secrets_store_csi_driver_provider = try(local.enable_aws_secrets_store_csi_driver_provider, false)
 
