@@ -4,6 +4,10 @@ variable "netdata_token" {
 
 }
 
+variable "node_tag" {
+  type = string
+}
+
 variable "nr_api_key" {
   description = "New relic API Key"
   type        = string
