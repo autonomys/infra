@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
+        default: "devnet"
         description: "Deployment environment (e.g. devnet, gemini)"
         required: true
 jobs:
@@ -18,4 +19,4 @@ jobs:
       - name: Deploy using Ansible
         working-directory: ./ansible/network
         run: |
-          ansible-playbook -i inventories/${{ github.event.inputs.environment }}/hosts.yml playbooks/main.yml
+          ansible-playbook -i ${{ github.event.inputs.environment }}/hosts.yml playbooks/main.yml

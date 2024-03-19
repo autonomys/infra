@@ -6,7 +6,6 @@ volumes:
 
 networks:
   traefik-proxy:
-    external: true
 
 services:
   vmagent:
@@ -22,7 +21,10 @@ services:
     command:
       - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.basicAuth.username=${VM_USER}"
+      - "--remoteWrite.basicAuth.password=${VM_PASS}"
+      - "--remoteWrite.basicAuth.tlsSkipVerify=true"
 
   agent:
     container_name: newrelic-infra
@@ -56,8 +58,9 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --certificatesresolvers.le.acme.email=alerts@subspace.network
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.storage=/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
+      - "traefik.docker.network=traefik-proxy"
     networks:
       - traefik-proxy
     ports:
@@ -65,107 +68,76 @@ services:
       - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt:/letsencrypt
+      - ./letsencrypt/acme.json:/acme.json
 
   archival-node:
-    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
+    image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
+      - ./keystore:/var/subspace/keystore:ro
     restart: unless-stopped
     ports:
-      - "30333:30333/udp"
-      - "30433:30433/udp"
-      - "40333:40333/udp"
       - "30333:30333/tcp"
+      - "30333:30333/udp"
       - "30433:30433/tcp"
-      - "40333:40333/tcp"
+      - "30433:30433/udp"
+      - "30334:30334/tcp"
       - "9615:9615"
-      - "8944:8944"
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}-${DOMAIN_ID}.${DOMAIN_LABEL}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
       - "traefik.http.routers.archival-node.middlewares=redirect-https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.docker.network=traefik-proxy"
     networks:
       - traefik-proxy
     logging:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command:
-      [
-        "--chain",
-        "${NETWORK_NAME}",
-        "--base-path",
-        "/var/subspace",
-        "--execution",
-        "wasm",
-        "--state-pruning",
-        "archive",
-        "--blocks-pruning",
-        "archive",
-        "--listen-addr",
-        "/ip4/0.0.0.0/tcp/30333",
-        "--dsn-external-address",
-        "/ip4/${EXTERNAL_IP}/udp/30433/quic-v1",
-        "--dsn-external-address",
-        "/ip4/${EXTERNAL_IP}/tcp/30433",
-        "--node-key",
-        "${NODE_KEY}",
-        "--rpc-cors",
-        "all",
-        "--rpc-external",
-        "--in-peers",
-        "500",
-        "--out-peers",
-        "250",
-        "--in-peers-light",
-        "500",
-        "--rpc-max-connections",
-        "10000",
-        "--prometheus-port",
-        "9615",
-        "--prometheus-external",
-        "--reserved-nodes",
-        "${BOOTSTRAP_NODE_0}",
-        "--bootnodes",
-        "${BOOTSTRAP_NODE_0}",
-        "--reserved-nodes",
-        "${BOOTSTRAP_NODE_1}",
-        "--bootnodes",
-        "${BOOTSTRAP_NODE_1}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_0}",
-        "--dsn-reserved-peers",
-        "${DSN_BOOTSTRAP_NODE_1}",
-        "--dsn-bootstrap-nodes",
-        "${DSN_BOOTSTRAP_NODE_1}",
-        "--",
-        "--chain=${NETWORK_NAME}",
-        "--state-pruning",
-        "archive",
-        "--blocks-pruning",
-        "archive",
-        "--domain-id=${DOMAIN_ID}",
-        "--base-path",
-        "/var/subspace/core_${DOMAIN_LABEL}_${DOMAIN_ID}_domain",
-        "--listen-addr",
-        "/ip4/0.0.0.0/tcp/40333",
-        "--rpc-cors",
-        "all",
-        "--rpc-port",
-        "8944",
-        "--unsafe-rpc-external",
-        "--relayer-id=${RELAYER_DOMAIN_ID}",
-        "--reserved-nodes",
-        "${BOOTSTRAP_NODE_EVM_0}",
-        "--bootnodes",
-        "${BOOTSTRAP_NODE_EVM_0}",
-      ]
+    command: [
+      "run",
+      "--chain", "${NETWORK_NAME}",
+      "--base-path", "/var/subspace",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+#      "--pot-external-entropy", "${POT_EXTERNAL_ENTROPY}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
+      "--node-key", "${NODE_KEY}",
+      "--in-peers", "500",
+      "--out-peers", "250",
+      "--rpc-max-connections", "10000",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:9944",
+      "--rpc-methods", "safe",
+      "--prometheus-listen-on", "0.0.0.0:9615",
+      "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/udp/30433/quic-v1/p2p/${NODE_PEER_ID}",
+      "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/tcp/30433/p2p/${NODE_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--domain-id", "${DOMAIN_ID}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30334",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:8944",
+      "--rpc-methods", "safe",
+      "--operator-id", "0",
+      "--reserved-nodes", "/dns/bootstrap-0.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-0.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-1.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-1.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
+    ]

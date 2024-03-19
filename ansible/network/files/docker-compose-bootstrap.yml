@@ -11,14 +11,17 @@ services:
     depends_on:
       - "archival-node"
     ports:
-      - "0.0.0.0:8429:8429"
+      - 8429:8429
     volumes:
       - vmagentdata:/vmagentdata
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--httpListenAddr=0.0.0.0:8429"
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.basicAuth.username=${VM_USER}"
+      - "--remoteWrite.basicAuth.password=${VM_PASS}"
+      - "--remoteWrite.basicAuth.tlsSkipVerify=true"
 
   agent:
     container_name: newrelic-infra
@@ -37,7 +40,7 @@ services:
     restart: unless-stopped
 
   dsn-bootstrap-node:
-    image: ghcr.io/${NODE_ORG}/bootstrap-node:${NODE_TAG}
+    image: ghcr.io/${REPO_ORG}/bootstrap-node:${DOCKER_TAG}
     restart: unless-stopped
     environment:
       - RUST_LOG=info
@@ -58,6 +61,10 @@ services:
       - /ip4/0.0.0.0/udp/30533/quic-v1
       - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
+      - "--listen-on"
+      - /ip6/::/udp/30533/quic-v1
+      - "--listen-on"
+      - /ip6/::/tcp/30533
       - --protocol-version
       - ${GENESIS_HASH}
       - "--in-peers"
@@ -68,68 +75,64 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
+## comment to disable external addresses using IP format for now
       - "--external-address"
       - "/ip4/${EXTERNAL_IP}/udp/30533/quic-v1"
       - "--external-address"
       - "/ip4/${EXTERNAL_IP}/tcp/30533"
+      - "--external-address"
+      - "/ip6/${EXTERNAL_IP_V6}/udp/30533/quic-v1"
+      - "--external-address"
+      - "/ip6/${EXTERNAL_IP_V6}/tcp/30533"
+      - "--external-address"
+      - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+      - "--external-address"
+      - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--reserved-peers"
-      - "${DSN_BOOTSTRAP_NODE_PEER}"
+      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--bootstrap-nodes"
-      - "${DSN_BOOTSTRAP_NODE_PEER}"
+      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+      - "--reserved-peers"
+      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
+      - "--bootstrap-nodes"
+      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
   archival-node:
-    image: ghcr.io/${NODE_ORG}/node:${NODE_TAG}
+    image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333/udp"
-      - "30433:30433/udp"
       - "30333:30333/tcp"
+      - "30433:30433/udp"
       - "30433:30433/tcp"
       - "9615:9615"
     logging:
       driver: loki
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command:
-      [
-        "--chain",
-        "${NETWORK_NAME}",
-        "--base-path",
-        "/var/subspace",
-        "--execution",
-        "wasm",
-        "--state-pruning",
-        "archive",
-        "--blocks-pruning",
-        "256",
-        "--listen-addr",
-        "/ip4/0.0.0.0/tcp/30333",
-        "--dsn-external-address",
-        "/ip4/${EXTERNAL_IP}/udp/30433/quic-v1",
-        "--dsn-external-address",
-        "/ip4/${EXTERNAL_IP}/tcp/30433",
-        "--node-key",
-        "${NODE_KEY}",
-        "--in-peers",
-        "1000",
-        "--out-peers",
-        "1000",
-        "--in-peers-light",
-        "1000",
-        "--dsn-in-connections",
-        "1000",
-        "--dsn-out-connections",
-        "1000",
-        "--dsn-pending-in-connections",
-        "1000",
-        "--dsn-pending-out-connections",
-        "1000",
-        "--prometheus-port",
-        "9615",
-        "--prometheus-external",
-        "--reserved-nodes",
-        "${BOOTSTRAP_NODE_PEER}",
-        "--bootnodes",
-        "${BOOTSTRAP_NODE_PEER}",
-      ]
+    command: [
+      "run",
+      "--chain", "${NETWORK_NAME}",
+      "--base-path", "/var/subspace",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "256",
+#      "--pot-external-entropy", "${POT_EXTERNAL_ENTROPY}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
+      "--dsn-external-address", "/ip4/${EXTERNAL_IP}/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip4/${EXTERNAL_IP}/tcp/30433",
+      "--dsn-external-address", "/ip6/${EXTERNAL_IP_V6}/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip6/${EXTERNAL_IP_V6}/tcp/30433",
+      "--node-key", "${NODE_KEY}",
+      "--in-peers", "1000",
+      "--out-peers", "1000",
+      "--dsn-in-connections", "1000",
+      "--dsn-out-connections", "1000",
+      "--dsn-pending-in-connections", "1000",
+      "--dsn-pending-out-connections", "1000",
+      "--prometheus-listen-on", "0.0.0.0:9615",
+      "--reserved-nodes", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
+      "--bootstrap-nodes", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
+
+    ]
