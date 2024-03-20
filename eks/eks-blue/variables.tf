@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "environment_name" {
   description = "The name of Environment Infrastructure stack, feel free to rename it. Used for cluster and VPC names."
   type        = string
-  default     = "blue"
+  default     = "cluster"
 }
 
 variable "ingress_type" {

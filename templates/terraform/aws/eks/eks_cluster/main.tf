@@ -42,40 +42,44 @@ locals {
 
   node_group_name = "subspace-default"
 
+  #---------------------------------------------------------------
   # ARGOCD ADD-ON APPLICATION
+  #---------------------------------------------------------------
 
   aws_addons = {
-    enable_cert_manager                          = true
-    enable_aws_ebs_csi_driver                    = true
-    enable_aws_efs_csi_driver                    = true
-    enable_aws_cloudwatch_metrics                = true
-    enable_aws_privateca_issuer                  = true
-    enable_cluster_autoscaler                    = true
-    enable_external_dns                          = true
-    enable_external_secrets                      = true
-    enable_aws_load_balancer_controller          = true
-    enable_aws_for_fluentbit                     = true
-    enable_aws_node_termination_handler          = true
-    enable_karpenter                             = true
-    enable_velero                                = true
-    enable_aws_gateway_api_controller            = true
-    enable_aws_secrets_store_csi_driver_provider = true
+    enable_cert_manager          = true
+    enable_aws_ebs_csi_resources = true # generate gp2 and gp3 storage classes for ebs-csi
+    #enable_aws_efs_csi_driver                    = true
+    enable_aws_cloudwatch_metrics = true
+    #enable_aws_privateca_issuer                  = true
+    #enable_cluster_autoscaler                    = true
+    enable_external_dns                 = true
+    enable_external_secrets             = true
+    enable_aws_load_balancer_controller = true
+    enable_aws_for_fluentbit            = true
+    #enable_aws_node_termination_handler          = true
+    enable_karpenter = true
+    #enable_aws_gateway_api_controller            = true
+    #enable_aws_secrets_store_csi_driver_provider = true
   }
   oss_addons = {
-    enable_argo_rollouts                   = true
-    enable_argo_workflows                  = true
-    enable_cluster_proportional_autoscaler = true
-    enable_ingress_nginx                   = true
-    enable_kyverno                         = true
-    enable_kube_prometheus_stack           = true
-    enable_metrics_server                  = true
-    enable_prometheus_adapter              = true
-    enable_secrets_store_csi_driver        = true
+    #enable_argo_rollouts                         = true
+    #enable_argo_workflows                        = true
+    #enable_cluster_proportional_autoscaler       = true
+    #enable_gatekeeper                            = true
+    enable_ingress_nginx = true
+    enable_kyverno       = true
+    #enable_kube_prometheus_stack                 = true
+    enable_metrics_server = true
+    #enable_prometheus_adapter                    = true
+    #enable_secrets_store_csi_driver              = true
     #enable_vpa                                   = true
   }
   addons = merge(local.aws_addons, local.oss_addons, { kubernetes_version = local.cluster_version })
 
+  #----------------------------------------------------------------
   # GitOps Bridge, define metadatas to pass from Terraform to ArgoCD
+  #----------------------------------------------------------------
 
   addons_metadata = merge(
     try(module.eks_addons.gitops_metadata, {}), # eks blueprints addons automatically expose metadatas
@@ -107,16 +111,18 @@ locals {
       argocd_route53_weight      = local.argocd_route53_weight
       route53_weight             = local.route53_weight
       ecsfrontend_route53_weight = local.ecsfrontend_route53_weight
-      target_group_arn           = local.service == "blue" ? data.aws_lb_target_group.tg_blue.arn : data.aws_lb_target_group.tg_green.arn
-      external_lb_dns            = data.aws_lb.alb.dns_name
+      #target_group_arn = local.service == "blue" ? data.aws_lb_target_group.tg_blue.arn : data.aws_lb_target_group.tg_green.arn # <-- Add this line
+      #      external_lb_dns = data.aws_lb.alb.dns_name
     }
   )
 
-  # Cluster for addons & workloads
+  #---------------------------------------------------------------
+  # Manifests for bootstraping the cluster for addons & workloads
+  #---------------------------------------------------------------
 
   argocd_apps = {
-    addons    = file("${path.module}/../../bootstrap/addons.yaml")
-    workloads = file("${path.module}/../../bootstrap/workloads.yaml")
+    addons    = file("${path.module}/../bootstrap/addons.yaml")
+    workloads = file("${path.module}/../bootstrap/workloads.yaml")
   }
 
 
@@ -172,7 +178,9 @@ data "aws_route53_zone" "sub" {
   name = "${local.environment}.${local.hosted_zone_name}"
 }
 
+################################################################################
 # AWS Secret Manager for argocd password
+################################################################################
 
 data "aws_secretsmanager_secret" "argocd" {
   name = "${local.argocd_secret_manager_name}.${local.environment}"
@@ -182,7 +190,10 @@ data "aws_secretsmanager_secret_version" "admin_password_version" {
   secret_id = data.aws_secretsmanager_secret.argocd.id
 }
 
+################################################################################
 # EKS Cluster
+################################################################################
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 19.15.2"
@@ -242,7 +253,10 @@ data "aws_iam_role" "eks_admin_role_name" {
   name  = local.eks_admin_role_name
 }
 
+################################################################################
 # EKS Teams
+################################################################################
+
 module "eks_platform_teams" {
   source  = "aws-ia/eks-blueprints-teams/aws"
   version = "~> 1.0"
@@ -263,7 +277,7 @@ module "eks_platform_teams" {
   labels = {
     "elbv2.k8s.aws/pod-readiness-gate-inject" = "enabled",
     "appName"                                 = "${var.app_name}",
-    "projectName"                             = "${var.project_name}}",
+    "projectName"                             = "${var.project_name}",
     #"pod-security.kubernetes.io/enforce"      = "restricted",
   }
 
@@ -325,7 +339,9 @@ module "eks_dev_teams" {
 
 }
 
+################################################################################
 # GitOps Bridge: Private ssh keys for git
+################################################################################
 data "aws_secretsmanager_secret" "workload_repo_secret" {
   name = local.aws_secret_manager_git_private_ssh_key_name
 }
@@ -365,7 +381,9 @@ resource "kubernetes_secret" "git_secrets" {
   data = each.value
 }
 
+################################################################################
 # GitOps Bridge: Bootstrap
+################################################################################
 module "gitops_bridge_bootstrap" {
   source = "github.com/gitops-bridge-dev/gitops-bridge-argocd-bootstrap-terraform?ref=v2.0.0"
 
@@ -396,7 +414,9 @@ module "gitops_bridge_bootstrap" {
   depends_on = [kubernetes_secret.git_secrets]
 }
 
-# EKS Addons
+################################################################################
+# EKS Blueprints Addons
+################################################################################
 module "eks_addons" {
   source = "aws-ia/eks-blueprints-addons/aws"
 
@@ -409,6 +429,7 @@ module "eks_addons" {
   create_kubernetes_resources = false
 
   eks_addons = {
+
     aws-ebs-csi-driver = {
       most_recent              = true
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
@@ -437,10 +458,10 @@ module "eks_addons" {
     }
   }
 
-  # EKS Addons
-  enable_cert_manager                 = try(local.aws_addons.enable_cert_manager, false)
+  # EKS Blueprints Addons
+  enable_cert_manager = try(local.aws_addons.enable_cert_manager, false)
+  #enable_aws_ebs_csi_resources  = try(local.aws_addons.enable_aws_ebs_csi_resources, false)
   enable_aws_efs_csi_driver           = try(local.aws_addons.enable_aws_efs_csi_driver, false)
-  enable_aws_fsx_csi_driver           = try(local.aws_addons.enable_aws_fsx_csi_driver, false)
   enable_aws_cloudwatch_metrics       = try(local.aws_addons.enable_aws_cloudwatch_metrics, false)
   enable_aws_privateca_issuer         = try(local.aws_addons.enable_aws_privateca_issuer, false)
   enable_cluster_autoscaler           = try(local.aws_addons.enable_cluster_autoscaler, false)
@@ -452,16 +473,11 @@ module "eks_addons" {
     service_account_name = "aws-lb-sa"
   }
 
-  enable_fargate_fluentbit              = try(local.aws_addons.enable_fargate_fluentbit, false)
   enable_aws_for_fluentbit              = try(local.aws_addons.enable_aws_for_fluentbit, false)
   enable_aws_node_termination_handler   = try(local.aws_addons.enable_aws_node_termination_handler, false)
   aws_node_termination_handler_asg_arns = [for asg in module.eks.self_managed_node_groups : asg.autoscaling_group_arn]
   enable_karpenter                      = try(local.aws_addons.enable_karpenter, false)
-  enable_velero                         = try(local.aws_addons.enable_velero, false)
-  #velero = {
-  #  s3_backup_location = "${module.velero_backup_s3_bucket.s3_bucket_arn}/backups"
-  #}
-  enable_aws_gateway_api_controller = try(local.aws_addons.enable_aws_gateway_api_controller, false)
+  enable_aws_gateway_api_controller     = try(local.aws_addons.enable_aws_gateway_api_controller, false)
   #enable_aws_secrets_store_csi_driver_provider = try(local.enable_aws_secrets_store_csi_driver_provider, false)
 
   tags = local.tags
