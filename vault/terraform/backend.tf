@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "vault-manager"
+      name = "vault-manager-eks-prod"
     }
   }
 }

@@ -1,31 +1,31 @@
-terraform {
-  required_providers {
-    vault = {
-      source  = "hashicorp/vault"
-      version = "3.15.2" # Replace with the desired version of the Vault provider
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "4.67.0"
-    }
+provider "aws" {
+  region = var.region
+}
+
+provider "kubernetes" {
+  host = aws_eks_cluster.vault.endpoint
+
+  cluster_ca_certificate = base64decode(
+    aws_eks_cluster.vault.certificate_authority[0].data
+  )
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1alpha1"
+    args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
+    command     = "aws"
   }
 }
 
-# Provider configuration (adjust as needed)
-provider "aws" {
-  region     = var.aws_region
-  access_key = var.access_key
-  secret_key = var.secret_key
-}
-
-provider "vault" {
-  address = "http://localhost:8200" # Replace with the desired Vault address
-
-  s3 {
-    bucket     = aws_s3_bucket.vault_storage.id
-    region     = var.aws_region # Replace with your desired AWS region
-    access_key = aws_iam_user.vault.name
-    secret_key = aws_iam_user.vault.secret
-    kms_key_id = aws_kms_key.vault.arn
+provider "helm" {
+  kubernetes {
+    host = aws_eks_cluster.vault.endpoint
+    cluster_ca_certificate = base64decode(
+      aws_eks_cluster.vault.certificate_authority[0].data
+    )
+    exec {
+      api_version = "client.authentication.k8s.io/v1alpha1"
+      args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
+      command     = "aws"
+    }
   }
 }
