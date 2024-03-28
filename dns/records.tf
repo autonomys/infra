@@ -114,9 +114,21 @@ resource "cloudflare_record" "block_explorer" {
   proxied = false
   ttl     = 3600
   type    = "CNAME"
-  value   = "subspace.github.io"
+  value   = "astral-prod.netlify.app"
   zone_id = data.cloudflare_zone.subspace_network.id
 }
+
+// subspace block explorer Astral
+resource "cloudflare_record" "block_explorer_astral" {
+  comment = "Subspace block explorer"
+  name    = "astral"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "astral-prod.netlify.app"
+  zone_id = data.cloudflare_zone.subspace_network.id
+}
+
 
 // subspace telemetry
 resource "cloudflare_record" "telemetry" {
