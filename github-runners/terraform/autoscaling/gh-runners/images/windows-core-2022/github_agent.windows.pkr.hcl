@@ -237,6 +237,9 @@ build {
       "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$vscodePath\", [System.EnvironmentVariableTarget]::Machine)",
       "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
+      "# Install .NET SDK",
+      "choco install dotnet-sdk -y",
+
       "# Install AzureSignTool",
       "Write-Host \"Install AzureSignTool\"",
       "dotnet tool install --global AzureSignTool",
