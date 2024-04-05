@@ -187,14 +187,6 @@ build {
       "rustc --version",
       "cargo --version",
 
-      "# Install common tools with cargo",
-      "cargo install cargo-cache",
-      "cargo install cargo-sweep",
-
-      "# Cleanup Cargo crates cache",
-      "Remove-Item \"$env:CARGO_HOME\\registry\\*\" -Recurse -Force",
-      "Write-Host \"Rust and common toolsets have been successfully installed.\"",
-
       "# Install the latest stable version of llvm and clang compilers",
       "choco install llvm -y",
 
@@ -219,7 +211,6 @@ build {
 
       "# Verify LLVM installation",
       "clang --version",
-      "llvm-config --version",
 
       "Write-Host \"LLVM and Clang have been successfully installed and added to the PATH.\"",
 
@@ -239,6 +230,11 @@ build {
 
       "# Install .NET SDK",
       "choco install dotnet-sdk -y",
+
+      "# Add .NET SDK to the PATH",
+      "$dotnetSdkPath = \"C:\\Program Files\\dotnet\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$dotnetSdkPath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
       "# Install AzureSignTool",
       "Write-Host \"Install AzureSignTool\"",
