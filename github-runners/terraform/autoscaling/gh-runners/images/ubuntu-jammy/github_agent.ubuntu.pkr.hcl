@@ -37,14 +37,14 @@ variable "associate_public_ip_address" {
 }
 
 variable "instance_type" {
-  description = "The instance type Packer will use for the builder"
+  description = "The instance type Packer will use for the builder. For windows use a instance with decent Memory to avoid OOM errors during bootstrapping rust toolkit"
   type        = string
-  default     = "t3.medium"
+  default     = "m6a.2xlarge"
 }
 
 variable "root_volume_size_gb" {
   type    = number
-  default = 8
+  default = 100
 }
 
 variable "ebs_delete_on_termination" {
@@ -155,12 +155,12 @@ build {
       "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
       "sudo apt-get update -y",
       "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
-      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly --profile default -y",
-      "echo 'export PATH=$PATH:$HOME/.cargo/bin' | sudo tee -a /etc/profile",
-      "source /etc/profile",
       "sudo systemctl enable containerd.service",
       "sudo service docker start",
       "sudo usermod -a -G docker ubuntu",
+      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly --profile default -y",
+      "echo 'export PATH=$PATH:$HOME/.cargo/bin' | sudo tee -a $HOME/.cargo/env",
+      ". $HOME/.cargo/env",
       "sudo curl -f https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -o amazon-cloudwatch-agent.deb",
       "sudo dpkg -i amazon-cloudwatch-agent.deb",
       "sudo systemctl restart amazon-cloudwatch-agent",

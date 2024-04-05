@@ -114,14 +114,8 @@ build {
     "source.amazon-ebs.githubrunner"
   ]
 
-  provisioner "file" {
-    source = "../installer.ps1"
-    destination = "/tmp/installer.ps1"
-  }
-
   provisioner "powershell" {
     inline = [
-      "powershell -ExecutionPolicy Bypass -File /tmp/installer.ps1",
       "$ErrorActionPreference = \"Continue\"",
       "$VerbosePreference = \"Continue\"",
       "Start-Transcript -Path \"C:\\UserData.log\" -Append",
@@ -166,6 +160,12 @@ build {
       "    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))",
       "}",
 
+      "# Install build tools",
+      "choco install -y mingw",
+
+      "# Install pkg-config",
+      "choco install -y pkgconfiglite",
+
       "# Set environment variables for Rust",
       "$env:RUSTUP_HOME = \"C:\\Users\\Default\\.rustup\"",
       "$env:CARGO_HOME = \"C:\\Users\\Default\\.cargo\"",
@@ -174,10 +174,11 @@ build {
       "New-Item -ItemType Directory -Path $env:RUSTUP_HOME, $env:CARGO_HOME -Force | Out-Null",
 
       "# Install Rust with Chocolatey",
-      "choco install rust -y --params=\"'/AddToPath:1'\"",
+      "choco install -y rust --params=\"'/AddToPath:1'\"",
 
-      "# Add Rust binaries to the path for the current session",
+      "# Add Rust to the system PATH",
       "$env:Path += \";$env:CARGO_HOME\\bin\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path, [System.EnvironmentVariableTarget]::Machine)",
 
       "# Refresh environment to ensure Rust is available in the PATH",
       "refreshenv",
@@ -187,9 +188,6 @@ build {
       "cargo --version",
 
       "# Install common tools with cargo",
-      "rustup component add rustfmt --toolchain nightly",
-      "rustup component add clippy --toolchain nightly",
-      "rustup component add rust-src --toolchain nightly",
       "cargo install cargo-cache",
       "cargo install cargo-sweep",
 
@@ -203,8 +201,20 @@ build {
       "# Add LLVM to the system PATH",
       "$llvmPath = \"C:\\Program Files\\LLVM\\bin\"",
       "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$llvmPath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
-      "# Refresh the current session's PATH",
+      "# Install zstd using Chocolatey",
+      "choco install -y zstd",
+
+      "# Install the missing dependency",
+      "choco install -y chocolatey-dotnetfx.extension",
+
+      "# Install Visual Studio 2022 Community",
+      "choco install -y visualstudio2022community",
+
+      "# Add Visual Studio Code to the PATH",
+      "$vscodePath = \"C:\\Program Files\\Microsoft VS Code\\bin\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$vscodePath\", [System.EnvironmentVariableTarget]::Machine)",
       "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
       "# Verify LLVM installation",
@@ -212,6 +222,33 @@ build {
       "llvm-config --version",
 
       "Write-Host \"LLVM and Clang have been successfully installed and added to the PATH.\"",
+
+      "# Add zstd to the PATH",
+      "$zstdPath = \"C:\\Program Files\\zstd\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$zstdPath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
+
+      "# Install Visual Studio Code 2022 and extensions",
+      "Write-Host \"Install Visual Studio Code 2022\"",
+      "choco install visualstudio2022community -y",
+
+      "# Add Visual Studio Code to the PATH",
+      "$vscodePath = \"C:\\Program Files\\Microsoft VS Code\\bin\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$vscodePath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
+
+      "# Install AzureSignTool",
+      "Write-Host \"Install AzureSignTool\"",
+      "dotnet tool install --global AzureSignTool",
+      "dotnet tool update --global AzureSignTool",
+
+      "# Add .dotnet tools to the PATH",
+      "$dotnetToolsPath = \"$env:USERPROFILE\\.dotnet\\tools\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$dotnetToolsPath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
+
+      "dotnet dev-certs https --trust",
+      "refreshenv",
 
       "# Disable Windows Defender",
       "Write-Host \"Disable Windows Defender...\"",
@@ -254,49 +291,6 @@ build {
       "    Set-ItemProperty -Path $atpRegPath -Name 'ForceDefenderPassiveMode' -Value '1' -Type 'DWORD'",
       "}",
 
-      "# Install zstd",
-      "Write-Host \"Install zstd\"",
-      "Invoke-WebRequest -Uri \"https://raw.githubusercontent.com/horta/zstd.install/main/install.ps1\" -OutFile \"install_zstd.ps1\"",
-      ".\\install_zstd.ps1",
-      "Remove-Item \"install_zstd.ps1\"",
-
-      "# Add zstd to the PATH",
-      "$zstdPath = \"C:\\Program Files\\zstd\"",
-      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$zstdPath\", [System.EnvironmentVariableTarget]::Machine)",
-      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
-
-      "# Install Visual Studio Code 2022 and extensions",
-      "Write-Host \"Install Visual Studio Code 2022\"",
-      "choco install visualstudio2022community -y",
-
-      "# Add Visual Studio Code to the PATH",
-      "$vscodePath = \"C:\\Program Files\\Microsoft VS Code\\bin\"",
-      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$vscodePath\", [System.EnvironmentVariableTarget]::Machine)",
-      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
-
-      "# Install the Visual Studio Extensions from toolset.json",
-      "Write-Host \"Install Visual Studio Extensions\"",
-      "$toolset = Get-ToolsetContent",
-      "$vsixPackagesList = $toolset.visualStudio.vsix",
-      "if (-not $vsixPackagesList) {",
-      "    Write-Host \"No extensions to install\"",
-      "    exit 0",
-      "}",
-
-      "$vsixPackagesList | ForEach-Object {",
-      "    # Retrieve cdn endpoint to avoid HTTP error 429",
-      "    # https://github.com/actions/runner-images/issues/3074",
-      "    $vsixPackage = Get-VsixInfoFromMarketplace $_",
-      "    Write-Host \"Installing $vsixPackage\"",
-      "    if ($vsixPackage.FileName.EndsWith(\".vsix\")) {",
-      "        Install-VSIXFromUrl $vsixPackage.DownloadUri",
-      "    } else {",
-      "        Install-Binary `",
-      "            -Url $vsixPackage.DownloadUri `",
-      "            -InstallArgs @('/install', '/quiet', '/norestart')",
-      "    }",
-      "}",
-
       "# Setup PowerShellGet",
       "Write-Host \"Setup PowerShellGet\"",
       "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force",
@@ -324,19 +318,6 @@ build {
       "    Import-Module PowerHTML",
       "}",
       "\"@ | Add-Content -Path $profile -Force",
-
-      "# Install AzureSignTool",
-      "Write-Host \"Install AzureSignTool\"",
-      "dotnet tool install --global AzureSignTool",
-      "dotnet tool update --global AzureSignTool",
-
-      "# Add .dotnet tools to the PATH",
-      "$dotnetToolsPath = \"$env:USERPROFILE\\.dotnet\\tools\"",
-      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$dotnetToolsPath\", [System.EnvironmentVariableTarget]::Machine)",
-      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
-
-      "dotnet dev-certs https --trust",
-      "refreshenv"
     ]
   }
 

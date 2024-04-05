@@ -70,6 +70,11 @@ echo export PATH=/home/$user_name/bin:$PATH >>/home/$user_name/.bashrc
 loginctl enable-linger $user_name
 su -l $user_name -c "systemctl --user enable docker"
 
+sudo apt install -y ca-certificates curl gnupg lsb-release jq git unzip pkg-config openssl libtool cmake build-essential libudev-dev acl aria2 autoconf automake binutils bison brotli bzip2 coreutils dbus curl dnsutils dpkg dpkg-dev fakeroot file findutils flex fonts-noto-color-emoji g++ gcc gnupg2 iproute2 lib32z1 libc++-dev libc++abi-dev libc6-dev libcurl4 imagemagick iputils-ping libgbm-dev libgconf-2-4 libgsl-dev libgtk-3-0 libmagic-dev libmagickcore-dev libmagickwand-dev libsecret-1-dev libsqlite3-dev libunwind8 libxkbfile-dev libxss1 libyaml-dev locales lz4 m4 make mediainfo net-tools netcat openssh-client p7zip-full parallel patchelf pigz python-is-python3 rsync shellcheck sqlite3 ssh sshpass sudo swig tar texinfo time tk tzdata unzip upx wget xorriso xvfb xz-utils zip zsync
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly --profile default -y
+echo 'export PATH=$PATH:$HOME/.cargo/bin' | sudo tee -a $HOME/.cargo/env
+. $HOME/.cargo/env
+
 ${install_runner}
 
 # config runner for rootless docker
