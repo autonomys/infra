@@ -150,6 +150,7 @@ build {
       "# Install dependent tools",
       "Write-Host \"Installing additional development tools\"",
       "choco install git awscli -y",
+      "& 'C:\\Program Files\\Git\\bin\\git.exe' config --global core.symlinks true",
       "refreshenv",
 
       "## Install rust and cargo",
