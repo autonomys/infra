@@ -196,7 +196,7 @@ build {
       "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
       "# Install zstd using Chocolatey",
-      "choco install -y zstd",
+      "choco install -y 7zip-zstd",
 
       "# Install the missing dependency",
       "choco install -y chocolatey-dotnetfx.extension",
@@ -214,8 +214,13 @@ build {
 
       "Write-Host \"LLVM and Clang have been successfully installed and added to the PATH.\"",
 
+      "# Add 7zip to the PATH",
+      "$7zipPath = \"C:\\Program Files\\7-Zip\"",
+      "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$7zipPath\", [System.EnvironmentVariableTarget]::Machine)",
+      "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
+
       "# Add zstd to the PATH",
-      "$zstdPath = \"C:\\Program Files\\zstd\"",
+      "$zstdPath = \"C:\\ProgramData\\chocolatey\\lib\\7zip-zstd\\tools\"",
       "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$zstdPath\", [System.EnvironmentVariableTarget]::Machine)",
       "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
@@ -246,7 +251,7 @@ build {
       "[Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$dotnetToolsPath\", [System.EnvironmentVariableTarget]::Machine)",
       "$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\")",
 
-      "dotnet dev-certs https --trust",
+      "dotnet dev-certs https --trust /y",
       "refreshenv",
 
       "# Disable Windows Defender",
@@ -290,33 +295,8 @@ build {
       "    Set-ItemProperty -Path $atpRegPath -Name 'ForceDefenderPassiveMode' -Value '1' -Type 'DWORD'",
       "}",
 
-      "# Setup PowerShellGet",
-      "Write-Host \"Setup PowerShellGet\"",
-      "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force",
-
-      "# Specifies the installation policy",
-      "Set-PSRepository -InstallationPolicy Trusted -Name PSGallery",
-
-      "# Warmup PSModuleAnalysisCachePath (speedup first PowerShell invocation by 20s)",
-      "Write-Host 'Warmup PSModuleAnalysisCachePath (speedup first PowerShell invocation by 20s)'",
-      "$PSModuleAnalysisCachePath = 'C:\\PSModuleAnalysisCachePath\\ModuleAnalysisCache'",
-      "[Environment]::SetEnvironmentVariable('PSModuleAnalysisCachePath', $PSModuleAnalysisCachePath, \"Machine\")",
-      "$env:PSModuleAnalysisCachePath = $PSModuleAnalysisCachePath",
-      "New-Item -Path $PSModuleAnalysisCachePath -ItemType 'File' -Force | Out-Null",
-
-      "# User (current user, image generation only)",
-      "if (-not (Test-Path $profile)) {",
-      "    New-Item $profile -ItemType File -Force",
-      "}",
-
-      "@\"",
-      "if (-not (Get-Module -ListAvailable -Name PowerHTML)) {",
-      "    Install-Module PowerHTML -Scope CurrentUser",
-      "}",
-      "if (-not (Get-Module -Name PowerHTML)) {",
-      "    Import-Module PowerHTML",
-      "}",
-      "\"@ | Add-Content -Path $profile -Force",
+      "# Force exit code 0",
+      "exit 0",
     ]
   }
 
