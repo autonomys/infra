@@ -44,7 +44,7 @@ module "runners" {
   enable_ssm_on_runners = true
 
   # Let the module manage the service linked role
-  # create_service_linked_role_spot = true
+  create_service_linked_role_spot = true
 
   instance_types = ["m6a.4xlarge", "c6a.4xlarge"]
 
@@ -60,20 +60,19 @@ module "runners" {
   enable_ephemeral_runners = true
 
   # # Example of simple pool usages
-  # pool_runner_owner = "subspace-scale-runners"
-  # pool_config = [{
-  #   size                = 3
-  #   schedule_expression = "cron(* * * * ? *)"
-  # }]
-  #
-  #
+  pool_runner_owner = "subspace-scale-runners"
+  pool_config = [{
+    size                = 3
+    schedule_expression = "cron(* * * * ? *)"
+  }]
+
   enable_job_queued_check = true
 
-  # tracing_config = {
-  #   mode                  = "Active"
-  #   capture_error         = true
-  #   capture_http_requests = true
-  # }
+  tracing_config = {
+    mode                  = "Active"
+    capture_error         = true
+    capture_http_requests = true
+  }
 
 
   # configure your pre-built AMI

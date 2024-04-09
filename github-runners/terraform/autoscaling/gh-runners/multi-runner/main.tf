@@ -41,28 +41,28 @@ module "runners" {
   source              = "../../modules/multi-runner"
   multi_runner_config = local.multi_runner_config
   #  Alternative to loading runner configuration from Yaml files is using static configuration:
-   multi_runner_config = {
-     "linux-x64" = {
-       matcherConfig : {
-         labelMatchers = [["self-hosted", "linux", "x64", "ubuntu-2204"], ["self-hosted", "linux", "x64", "ubuntu-latest"]]
-         exactMatch    = true
-       }
-       fifo                = true
-       delay_webhook_event = 0
-       runner_config = {
-         runner_os                       = "linux"
-         runner_architecture             = "x64"
-         runner_name_prefix              = "ubuntu-x64_"
-         create_service_linked_role_spot = true
-         enable_ssm_on_runners           = true
-         instance_types                  = ["m6a.2xlarge", "m6a.4xlarge"]
-         runner_extra_labels             = ["ubuntu-22.04", "ubuntu"]
-         runners_maximum_count           = 3
-         enable_ephemeral_runners        = true
-         scale_down_schedule_expression  = "cron(* * * * ? *)"
-       }
-     }
-   }
+  # multi_runner_config = {
+  #   "linux-x64" = {
+  #     matcherConfig : {
+  #       labelMatchers = [["self-hosted", "linux", "x64", "ubuntu-2204"], ["self-hosted", "linux", "x64", "ubuntu-latest"]]
+  #       exactMatch    = true
+  #     }
+  #     fifo                = true
+  #     delay_webhook_event = 0
+  #     runner_config = {
+  #       runner_os                       = "linux"
+  #       runner_architecture             = "x64"
+  #       runner_name_prefix              = "ubuntu-x64_"
+  #       create_service_linked_role_spot = true
+  #       enable_ssm_on_runners           = true
+  #       instance_types                  = ["m6a.2xlarge", "m6a.4xlarge"]
+  #       runner_extra_labels             = ["ubuntu-22.04", "ubuntu"]
+  #       runners_maximum_count           = 3
+  #       enable_ephemeral_runners        = true
+  #       scale_down_schedule_expression  = "cron(* * * * ? *)"
+  #     }
+  #   }
+  # }
   aws_region                        = local.aws_region
   vpc_id                            = module.base.vpc.vpc_id
   subnet_ids                        = module.base.vpc.private_subnets
@@ -78,35 +78,35 @@ module "runners" {
     webhook_secret = random_id.random.hex
   }
   # enable this section for tracing
-  # tracing_config = {
-  #   mode                  = "Active"
-  #   capture_error         = true
-  #   capture_http_requests = true
-  # }
+  tracing_config = {
+    mode                  = "Active"
+    capture_error         = true
+    capture_http_requests = true
+  }
   # Assuming local build lambda's to use pre build ones, uncomment the lines below and download the
   # lambda zip files lambda_download
-  # webhook_lambda_zip                = "../lambdas-download/webhook.zip"
-  # runner_binaries_syncer_lambda_zip = "../lambdas-download/runner-binaries-syncer.zip"
-  # runners_lambda_zip                = "../lambdas-download/runners.zip"
+  webhook_lambda_zip                = "../lambdas-download/webhook.zip"
+  runner_binaries_syncer_lambda_zip = "../lambdas-download/runner-binaries-syncer.zip"
+  runners_lambda_zip                = "../lambdas-download/runners.zip"
 
-  # enable_workflow_job_events_queue = true
+  enable_workflow_job_events_queue = true
   # override delay of events in seconds
 
   # Enable debug logging for the lambda functions
-  # log_level = "debug"
+  log_level = "debug"
 
   # Enable spot termination watcher
-  # spot_instance_termination_watcher = {
-  #   enable = true
-  # }
+  spot_instance_termination_watcher = {
+    enable = true
+  }
 
   # Enable to track the spot instance termination warning
-  # instance_termination_watcher = {
-  #   enable         = true
-  #   enable_metric = {
-  #     spot_warning = true
-  #   }
-  # }
+  instance_termination_watcher = {
+    enable         = true
+    enable_metric = {
+      spot_warning = true
+    }
+  }
 }
 
 module "webhook_github_app" {
