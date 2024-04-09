@@ -45,6 +45,19 @@ resource "null_resource" "setup-bootstrap-nodes-evm" {
 
 }
 
+resource "null_resource" "clone_branch" {
+  count = var.branch != "main" ? 1 : 0
+
+  provisioner "remote-exec" {
+    inline = [
+      "cd /root/subspace/",
+      "git clone https://github.com/subspace/subspace.git",
+      "cd subspace",
+      "git checkout ${var.branch_name}"
+    ]
+  }
+}
+
 resource "null_resource" "prune-bootstrap-nodes-evm" {
   count      = var.bootstrap-node-evm-config.prune ? length(local.bootstrap_nodes_evm_ip_v4) : 0
   depends_on = [null_resource.setup-bootstrap-nodes-evm]
@@ -135,8 +148,8 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-evm-config.docker-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /root/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-evm-config.repo-org} > /root/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-evm-config.node-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
       "echo NODE_ID=${count.index} >> /root/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
@@ -151,12 +164,16 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /root/subspace/.env",
       "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /root/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /root/subspace/.env",
+      "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
       # create docker compose file
-      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
+      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains}",
 
       # start subspace node
-      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
+      var.branch != "main" ? join(" && ", [
+        "cp -f /root/subspace/.env /root/subspace/subspace/.env",
+        "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d"
+      ]) : "sudo docker compose -f /root/subspace/docker-compose.yml up -d"
     ]
   }
 }

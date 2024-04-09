@@ -43,8 +43,11 @@ resource "null_resource" "setup-nodes" {
       "sudo bash /root/subspace/installer.sh",
     ]
   }
+}
 
-  # clone testing branch
+resource "null_resource" "clone_branch" {
+  count = var.branch != "main" ? 1 : 0
+
   provisioner "remote-exec" {
     inline = [
       "cd /root/subspace/",
@@ -53,7 +56,6 @@ resource "null_resource" "setup-nodes" {
       "git checkout ${var.branch_name}"
     ]
   }
-
 }
 
 resource "null_resource" "prune-nodes" {
@@ -148,14 +150,16 @@ resource "null_resource" "start-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /root/subspace/.env",
       "echo NODE_DSN_PORT=${var.node-config.node-dsn-port} >> /root/subspace/.env",
+      "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
       # create docker compose file
-      "chmod +x /root/subspace/create_compose_file.sh",
       "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
 
       # start subspace node
-      "cp -f /root/subspace/.env /root/subspace/subspace/.env",
-      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
+      var.branch != "main" ? join(" && ", [
+        "cp -f /root/subspace/.env /root/subspace/subspace/.env",
+        "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d"
+      ]) : "sudo docker compose -f /root/subspace/docker-compose.yml up -d"
     ]
   }
 }

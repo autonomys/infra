@@ -42,7 +42,11 @@ resource "null_resource" "setup-domain-nodes" {
       "sudo bash /root/subspace/installer.sh",
     ]
   }
-  # clone testing branch
+}
+
+resource "null_resource" "clone_branch" {
+  count = var.branch != "main" ? 1 : 0
+
   provisioner "remote-exec" {
     inline = [
       "cd /root/subspace/",
@@ -51,7 +55,6 @@ resource "null_resource" "setup-domain-nodes" {
       "git checkout ${var.branch_name}"
     ]
   }
-
 }
 
 resource "null_resource" "prune-domain-nodes" {
@@ -163,38 +166,16 @@ resource "null_resource" "start-domain-nodes" {
       "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /root/subspace/relayer_ids.txt) >> /root/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /root/subspace/.env",
       "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /root/subspace/.env",
+      "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
       # create docker compose file
       "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
 
       # start subspace node
-      "cp -f /root/subspace/.env /root/subspace/subspace/.env",
-      "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d",
-    ]
-  }
-}
-
-resource "null_resource" "inject-domain-keystore" {
-  # for now we have one executor running. Should change here when multiple executors are expected.
-  count      = length(local.domain_node_ip_v4) > 0 ? 1 : 0
-  depends_on = [null_resource.start-domain-nodes]
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.domain-node-config.deployment-version
-  }
-
-  connection {
-    host        = local.domain_node_ip_v4[0]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo docker cp /root/subspace/keystore/.  subspace-archival-node-1:/var/subspace/keystore/"
+      var.branch != "main" ? join(" && ", [
+        "cp -f /root/subspace/.env /root/subspace/subspace/.env",
+        "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d"
+      ]) : "sudo docker compose -f /root/subspace/docker-compose.yml up -d"
     ]
   }
 }
