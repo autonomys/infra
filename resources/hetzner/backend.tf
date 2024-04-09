@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "ephemeral-devnet-hetzner"
+      name = var.workspace_name
     }
   }
 }
