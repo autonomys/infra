@@ -1,6 +1,6 @@
 module "network" {
   source          = "../../../templates/terraform/hetzner"
-  path_to_scripts = "../../../templates/scripts"
+  path_to_scripts = "./scripts"
   network_name    = var.network_name
 
   bootstrap-node-config = {
