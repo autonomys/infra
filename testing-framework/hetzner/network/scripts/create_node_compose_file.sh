@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP=$(curl -s -4 https://ifconfig.me)
 
 cat > ~/subspace/subspace/docker-compose.yml << EOF
 version: "3.7"

@@ -46,7 +46,7 @@ resource "null_resource" "setup-bootstrap-nodes" {
 }
 
 resource "null_resource" "clone_branch" {
-  count = var.branch != "main" ? 1 : 0
+  count = var.branch_name != "main" ? 1 : 0
 
   provisioner "remote-exec" {
     inline = [
@@ -154,7 +154,7 @@ resource "null_resource" "start-boostrap-nodes" {
       "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
 
       # start subspace node
-      var.branch != "main" ? join(" && ", [
+      var.branch_name != "main" ? join(" && ", [
         "cp -f /root/subspace/.env /root/subspace/subspace/.env",
         "sudo docker compose -f /root/subspace/subspace/docker-compose.yml up -d"
       ]) : "sudo docker compose -f /root/subspace/docker-compose.yml up -d"

@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
+EXTERNAL_IP=$(curl -s -4 https://ifconfig.me)
 
 reserved_only=${1}
 node_count=${2}
