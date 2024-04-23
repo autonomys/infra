@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "general-squid.fullname" . }}-loadbal-svc
+  namespace: {{ .Values.namespace}}
+  labels:
+    app: {{ include "general-squid.fullname" . }}-app
+    chart: {{ include "general-squid.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    name: {{ include "general-squid.fullname" . }}-app
+    app: {{ include "general-squid.fullname" . }}-app
+  type: {{ .Values.lb_service.type }}
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    {{- range .Values.lb_service.lb_ports }}
+    - port: {{ .port }}
+      name: {{ .name }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol }}
+    {{- end }}
