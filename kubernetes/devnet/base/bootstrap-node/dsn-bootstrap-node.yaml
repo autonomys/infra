@@ -17,6 +17,11 @@ spec:
         app: dsn-bootstrap-node
         component: bootstrap
     spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,6 +49,12 @@ spec:
       containers:
       - name: dsn-bootstrap-node
         image: ghcr.io/${REPO_ORG}/bootstrap-node:${DOCKER_TAG}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: RUST_LOG
           value: "info"

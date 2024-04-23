@@ -15,12 +15,17 @@ spec:
       labels:
         app: archival-node
     spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role.kubernetes.io/storage
+              - key: node-role.kubernetes.io/dsn
                 operator: In
                 values:
                 - "true"
@@ -31,7 +36,7 @@ spec:
                   - key: app
                     operator: In
                     values:
-                    - archival-node
+                    - dsn-bootstrap-node
               topologyKey: "kubernetes.io/hostname"
       tolerations:
       - key: "dedicated"
@@ -41,6 +46,12 @@ spec:
       containers:
       - name: archival-node
         image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: RUST_LOG
           value: "info"

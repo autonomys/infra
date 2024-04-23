@@ -13,6 +13,11 @@ spec:
       labels:
         app: rpc-node
     spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -34,11 +39,17 @@ spec:
       tolerations:
       - key: "dedicated"
         operator: "Equal"
-        value: "rpc-nodes"
+        value: "rpc-node"
         effect: "NoSchedule"
       containers:
       - name: rpc-node
         image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         envFrom:
         - configMapRef:
             name: rpc-node-config
