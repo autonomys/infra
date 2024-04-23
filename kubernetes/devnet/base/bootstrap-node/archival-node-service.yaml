@@ -14,8 +14,12 @@ spec:
     protocol: UDP
     port: 30333
     targetPort: 30333
-  - name: rpc
+  - name: dsn_port
     protocol: TCP
+    port: 30433
+    targetPort: 30433
+  - name: dsn_port_udp
+    protocol: UDP
     port: 30433
     targetPort: 30433
   - name: prometheus

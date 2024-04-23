@@ -1,11 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: dsn-bootstrap-node
   labels:
     app: dsn-bootstrap-node
     component: bootstrap
 spec:
+  serviceName: "dsn-bootstrap-node-service"
   replicas: 1
   selector:
     matchLabels:

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: archival-node-config
+  name: rpc-node-config
 data:
   NETWORK_NAME: "your-network-name"
   EXTERNAL_IP: "your-external-ip"

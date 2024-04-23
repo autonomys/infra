@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: archival-node
   labels:
     app: archival-node
 spec:
+  serviceName: "archival-node-service"
   replicas: 1
   selector:
     matchLabels:

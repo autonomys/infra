@@ -1,8 +1,9 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: rpc-node
 spec:
+  serviceName: "rpc-node-service"
   replicas: 1
   selector:
     matchLabels:
