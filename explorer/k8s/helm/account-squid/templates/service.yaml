@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "account-squid.fullname" . }}-svc
+  namespace: {{ .Values.namespace}}
+  labels:
+    app: {{ include "account-squid.fullname" . }}-app
+    chart: {{ include "account-squid.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+
+spec:
+  selector:
+    name: {{ include "account-squid.fullname" . }}-app
+    app: {{ include "account-squid.fullname" . }}-app
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range .Values.service.ports }}
+    - port: {{ .port }}
+      name: {{ .name }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol }}
+    {{- end }}
