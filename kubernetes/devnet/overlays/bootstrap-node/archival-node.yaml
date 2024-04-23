@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archival-node
+  labels:
+    app: archival-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: archival-node
+  template:
+    metadata:
+      labels:
+        app: archival-node
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/storage
+                operator: In
+                values:
+                - "true"
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - archival-node
+              topologyKey: "kubernetes.io/hostname"
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "archival-nodes"
+        effect: "NoSchedule"
+      containers:
+      - name: archival-node
+        image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+        env:
+        - name: RUST_LOG
+          value: "info"
+        - name: NETWORK_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: NETWORK_NAME
+        - name: EXTERNAL_IP
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: EXTERNAL_IP
+        - name: EXTERNAL_IP_V6
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: EXTERNAL_IP_V6
+        - name: NODE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: NODE_ID
+        - name: NODE_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: NODE_PEER_ID
+        - name: BOOTSTRAP_0_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: BOOTSTRAP_0_PEER_ID
+        - name: BOOTSTRAP_1_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: archival-node-config
+              key: BOOTSTRAP_1_PEER_ID
+        ports:
+        - containerPort: 30333
+          protocol: TCP
+        - containerPort: 30333
+          protocol: UDP
+        - containerPort: 30433
+          protocol: TCP
+        - containerPort: 30433
+          protocol: UDP
+        - containerPort: 9615
+          protocol: TCP
+        volumeMounts:
+        - name: archival-node-data
+          mountPath: /var/subspace
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 30333
+          initialDelaySeconds: 60
+          periodSeconds: 60
+        readinessProbe:
+          tcpSocket:
+            port: 30333
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: archival-node-data
+        persistentVolumeClaim:
+          claimName: archival-node-pvc

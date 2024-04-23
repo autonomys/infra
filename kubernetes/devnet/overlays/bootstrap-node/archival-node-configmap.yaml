@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: archival-node-config
+data:
+  NETWORK_NAME: "your-network-name"
+  EXTERNAL_IP: "your-external-ip"
+  EXTERNAL_IP_V6: "your-external-ip-v6"
+  NODE_ID: "your-node-id"
+  NODE_PEER_ID: "your-node-peer-id"
+  BOOTSTRAP_0_PEER_ID: "bootstrap-0-peer-id"
+  BOOTSTRAP_1_PEER_ID: "bootstrap-1-peer-id"
