@@ -120,8 +120,8 @@ spec:
             port: 30533
           initialDelaySeconds: 30
           periodSeconds: 30
-        command:
-          - start
+        args:
+          - "start"
           - "--metrics-endpoints=0.0.0.0:9616"
           - "--keypair"
           - ${DSN_NODE_KEY}
