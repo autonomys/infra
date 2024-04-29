@@ -54,6 +54,9 @@ spec:
         - configMapRef:
             name: rpc-node-config
         ports:
+        - containerPort: 30333
+        - containerPort: 30433
+        - containerPort: 30533
         - containerPort: 9944
         - containerPort: 9615
         volumeMounts:

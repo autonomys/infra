@@ -22,6 +22,10 @@ spec:
     protocol: UDP
     port: 30433
     targetPort: 30433
+  - name: bootnode_port_udp
+    protocol: UDP
+    port: 30533
+    targetPort: 30533
   - name: rpc
     protocol: TCP
     port: 9944
