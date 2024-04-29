@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dsn-bootstrap-node
+  labels:
+    app: dsn-bootstrap-node
+    component: bootstrap
+spec:
+  serviceName: "dsn-bootstrap-node-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dsn-bootstrap-node
+  template:
+    metadata:
+      labels:
+        app: dsn-bootstrap-node
+        component: bootstrap
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/dsn
+                operator: In
+                values:
+                - "true"
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - dsn-bootstrap-node
+              topologyKey: "kubernetes.io/hostname"
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "bootstrap-nodes"
+        effect: "NoSchedule"
+
+      containers:
+      - name: dsn-bootstrap-node
+        image: ghcr.io/${REPO_ORG}/bootstrap-node:${DOCKER_TAG}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        env:
+        - name: RUST_LOG
+          value: "info"
+        - name: GENESIS_HASH
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: GENESIS_HASH
+        - name: DSN_NODE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: nodeKey
+        - name: EXTERNAL_IP
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: EXTERNAL_IP
+        - name: EXTERNAL_IP_V6
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: EXTERNAL_IP_V6
+        - name: NETWORK_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: NETWORK_NAME
+        - name: NODE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: NODE_ID
+        - name: NODE_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: NODE_PEER_ID
+        - name: BOOTSTRAP_0_SUBSPACE_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: BOOTSTRAP_0_SUBSPACE_PEER_ID
+        - name: BOOTSTRAP_1_SUBSPACE_PEER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: dsn-bootstrap-node-config
+              key: BOOTSTRAP_1_SUBSPACE_PEER_ID
+        ports:
+        - containerPort: 30533
+          protocol: TCP
+        - containerPort: 30533
+          protocol: UDP
+        - containerPort: 9616
+          protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: 30533
+          initialDelaySeconds: 60
+          periodSeconds: 60
+        readinessProbe:
+          tcpSocket:
+            port: 30533
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        args:
+          - "start"
+          - "--metrics-endpoints=0.0.0.0:9616"
+          - "--keypair"
+          - ${DSN_NODE_KEY}
+          - "--listen-on"
+          - "/ip4/0.0.0.0/udp/30533/quic-v1"
+          - "--listen-on"
+          - "/ip4/0.0.0.0/tcp/30533"
+          - "--listen-on"
+          - "/ip6/::/udp/30533/quic-v1"
+          - "--listen-on"
+          - "/ip6/::/tcp/30533"
+          - "--protocol-version"
+          - ${GENESIS_HASH}
+          - "--in-peers"
+          - "1000"
+          - "--out-peers"
+          - "1000"
+          - "--pending-in-peers"
+          - "1000"
+          - "--pending-out-peers"
+          - "1000"
+          - "--external-address"
+          - "/ip4/${EXTERNAL_IP}/udp/30533/quic-v1"
+          - "--external-address"
+          - "/ip4/${EXTERNAL_IP}/tcp/30533"
+          - "--external-address"
+          - "/ip6/${EXTERNAL_IP_V6}/udp/30533/quic-v1"
+          - "--external-address"
+          - "/ip6/${EXTERNAL_IP_V6}/tcp/30533"
+          - "--reserved-peers"
+          - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+          - "--bootstrap-nodes"
+          - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+          - "--reserved-peers"
+          - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
+          - "--bootstrap-nodes"
+          - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
