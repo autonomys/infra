@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: rpc-node-service
+  name: farmer-node-service
+  namespace: farmer
 spec:
   selector:
-    app: rpc-node
+    app: farmer-node
   ports:
   - name: p2p
     protocol: TCP
@@ -30,4 +31,16 @@ spec:
     protocol: TCP
     port: 9615
     targetPort: 9615
+  - name: farmer_dsn
+    protocol: TCP
+    port: 30533
+    targetPort: 30533
+  - name: farmer_dsn_udp
+    protocol: UDP
+    port: 30533
+    targetPort: 30533
+  - name: famer_prometheus
+    protocol: TCP
+    port: 9616
+    targetPort: 9616
   type: ClusterIP

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: archival-node-config
+  name: farmer-node-config
   namespace: farmer
 data:
   NETWORK_NAME: "network-name"
@@ -12,4 +12,4 @@ data:
   BOOTSTRAP_0_PEER_ID: "bootstrap-0-peer-id"
   BOOTSTRAP_1_PEER_ID: "bootstrap-1-peer-id"
   DOCKER_TAG: "${DOCKER_TAG}"
-  POT_EXTERNAL_ENTROPY: "${POT_EXTERNAL_ENTROPY}"
+  PLOT_SIZE: "${PLOT_SIZE}"

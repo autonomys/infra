@@ -1,17 +1,18 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: rpc-node
+  name: farmer-node
+  namespace: farmer
 spec:
-  serviceName: "rpc-node-service"
+  serviceName: "farmer-node-service"
   replicas: 1
   selector:
     matchLabels:
-      app: rpc-node
+      app: farmer-node
   template:
     metadata:
       labels:
-        app: rpc-node
+        app: farmer-node
     spec:
       securityContext:
         fsGroup: 1000
@@ -23,27 +24,27 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role.kubernetes.io/rpc
+              - key: farmer
                 operator: In
                 values:
-                - "true"
+                - "1"
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: app
+                  - key: farmer
                     operator: In
                     values:
-                    - rpc-node
+                    - "1"
               topologyKey: "kubernetes.io/hostname"
       tolerations:
-      - key: "dedicated"
+      - key: "farmer"
         operator: "Equal"
-        value: "rpc-nodes"
+        value: "1"
         effect: "NoSchedule"
       containers:
-      - name: rpc-node
-        image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+      - name: archival-node
+        image: ghcr.io/subspace/node:${DOCKER_TAG}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -52,12 +53,12 @@ spec:
               - ALL
         envFrom:
         - configMapRef:
-            name: rpc-node-config
+            name: archival-node-config
         ports:
         - containerPort: 9944
         - containerPort: 9615
         volumeMounts:
-        - name: rpc-node-data
+        - name: archival-node-data
           mountPath: /var/subspace
         resources:
           requests:
@@ -73,33 +74,98 @@ spec:
             port: 9944
           initialDelaySeconds: 30
           periodSeconds: 30
-        command: ["/bin/sh", "-c"]
         args:
-          - |
-            run \
-            --chain $(NETWORK_NAME) \
-            --base-path /var/subspace \
-            --state-pruning archive \
-            --blocks-pruning archive \
-            --listen-on /ip4/0.0.0.0/tcp/30333 \
-            --listen-on /ip6/::/tcp/30333 \
-            --dsn-external-address /ip4/$(EXTERNAL_IP)/udp/30433/quic-v1 \
-            --dsn-external-address /ip4/$(EXTERNAL_IP)/tcp/30433 \
-            --dsn-external-address /ip6/$(EXTERNAL_IP_V6)/udp/30433/quic-v1 \
-            --dsn-external-address /ip6/$(EXTERNAL_IP_V6)/tcp/30433 \
-            --node-key $(NODE_KEY) \
-            --in-peers 500 \
-            --out-peers 250 \
-            --rpc-max-connections 10000 \
-            --rpc-cors all \
-            --rpc-listen-on 0.0.0.0:9944 \
-            --rpc-methods safe \
-            --prometheus-listen-on 0.0.0.0:9615 \
-            --reserved-nodes /dns/bootstrap-0.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_0_PEER_ID) \
-            --bootstrap-nodes /dns/bootstrap-0.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_0_PEER_ID) \
-            --reserved-nodes /dns/bootstrap-1.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_1_PEER_ID) \
-            --bootstrap-nodes /dns/bootstrap-1.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_1_PEER_ID)
+          - "run"
+          - "--chain"
+          - "$(NETWORK_NAME)"
+          - "--base-path"
+          - "/var/subspace"
+          - "--state-pruning"
+          - "archive"
+          - "--blocks-pruning"
+          - "256"
+          - "--pot-external-entropy"
+          - "$(POT_EXTERNAL_ENTROPY)"
+          - "--listen-on"
+          - "/ip4/0.0.0.0/tcp/30333"
+          - "--listen-on"
+          - "/ip6/::/tcp/30333"
+          - "--dsn-external-address"
+          - "/ip4/$(EXTERNAL_IP)/udp/30433/quic-v1"
+          - "--dsn-external-address"
+          - "/ip6/$(EXTERNAL_IP_V6)/udp/30433/quic-v1"
+          - "--node-key"
+          - "$(NODE_KEY)"
+          - "--farmer"
+          - "--timekeeper"
+          - "--rpc-cors"
+          - "all"
+          - "--rpc-listen-on"
+          - "0.0.0.0:9944"
+          - "--rpc-methods"
+          - "unsafe"
+          - "--prometheus-listen-on"
+          - "0.0.0.0:9615"
+          - "--reserved-nodes"
+          - "/dns/bootstrap-0.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_0_PEER_ID)"
+          - "--bootstrap-nodes"
+          - "/dns/bootstrap-0.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_0_PEER_ID)"
+          - "--reserved-nodes"
+          - "/dns/bootstrap-1.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_1_PEER_ID)"
+          - "--bootstrap-nodes"
+          - "/dns/bootstrap-1.$(NETWORK_NAME).subspace.network/tcp/30333/p2p/$(BOOTSTRAP_1_PEER_ID)"
+
+      - name: farmer-node
+        image: ghcr.io/subspace/farmer:${DOCKER_TAG}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        envFrom:
+        - configMapRef:
+            name: farmer-node-config
+        ports:
+        - containerPort: 9944
+        - containerPort: 9615
+        volumeMounts:
+        - name: farmer-node-data
+          mountPath: /var/subspace
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        args:
+          - "farm"
+          - "path=/var/subspace,size=$(PLOT_SIZE)"
+          - "--node-rpc-url"
+          - "ws://localhost:9944"
+          - "--external-address"
+          - "/ip4/$(EXTERNAL_IP)/udp/30533/quic-v1"
+          - "--external-address"
+          - "/ip4/$(EXTERNAL_IP)/tcp/30533"
+          - "--external-address"
+          - "/ip6/$(EXTERNAL_IP_V6)/udp/30533/quic-v1"
+          - "--external-address"
+          - "/ip6/$(EXTERNAL_IP_V6)/tcp/30533"
+          - "--listen-on"
+          - "/ip4/0.0.0.0/udp/30533/quic-v1"
+          - "--listen-on"
+          - "/ip4/0.0.0.0/tcp/30533"
+          - "--listen-on"
+          - "/ip6/::/udp/30533/quic-v1"
+          - "--listen-on"
+          - "/ip6/::/tcp/30533"
+          - "--reward-address"
+          - "$(REWARD_ADDRESS)"
+          - "--metrics-endpoint=0.0.0.0:9616"
+          - "--cache-percentage"
+          - "50"
       volumes:
-      - name: rpc-node-data
+      - name: archival-node-data
         persistentVolumeClaim:
-          claimName: rpc-node-pvc
+          claimName: archival-node-pvc
+      - name: farmer-node-data
+        persistentVolumeClaim:
+          claimName: farmer-node-pvc
