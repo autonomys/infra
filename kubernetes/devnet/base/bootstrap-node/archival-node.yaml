@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: archival-node
+  namespace: bootstrap-node
   labels:
     app: archival-node
 spec:

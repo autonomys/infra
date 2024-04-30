@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: rpc-node
+  namespace: rpc-node
 spec:
   serviceName: "rpc-node-service"
   replicas: 1
