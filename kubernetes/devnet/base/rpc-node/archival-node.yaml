@@ -23,27 +23,27 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role.kubernetes.io/rpc
+              - key: rpc-node
                 operator: In
                 values:
-                - "true"
+                - "1"
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: app
+                  - key: rpc-node
                     operator: In
                     values:
-                    - rpc-node
+                    - "1"
               topologyKey: "kubernetes.io/hostname"
       tolerations:
-      - key: "dedicated"
+      - key: "rpc-node"
         operator: "Equal"
-        value: "rpc-node"
+        value: "1"
         effect: "NoSchedule"
       containers:
       - name: rpc-node
-        image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+        image: ghcr.io/subspace/node:${DOCKER_TAG}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

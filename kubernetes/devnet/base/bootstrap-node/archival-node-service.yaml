@@ -26,4 +26,13 @@ spec:
     protocol: TCP
     port: 9615
     targetPort: 9615
+  - protocol: TCP
+    port: 30533
+    targetPort: 30533
+  - protocol: UDP
+    port: 30533
+    targetPort: 30533
+  - protocol: TCP
+    port: 9616
+    targetPort: 9616
   type: ClusterIP
