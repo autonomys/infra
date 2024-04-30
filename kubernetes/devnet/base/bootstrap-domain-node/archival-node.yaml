@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: bootstrap-domain-node
+  namespace: bootstrap-domain
 spec:
   serviceName: "bootstrap-domain-node-service"
   replicas: 1
@@ -23,23 +24,23 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role.kubernetes.io/domain
+              - key: bootstrap-domain-node
                 operator: In
                 values:
-                - "true"
+                - "1"
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: app
+                  - key: bootstrap-domain-node
                     operator: In
                     values:
-                    - bootstrap-domain-node
+                    - "1"
               topologyKey: "kubernetes.io/hostname"
       tolerations:
-      - key: "dedicated"
+      - key: "bootstrap-domain-node"
         operator: "Equal"
-        value: "bootstrap-domain-node"
+        value: "1"
         effect: "NoSchedule"
       containers:
       - name: dsn-bootstrap-node

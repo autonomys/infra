@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: bootstrap-archival-node-config
+  namespace: bootstrap-domain
 data:
   GENESIS_HASH: "${GENESIS_HASH}"
   NETWORK_NAME: "network-name"
