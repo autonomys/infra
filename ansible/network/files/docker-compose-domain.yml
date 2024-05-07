@@ -86,10 +86,16 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX_EVM}-${DOMAIN_ID_EVM}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
+      - "traefik.http.routers.archival-node-auto.rule=Host(`${DOMAIN_PREFIX_AUTO}-${DOMAIN_ID_AUTO}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node-auto.tls=true"
+      - "traefik.http.routers.archival-node-auto.tls.certresolver=le"
+      - "traefik.http.routers.archival-node-auto.entrypoints=websecure"
+      - "traefik.http.routers.archival-node-auto.middlewares=redirect-https"
+      - "traefik.http.services.archival-node-auto.loadbalancer.server.port=7944"
       - "traefik.http.routers.archival-node.middlewares=redirect-https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
@@ -130,7 +136,7 @@ services:
       "--",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
-      "--domain-id", "${DOMAIN_ID}",
+      "--domain-id", "${DOMAIN_ID_EVM}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30334",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:8944",
@@ -140,4 +146,17 @@ services:
       "--bootstrap-nodes", "/dns/bootstrap-0.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_PEER_ID}",
       "--reserved-nodes", "/dns/bootstrap-1.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
       "--bootstrap-nodes", "/dns/bootstrap-1.nova.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
+      "--",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--domain-id", "${DOMAIN_ID_AUTO}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30334",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:7944",
+      "--rpc-methods", "safe",
+      "--operator-id", "0",
+      "--reserved-nodes", "/dns/bootstrap-0.auto.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-0.auto.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-1.auto.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-1.auto.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_PEER_ID}",
     ]
