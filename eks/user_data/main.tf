@@ -1,7 +1,7 @@
 locals {
   name = "ex-${replace(basename(path.cwd), "_", "-")}"
 
-  cluster_endpoint          = "https://012345678903AB2BAE5D1E0BFE0E2B50.gr7.us-east-1.eks.amazonaws.com"
+  cluster_endpoint          = "https://012345678903AB2BAE5D1E0BFE0E2B50.gr7.us-east-2.eks.amazonaws.com"
   cluster_auth_base64       = var.cluster_auth_base64
   cluster_service_ipv4_cidr = "172.16.0.0/16"
 }
