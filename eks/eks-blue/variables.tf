@@ -81,7 +81,7 @@ variable "gitops_workloads_repo" {
 variable "gitops_workloads_path" {
   type        = string
   description = "Git repo path in workload_repo_url for the ArgoCD workload deployment"
-  default     = "envs/argo-cd/"
+  default     = "envs/argo-cd/blue"
 }
 
 variable "gitops_workloads_revision" {

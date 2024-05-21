@@ -13,7 +13,7 @@ gitops_addons_basepath = "argocd/"
 gitops_workloads_org      = "git@github.com:subspace"
 gitops_workloads_repo     = "infra"
 gitops_workloads_revision = "main"
-gitops_workloads_path     = "envs/argocd"
+gitops_workloads_path     = "envs/argocd/blue"
 
 
 #Secret manager secret for github ssk key
