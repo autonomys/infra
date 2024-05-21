@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "rewards-squid.fullname" . }}-app
+  name: {{ include "squid.fullname" . }}-app
   namespace: {{ .Values.namespace | quote }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   minReadySeconds: 5
-  serviceName: {{ include "rewards-squid.fullname" . }}-app
+  serviceName: {{ include "squid.fullname" . }}-app
   template:
     metadata:
       labels:
-        app: {{ include "rewards-squid.name" . }}
+        app: {{ include "squid.name" . }}
         release: {{ .Release.Name }}
     matchLabels:
-      app: {{ include "rewards-squid.name" . }}
+      app: {{ include "squid.name" . }}
       release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "rewards-squid.serviceAccountName" . }}
+      serviceAccountName: {{ include "squid.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -33,31 +33,31 @@ spec:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_HOST
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_DB
             - name: POSTGRES_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_PORT
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-postgres-secret
+                  name: {{ include "squid.fullname" . }}-postgres-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-postgres-secret
+                  name: {{ include "squid.fullname" . }}-postgres-secret
                   key: POSTGRES_PASSWORD
           volumeMounts:
             - mountPath: "/var/lib/postgresql/data"
-              name: {{ include "rewards-squid.fullname" . }}-data
+              name: {{ include "squid.fullname" . }}-data
             - mountPath: "/var/lib/postgresql/postgres.conf"
               name: config
               subPath: postgres.conf
@@ -102,27 +102,27 @@ spec:
             - name: POSTGRES_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_HOST
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_DB
             - name: POSTGRES_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-configmap
+                  name: {{ include "squid.fullname" . }}-configmap
                   key: POSTGRES_PORT
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-postgres-secret
+                  name: {{ include "squid.fullname" . }}-postgres-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "rewards-squid.fullname" . }}-postgres-secret
+                  name: {{ include "squid.fullname" . }}-postgres-secret
                   key: POSTGRES_PASSWORD
           livenessProbe:
             tcpSocket:
@@ -136,7 +136,7 @@ spec:
             periodSeconds: 30
           volumeMounts:
             - mountPath: "/var/processor"
-              name: {{ include "rewards-squid.fullname" . }}-data
+              name: {{ include "squid.fullname" . }}-data
         - name: graphql
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -158,11 +158,11 @@ spec:
             periodSeconds: 30
           volumeMounts:
             - mountPath: "/var/graphql"
-              name: {{ include "rewards-squid.fullname" . }}-data
+              name: {{ include "squid.fullname" . }}-data
       volumes:
         - name: config
           configMap:
-            name: {{ include "rewards-squid.fullname" . }}-postgres-configmap
-        - name: {{ include "rewards-squid.fullname" . }}-data
+            name: {{ include "squid.fullname" . }}-postgres-configmap
+        - name: {{ include "squid.fullname" . }}-data
           persistentVolumeClaim:
-            claimName: {{ include "rewards-squid.fullname" . }}-data-pvc
+            claimName: {{ include "squid.fullname" . }}-data-pvc

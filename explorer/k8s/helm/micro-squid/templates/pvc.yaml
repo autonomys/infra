@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "rewards-squid.fullname" . }}-pvc
+  name: {{ include "squid.fullname" . }}-pvc
   namespace: {{ .Values.namespace | quote }}
   labels:
-    app: {{ include "rewards-squid.name" . }}
-    chart: {{ include "rewards-squid.chart" . }}
+    app: {{ include "squid.name" . }}
+    chart: {{ include "squid.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:

@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.namespace }}-configmap
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ include "rewards-squid.fullname" . }}
+    app: {{ include "squid.fullname" . }}
 data:
   POSTGRES_PORT: {{ .Values.postgres.postgresPort }}
   POSTGRES_DB: {{ .Values.postgres.postgresDatabase }}

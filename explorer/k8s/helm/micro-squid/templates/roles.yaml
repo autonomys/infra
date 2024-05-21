@@ -17,7 +17,7 @@ metadata:
   namespace: {{ .Values.namespace | quote }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "rewards-squid.serviceAccountName" . }}-pod-read
+    name: {{ include "squid.serviceAccountName" . }}-pod-read
     namespace: {{ .Values.namespace | quote }}
     apiGroup: rbac.authorization.k8s.io
 roleRef:
@@ -46,7 +46,7 @@ metadata:
   namespace: {{ .Values.namespace | quote }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "rewards-squid.serviceAccountName" . }}-admin
+    name: {{ include "squid.serviceAccountName" . }}-admin
     namespace: {{ .Values.namespace | quote }}
     apiGroup: rbac.authorization.k8s.io
 roleRef:
@@ -90,7 +90,7 @@ roleRef:
   name: role-viewer
 subjects:
   - kind: ServiceAccount
-    name: {{ include "rewards-squid.serviceAccountName" . }}
+    name: {{ include "squid.serviceAccountName" . }}
     namespace: {{ .Values.namespace | quote }}
     apiGroup: rbac.authorization.k8s.io
 
@@ -99,17 +99,17 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "rewards-squid.fullname" . }}-admin-role-binding
+  name: {{ include "squid.fullname" . }}-admin-role-binding
   namespace: {{ .Values.namespace | quote }}
 subjects:
   - kind: User
     name: {{ .Values.administrator.email }}
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
-    name: {{ include "rewards-squid.fullname" . }}-admin
+    name: {{ include "squid.fullname" . }}-admin
     apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
-    name: {{ include "rewards-squid.serviceAccountName" . }}-admin
+    name: {{ include "squid.serviceAccountName" . }}-admin
     namespace: {{ .Values.namespace | quote }}
     apiGroup: rbac.authorization.k8s.io
 roleRef:
@@ -133,9 +133,9 @@ subjects:
     name: {{ .Values.administrator.email }}
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
-    name: {{ include "rewards-squid.fullname" . }}-admin
+    name: {{ include "squid.fullname" . }}-admin
     apiGroup: rbac.authorization.k8s.io
   - kind: ServiceAccount
-    name: {{ include "rewards-squid.serviceAccountName" . }}-admin
+    name: {{ include "squid.serviceAccountName" . }}-admin
     namespace: {{ .Values.namespace | quote }}
     apiGroup: rbac.authorization.k8s.io

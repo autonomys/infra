@@ -1,4 +1,4 @@
-# Default values for rewards-squid.
+# Default values for squid.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -134,13 +134,13 @@ autoscaling:
 replicaCount: 1
 
 nodeSelector:
-  squid.gemini-3h.subspace.network/role: rewards-squid-node
+  squid.gemini-3h.subspace.network/role: squid-node
 
 
 tolerations:
   - key: "squid.gemini-3h.subspace.network/role"
     operator: "Equal"
-    value: "rewards-squid-node"
+    value: "squid-node"
     effect: "NoSchedule"
 
 
@@ -152,7 +152,7 @@ affinity:
         - key: squid.gemini-3h.subspace.network/role
           operator: In
           values:
-          - rewards-squid-node
+          - squid-node
 
 
 persistence:

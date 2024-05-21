@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "rewards-squid.fullname" . }}-loadbal-svc
+  name: {{ include "squid.fullname" . }}-loadbal-svc
   namespace: {{ .Values.namespace}}
   labels:
-    app: {{ include "rewards-squid.fullname" . }}-app
-    chart: {{ include "rewards-squid.chart" . }}
+    app: {{ include "squid.fullname" . }}-app
+    chart: {{ include "squid.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
-    name: {{ include "rewards-squid.fullname" . }}-app
-    app: {{ include "rewards-squid.fullname" . }}-app
+    name: {{ include "squid.fullname" . }}-app
+    app: {{ include "squid.fullname" . }}-app
   type: {{ .Values.lb_service.type }}
   sessionAffinity: None
   sessionAffinityConfig:

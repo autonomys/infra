@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "rewards-squid.fullname" . }}-ingress
+  name: {{ include "squid.fullname" . }}-ingress
   namespace: {{ .Values.namespace }}
   labels:
-    app.kubernetes.io/name: {{ include "rewards-squid.name" . }}
-    helm.sh/chart: {{ include "rewards-squid.chart" . }}
+    app.kubernetes.io/name: {{ include "squid.name" . }}
+    helm.sh/chart: {{ include "squid.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
   {{- with .Values.annotations }}
