@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: domain-node
+  namespace: domain-node
 spec:
   serviceName: "domain-node-service"
   replicas: 1

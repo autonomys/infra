@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: bootstrap-node-config
+  namespace: bootstrap-node
 data:
   NETWORK_NAME: "network-name"
   EXTERNAL_IP: "external-ip"

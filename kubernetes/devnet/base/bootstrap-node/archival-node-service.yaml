@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: archival-node-service
   namespace: bootstrap-node
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
 spec:
   selector:
     app: archival-node
@@ -36,4 +39,4 @@ spec:
   - protocol: TCP
     port: 9616
     targetPort: 9616
-  type: ClusterIP
+  type: LoadBalancer
