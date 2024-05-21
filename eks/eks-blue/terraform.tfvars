@@ -4,7 +4,7 @@ environment_name    = "cluster"
 hosted_zone_name    = "eks.subspace.network" # Existing Hosted Zone (create one to be managed by route53 since subspace.network is managed with Cloudflare)
 eks_admin_role_name = ""                     # Additional role admin in the cluster (usually the role I use in the AWS console)
 
-#gitops_addons_org      = "git@github.com:subspace"
+gitops_addons_org      = "git@github.com:subspace"
 gitops_addons_repo     = "infra"
 gitops_addons_path     = "argocd/bootstrap/control-plane/addons"
 gitops_addons_basepath = "argocd/"
