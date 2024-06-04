@@ -12,3 +12,8 @@ output "cloudflare-continuim-cc-zone" {
   value       = data.cloudflare_zone.continuim_cc.id
   description = "Cloudflare's continuim.cc Zone ID"
 }
+
+output "cloudflare-autonomys-net-zone" {
+  value       = data.cloudflare_zone.autonomys_net.id
+  description = "Cloudflare's autonomys.net Zone ID"
+}
