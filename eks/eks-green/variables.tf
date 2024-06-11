@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS Region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "environment_name" {
@@ -81,7 +81,7 @@ variable "gitops_workloads_repo" {
 variable "gitops_workloads_path" {
   type        = string
   description = "Git repo path in workload_repo_url for the ArgoCD workload deployment"
-  default     = "envs/argo-cd/"
+  default     = "envs/argo-cd/green"
 }
 
 variable "gitops_workloads_revision" {

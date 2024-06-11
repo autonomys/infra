@@ -5,7 +5,7 @@ resource "tls_private_key" "ssh_key" {
 
 # Create a secret for the SSH private key
 resource "aws_secretsmanager_secret" "ssh_private_key" {
-  name        = "github-subspace-ssh-key"
+  name        = "github-eks-subspace-ssh-key"
   description = "GitHub Subspace SSH private key"
 }
 
@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret_version" "ssh_private_key_version" {
 
 # Create a secret for the SSH public key
 resource "aws_secretsmanager_secret" "ssh_public_key" {
-  name        = "github-subspace-ssh-key-pub"
+  name        = "github-eks-subspace-ssh-key-pub"
   description = "GitHub Subspace SSH public key"
 }
 
