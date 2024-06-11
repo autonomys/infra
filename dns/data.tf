@@ -17,3 +17,8 @@ data "cloudflare_zone" "continuim_cc" {
 data "cloudflare_zone" "continuum_co" {
   name = "continuum.co"
 }
+
+// ## autonomys.net zone ##
+data "cloudflare_zone" "autonomys_net" {
+  name = "autonomys.net"
+}
