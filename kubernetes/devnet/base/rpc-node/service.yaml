@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: rpc-node-service
   namespace: rpc-node
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
 spec:
   selector:
     app: rpc-node
@@ -35,4 +38,4 @@ spec:
     protocol: TCP
     port: 9615
     targetPort: 9615
-  type: ClusterIP
+  type: LoadBalancer
