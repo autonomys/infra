@@ -25,7 +25,7 @@ http {
 	tcp_nodelay on;
 	keepalive_timeout 120;
 	send_timeout 120;
-	keepalive_requests 200000;
+	keepalive_requests 50000;
 	keepalive_disable none;
 	reset_timedout_connection on;
 	proxy_ignore_client_abort on;
