@@ -3,15 +3,16 @@ sudo DEBIAN_FRONTEND=noninteractive apt install nginx certbot python3-certbot-ng
 cat /dev/null > /etc/nginx/nginx.conf
 cat << EOF >> /etc/nginx/nginx.conf
 user www-data;
-worker_processes 16;
+worker_processes auto;
 worker_rlimit_nofile 32000;
 pid /run/nginx.pid;
 #include /etc/nginx/modules-enabled/*.conf;
 #load_module modules/ngx_http_modsecurity_module.so;
 
 events {
-	worker_connections 1024;
-	# multi_accept on;
+	worker_connections 16000;
+	multi_accept on;
+	use epoll;
 }
 
 http {
@@ -19,13 +20,14 @@ http {
 	##
 	# Basic Settings
 	##
-
 	sendfile on;
 	tcp_nopush on;
 	tcp_nodelay on;
 	keepalive_timeout 120;
 	send_timeout 120;
-	keepalive_requests 5000;
+	keepalive_requests 200000;
+	keepalive_disable none;
+	reset_timedout_connection on;
 	proxy_ignore_client_abort on;
 	client_body_timeout 120;
 	client_header_timeout 120;
@@ -40,7 +42,7 @@ http {
 	default_type application/json;
 
 	# Buffers
-	client_body_buffer_size 64K;
+	client_body_buffer_size 128K;
 	client_header_buffer_size 1k;
 	client_max_body_size 1m;
 	large_client_header_buffers 4 64k;
@@ -71,9 +73,9 @@ http {
 
 
 	# Proxy settings
-	proxy_read_timeout 120;
-	proxy_connect_timeout 120;
-	proxy_send_timeout 120;
+	proxy_read_timeout 300;
+	proxy_connect_timeout 300;
+	proxy_send_timeout 300;
 	proxy_intercept_errors on;
 
 	##
