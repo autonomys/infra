@@ -1,5 +1,5 @@
 variable "instance_type" {
-  default = "m6a.xlarge"
+  default = "m7a.2xlarge"
   type    = string
 }
 
