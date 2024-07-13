@@ -47,7 +47,7 @@ services:
 
   # traefik reverse proxy with automatic tls management using let encrypt
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.11.6
     container_name: traefik
     restart: unless-stopped
     command:
@@ -112,7 +112,7 @@ services:
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--rpc-max-connections", "10000",
+      "--rpc-max-connections", "15000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
