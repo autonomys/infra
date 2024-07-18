@@ -1,7 +1,12 @@
 //output
-output "full-node-ipv4-addresses" {
-  value       = module.gemini-3h.full_node_public_ip
-  description = "Full node IPv4 Addresses"
+output "rpc-squid-node-ipv4-addresses" {
+  value       = module.gemini-3h.rpc-squid_node_public_ip
+  description = "RPC squid node IPv4 Addresses"
+}
+
+output "nova-squid-node-ipv4-addresses" {
+  value       = module.gemini-3h.nova-squid_node_public_ip
+  description = "Nova Squid node IPv4 Addresses"
 }
 
 output "farmer-node-ipv4-addresses" {
