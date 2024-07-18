@@ -43,6 +43,7 @@ module "gemini-3h" {
     instance-count     = var.instance_count["rpc-squid"]
     docker-org         = "subspace"
     docker-tag         = "gemini-3h-2024-jul-16"
+    domain-prefix      = "rpc-squid"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -50,7 +51,7 @@ module "gemini-3h" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  domain-node-config = {
+  nova-squid-node-config = {
     instance-type      = var.instance_type["nova-squid"]
     deployment-version = 0
     regions            = var.aws_region
