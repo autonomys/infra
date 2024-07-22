@@ -28,6 +28,17 @@ services:
       options:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
+  pgcat:
+    image: ghcr.io/postgresml/pgcat:e1e4929d439313d987c352b4517a6d99627f3e9c
+    command:
+      - "pgcat"
+      - "/etc/pgcat/pgcat.toml"
+    volumes:
+      - "$HOME/squid/postgresql/conf/pgcat.toml:/etc/pgcat/pgcat.toml"
+    ports:
+      - "6432:6432"
+      - "9930:9930"
+
   run-migrations:
     image: ghcr.io/subspace/blockexplorer-processor:\${DOCKER_TAG}
     restart: on-failure:5
