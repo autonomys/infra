@@ -152,6 +152,141 @@ resource "cloudflare_record" "substation" {
   zone_id = data.cloudflare_zone.subspace_network.id
 }
 
+resource "cloudflare_record" "staging_wallet_web_ui" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "staging.safe"
+  value   = "d2r0ylf7cfvofa.cloudfront.net"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_config_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "config.staging.safe"
+  value   = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_gateway_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "gateway.staging.safe"
+  value   = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_events_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "events.staging.safe"
+  value   = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_transaction_testnet_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "transaction-testnet.staging.safe"
+  value   = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_flower_transaction_testnet_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "flower-transaction-testnet.staging.safe"
+  value   = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "staging_static_assets" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "assets.staging.safe"
+  value   = "d1xizeqd8g84j.cloudfront.net"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_wallet_web_ui" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "safe"
+  value   = "d5w1d4ch1mqvo.cloudfront.net"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_config_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "config.safe"
+  value   = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_gateway_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "gateway.safe"
+  value   = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_events_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "events.safe"
+  value   = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_transaction_testnet_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "transaction-testnet.safe"
+  value   = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_flower_transaction_testnet_service" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "flower-transaction-testnet.safe"
+  value   = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_static_assets" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "assets.safe"
+  value   = "d2ymdwbs6umczt.cloudfront.net"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
+resource "cloudflare_record" "prod_status_page" {
+  zone_id = data.cloudflare_zone.subspace_network.id
+  name    = "status.safe"
+  value   = "stats.uptimerobot.com"
+  type    = "CNAME"
+  ttl     = 1 # Auto
+  proxied = false
+}
+
 // TODO: the following records needs to be updated with further info on why they exist
 resource "cloudflare_record" "terraform_managed_resource_964bf73d0853cefc64803baef62167a5" {
   name    = "ws"
