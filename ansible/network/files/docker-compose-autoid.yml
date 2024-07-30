@@ -1,0 +1,143 @@
+version: "3.7"
+
+volumes:
+  archival_node_data: {}
+  vmagentdata: {}
+
+networks:
+  traefik-proxy:
+
+services:
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent:latest
+    depends_on:
+      - "archival-node"
+    ports:
+      - 8429:8429
+    volumes:
+      - vmagentdata:/vmagentdata
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--httpListenAddr=0.0.0.0:8429"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+      - "--remoteWrite.url=https://vmetrics.subspace.network:8428/api/v1/write"
+      - "--remoteWrite.basicAuth.username=${VM_USER}"
+      - "--remoteWrite.basicAuth.password=${VM_PASS}"
+      - "--remoteWrite.basicAuth.tlsSkipVerify=true"
+
+  agent:
+    container_name: newrelic-infra
+    image: newrelic/infrastructure:latest
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+    pid: host
+    privileged: true
+    volumes:
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      NRIA_LICENSE_KEY: "${NR_API_KEY}"
+      NRIA_DISPLAY_NAME: "${NETWORK_NAME}-autoid-node-${NODE_ID}"
+    restart: unless-stopped
+
+  # traefik reverse proxy with automatic tls management using let encrypt
+  traefik:
+    image: traefik:v2.11.3
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --api=false
+      - --api.dashboard=false
+      - --providers.docker
+      - --log.level=info
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesresolvers.le.acme.email=alerts@subspace.network
+      - --certificatesresolvers.le.acme.storage=/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - "traefik.docker.network=traefik-proxy"
+    networks:
+      - traefik-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt/acme.json:/acme.json
+
+  archival-node:
+    image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
+    volumes:
+      - archival_node_data:/var/subspace:rw
+      - ./keystore:/var/subspace/keystore:ro
+    restart: unless-stopped
+    ports:
+      - "30333:30333/tcp"
+      - "30333:30333/udp"
+      - "30433:30433/tcp"
+      - "30433:30433/udp"
+      - "30334:30334/tcp"
+      - "9615:9615"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
+      - "traefik.http.routers.archival-node.rule=Host(`${DOMAIN_PREFIX_AUTO}-${DOMAIN_ID_AUTO}.${NETWORK_NAME}.subspace.network`) && Path(`/ws`)"
+      - "traefik.http.routers.archival-node.tls=true"
+      - "traefik.http.routers.archival-node.tls.certresolver=le"
+      - "traefik.http.routers.archival-node.entrypoints=websecure"
+      - "traefik.http.routers.archival-node.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.docker.network=traefik-proxy"
+    networks:
+      - traefik-proxy
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
+    command: [
+      "run",
+      "--chain", "${NETWORK_NAME}",
+      "--base-path", "/var/subspace",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+#      "--pot-external-entropy", "${POT_EXTERNAL_ENTROPY}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+      "--listen-on", "/ip6/::/tcp/30333",
+      "--node-key", "${NODE_KEY}",
+      "--in-peers", "500",
+      "--out-peers", "250",
+      "--rpc-max-connections", "10000",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:9944",
+      "--rpc-methods", "safe",
+      "--prometheus-listen-on", "0.0.0.0:9615",
+      "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/udp/30433/quic-v1/p2p/${NODE_PEER_ID}",
+      "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/tcp/30433/p2p/${NODE_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--",
+      "--state-pruning", "archive",
+      "--blocks-pruning", "archive",
+      "--domain-id", "${DOMAIN_ID_AUTO}",
+      "--listen-on", "/ip4/0.0.0.0/tcp/30334",
+      "--rpc-cors", "all",
+      "--rpc-listen-on", "0.0.0.0:8944",
+      "--rpc-methods", "safe",
+      "--operator-id", "0",
+      "--reserved-nodes", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
+      "--reserved-nodes", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
+      "--bootstrap-nodes", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
+    ]

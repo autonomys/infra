@@ -34,7 +34,7 @@ locals {
   route53_weight             = var.route53_weight
   ecsfrontend_route53_weight = var.ecsfrontend_route53_weight
 
-  eks_cluster_domain = "${local.environment}.${local.hosted_zone_name}" # for external-dns
+  eks_cluster_domain = local.hosted_zone_name # for external-dns
 
   tag_val_vpc            = local.environment
   tag_val_public_subnet  = "${local.environment}-public-"
@@ -175,7 +175,7 @@ resource "aws_ec2_tag" "public_subnets" {
 
 # Get HostedZone four our deployment
 data "aws_route53_zone" "sub" {
-  name = "${local.environment}.${local.hosted_zone_name}"
+  name = var.hosted_zone_name
 }
 
 ################################################################################

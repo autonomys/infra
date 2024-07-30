@@ -19,7 +19,7 @@ variable "ingress_type" {
 variable "hosted_zone_name" {
   type        = string
   description = "Route53 domain for the cluster."
-  default     = ""
+  default     = "eks.subspace.network"
 }
 
 variable "eks_admin_role_name" {
@@ -31,7 +31,7 @@ variable "eks_admin_role_name" {
 variable "aws_secret_manager_git_private_ssh_key_name" {
   type        = string
   description = "Secret Manager secret name for hosting Github SSH-Key to Access private repository"
-  default     = "github-subspace-ssh-key"
+  default     = "github-eks-subspace-ssh-key"
 }
 
 variable "argocd_secret_manager_name_suffix" {

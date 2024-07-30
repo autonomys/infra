@@ -41,7 +41,8 @@ variable "instance_count" {
     rpc           = 2
     domain        = 2
     autoid        = 2
-    full          = 1
+    rpc-squid     = 1
+    nova-squid    = 1
     farmer        = 1
     evm_bootstrap = 1
   }
@@ -99,7 +100,7 @@ variable "piece_cache_size" {
   default     = "1GiB"
 }
 
-variable "full-node-config" {
+variable "rpc-squid-node-config" {
   description = "Full node deployment config"
   type = object({
     instance-type      = string
@@ -118,6 +119,24 @@ variable "full-node-config" {
 
 variable "rpc-node-config" {
   description = "RPC node deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    domain-prefix      = string
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "rpc-squid-node-config" {
+  description = "RPC squid node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number
@@ -165,6 +184,27 @@ variable "autoid-node-config" {
     docker-org         = string
     docker-tag         = string
     domain-prefix      = list(string)
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    enable-domains     = bool
+    domain-id          = list(number)
+    domain-labels      = list(string)
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "nova-squid-node-config" {
+  description = "Nova squid node deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    domain-prefix      = string
     reserved-only      = bool
     prune              = bool
     node-dsn-port      = number

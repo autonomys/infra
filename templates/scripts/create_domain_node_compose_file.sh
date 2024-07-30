@@ -42,12 +42,12 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "\${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-domain-node-\${NODE_ID}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-\${DOMAIN_PREFIX}-node-\${NODE_ID}"
     restart: unless-stopped
 
   # traefik reverse proxy with automatic tls management using let encrypt
   traefik:
-    image: traefik:v2.11.3
+    image: traefik:v2.11.6
     container_name: traefik
     restart: unless-stopped
     command:
@@ -109,13 +109,14 @@ services:
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--sync", "full",
       "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--rpc-max-connections", "10000",
+      "--rpc-max-connections", "15000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",

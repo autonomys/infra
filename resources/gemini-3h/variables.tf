@@ -29,8 +29,8 @@ variable "instance_type" {
     bootstrap     = "c7a.4xlarge"
     rpc           = "m6a.xlarge"
     domain        = "m6a.xlarge"
-    autoid        = "m6a.xlarge"
-    full          = "c7a.2xlarge"
+    rpc-squid     = "c7a.2xlarge"
+    nova-squid    = "c7a.2xlarge"
     farmer        = "c7a.2xlarge"
     evm_bootstrap = "c7a.xlarge"
     autoid_bootstrap = "c7a.xlarge"
@@ -59,7 +59,8 @@ variable "instance_count" {
     rpc           = 2
     domain        = 2
     autoid        = 2
-    full          = 1
+    rpc-squid     = 1
+    nova-squid    = 1
     farmer        = 0
     evm_bootstrap = 1
   }
