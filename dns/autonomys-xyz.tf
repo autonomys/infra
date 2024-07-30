@@ -25,6 +25,24 @@ resource "cloudflare_record" "autonomys_xyz_www" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
+resource "cloudflare_record" "autonomys_xyz_astral" {
+  name    = "astral"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "astral-prod.netlify.app"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "autonomys_xyz_explorer" {
+  name    = "explorer"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "astral-prod.netlify.app"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
 resource "cloudflare_record" "autonomys_xyz_academy" {
   name    = "academy"
   proxied = false
