@@ -126,10 +126,10 @@ resource "aws_instance" "bootstrap_node_evm" {
 
 }
 
-resource "aws_instance" "full_node" {
-  count              = length(var.aws_region) * var.full-node-config.instance-count
+resource "aws_instance" "rpc_squid_node" {
+  count              = length(var.aws_region) * var.rpc-squid-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.full-node-config.instance-type
+  instance_type      = var.rpc-squid-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
   ipv6_address_count = 1
@@ -141,16 +141,16 @@ resource "aws_instance" "full_node" {
   ebs_optimized               = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.full-node-config.disk-volume-size
-    volume_type = var.full-node-config.disk-volume-type
+    volume_size = var.rpc-squid-node-config.disk-volume-size
+    volume_type = var.rpc-squid-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
 
   tags = {
-    Name       = "${var.network_name}-full-${count.index}"
-    name       = "${var.network_name}-full-${count.index}"
-    role       = "full node"
+    Name       = "${var.network_name}-rpc-squid-${count.index}"
+    name       = "${var.network_name}-rpc-squid-${count.index}"
+    role       = "rpc-squid node"
     os_name    = "ubuntu"
     os_version = "22.04"
     arch       = "x86_64"
@@ -189,6 +189,68 @@ resource "aws_instance" "full_node" {
 
 }
 
+resource "aws_instance" "nova_squid_node" {
+  count              = length(var.aws_region) * var.nova-squid-node-config.instance-count
+  ami                = data.aws_ami.ubuntu_amd64.image_id
+  instance_type      = var.nova-squid-node-config.instance-type
+  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  availability_zone  = var.azs
+  ipv6_address_count = 1
+  # Security Group
+  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  # the Public SSH key
+  key_name                    = var.aws_key_name
+  associate_public_ip_address = true
+  ebs_optimized               = true
+  ebs_block_device {
+    device_name = "/dev/sda1"
+    volume_size = var.nova-squid-node-config.disk-volume-size
+    volume_type = var.nova-squid-node-config.disk-volume-type
+    iops        = 3000
+    throughput  = 250
+  }
+
+  tags = {
+    Name       = "${var.network_name}-nova-squid-${count.index}"
+    name       = "${var.network_name}-nova-squid-${count.index}"
+    role       = "nova-squid node"
+    os_name    = "ubuntu"
+    os_version = "22.04"
+    arch       = "x86_64"
+  }
+
+  depends_on = [
+    aws_subnet.public_subnets,
+    #aws_nat_gateway.nat_gateway,
+    aws_internet_gateway.gw
+  ]
+
+  lifecycle {
+
+    ignore_changes = [ami, ipv6_address_count]
+
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "cloud-init status --wait",
+      "sudo apt update -y",
+    ]
+
+    on_failure = continue
+
+  }
+
+  # Setting up the ssh connection
+  connection {
+    type        = "ssh"
+    host        = element(self.*.public_ip, count.index)
+    user        = var.ssh_user
+    private_key = file("${var.private_key_path}")
+    timeout     = "300s"
+  }
+
+}
 
 resource "aws_instance" "rpc_node" {
   count              = length(var.aws_region) * var.rpc-node-config.instance-count

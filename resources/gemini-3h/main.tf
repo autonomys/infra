@@ -36,16 +36,35 @@ module "gemini-3h" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  full-node-config = {
-    instance-type      = var.instance_type["full"]
+  rpc-squid-node-config = {
+    instance-type      = var.instance_type["rpc-squid"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["full"]
-    docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-jul-26"
+    instance-count     = var.instance_count["rpc-squid"]
+    docker-org         = "subspace"
+    docker-tag         = "gemini-3h-2024-jul-16"
+    domain-prefix      = "rpc-squid"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+  }
+
+  nova-squid-node-config = {
+    instance-type      = var.instance_type["nova-squid"]
+    deployment-version = 0
+    regions            = var.aws_region
+    instance-count     = var.instance_count["nova-squid"]
+    docker-org         = "subspace"
+    docker-tag         = "gemini-3h-2024-jul-16"
+    domain-prefix      = "nova-squid"
+    reserved-only      = false
+    prune              = false
+    node-dsn-port      = 30433
+    enable-domains     = true
+    domain-id          = var.domain_id
+    domain-labels      = var.domain_labels
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }

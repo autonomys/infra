@@ -42,7 +42,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "\${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-domain-node-\${NODE_ID}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-\${DOMAIN_PREFIX}-node-\${NODE_ID}"
     restart: unless-stopped
 
   # traefik reverse proxy with automatic tls management using let encrypt

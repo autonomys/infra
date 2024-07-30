@@ -53,7 +53,7 @@ Clone the repository and navigate to the testing framework directory **resources
 │   ├── dns.tf
 │   ├── domain_node_provisioner.tf
 │   ├── farmer_node_provisioner.tf
-│   ├── full_node_provisioner.tf
+│   ├── rpc-squid_node_provisioner.tf
 │   ├── instances.tf
 │   ├── network.tf
 │   ├── outputs.tf
@@ -64,7 +64,7 @@ Clone the repository and navigate to the testing framework directory **resources
 │   │   ├── create_bootstrap_node_evm_compose_file.sh
 │   │   ├── create_domain_node_compose_file.sh
 │   │   ├── create_farmer_node_compose_file.sh
-│   │   ├── create_full_node_compose_file.sh
+│   │   ├── create_rpc-squid_node_compose_file.sh
 │   │   ├── create_rpc_node_compose_file.sh
 │   │   ├── installer.sh
 │   │   └── prune_docker_system.sh
@@ -97,7 +97,7 @@ Each network will need it's own keys, which you can gather from bitwarden, and e
 ├── domain_node_keys.txt
 ├── dsn_bootstrap_node_keys.txt
 ├── farmer_node_keys.txt
-├── full_node_keys.txt
+├── rpc-squid_node_keys.txt
 ├── keystore
 ├── relayer_ids.txt
 └── rpc_node_keys.txt
