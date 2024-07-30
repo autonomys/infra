@@ -8,8 +8,8 @@ module "gemini-3h" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
-    docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-org         = "autonomys"
+    docker-tag         = "gemini-3h-2024-jul-29"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -24,8 +24,8 @@ module "gemini-3h" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
-    docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-org         = "autonomys"
+    docker-tag         = "gemini-3h-2024-jul-29"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -74,8 +74,8 @@ module "gemini-3h" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
-    docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-org         = "autonomys"
+    docker-tag         = "gemini-3h-2024-jul-29"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -89,8 +89,8 @@ module "gemini-3h" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
-    docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-org         = "autonomys"
+    docker-tag         = "gemini-3h-2024-jul-29"
     domain-prefix      = "nova"
     reserved-only      = false
     prune              = false
@@ -107,8 +107,8 @@ module "gemini-3h" {
     deployment-version     = 0
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
-    docker-org             = "subspace"
-    docker-tag             = "gemini-3h-2024-jul-16"
+    docker-org             = "autonomys"
+    docker-tag             = "gemini-3h-2024-jul-29"
     reserved-only          = false
     prune                  = false
     plot-size              = "100G"
