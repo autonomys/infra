@@ -126,12 +126,6 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
-  # copy relayer ids
-  provisioner "file" {
-    source      = "./relayer_ids.txt"
-    destination = "/home/${var.ssh_user}/subspace/relayer_ids.txt"
-  }
-
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_bootstrap_node_evm_compose_file.sh"
@@ -155,8 +149,6 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo RELAYER_SYSTEM_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_SYSTEM_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo RELAYER_DOMAIN_ID=$(sed -nr 's/NODE_${count.index}_RELAYER_DOMAIN_ID=//p' /home/${var.ssh_user}/subspace/relayer_ids.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
