@@ -145,12 +145,6 @@ resource "null_resource" "start-autoid-nodes" {
     destination = "/home/${var.ssh_user}/subspace/keystore/"
   }
 
-  # copy relayer ids
-  provisioner "file" {
-    source      = "./relayer_ids.txt"
-    destination = "/home/${var.ssh_user}/subspace/relayer_ids.txt"
-  }
-
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_autoid_node_compose_file.sh"

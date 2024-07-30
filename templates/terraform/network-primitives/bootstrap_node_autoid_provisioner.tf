@@ -126,12 +126,6 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
-  # copy relayer ids
-  provisioner "file" {
-    source      = "./relayer_ids.txt"
-    destination = "/home/${var.ssh_user}/subspace/relayer_ids.txt"
-  }
-
   # copy compose file creation script
   provisioner "file" {
     source      = "${var.path_to_scripts}/create_bootstrap_node_autoid_compose_file.sh"
