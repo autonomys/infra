@@ -93,7 +93,7 @@ services:
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
-      - "traefik.http.routers.archival-node.middlewares=redirect-https,rate-limt"
+      - "traefik.http.routers.archival-node.middlewares=redirect-https,rate-limit"
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.docker.network=traefik-proxy"
