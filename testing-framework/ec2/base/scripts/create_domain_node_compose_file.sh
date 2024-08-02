@@ -86,7 +86,7 @@ services:
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--rpc-max-connections", "6000",
+      "--rpc-max-connections", "10000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
@@ -138,6 +138,7 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--rpc-cors", "all",'
     echo '      "--rpc-methods", "safe",'
     echo '      "--rpc-listen-on", "0.0.0.0:8944",'
+    echo '      "--rpc-max-connections", "10000",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace/bootstrap_node_evm_keys.txt)
