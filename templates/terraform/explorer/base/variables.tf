@@ -228,3 +228,8 @@ variable "prometheus_secret" {
   sensitive = true
   type      = string
 }
+
+variable "hasura_graphql_admin_secret" {
+  sensitive = true
+  type      = string
+}

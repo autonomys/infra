@@ -282,6 +282,7 @@ resource "null_resource" "start-blue-squid-nodes" {
       "echo INGEST_HEALTH_HOST=http://ingest:9090 >> /home/${var.ssh_user}/squid/.env",
       "echo INGEST_HEALTH_PORT=7070 >> /home/${var.ssh_user}/squid/.env",
       "echo MY_SECRET=${var.prometheus_secret} >> /home/${var.ssh_user}/squid/.env",
+      "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/squid/.env",
 
       # create docker compose file
       "chmod +x /home/${var.ssh_user}/squid/create_compose_file.sh",
