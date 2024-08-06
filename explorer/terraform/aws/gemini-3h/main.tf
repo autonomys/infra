@@ -107,16 +107,17 @@ module "squids" {
     prune              = false
   }
 
-  cloudflare_api_token = var.cloudflare_api_token
-  cloudflare_email     = var.cloudflare_email
-  aws_key_name         = var.aws_key_name
-  nr_api_key           = var.nr_api_key
-  netdata_token        = var.netdata_token
-  access_key           = var.access_key
-  secret_key           = var.secret_key
-  vpc_id               = var.vpc_id
-  vpc_cidr_block       = var.vpc_cidr_block
-  public_subnet_cidrs  = var.public_subnet_cidrs
-  postgres_password    = var.postgres_password
-  prometheus_secret    = var.prometheus_secret
+  cloudflare_api_token        = var.cloudflare_api_token
+  cloudflare_email            = var.cloudflare_email
+  aws_key_name                = var.aws_key_name
+  nr_api_key                  = var.nr_api_key
+  netdata_token               = var.netdata_token
+  access_key                  = var.access_key
+  secret_key                  = var.secret_key
+  vpc_id                      = var.vpc_id
+  vpc_cidr_block              = var.vpc_cidr_block
+  public_subnet_cidrs         = var.public_subnet_cidrs
+  postgres_password           = var.postgres_password
+  prometheus_secret           = var.prometheus_secret
+  hasura_graphql_admin_secret = var.hasura_graphql_admin_secret
 }
