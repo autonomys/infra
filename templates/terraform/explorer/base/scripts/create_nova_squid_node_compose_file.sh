@@ -104,6 +104,8 @@ services:
     command:
       - graphql-engine
       - serve
+    ports:
+      - "8080:8080"
 
   agent:
     container_name: newrelic-infra
@@ -130,7 +132,7 @@ services:
       SECRET: \${MY_SECRET}
     command: "postgres"
     ports:
-      - 8080:8080
+      - 9080:8080
 
   prom-health-check:
     image: ghcr.io/subspace/health-check:latest
