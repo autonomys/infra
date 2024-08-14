@@ -1,6 +1,6 @@
 resource "cloudflare_record" "autonomys_xyz_1" {
   name    = "autonomys.xyz"
-  proxied = false
+  proxied = true
   ttl     = 3600
   type    = "A"
   value   = "52.223.52.2"
@@ -9,7 +9,7 @@ resource "cloudflare_record" "autonomys_xyz_1" {
 
 resource "cloudflare_record" "autonomys_xyz_2" {
   name    = "autonomys.xyz"
-  proxied = false
+  proxied = true
   ttl     = 3600
   type    = "A"
   value   = "35.71.142.77"
@@ -22,6 +22,15 @@ resource "cloudflare_record" "autonomys_xyz_www" {
   ttl     = 3600
   type    = "CNAME"
   value   = "sites.framer.app"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "autonomys_xyz_shop" {
+  name    = "shop"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "shops.myshopify.com"
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
