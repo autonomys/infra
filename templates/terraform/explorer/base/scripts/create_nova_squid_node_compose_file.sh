@@ -86,11 +86,11 @@ services:
   graphql-engine:
     image: hasura/graphql-engine:v2.40.0
     depends_on:
-      - "postgres"
+      - "db"
     restart: always
     environment:
       ## postgres database to store Hasura metadata
-      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/postgres
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}
       ## enable the console served by server
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set "false" to disable console
       ## enable debugging mode. It is recommended to disable this in production
