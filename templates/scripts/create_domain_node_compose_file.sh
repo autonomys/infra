@@ -120,7 +120,7 @@ services:
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
-      "--rpc-max-connections", "10000",
+      "--rpc-max-connections", "1000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",

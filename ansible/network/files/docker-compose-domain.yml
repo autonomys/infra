@@ -115,7 +115,7 @@ services:
       "--dsn-out-connections", "250",
       "--in-peers", "250",
       "--out-peers", "150",
-      "--rpc-max-connections", "10000",
+      "--rpc-max-connections", "1000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
