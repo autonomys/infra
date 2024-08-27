@@ -84,9 +84,11 @@ services:
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--node-key", "\${NODE_KEY}",
-      "--in-peers", "500",
-      "--out-peers", "250",
-      "--rpc-max-connections", "10000",
+      "--dsn-in-connections", "500",
+      "--dsn-out-connections", "250",
+      "--in-peers", "250",
+      "--out-peers", "150",
+      "--rpc-max-connections", "1000",
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
@@ -138,6 +140,7 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--rpc-cors", "all",'
     echo '      "--rpc-methods", "safe",'
     echo '      "--rpc-listen-on", "0.0.0.0:8944",'
+    echo '      "--rpc-max-connections", "10000",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace/bootstrap_node_evm_keys.txt)
