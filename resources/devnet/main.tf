@@ -9,7 +9,7 @@ module "devnet" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
-    docker-org         = "subspace"
+    docker-org         = "autonomys"
     docker-tag         = "snapshot-2024-jan-23-2"
     reserved-only      = false
     prune              = false
@@ -25,7 +25,7 @@ module "devnet" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
-    docker-org         = "subspace"
+    docker-org         = "autonomys"
     docker-tag         = "snapshot-2024-jan-23-2"
     reserved-only      = false
     prune              = false
@@ -59,7 +59,7 @@ module "devnet" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["full"]
-    docker-org         = "subspace"
+    docker-org         = "autonomys"
     docker-tag         = "snapshot-2024-jan-23-2"
     reserved-only      = false
     prune              = false
@@ -73,7 +73,7 @@ module "devnet" {
     deployment-version = 1
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
-    docker-org         = "subspace"
+    docker-org         = "autonomys"
     docker-tag         = "snapshot-2024-jan-23-2"
     domain-prefix      = "rpc"
     reserved-only      = false
@@ -88,7 +88,7 @@ module "devnet" {
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
-    docker-org         = "subspace"
+    docker-org         = "autonomys"
     docker-tag         = "snapshot-2024-jan-23-2"
     domain-prefix      = ["nova"]
     reserved-only      = false
@@ -124,7 +124,7 @@ module "devnet" {
     deployment-version     = 1
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
-    docker-org             = "subspace"
+    docker-org             = "autonomys"
     docker-tag             = "snapshot-2024-jan-23-2"
     reserved-only          = false
     prune                  = false
