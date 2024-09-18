@@ -3,13 +3,14 @@ module "gemini-3h" {
   path_to_scripts = "../../templates/terraform/network-primitives/scripts"
   path_to_configs = "../../templates/terraform/network-primitives/configs"
   network_name    = var.network_name
+
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "gemini-3h-2024-sep-17"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -25,7 +26,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "gemini-3h-2024-sep-17"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -42,7 +43,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "gemini-3h-2024-sep-17"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -92,7 +93,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "gemini-3h-2024-sep-17"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -107,7 +108,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "gemini-3h-2024-sep-17"
     domain-prefix      = "nova"
     reserved-only      = false
     prune              = false
@@ -143,7 +144,7 @@ module "gemini-3h" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "gemini-3h-2024-sep-03"
+    docker-tag             = "gemini-3h-2024-sep-17"
     reserved-only          = false
     prune                  = false
     plot-size              = "100G"

@@ -37,14 +37,15 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap     = 2
-    rpc           = 2
-    domain        = 2
-    autoid        = 2
-    rpc-squid     = 1
-    nova-squid    = 1
-    farmer        = 1
-    evm_bootstrap = 1
+    bootstrap        = 2
+    rpc              = 2
+    domain           = 2
+    autoid           = 2
+    rpc-squid        = 1
+    nova-squid       = 1
+    farmer           = 1
+    evm_bootstrap    = 1
+    autoid_bootstrap = 1
   }
 }
 
@@ -98,23 +99,6 @@ variable "piece_cache_size" {
   description = "Piece cache size"
   type        = string
   default     = "1GiB"
-}
-
-variable "rpc-squid-node-config" {
-  description = "Full node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    reserved-only      = bool
-    prune              = bool
-    node-dsn-port      = number
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
 }
 
 variable "rpc-node-config" {
