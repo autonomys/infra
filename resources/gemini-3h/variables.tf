@@ -27,8 +27,8 @@ variable "instance_type" {
   type = map(string)
   default = {
     bootstrap     = "c7a.2xlarge"
-    rpc           = "m7a.xlarge"
-    domain        = "m7a.xlarge"
+    rpc           = "m7a.2xlarge"
+    domain        = "m7a.2xlarge"
     rpc-squid     = "c7a.2xlarge"
     nova-squid    = "c7a.2xlarge"
     farmer        = "c7a.2xlarge"
@@ -55,14 +55,15 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap     = 2
+    bootstrap     = 0
     rpc           = 2
-    domain        = 2
-    autoid        = 2
+    domain        = 0
+    autoid        = 0
     rpc-squid     = 1
-    nova-squid    = 1
+    nova-squid    = 0
     farmer        = 0
-    evm_bootstrap = 1
+    evm_bootstrap = 0
+    autoid_bootstrap = 0
   }
 }
 
