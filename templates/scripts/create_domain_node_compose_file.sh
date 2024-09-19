@@ -89,7 +89,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX_EVM}-\${DOMAIN_ID_EVM}.\${NETWORK_NAME}.subspace.network\`) && Path(\`/ws\`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${DOMAIN_ID}.\${NETWORK_NAME}.subspace.network\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -163,7 +163,7 @@ if [ "${enable_domains}" == "true" ]; then
   {
     # core domain
     echo '      "--",'
-    echo '      "--domain-id", "${DOMAIN_ID_EVM}",'
+    echo '      "--domain-id", "${DOMAIN_ID}",'
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
     echo '      "--operator-id", "0",'

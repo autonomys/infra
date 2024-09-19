@@ -181,7 +181,7 @@ if [ "${enable_domains}" == "true" ]; then
     {
     # auto domain
       echo '      "--",'
-      echo '      "--domain-id", "${DOMAIN_ID_AUTO}",'
+      echo '      "--domain-id", "${DOMAIN_ID}",'
       echo '      "--state-pruning", "archive",'
       echo '      "--blocks-pruning", "archive",'
       echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
