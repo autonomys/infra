@@ -51,7 +51,7 @@ variable "ssh_user" {
 
 variable "private_key_path" {
   type    = string
-  default = "~/.ssh/hetzner"
+  default = "~/.ssh/ovh"
 }
 
 variable "tf_token" {
