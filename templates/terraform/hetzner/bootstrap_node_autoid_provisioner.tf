@@ -1,20 +1,20 @@
 locals {
-  bootstrap_nodes_evm_ip_v4 = flatten([
-    [var.bootstrap-node-evm-config.additional-node-ips]
+  bootstrap_nodes_autoid_ip_v4 = flatten([
+    [var.bootstrap-node-autoid-config.additional-node-ips]
     ]
   )
 }
 
-resource "null_resource" "setup-bootstrap-nodes-evm" {
-  count = length(local.bootstrap_nodes_evm_ip_v4)
+resource "null_resource" "setup-bootstrap-nodes-autoid" {
+  count = length(local.bootstrap_nodes_autoid_ip_v4)
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_evm_ip_v4)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_autoid_ip_v4)
   }
 
   connection {
-    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
+    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -58,16 +58,16 @@ resource "null_resource" "clone_branch" {
   }
 }
 
-resource "null_resource" "prune-bootstrap-nodes-evm" {
-  count      = var.bootstrap-node-evm-config.prune ? length(local.bootstrap_nodes_evm_ip_v4) : 0
-  depends_on = [null_resource.setup-bootstrap-nodes-evm]
+resource "null_resource" "prune-bootstrap-nodes-autoid" {
+  count      = var.bootstrap-node-autoid-config.prune ? length(local.bootstrap_nodes_autoid_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
 
   triggers = {
-    prune = var.bootstrap-node-evm-config.prune
+    prune = var.bootstrap-node-autoid-config.prune
   }
 
   connection {
-    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
+    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -88,19 +88,19 @@ resource "null_resource" "prune-bootstrap-nodes-evm" {
   }
 }
 
-resource "null_resource" "start-bootstrap-nodes-evm" {
-  count = length(local.bootstrap_nodes_evm_ip_v4)
+resource "null_resource" "start-bootstrap-nodes-autoid" {
+  count = length(local.bootstrap_nodes_autoid_ip_v4)
 
-  depends_on = [null_resource.setup-bootstrap-nodes-evm]
+  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.bootstrap-node-evm-config.deployment-version
-    reserved_only      = var.bootstrap-node-evm-config.reserved-only
+    deployment_version = var.bootstrap-node-autoid-config.deployment-version
+    reserved_only      = var.bootstrap-node-autoid-config.reserved-only
   }
 
   connection {
-    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
+    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -110,7 +110,7 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
 
   # copy bootstrap node keys file
   provisioner "file" {
-    source      = "./bootstrap_node_evm_keys.txt"
+    source      = "./bootstrap_node_autoid_keys.txt"
     destination = "/root/subspace/node_keys.txt"
   }
 
@@ -145,27 +145,27 @@ resource "null_resource" "start-bootstrap-nodes-evm" {
       "sudo docker compose -f /root/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-autoid-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-evm-config.repo-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-evm-config.node-tag} >> /root/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-autoid-config.repo-org} > /root/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-autoid-config.node-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
       "echo NODE_ID=${count.index} >> /root/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[1]} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /root/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /root/subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
-      "echo DSN_LISTEN_PORT=${var.bootstrap-node-evm-config.dsn-listen-port} >> /root/subspace/.env",
-      "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /root/subspace/.env",
-      "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /root/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /root/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-autoid-config.dsn-listen-port} >> /root/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-autoid-config.node-dsn-port} >> /root/subspace/.env",
+      "echo OPERATOR_PORT=${var.bootstrap-node-autoid-config.operator-port} >> /root/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-autoid-config.genesis-hash} >> /root/subspace/.env",
       "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
       # create docker compose file
-      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains}",
+      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains}",
 
       # start subspace node
       var.branch_name != "main" ? join(" && ", [
