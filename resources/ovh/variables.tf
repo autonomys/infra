@@ -25,22 +25,22 @@ variable "domain_labels" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap     = 2
-    node          = 1
-    farmer        = 1
-    domain        = 2
-    evm_bootstrap = 1
+    bootstrap        = 2
+    node             = 1
+    farmer           = 1
+    domain           = 2
+    domain_bootstrap = 1
   }
 }
 
 variable "additional_node_ips" {
   type = map(list(string))
   default = {
-    bootstrap     = [""]
-    node          = [""]
-    farmer        = [""]
-    domain        = [""]
-    evm_bootstrap = [""]
+    bootstrap        = [""]
+    node             = [""]
+    farmer           = [""]
+    domain           = [""]
+    domain_bootstrap = [""]
   }
 }
 
@@ -51,7 +51,7 @@ variable "ssh_user" {
 
 variable "private_key_path" {
   type    = string
-  default = "~/.ssh/hetzner"
+  default = "~/.ssh/ovh"
 }
 
 variable "tf_token" {

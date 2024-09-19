@@ -1,20 +1,20 @@
 locals {
-  domain_node_ip_v4 = flatten([
-    [var.domain-node-config.additional-node-ips]
+  bootstrap_nodes_domain_ip_v4 = flatten([
+    [var.bootstrap-node-domain-config.additional-node-ips]
     ]
   )
 }
 
-resource "null_resource" "setup-domain-nodes" {
-  count = length(local.domain_node_ip_v4)
+resource "null_resource" "setup-bootstrap-nodes-domain" {
+  count = length(local.bootstrap_nodes_domain_ip_v4)
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.domain_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_domain_ip_v4)
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.bootstrap_nodes_domain_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -42,6 +42,7 @@ resource "null_resource" "setup-domain-nodes" {
       "sudo bash /root/subspace/installer.sh",
     ]
   }
+
 }
 
 resource "null_resource" "clone_branch" {
@@ -57,16 +58,16 @@ resource "null_resource" "clone_branch" {
   }
 }
 
-resource "null_resource" "prune-domain-nodes" {
-  count      = var.domain-node-config.prune ? length(local.domain_node_ip_v4) : 0
-  depends_on = [null_resource.setup-domain-nodes]
+resource "null_resource" "prune-bootstrap-nodes-domain" {
+  count      = var.bootstrap-node-domain-config.prune ? length(local.bootstrap_nodes_domain_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes-domain]
 
   triggers = {
-    prune = var.domain-node-config.prune
+    prune = var.bootstrap-node-domain-config.prune
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.bootstrap_nodes_domain_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -87,19 +88,19 @@ resource "null_resource" "prune-domain-nodes" {
   }
 }
 
-resource "null_resource" "start-domain-nodes" {
-  count = length(local.domain_node_ip_v4)
+resource "null_resource" "start-bootstrap-nodes-domain" {
+  count = length(local.bootstrap_nodes_domain_ip_v4)
 
-  depends_on = [null_resource.setup-domain-nodes]
+  depends_on = [null_resource.setup-bootstrap-nodes-domain]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.domain-node-config.deployment-version
-    reserved_only      = var.domain-node-config.reserved-only
+    deployment_version = var.bootstrap-node-domain-config.deployment-version
+    reserved_only      = var.bootstrap-node-domain-config.reserved-only
   }
 
   connection {
-    host        = local.domain_node_ip_v4[count.index]
+    host        = local.bootstrap_nodes_domain_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -107,9 +108,9 @@ resource "null_resource" "start-domain-nodes" {
     timeout     = "300s"
   }
 
-  # copy node keys file
+  # copy bootstrap node keys file
   provisioner "file" {
-    source      = "./domain_node_keys.txt"
+    source      = "./bootstrap_node_domain_keys.txt"
     destination = "/root/subspace/node_keys.txt"
   }
 
@@ -119,16 +120,10 @@ resource "null_resource" "start-domain-nodes" {
     destination = "/root/subspace/bootstrap_node_keys.txt"
   }
 
-  # copy dsn_boostrap node keys file
+  # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
     destination = "/root/subspace/dsn_bootstrap_node_keys.txt"
-  }
-
-  # copy keystore
-  provisioner "file" {
-    source      = "./keystore"
-    destination = "/root/subspace/keystore/"
   }
 
   # copy relayer ids
@@ -139,7 +134,7 @@ resource "null_resource" "start-domain-nodes" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_domain_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_bootstrap_node_domain_compose_file.sh"
     destination = "/root/subspace/create_compose_file.sh"
   }
 
@@ -150,26 +145,27 @@ resource "null_resource" "start-domain-nodes" {
       "sudo docker compose -f /root/subspace/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${var.domain-node-config.domain-labels[0]}-${count.index}",
 
       # create .env file
-      "echo REPO_ORG=${var.domain-node-config.repo-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.node-tag} >> /root/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-domain-config.repo-org} > /root/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-domain-config.node-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
-      "echo DOMAIN_PREFIX_EVM=${var.domain-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX_AUTO=${var.domain-node-config.domain-prefix[1]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL_EVM=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID_EVM=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL_AUTO=${var.domain-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID_AUTO=${var.domain-node-config.domain-id[1]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /root/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /root/subspace/.env",
-      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /root/subspace/.env",
+      "echo DSN_NODE_ID=${count.index} >> /root/subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-domain-config.dsn-listen-port} >> /root/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-domain-config.node-dsn-port} >> /root/subspace/.env",
+      "echo OPERATOR_PORT=${var.bootstrap-node-domain-config.operator-port} >> /root/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-domain-config.genesis-hash} >> /root/subspace/.env",
       "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
       # create docker compose file
-      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_node_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
+      "bash /root/subspace/create_compose_file.sh ${var.bootstrap-node-domain-config.reserved-only} ${length(local.bootstrap_nodes_domain_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains}",
 
       # start subspace node
       var.branch_name != "main" ? join(" && ", [

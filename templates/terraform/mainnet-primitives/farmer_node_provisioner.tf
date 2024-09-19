@@ -1,27 +1,26 @@
 locals {
-  bootstrap_nodes_autoid_ip_v4 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.public_ip]
+  farmer_nodes_ipv4 = flatten([
+    [aws_instance.farmer_node.*.public_ip]
     ]
   )
-
-  bootstrap_nodes_autoid_ip_v6 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.ipv6_addresses]
+  farmer_nodes_ipv6 = flatten([
+    [aws_instance.farmer_node.*.ipv6_addresses]
     ]
   )
 }
 
-resource "null_resource" "setup-bootstrap-nodes-autoid" {
-  count = length(local.bootstrap_nodes_autoid_ip_v4)
+resource "null_resource" "setup-farmer-nodes" {
+  count = length(local.farmer_nodes_ipv4)
 
-  depends_on = [aws_instance.bootstrap_node_autoid]
+  depends_on = [aws_instance.farmer_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_autoid_ip_v4)
+    cluster_instance_ipv4s = join(",", local.farmer_nodes_ipv4)
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -33,7 +32,8 @@ resource "null_resource" "setup-bootstrap-nodes-autoid" {
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/"
+      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/",
+      "sudo mkdir -p /home/${var.ssh_user}/subspace/farmer_data/ && sudo chmod -R 770 /home/${var.ssh_user}/subspace/farmer_data/",
     ]
   }
 
@@ -58,16 +58,16 @@ resource "null_resource" "setup-bootstrap-nodes-autoid" {
 
 }
 
-resource "null_resource" "prune-bootstrap-nodes-autoid" {
-  count      = var.bootstrap-node-autoid-config.prune ? length(local.bootstrap_nodes_autoid_ip_v4) : 0
-  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
+resource "null_resource" "prune-farmer-nodes" {
+  count      = var.farmer-node-config.prune ? length(local.farmer_nodes_ipv4) : 0
+  depends_on = [null_resource.setup-farmer-nodes]
 
   triggers = {
-    prune = var.bootstrap-node-autoid-config.prune
+    prune = var.farmer-node-config.prune
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -88,19 +88,19 @@ resource "null_resource" "prune-bootstrap-nodes-autoid" {
   }
 }
 
-resource "null_resource" "start-bootstrap-nodes-autoid" {
-  count = length(local.bootstrap_nodes_autoid_ip_v4)
+resource "null_resource" "start-farmer-nodes" {
+  count = length(local.farmer_nodes_ipv4)
 
-  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
+  depends_on = [null_resource.setup-farmer-nodes]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.bootstrap-node-autoid-config.deployment-version
-    reserved_only      = var.bootstrap-node-autoid-config.reserved-only
+    deployment_version = var.farmer-node-config.deployment-version
+    reserved_only      = var.farmer-node-config.reserved-only
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.farmer_nodes_ipv4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -108,9 +108,15 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
     timeout     = "300s"
   }
 
-  # copy bootstrap node keys file
+  # copy farmer identity files (todo: reset this after)
   provisioner "file" {
-    source      = "./bootstrap_node_autoid_keys.txt"
+    source      = "./identity.bin"
+    destination = "/home/${var.ssh_user}/subspace/identity.bin"
+  }
+
+  # copy node keys file
+  provisioner "file" {
+    source      = "./farmer_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -128,40 +134,39 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_bootstrap_node_domain_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_farmer_node_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
   # start docker containers
   provisioner "remote-exec" {
     inline = [
+      # inject farmer identity // todo: make configurable as not needed with devnet
+      "sudo cp -rf /home/${var.ssh_user}/subspace/identity.bin  /home/${var.ssh_user}/subspace/farmer_data/",
+      "sudo chown -R nobody:nogroup /home/${var.ssh_user}/subspace/farmer_data/",
       # stop any running service
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-autoid-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-autoid-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-autoid-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.farmer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.farmer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[1]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
+      "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_LISTEN_PORT=${var.bootstrap-node-autoid-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.bootstrap-node-autoid-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo OPERATOR_PORT=${var.bootstrap-node-autoid-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-autoid-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.farmer_nodes_ipv4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production}",
 
-      # start subspace node
+      # start subspace
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
     ]
   }

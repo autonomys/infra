@@ -62,8 +62,8 @@ variable "bootstrap-node-config" {
   })
 }
 
-variable "bootstrap-node-evm-config" {
-  description = "Bootstrap node evm domain deployment config"
+variable "bootstrap-node-domain-config" {
+  description = "Bootstrap node  domain deployment config"
   type = object({
     deployment-version  = number
     instance-count      = number

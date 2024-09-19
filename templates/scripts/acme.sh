@@ -2,7 +2,7 @@
 
 set -e
 
-DIRECTORY="${HOME}/subspace/letsencrypt"
+DIRECTORY="${HOME}/subspace"
 if [ ! -d "$DIRECTORY" ]; then
     mkdir "$DIRECTORY"
     echo "Directory '$DIRECTORY' created."
