@@ -139,7 +139,7 @@ resource "null_resource" "start-rpc-indexer-nodes" {
 
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_rpc_indexer_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_rpc_node_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
