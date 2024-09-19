@@ -13,9 +13,9 @@ output "bootstrap-node-ipv4-addresses" {
   description = "Bootstrap node IPv4 Addresses"
 }
 
-output "bootstrap-node-evm-ipv4-addresses" {
-  value       = local.bootstrap_nodes_evm_ip_v4
-  description = "Bootstrap node EVM IPv4 Addresses"
+output "bootstrap-node-domain-ipv4-addresses" {
+  value       = local.bootstrap_nodes-domain_ip_v4
+  description = "Bootstrap node domain IPv4 Addresses"
 }
 
 output "domain-node-ipv4-addresses" {

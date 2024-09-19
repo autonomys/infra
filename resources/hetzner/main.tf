@@ -16,7 +16,7 @@ module "network" {
     node-dsn-port       = 30433
   }
 
-  bootstrap-node-evm-config = {
+  bootstrap-node-domain-config = {
     deployment-version  = 1
     instance-count      = var.instance_count["bootstrap"]
     repo-org            = "autonomys"
@@ -80,5 +80,5 @@ module "network" {
 
 # External data source to run the shell command and extract the value of the operator bootnode connection parameter
 data "external" "operator_peer_multiaddr" {
-  program = ["bash", "-c", "echo '{\"OPERATOR_MULTI_ADDR\": \"'$(sed -nr 's/^NODE_0_OPERATOR_MULTI_ADDR=(.*)/\\1/p' ./bootstrap_node_evm_keys.txt)'\"}'"]
+  program = ["bash", "-c", "echo '{\"OPERATOR_MULTI_ADDR\": \"'$(sed -nr 's/^NODE_0_OPERATOR_MULTI_ADDR=(.*)/\\1/p' ./bootstrap_node_domain_keys.txt)'\"}'"]
 }
