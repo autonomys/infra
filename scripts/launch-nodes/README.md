@@ -74,9 +74,10 @@ type = "farmer"
 
 ### Step 4: Running the Script
 
-Once the configuration file is ready, run the Python script with the following command:
+Once the configuration file is ready, make the python script executable and run the Python script with the following command:
 
 ```bash
+chmod +x manage_subspace.py
 python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace
 ```
 
