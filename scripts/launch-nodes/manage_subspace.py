@@ -40,8 +40,13 @@ def run_command(client, command):
         stdin, stdout, stderr = client.exec_command(command)
         output = stdout.read().decode('utf-8')
         error = stderr.read().decode('utf-8')
+
+        # Treat Docker status updates as INFO instead of ERROR
         if error:
-            logger.error(f"Error running command: {error}")
+            if any(keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
+                logger.info(f"Command output: {error.strip()}")
+            else:
+                logger.error(f"Error running command: {error.strip()}")
         return output, error
     except Exception as e:
         logger.error(f"Failed to run command: {command}: {e}")
