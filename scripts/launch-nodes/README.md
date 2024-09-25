@@ -78,12 +78,13 @@ Once the configuration file is ready, make the python script executable and run 
 
 ```bash
 chmod +x manage_subspace.py
-python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace
+python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --pot_external_entropy random_value
 ```
 
 - `--config`: Path to the TOML configuration file.
 - `--release_version`: The release version to be used to update the `DOCKER_TAG` in the `.env` files.
 - `--subspace_dir`: Path to the Subspace directory (default: `/home/ubuntu/subspace`).
+- `--pot_external_entropy`: The random seed for proof of time entropy
 
 ### Step 5: Deactivate the Virtual Environment
 
