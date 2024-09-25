@@ -62,8 +62,8 @@ def docker_compose_down(client, subspace_dir):
         logger.error(f"Failed to run sudo docker compose down -v: {e}")
         raise
 
-def modify_env_file(client, subspace_dir, release_version, genesis_hash=None):
-    """Modify the .env file to update the Docker tag and optionally the Genesis Hash."""
+def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None):
+    """Modify the .env file to update the Docker tag and optionally the Genesis Hash and POT_EXTERNAL_ENTROPY."""
     env_file = f'{subspace_dir}/.env'
 
     try:
@@ -71,13 +71,15 @@ def modify_env_file(client, subspace_dir, release_version, genesis_hash=None):
         with sftp.open(env_file, 'r') as f:
             env_data = f.readlines()
 
-        # Modify the Docker tag and optionally the Genesis hash
+        # Modify the Docker tag, Genesis hash, and POT_EXTERNAL_ENTROPY
         with sftp.open(env_file, 'w') as f:
             for line in env_data:
                 if line.startswith('DOCKER_TAG='):
                     f.write(f'DOCKER_TAG={release_version}\n')
                 elif genesis_hash and line.startswith('GENESIS_HASH='):
                     f.write(f'GENESIS_HASH={genesis_hash}\n')
+                elif pot_external_entropy and line.startswith('POT_EXTERNAL_ENTROPY='):
+                    f.write(f'POT_EXTERNAL_ENTROPY={pot_external_entropy}\n')
                 else:
                     f.write(line)
         logger.info(f"Modified .env file in {env_file}")
@@ -125,6 +127,7 @@ def main():
     parser.add_argument('--config', required=True, help='Path to the TOML config file')
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory (default: /home/ubuntu/subspace)')
+    parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for the timekeeper node')
     args = parser.parse_args()
 
     # Read configuration from the TOML file using tomli
@@ -133,6 +136,7 @@ def main():
 
     bootstrap_node = config['bootstrap_node']
     farmer_rpc_nodes = config['farmer_rpc_nodes']
+    timekeeper_node = config['timekeeper']
 
     release_version = args.release_version
     subspace_dir = args.subspace_dir
@@ -179,6 +183,25 @@ def main():
             client.close()
         except Exception as e:
             logger.error(f"Error during update and start on {node['host']}: {e}")
+
+    if timekeeper_node:
+        if args.pot_external_entropy:
+            try:
+                logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
+                client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
+
+                # Modify the .env file with the POT_EXTERNAL_ENTROPY value
+                modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
+
+                # Start the timekeeper node
+                docker_compose_up(client, subspace_dir)
+
+                client.close()
+                logger.info("Timekeeper node started with the updated POT_EXTERNAL_ENTROPY value.")
+            except Exception as e:
+                logger.error(f"Error during timekeeper node update: {e}")
+        else:
+            logger.warning(f"POT_EXTERNAL_ENTROPY not provided for the timekeeper node, skipping update.")
 
     # Step 3: SSH into the bootstrap node and update GENESIS_HASH, then start it
     if protocol_version_hash:

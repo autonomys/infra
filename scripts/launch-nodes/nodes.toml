@@ -5,8 +5,6 @@ host = "34.201.40.91"
 user = "ubuntu"
 ssh_key = "key.pem"
 
-# Remove the [farmer_rpc_nodes] block and only use the array of tables below
-
 [[farmer_rpc_nodes]]
 host = "54.209.76.129"
 user = "ubuntu"
@@ -18,3 +16,9 @@ host = "44.202.161.154"
 user = "ubuntu"
 ssh_key = "key.pem"
 type = "farmer"
+
+[timekeeper]
+host = "52.200.120.112"
+user = "ubuntu"
+ssh_key = "key.pem"
+type = "timekeeper"
