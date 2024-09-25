@@ -71,17 +71,28 @@ def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, po
         with sftp.open(env_file, 'r') as f:
             env_data = f.readlines()
 
+        pot_entropy_found = False
+
         # Modify the Docker tag, Genesis hash, and POT_EXTERNAL_ENTROPY
         with sftp.open(env_file, 'w') as f:
             for line in env_data:
                 if line.startswith('DOCKER_TAG='):
+                    logger.debug(f"Writing DOCKER_TAG={release_version}")
                     f.write(f'DOCKER_TAG={release_version}\n')
                 elif genesis_hash and line.startswith('GENESIS_HASH='):
+                    logger.debug(f"Writing GENESIS_HASH={genesis_hash}")
                     f.write(f'GENESIS_HASH={genesis_hash}\n')
                 elif pot_external_entropy and line.startswith('POT_EXTERNAL_ENTROPY='):
                     f.write(f'POT_EXTERNAL_ENTROPY={pot_external_entropy}\n')
+                    pot_entropy_found = True
                 else:
                     f.write(line)
+
+            # If POT_EXTERNAL_ENTROPY was not found, append it
+            if pot_external_entropy and not pot_entropy_found:
+                logger.debug(f"Writing POT_EXTERNAL_ENTROPY={pot_external_entropy}")
+                f.write(f'POT_EXTERNAL_ENTROPY={pot_external_entropy}\n')
+
         logger.info(f"Modified .env file in {env_file}")
     except Exception as e:
         logger.error(f"Failed to modify .env file: {e}")
@@ -110,7 +121,6 @@ def grep_protocol_version(client, retries=5, interval=30):
     logger.error("Failed to retrieve protocol version hash after retries.")
     return None
 
-
 def docker_compose_up(client, subspace_dir):
     """Run sudo docker compose up -d in the subspace directory."""
     try:
@@ -128,7 +138,14 @@ def main():
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory (default: /home/ubuntu/subspace)')
     parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for the timekeeper node')
+    parser.add_argument('--log_level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR)')
     args = parser.parse_args()
+
+    # Set logging level based on user input
+    log_level = args.log_level.upper()
+    logging.getLogger().setLevel(log_level)
+
+    logger.debug(f"Received POT_EXTERNAL_ENTROPY: {args.pot_external_entropy}")
 
     # Read configuration from the TOML file using tomli
     with open(args.config, 'rb') as f:
@@ -143,6 +160,7 @@ def main():
 
     # Step 1: sudo docker compose down -v on all farmer and RPC nodes
     for node in farmer_rpc_nodes:
+        client = None  # Initialize the client variable
         try:
             logger.info(f"Connecting to {node['host']} for sudo docker compose down -v...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
@@ -154,10 +172,15 @@ def main():
             client.close()
         except Exception as e:
             logger.error(f"Error during sudo docker compose down -v on {node['host']}: {e}")
+        finally:
+            if client:
+                client.close()
+                logger.debug(f"Closed connection for node {node['host']}")
 
     # Step 2: Update .env and start sudo docker compose for RPC and Farmer nodes
     protocol_version_hash = None
     for node in farmer_rpc_nodes:
+        client = None  # Initialize the client variable
         try:
             logger.info(f"Connecting to {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
@@ -183,28 +206,38 @@ def main():
             client.close()
         except Exception as e:
             logger.error(f"Error during update and start on {node['host']}: {e}")
+        finally:
+            if client:
+                client.close()
+                logger.debug(f"Closed connection for node {node['host']}")
 
     if timekeeper_node:
+        client = None  # Initialize the client variable
         if args.pot_external_entropy:
             try:
                 logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
                 client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
 
                 # Modify the .env file with the POT_EXTERNAL_ENTROPY value
+                logger.debug(f"Modifying .env file with POT_EXTERNAL_ENTROPY={args.pot_external_entropy}")
                 modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
 
                 # Start the timekeeper node
                 docker_compose_up(client, subspace_dir)
 
-                client.close()
                 logger.info("Timekeeper node started with the updated POT_EXTERNAL_ENTROPY value.")
             except Exception as e:
                 logger.error(f"Error during timekeeper node update: {e}")
+            finally:
+                if client:
+                    client.close()
+                    logger.debug(f"Closed connection to timekeeper node {timekeeper_node['host']}")
         else:
             logger.warning(f"POT_EXTERNAL_ENTROPY not provided for the timekeeper node, skipping update.")
 
     # Step 3: SSH into the bootstrap node and update GENESIS_HASH, then start it
     if protocol_version_hash:
+        client = None  # Initialize the client variable
         try:
             logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']} for sudo docker compose down -v...")
             client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
@@ -222,6 +255,9 @@ def main():
             logger.info("Bootstrap node started with the updated Genesis Hash.")
         except Exception as e:
             logger.error(f"Error during bootstrap node update: {e}")
+        finally:
+            if client:
+                client.close()
     else:
         logger.error("Protocol version hash not found, skipping bootstrap node start.")
 
