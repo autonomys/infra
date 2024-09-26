@@ -219,6 +219,9 @@ def main():
                 logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
                 client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
 
+                # Run sudo docker compose down -v
+                docker_compose_down(client, subspace_dir)
+
                 # Modify the .env file with the POT_EXTERNAL_ENTROPY value
                 logger.debug(f"Modifying .env file with POT_EXTERNAL_ENTROPY={args.pot_external_entropy}")
                 modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
