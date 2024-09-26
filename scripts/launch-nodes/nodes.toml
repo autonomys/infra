@@ -18,7 +18,7 @@ ssh_key = "key.pem"
 type = "farmer"
 
 [timekeeper]
-host = "52.200.120.112"
+host = "54.147.124.232"
 user = "ubuntu"
 ssh_key = "key.pem"
 type = "timekeeper"
