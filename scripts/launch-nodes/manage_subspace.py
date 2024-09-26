@@ -1,3 +1,4 @@
+import os
 import paramiko
 import argparse
 import tomli
@@ -63,37 +64,37 @@ def docker_compose_down(client, subspace_dir):
         raise
 
 def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None):
-    """Modify the .env file to update the Docker tag and optionally the Genesis Hash and POT_EXTERNAL_ENTROPY."""
-    env_file = f'{subspace_dir}/.env'
-
+    """Modify the .env file to update the Docker tag, Genesis Hash, and POT_EXTERNAL_ENTROPY using sed."""
     try:
-        sftp = client.open_sftp()
-        with sftp.open(env_file, 'r') as f:
-            env_data = f.readlines()
+        # Command to update DOCKER_TAG
+        commands = [
+            f"sed -i 's/^DOCKER_TAG=.*/DOCKER_TAG={release_version}/' {subspace_dir}/.env"
+        ]
 
-        pot_entropy_found = False
+        # Command to update GENESIS_HASH if provided
+        if genesis_hash:
+            commands.append(f"sed -i 's/^GENESIS_HASH=.*/GENESIS_HASH={genesis_hash}/' {subspace_dir}/.env")
 
-        # Modify the Docker tag, Genesis hash, and POT_EXTERNAL_ENTROPY
-        with sftp.open(env_file, 'w') as f:
-            for line in env_data:
-                if line.startswith('DOCKER_TAG='):
-                    logger.debug(f"Writing DOCKER_TAG={release_version}")
-                    f.write(f'DOCKER_TAG={release_version}\n')
-                elif genesis_hash and line.startswith('GENESIS_HASH='):
-                    logger.debug(f"Writing GENESIS_HASH={genesis_hash}")
-                    f.write(f'GENESIS_HASH={genesis_hash}\n')
-                elif pot_external_entropy and line.startswith('POT_EXTERNAL_ENTROPY='):
-                    f.write(f'POT_EXTERNAL_ENTROPY={pot_external_entropy}\n')
-                    pot_entropy_found = True
-                else:
-                    f.write(line)
+        # Command to update POT_EXTERNAL_ENTROPY if provided
+        if pot_external_entropy:
+            # If POT_EXTERNAL_ENTROPY exists, replace it, otherwise append it
+            commands.append(f"grep -q '^POT_EXTERNAL_ENTROPY=' {subspace_dir}/.env && "
+                            f"sed -i 's/^POT_EXTERNAL_ENTROPY=.*/POT_EXTERNAL_ENTROPY={pot_external_entropy}/' {subspace_dir}/.env || "
+                            f"echo 'POT_EXTERNAL_ENTROPY={pot_external_entropy}' >> {subspace_dir}/.env")
 
-            # If POT_EXTERNAL_ENTROPY was not found, append it
-            if pot_external_entropy and not pot_entropy_found:
-                logger.debug(f"Writing POT_EXTERNAL_ENTROPY={pot_external_entropy}")
-                f.write(f'POT_EXTERNAL_ENTROPY={pot_external_entropy}\n')
+        # Execute the commands over SSH
+        for command in commands:
+            logger.debug(f"Executing command: {command}")
+            stdin, stdout, stderr = client.exec_command(command)
+            stdout_text = stdout.read().decode()
+            stderr_text = stderr.read().decode()
 
-        logger.info(f"Modified .env file in {env_file}")
+            if stderr_text:
+                logger.error(f"Error modifying .env file with command: {command}, error: {stderr_text}")
+                raise Exception(f"Error modifying .env file: {stderr_text}")
+            else:
+                logger.info(f"Successfully executed command: {command}")
+
     except Exception as e:
         logger.error(f"Failed to modify .env file: {e}")
         raise
