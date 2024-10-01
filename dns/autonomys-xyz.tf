@@ -120,7 +120,7 @@ resource "cloudflare_record" "block_explorer_astral" {
   zone_id = data.cloudflare_zone.subspace_network.id
 }
 
-resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_xyz"
+resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_xyz" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_27e027657b943bc5de8249fa279f49df.safe.autonomys.xyz"
   type    = "CNAME"
@@ -129,7 +129,7 @@ resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_x
   proxied = false
 }
 
-resource "cloudflare_record" "_0cb51155ee81f2362bd25953737affa9_staging_safe_autonomys_xyz"
+resource "cloudflare_record" "_0cb51155ee81f2362bd25953737affa9_staging_safe_autonomys_xyz" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_0cb51155ee81f2362bd25953737affa9.staging.safe.autonomys.xyz"
   type    = "CNAME"
