@@ -233,14 +233,15 @@ def main():
             # Run sudo docker compose down -v for the bootstrap node
             docker_compose_down(client, subspace_dir)
 
-            # Modify .env with the new GENESIS_HASH
-            modify_env_file(client, subspace_dir, release_version, genesis_hash=protocol_version_hash)
+            # Modify .env with the new GENESIS_HASH and POT_EXTERNAL_ENTROPY
+            modify_env_file(client, subspace_dir, release_version, genesis_hash=protocol_version_hash, pot_external_entropy=args.pot_external_entropy)
 
             # Start the bootstrap node
             docker_compose_up(client, subspace_dir)
 
             client.close()
-            logger.info("Bootstrap node started with the updated Genesis Hash.")
+            logger.info("Bootstrap node started with the updated Genesis Hash and POT_EXTERNAL_ENTROPY.")
+
         except Exception as e:
             logger.error(f"Error during bootstrap node update: {e}")
         finally:
