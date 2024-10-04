@@ -138,7 +138,7 @@ def main():
     parser.add_argument('--config', required=True, help='Path to the TOML config file')
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory (default: /home/ubuntu/subspace)')
-    parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for the timekeeper node')
+    parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for all nodes')
     parser.add_argument('--log_level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR)')
     args = parser.parse_args()
 
@@ -159,7 +159,35 @@ def main():
     release_version = args.release_version
     subspace_dir = args.subspace_dir
 
-    # Step 1: sudo docker compose down -v on all farmer and RPC nodes
+    # Step 1: Handle the timekeeper node first
+    if timekeeper_node:
+        client = None  # Initialize the client variable
+        try:
+            logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
+            client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
+
+            # Run sudo docker compose down -v for the timekeeper node
+            docker_compose_down(client, subspace_dir)
+
+            # Modify the .env file with the POT_EXTERNAL_ENTROPY value
+            logger.debug(f"Modifying .env file for timekeeper with POT_EXTERNAL_ENTROPY={args.pot_external_entropy}")
+            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
+
+            # Start the timekeeper node
+            docker_compose_up(client, subspace_dir)
+
+            logger.info("Timekeeper node started with the updated POT_EXTERNAL_ENTROPY value.")
+        except Exception as e:
+            logger.error(f"Error during timekeeper node update: {e}")
+        finally:
+            if client:
+                client.close()
+                logger.debug(f"Closed connection to timekeeper node {timekeeper_node['host']}")
+    else:
+        logger.warning("Timekeeper node not found, proceeding with other nodes.")
+
+    # Step 2: Start the other farmer and RPC nodes after the timekeeper node
+    protocol_version_hash = None
     for node in farmer_rpc_nodes:
         client = None  # Initialize the client variable
         try:
@@ -169,25 +197,8 @@ def main():
             # Run sudo docker compose down -v
             docker_compose_down(client, subspace_dir)
 
-            # Close connection after shutdown
-            client.close()
-        except Exception as e:
-            logger.error(f"Error during sudo docker compose down -v on {node['host']}: {e}")
-        finally:
-            if client:
-                client.close()
-                logger.debug(f"Closed connection for node {node['host']}")
-
-    # Step 2: Update .env and start sudo docker compose for RPC and Farmer nodes
-    protocol_version_hash = None
-    for node in farmer_rpc_nodes:
-        client = None  # Initialize the client variable
-        try:
-            logger.info(f"Connecting to {node['host']}...")
-            client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-
-            # Modify the .env file
-            modify_env_file(client, subspace_dir, release_version)
+            # Modify the .env file for farmer and RPC nodes
+            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
 
             # Start sudo docker compose up -d
             docker_compose_up(client, subspace_dir)
@@ -211,33 +222,6 @@ def main():
             if client:
                 client.close()
                 logger.debug(f"Closed connection for node {node['host']}")
-
-    if timekeeper_node:
-        client = None  # Initialize the client variable
-        if args.pot_external_entropy:
-            try:
-                logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
-                client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
-
-                # Run sudo docker compose down -v
-                docker_compose_down(client, subspace_dir)
-
-                # Modify the .env file with the POT_EXTERNAL_ENTROPY value
-                logger.debug(f"Modifying .env file with POT_EXTERNAL_ENTROPY={args.pot_external_entropy}")
-                modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
-
-                # Start the timekeeper node
-                docker_compose_up(client, subspace_dir)
-
-                logger.info("Timekeeper node started with the updated POT_EXTERNAL_ENTROPY value.")
-            except Exception as e:
-                logger.error(f"Error during timekeeper node update: {e}")
-            finally:
-                if client:
-                    client.close()
-                    logger.debug(f"Closed connection to timekeeper node {timekeeper_node['host']}")
-        else:
-            logger.warning(f"POT_EXTERNAL_ENTROPY not provided for the timekeeper node, skipping update.")
 
     # Step 3: SSH into the bootstrap node and update GENESIS_HASH, then start it
     if protocol_version_hash:
