@@ -44,7 +44,7 @@ def run_command(client, command):
 
         # Treat Docker status updates as INFO instead of ERROR
         if error:
-            if any(keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
+            if any (keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
                 logger.info(f"Command output: {error.strip()}")
             else:
                 logger.error(f"Error running command: {error.strip()}")
@@ -140,6 +140,7 @@ def main():
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory (default: /home/ubuntu/subspace)')
     parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for all nodes')
     parser.add_argument('--log_level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR)')
+    parser.add_argument('--no-timekeeper', action='store_true', help='Disable launching of the timekeeper node')
     args = parser.parse_args()
 
     # Set logging level based on user input
@@ -159,8 +160,8 @@ def main():
     release_version = args.release_version
     subspace_dir = args.subspace_dir
 
-    # Step 1: Handle the timekeeper node first
-    if timekeeper_node:
+    # Step 1: Handle the timekeeper node first, if present and --no-timekeeper is not set
+    if not args.no_timekeeper and timekeeper_node:
         client = None  # Initialize the client variable
         try:
             logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
@@ -183,6 +184,8 @@ def main():
             if client:
                 client.close()
                 logger.debug(f"Closed connection to timekeeper node {timekeeper_node['host']}")
+    elif args.no_timekeeper:
+        logger.info("Skipping timekeeper node as --no-timekeeper flag is set.")
     else:
         logger.warning("Timekeeper node not found, proceeding with other nodes.")
 
@@ -223,7 +226,7 @@ def main():
                 client.close()
                 logger.debug(f"Closed connection for node {node['host']}")
 
-    # Step 3: SSH into the bootstrap node and update GENESIS_HASH, then start it
+    # Step 3: SSH into the bootstrap node and update GENESIS_HASH and POT_EXTERNAL_ENTROPY, then start it
     if protocol_version_hash:
         client = None  # Initialize the client variable
         try:
@@ -241,7 +244,6 @@ def main():
 
             client.close()
             logger.info("Bootstrap node started with the updated Genesis Hash and POT_EXTERNAL_ENTROPY.")
-
         except Exception as e:
             logger.error(f"Error during bootstrap node update: {e}")
         finally:
