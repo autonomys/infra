@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Welcome to the Terraform-based testing framework for Subspace's devnets. This framework does devnet infrastructure deployments using Terraform based on the developers branch by building and deploying with docker & docker compose, on either AWS or Hetzner metal.
+Welcome to the Terraform-based testing framework for Subspace's devnets. This framework does devnet infrastructure deployments using Terraform based on the developers branch by building and deploying with docker & docker compose, on AWS.
 
 ## Prerequisites
 
@@ -14,41 +14,29 @@ Before using this framework, ensure you have the following installed:
 
 ## Installation via Terraform
 
-We use **Terraform**, **AWS**, or **Hetzner Metal** to provision the infrastructure.
+We use **Terraform** and **AWS** to provision the infrastructure.
 
 Clone the repository and navigate to the testing framework directory **testing-framework**:
 
-### Terraform Testing Framework Folder Structure:
+### Terraform Testing Framework Folder Structure
 
 ```
 .
 ├── README.md
-├── ec2
-│   ├── base
-│   │   ├── ami.tf
-│   │   ├── bootstrap_node_provisioner.tf
-│   │   ├── domain_node_provisioner.tf
-│   │   ├── farmer_node_provisioner.tf
-│   │   ├── instances.tf
-│   │   ├── network.tf
-│   │   ├── node_provisioner.tf
-│   │   ├── outputs.tf
-│   │   ├── provider.tf
-│   │   ├── scripts
-│   │   └── variables.tf
-│   └── network
-│       ├── backend.tf
-│       ├── main.tf
-│       ├── outputs.tf
-│       ├── terraform.tfvars.example
-│       └── variables.tf
-└── hetzner
+└── ec2
     ├── base
+    │   ├── ami.tf
+    │   ├── autoid_node_provisioner.tf
+    │   ├── bootstrap_node_autoid_provisioner.tf
+    │   ├── bootstrap_node_evm_provisioner.tf
     │   ├── bootstrap_node_provisioner.tf
     │   ├── domain_node_provisioner.tf
     │   ├── farmer_node_provisioner.tf
+    │   ├── instances.tf
+    │   ├── network.tf
     │   ├── node_provisioner.tf
     │   ├── outputs.tf
+    │   ├── provider.tf
     │   ├── scripts
     │   └── variables.tf
     └── network
@@ -57,29 +45,19 @@ Clone the repository and navigate to the testing framework directory **testing-f
         ├── outputs.tf
         ├── terraform.tfvars.example
         └── variables.tf
+
 ```
 
-## Getting started.
+## Getting started
 
 - To apply any updates or new definitions you must always work in a separate branch, by creating a new branch, i.e `bob/devnet`
 - Go to **testing-framework/PROVIDER/network**
 - rename the terraform.tfvars.example file inside the child module to terraform.tfvars.
 - modify the main.tf file if any further changes are needed to customize
 - If using AWS add your personal AWS access and secret in the terraform.tfvars file
-- gather the necessary deployment ssh keys i.e deployer.pem or hetzner from bitwarden and set the `private_key_path` variable to the location on the filesystem.
+- gather the necessary deployment ssh keys i.e deployer.pem from bitwarden and set the `private_key_path` variable to the location on the filesystem.
 - add the `branch_name` in the tfvars file of the branch you wish to deploy for terraform to build your code with docker.
-- populate the empty variables with the correct values in the terraform.tfvars file, for the dedicated machines, add the ip address values. i.e
-
-  ```
-  additional_node_ips = {
-    bootstrap = ["1.1.1.1"]
-    node      = ["2.2.2.2"]
-    farmer    = ["3.3.3.3"]
-    domain    = ["4.4.4.4"]
-  }
-  ```
-
-- modify the `backend.tf` file in the network folder of the module, by setting the workspace name i.e `"ephemeral-devnet-hetzner"` to include a suffix with your name, i.e `"ephemeral-devnet-hetzner-bob"` to prevent your backend from being shared with other developers. For AWS `"ephemeral-devnet-bob"`.
+- modify the `backend.tf` file in the network folder of the module, by setting the workspace name i.e `"ephemeral-devnet-aws"` to include a suffix with your name, i.e `"ephemeral-devnet-bob"` to prevent your backend from being shared with other developers. For AWS `"ephemeral-devnet-bob"`.
 
 - Then you are ready to follow instructions to **init** terraform, **add resources**, **plan** the resource deployment and **apply** the resource deployments for the respective provider.
 
@@ -101,7 +79,7 @@ Each devnet will need it's own keys, but if there are none deployed, you can re-
 
 Note: if you need to create new ones, the format of the files should be the same, so it works with the scripts.
 
-## Deploy resources.
+## Deploy resources
 
 1. Go to **testing-framework/PROVIDER/network** directory and run the following commands to init terraform:
 
@@ -128,19 +106,7 @@ Be aware that state files can contain sensitive information. Do not expose it to
 
 ## Installation via Github Actions
 
-To deploy a ephemeral devnet with Github CI/CD the workflow `.github/workflows/ephemeral_devnet_aws_deploy.yml` can be triggered for AWS and `.github/workflows/ephemeral_devnet_hetzner_deploy.yml` to trigger the workflow for hetzner deployment.
-
-Before deploying to hetzner, please make sure there are machines available, and also not being used by other devs. If necessary, check first with the devops engineer, but a list of servers will remain dedicated for this workflow. If the IPs need to be updated, change the variable below in the terraform.tfvars file and open a pull request to have it merged.
-
-```
-additional_node_ips = {
-bootstrap = ["1.1.1.1"]
-node = ["2.2.2.2"]
-farmer = ["3.3.3.3"]
-domain = ["4.4.4.4"]
-}
-
-```
+To deploy a ephemeral devnet with Github CI/CD the workflow `.github/workflows/ephemeral_devnet_aws_deploy.yml` can be triggered for AWS deployment.
 
 The `branch` input variable is required and should have the value of the branch name you want to deploy. i.e bob/feature-1
 

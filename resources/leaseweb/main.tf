@@ -1,5 +1,5 @@
 module "network" {
-  source          = "../../templates/terraform/ovh"
+  source          = "../../templates/terraform/leaseweb"
   path_to_scripts = "../../templates/scripts"
   network_name    = var.network_name
 
