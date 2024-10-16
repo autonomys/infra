@@ -1,18 +1,18 @@
 resource "cloudflare_record" "autonomys_xyz_1" {
   name    = "autonomys.xyz"
-  proxied = true
+  proxied = false
   ttl     = 3600
   type    = "A"
-  value   = "52.223.52.2"
+  value   = "75.2.70.75"
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
 resource "cloudflare_record" "autonomys_xyz_2" {
   name    = "autonomys.xyz"
-  proxied = true
+  proxied = false
   ttl     = 3600
   type    = "A"
-  value   = "35.71.142.77"
+  value   = "99.83.190.102"
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
@@ -21,7 +21,7 @@ resource "cloudflare_record" "autonomys_xyz_www" {
   proxied = false
   ttl     = 3600
   type    = "CNAME"
-  value   = "sites.framer.app"
+  value   = "proxy-ssl.webflow.com"
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
@@ -31,6 +31,15 @@ resource "cloudflare_record" "autonomys_xyz_shop" {
   ttl     = 3600
   type    = "CNAME"
   value   = "shops.myshopify.com"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "blog" {
+  name    = "autonomys.xyz"
+  proxied = true
+  ttl     = 3600
+  type    = "A"
+  value   = "35.71.142.77" #this is a dummy IP since we use redirect workers to route this to medium
   zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
@@ -73,6 +82,34 @@ resource "cloudflare_record" "mailserver_mx" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.id
 }
 
+// mailserver records for mail.autonomys.xyz
+resource "cloudflare_record" "mail_mailserver_mx" {
+  name     = "mail.autonomys.xyz"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 1
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "smtp.google.com"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "mail_spf" {
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+  name    = "mail.autonomys.xyz"
+  type    = "TXT"
+  value   = "v=spf1 a mx include:_spf.google.com include:sendgrid.net ~all"
+  ttl     = 3600
+}
+
+resource "cloudflare_record" "mail_beehiiv_txt" {
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+  name    = "_beehiiv-authentication"
+  type    = "TXT"
+  value   = "57foN3YSwWdS6bvUsqRfztqw"
+  ttl     = 3600
+}
+
 resource "cloudflare_record" "dmarc" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_dmarc"
@@ -111,7 +148,7 @@ resource "cloudflare_record" "block_explorer_astral" {
   zone_id = data.cloudflare_zone.subspace_network.id
 }
 
-resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_xyz"
+resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_xyz" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_27e027657b943bc5de8249fa279f49df.safe.autonomys.xyz"
   type    = "CNAME"
@@ -120,7 +157,7 @@ resource "cloudflare_record" "_27e027657b943bc5de8249fa279f49df_safe_autonomys_x
   proxied = false
 }
 
-resource "cloudflare_record" "_0cb51155ee81f2362bd25953737affa9_staging_safe_autonomys_xyz"
+resource "cloudflare_record" "_0cb51155ee81f2362bd25953737affa9_staging_safe_autonomys_xyz" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_0cb51155ee81f2362bd25953737affa9.staging.safe.autonomys.xyz"
   type    = "CNAME"
@@ -296,4 +333,20 @@ resource "cloudflare_record" "caa_staging_wildcard" {
   type    = "CAA"
   value   = "0 issue amazon.com"
   ttl     = 3600
+}
+
+resource "cloudflare_record" "community_cname" {
+  zone_id = var.cloudflare_zone_id
+  name    = "_5865f51c06607c9ac81ce2703c39fcd8.community.autonomys.xyz"
+  type    = "CNAME"
+  value   = "_dc672d34d26463f4682c6ac96eb18a8f.djqtsrsxkq.acm-validations.aws"
+  ttl     = 300
+}
+
+resource "cloudflare_record" "community_a" {
+  zone_id = var.cloudflare_zone_id
+  name    = "community.autonomys.xyz"
+  type    = "A"
+  value   = "13.248.133.137"
+  ttl     = 300
 }
