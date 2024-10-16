@@ -82,6 +82,34 @@ resource "cloudflare_record" "mailserver_mx" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.id
 }
 
+// mailserver records for mail.autonomys.xyz
+resource "cloudflare_record" "mail_mailserver_mx" {
+  name     = "mail.autonomys.xyz"
+  comment  = "MX record pointing to our preferred mailserver"
+  priority = 1
+  proxied  = false
+  ttl      = 3600
+  type     = "MX"
+  value    = "smtp.google.com"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "mail_spf" {
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+  name    = "mail.autonomys.xyz"
+  type    = "TXT"
+  value   = "v=spf1 a mx include:_spf.google.com include:sendgrid.net ~all"
+  ttl     = 3600
+}
+
+resource "cloudflare_record" "mail_beehiiv_txt" {
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+  name    = "_beehiiv-authentication"
+  type    = "TXT"
+  value   = "57foN3YSwWdS6bvUsqRfztqw"
+  ttl     = 3600
+}
+
 resource "cloudflare_record" "dmarc" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_dmarc"

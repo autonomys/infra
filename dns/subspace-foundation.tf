@@ -35,3 +35,25 @@ resource "cloudflare_record" "subspace_foundation_notion_txt" {
   value   = "111b66ba-c532-81eb-abf2-0070cacddff4"
   ttl     = 3600
 }
+
+// subspace telemetry
+resource "cloudflare_record" "telemetry" {
+  comment = "Subspace Telemetry"
+  name    = "telemetry"
+  proxied = true
+  ttl     = 1
+  type    = "A"
+  value   = "35.89.37.220"
+  zone_id = data.cloudflare_zone.subspace_foundation.id
+}
+
+// subspace telemetry (substation)
+resource "cloudflare_record" "substation" {
+  comment = "Subspace Telemetry (Substation)"
+  name    = "substation"
+  proxied = true
+  ttl     = 1
+  type    = "A"
+  value   = "35.89.37.220"
+  zone_id = data.cloudflare_zone.subspace_foundation.id
+}
