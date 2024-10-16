@@ -149,7 +149,7 @@ resource "null_resource" "start-farmer-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
       "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo CACHE_PERCENTAGE=${var.cache_percentage} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file

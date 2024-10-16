@@ -152,7 +152,8 @@ resource "null_resource" "start-farmer-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",
       "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /root/subspace/.env",
       "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /root/subspace/.env",
-      "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /root/subspace/.env",
+      "echo CACHE_PERCENTAGE=${var.cache_percentage} >> /home/${var.ssh_user}/subspace/.env",
+      "echo THREAD_POOL_SIZE=${var.thread_pool_size} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /root/subspace/.env",
       "echo BRANCH_NAME=${var.branch_name} >> /root/subspace/.env",
 
