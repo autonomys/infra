@@ -68,3 +68,15 @@ variable "genesis_hash" {
   description = "Genesis hash"
   type        = string
 }
+
+variable "cache_percentage" {
+  description = "cache percentage"
+  type        = string
+  default     = "50"
+}
+
+variable "thread_pool_size" {
+  description = "thread pool size (number of cpu cores)"
+  type        = string
+  default     = "8"
+}

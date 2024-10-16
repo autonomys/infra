@@ -147,7 +147,9 @@ module "gemini-3h" {
     docker-tag             = "gemini-3h-2024-sep-03"
     reserved-only          = false
     prune                  = false
-    plot-size              = "100G"
+    plot-size              = "20G"
+    cache-percentage       = var.cache_percentage
+    thread_pool_size       = var.thread_pool_size
     reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433

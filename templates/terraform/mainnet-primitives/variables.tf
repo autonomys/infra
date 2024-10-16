@@ -94,12 +94,6 @@ variable "path_to_configs" {
   type        = string
 }
 
-variable "piece_cache_size" {
-  description = "Piece cache size"
-  type        = string
-  default     = "1GiB"
-}
-
 variable "rpc-indexer-node-config" {
   description = "Full node deployment config"
   type = object({

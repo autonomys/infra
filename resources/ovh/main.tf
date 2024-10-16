@@ -65,6 +65,8 @@ module "network" {
     reserved-only          = true
     prune                  = false
     plot-size              = "10G"
+    cache-percentage       = var.cache_percentage
+    thread_pool_size       = var.thread_pool_size
     reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433

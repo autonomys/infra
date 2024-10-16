@@ -95,12 +95,6 @@ variable "path_to_configs" {
   type        = string
 }
 
-variable "piece_cache_size" {
-  description = "Piece cache size"
-  type        = string
-  default     = "1GiB"
-}
-
 variable "rpc-node-config" {
   description = "RPC node deployment config"
   type = object({

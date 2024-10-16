@@ -43,8 +43,8 @@ services:
       "--listen-on", "/ip6/::/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
       "--metrics-endpoint=0.0.0.0:9616",
-      "--cache-percentage", "50",
-      "--farm-during-initial-plotting", true",
+      "--cache-percentage", "\${CACHE_PERCENTAGE}",
+      "--farming-thread-pool-size", "\${THREAD_POOL_SIZE}",
     ]
 
   archival-node:

@@ -8,12 +8,6 @@ variable "path_to_scripts" {
   type        = string
 }
 
-variable "piece_cache_size" {
-  description = "Piece cache size"
-  type        = string
-  default     = "1GiB"
-}
-
 variable "node-config" {
   description = "Full node deployment config"
   type = object({
