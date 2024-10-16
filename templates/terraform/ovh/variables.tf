@@ -84,6 +84,8 @@ variable "farmer-node-config" {
     reserved-only          = bool
     prune                  = bool
     plot-size              = string
+    cache-percentage       = number
+    thread_pool_size       = number
     reward-address         = string
     force-block-production = bool
     node-dsn-port          = number

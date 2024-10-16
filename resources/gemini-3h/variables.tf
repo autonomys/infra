@@ -121,12 +121,12 @@ variable "pot_external_entropy" {
 
 variable "cache_percentage" {
   description = "cache percentage"
-  type        = string
-  default     = "50"
+  type        = number
+  default     = 50
 }
 
 variable "thread_pool_size" {
   description = "thread pool size (number of cpu cores)"
-  type        = string
-  default     = "8"
+  type        = number
+  default     = 8
 }
