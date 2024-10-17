@@ -52,9 +52,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333/tcp"
-      - "30333:30333/udp"
       - "30433:30433/tcp"
-      - "30433:30433/udp"
       - "30334:30334/tcp"
       - "9615:9615"
     labels:
@@ -112,7 +110,7 @@ for (( i = 0; i < node_count; i++ )); do
 done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
   echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
 done
@@ -143,7 +141,7 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--rpc-max-connections", "10000",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace/bootstrap_node_evm_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)
       echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
       echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
     done
