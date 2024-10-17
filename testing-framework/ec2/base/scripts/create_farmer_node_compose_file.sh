@@ -23,7 +23,6 @@ services:
       - /home/$USER/subspace/farmer_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30533:30533/udp"
       - "30533:30533/tcp"
       - "9616:9616"
     logging:
@@ -33,13 +32,9 @@ services:
     command: [
       "farm", "path=/var/subspace,size=\${PLOT_SIZE}",
       "--node-rpc-url", "ws://archival-node:9944",
-      "--external-address", "/ip4/$EXTERNAL_IP/udp/30533/quic-v1",
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30533",
-      "--external-address", "/ip6/$EXTERNAL_IP_V6/udp/30533/quic-v1",
       "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30533",
-      "--listen-on", "/ip4/0.0.0.0/udp/30533/quic-v1",
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
-      "--listen-on", "/ip6/::/udp/30533/quic-v1",
       "--listen-on", "/ip6/::/tcp/30533",
       "--reward-address", "\${REWARD_ADDRESS}",
       "--metrics-endpoint=0.0.0.0:9616",
@@ -56,9 +51,7 @@ services:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333/udp"
       - "30333:30333/tcp"
-      - "30433:30433/udp"
       - "30433:30433/tcp"
       - "9615:9615"
     logging:
@@ -74,8 +67,8 @@ services:
 #      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
-      "--dsn-external-address", "/ip4/$EXTERNAL_IP/udp/30433/quic-v1",
-      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/udp/30433/quic-v1",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--node-key", "\${NODE_KEY}",
       "--farmer",
       "--timekeeper",
@@ -93,7 +86,7 @@ dsn_bootstrap_node_count=${4}
 force_block_production=${5}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR_TCP=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
   echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
 done
