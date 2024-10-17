@@ -82,19 +82,38 @@ resource "cloudflare_record" "mailserver_mx" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.id
 }
 
-// mailserver records for mail.autonomys.xyz
-resource "cloudflare_record" "mail_mailserver_mx" {
-  name     = "mail.autonomys.xyz"
-  comment  = "MX record pointing to our preferred mailserver"
-  priority = 1
-  proxied  = false
-  ttl      = 3600
-  type     = "MX"
-  value    = "smtp.google.com"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.id
+// CNAME record for mail.autonomys.xyz
+resource "cloudflare_record" "mail_autonomys_cname" {
+  name    = "em6407.mail"
+  comment = "CNAME record pointing to beehiiv"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "u47499917.wl168.sendgrid.net"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
 }
 
-resource "cloudflare_record" "mail_spf" {
+resource "cloudflare_record" "mail_autonomys_cname_dk" {
+  name    = "607._domainkey.mail"
+  comment = "CNAME DKIM record pointing to beehiiv"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "607.domainkey.u47499917.wl168.sendgrid.net"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "mail_autonomys_cname_dk_2" {
+  name    = "6072._domainkey.mail"
+  comment = "CNAME DKIM record pointing to beehiiv"
+  proxied = false
+  ttl     = 3600
+  type    = "CNAME"
+  value   = "6072.domainkey.u47499917.wl168.sendgrid.net"
+  zone_id = data.cloudflare_zone.autonomys_xyz.id
+}
+
+resource "cloudflare_record" "mail_autonomys_spf" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "mail.autonomys.xyz"
   type    = "TXT"
@@ -102,7 +121,7 @@ resource "cloudflare_record" "mail_spf" {
   ttl     = 3600
 }
 
-resource "cloudflare_record" "mail_beehiiv_txt" {
+resource "cloudflare_record" "mail_autonomys_beehiiv_txt" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_beehiiv-authentication"
   type    = "TXT"
