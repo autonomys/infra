@@ -45,7 +45,6 @@ services:
     environment:
       - RUST_LOG=info
     ports:
-      - "30533:30533/udp"
       - "30533:30533/tcp"
       - "9616:9616"
     logging:
@@ -58,11 +57,7 @@ services:
       - "--keypair"
       - ${DSN_NODE_KEY}
       - "--listen-on"
-      - /ip4/0.0.0.0/udp/30533/quic-v1
-      - "--listen-on"
       - /ip4/0.0.0.0/tcp/30533
-      - "--listen-on"
-      - /ip6/::/udp/30533/quic-v1
       - "--listen-on"
       - /ip6/::/tcp/30533
       - --protocol-version
@@ -77,34 +72,28 @@ services:
       - "1000"
 ## comment to disable external addresses using IP format for now
       - "--external-address"
-      - "/ip4/${EXTERNAL_IP}/udp/30533/quic-v1"
-      - "--external-address"
       - "/ip4/${EXTERNAL_IP}/tcp/30533"
-      - "--external-address"
-      - "/ip6/${EXTERNAL_IP_V6}/udp/30533/quic-v1"
       - "--external-address"
       - "/ip6/${EXTERNAL_IP_V6}/tcp/30533"
       - "--external-address"
-      - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+      - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--external-address"
       - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--reserved-peers"
-      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--bootstrap-nodes"
-      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
+      - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--reserved-peers"
-      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
+      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
       - "--bootstrap-nodes"
-      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
+      - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
   archival-node:
     image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped
     ports:
-      - "30333:30333/udp"
       - "30333:30333/tcp"
-      - "30433:30433/udp"
       - "30433:30433/tcp"
       - "9615:9615"
     logging:
@@ -121,9 +110,7 @@ services:
 #      "--pot-external-entropy", "${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
-      "--dsn-external-address", "/ip4/${EXTERNAL_IP}/udp/30433/quic-v1",
       "--dsn-external-address", "/ip4/${EXTERNAL_IP}/tcp/30433",
-      "--dsn-external-address", "/ip6/${EXTERNAL_IP_V6}/udp/30433/quic-v1",
       "--dsn-external-address", "/ip6/${EXTERNAL_IP_V6}/tcp/30433",
       "--node-key", "${NODE_KEY}",
       "--in-peers", "1000",

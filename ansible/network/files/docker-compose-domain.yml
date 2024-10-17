@@ -78,9 +78,7 @@ services:
     restart: unless-stopped
     ports:
       - "30333:30333/tcp"
-      - "30333:30333/udp"
       - "30433:30433/tcp"
-      - "30433:30433/udp"
       - "30334:30334/tcp"
       - "9615:9615"
     labels:
@@ -120,16 +118,15 @@ services:
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
-      "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/udp/30433/quic-v1/p2p/${NODE_PEER_ID}",
       "--dsn-external-address", "/dns/domain.${NETWORK_NAME}.subspace.network/tcp/30433/p2p/${NODE_PEER_ID}",
       "--reserved-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
       "--bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
       "--reserved-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
       "--bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
-      "--dsn-reserved-peers", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
-      "--dsn-bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
-      "--dsn-reserved-peers", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
-      "--dsn-bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/udp/30533/quic-v1/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--dsn-reserved-peers", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--dsn-bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
       "--",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
