@@ -89,16 +89,14 @@ Once the configuration file is ready, make the python script executable and run 
 ```bash
 chmod +x manage_subspace.py
 python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace \
---pot_external_entropy random_value --network gemini-3h --plot_size 10G --cache_percentage 15
+--pot_external_entropy random_value --network devnet --plot_size 10G --cache_percentage 15
 
 # prune images
-python manage_subspace.py --config nodes.toml --subspace_dir /home/ubuntu/subspace/subspace --prune
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --prune
 
 # restart stack
-python manage_subspace.py --config nodes.toml --subspace_dir /home/ubuntu/subspace/subspace --restart
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --restart
 
-# restart stack with new docker tag
-python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --restart
 ```
 
 ### Command Line Options
