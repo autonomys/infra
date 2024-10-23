@@ -150,15 +150,14 @@ def grep_protocol_version(client, retries=5, interval=30):
 def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None, prune=False, restart=False):
     """Generic function to handle different node types with specified actions."""
     try:
-        docker_compose_down(client, subspace_dir)
-        modify_env_file(client, subspace_dir, release_version, pot_external_entropy=pot_external_entropy, plot_size=plot_size, cache_percentage=cache_percentage, network=network)
-        docker_compose_up(client, subspace_dir)
-
         if restart:
             docker_compose_restart(client, subspace_dir)
-
-        if prune:
+        elif prune:
             docker_cleanup(client, subspace_dir)
+        else:
+            docker_compose_down(client, subspace_dir)
+            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=pot_external_entropy, plot_size=plot_size, cache_percentage=cache_percentage, network=network)
+            docker_compose_up(client, subspace_dir)
 
     except Exception as e:
         logger.error(f"Error handling node {node['host']}: {e}")
