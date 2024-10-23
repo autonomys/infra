@@ -42,7 +42,7 @@ Activate the virtual environment where the dependencies are installed:
 
 ```bash
 source subspace_env/bin/activate
-
+```
 
 ### Step 3: Prepare Configuration
 
