@@ -13,7 +13,7 @@ module "taurus" {
     docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -29,7 +29,7 @@ module "taurus" {
     docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -46,7 +46,7 @@ module "taurus" {
     docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
