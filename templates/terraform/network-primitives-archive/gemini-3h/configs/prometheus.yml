@@ -1,0 +1,8 @@
+# A scrape configuration for subspace node:
+scrape_configs:
+  - job_name: "subspace_node"
+
+    scrape_interval: 5s
+
+    static_configs:
+      - targets: ["localhost:9615"]
