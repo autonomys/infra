@@ -78,13 +78,13 @@ services:
       - "/dns/bootstrap-${NODE_ID}.autoid.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${NODE_PEER_ID}"
       - "--external-address"
       - "/dns/bootstrap-${NODE_ID}.autoid.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${NODE_PEER_ID}"
-      - "--reserved-peers"
+      - "--reserved-peer"
       - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
-      - "--bootstrap-nodes"
+      - "--bootstrap-node"
       - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
-      - "--reserved-peers"
+      - "--reserved-peer"
       - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
-      - "--bootstrap-nodes"
+      - "--bootstrap-node"
       - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
   archival-node:
     image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
@@ -121,13 +121,13 @@ services:
       "--dsn-pending-out-connections", "1000",
       "--prometheus-listen-on", "0.0.0.0:9615",
       "--dsn-external-address", "/dns/bootstrap-${NODE_ID}.autoid.${NETWORK_NAME}.subspace.network/tcp/30433/p2p/${NODE_PEER_ID}",
-      "--reserved-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
-      "--bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
-      "--reserved-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
-      "--bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
-      "--dsn-reserved-peers", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
+      "--reserved-peer", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--bootstrap-node", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_0_PEER_ID}",
+      "--reserved-peer", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--bootstrap-node", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_1_PEER_ID}",
+      "--dsn-reserved-peer", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
       "--dsn-bootstrap-nodes", "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}",
-      "--dsn-reserved-peers", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
+      "--dsn-reserved-peer", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
       "--dsn-bootstrap-nodes", "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}",
       "--",
       "--state-pruning", "archive",
@@ -137,8 +137,8 @@ services:
       "--rpc-cors", "all",
       "--rpc-listen-on", "0.0.0.0:8944",
       "--rpc-methods", "safe",
-      "--reserved-nodes", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
-      "--bootstrap-nodes", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
-      "--reserved-nodes", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
-      "--bootstrap-nodes", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
+      "--reserved-peer", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
+      "--bootstrap-node", "/dns/bootstrap-0.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_0_OPERATOR_AUTO_PEER_ID}",
+      "--reserved-peer", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
+      "--bootstrap-node", "/dns/bootstrap-1.autoid.${NETWORK_NAME}.subspace.network/tcp/30334/p2p/${NODE_1_OPERATOR_AUTO_PEER_ID}",
     ]

@@ -87,7 +87,7 @@ bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
   echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootnodes\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done

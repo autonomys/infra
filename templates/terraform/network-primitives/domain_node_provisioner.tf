@@ -1,26 +1,26 @@
 locals {
-  domain_nodes_ip_v4 = flatten([
-    [aws_instance.domain_node.*.public_ip]
+  evm_nodes_ip_v4 = flatten([
+    [aws_instance.evm_node.*.public_ip]
     ]
   )
-  domain_nodes_ip_v6 = flatten([
-    [aws_instance.domain_node.*.ipv6_addresses]
+  evm_nodes_ip_v6 = flatten([
+    [aws_instance.evm_node.*.ipv6_addresses]
     ]
   )
 }
 
-resource "null_resource" "setup-domain-nodes" {
-  count = length(local.domain_nodes_ip_v4)
+resource "null_resource" "setup-evm-nodes" {
+  count = length(local.evm_nodes_ip_v4)
 
-  depends_on = [aws_instance.domain_node]
+  depends_on = [aws_instance.evm_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.domain_nodes_ip_v4)
+    cluster_instance_ipv4s = join(",", local.evm_nodes_ip_v4)
   }
 
   connection {
-    host        = local.domain_nodes_ip_v4[count.index]
+    host        = local.evm_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -64,16 +64,16 @@ resource "null_resource" "setup-domain-nodes" {
 
 }
 
-resource "null_resource" "prune-domain-nodes" {
-  count      = var.domain-node-config.prune ? length(local.domain_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-domain-nodes]
+resource "null_resource" "prune-evm-nodes" {
+  count      = var.evm-node-config.prune ? length(local.evm_nodes_ip_v4) : 0
+  depends_on = [null_resource.setup-evm-nodes]
 
   triggers = {
-    prune = var.domain-node-config.prune
+    prune = var.evm-node-config.prune
   }
 
   connection {
-    host        = local.domain_nodes_ip_v4[count.index]
+    host        = local.evm_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -94,19 +94,19 @@ resource "null_resource" "prune-domain-nodes" {
   }
 }
 
-resource "null_resource" "start-domain-nodes" {
-  count = length(local.domain_nodes_ip_v4)
+resource "null_resource" "start-evm-nodes" {
+  count = length(local.evm_nodes_ip_v4)
 
-  depends_on = [null_resource.setup-domain-nodes]
+  depends_on = [null_resource.setup-evm-nodes]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.domain-node-config.deployment-version
-    reserved_only      = var.domain-node-config.reserved-only
+    deployment_version = var.evm-node-config.deployment-version
+    reserved_only      = var.evm-node-config.reserved-only
   }
 
   connection {
-    host        = local.domain_nodes_ip_v4[count.index]
+    host        = local.evm_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -116,7 +116,7 @@ resource "null_resource" "start-domain-nodes" {
 
   # copy node keys file
   provisioner "file" {
-    source      = "./domain_node_keys.txt"
+    source      = "./evm_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -158,24 +158,24 @@ resource "null_resource" "start-domain-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-evm-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.evm-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.evm-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.evm-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.evm-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.evm-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.evm-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.domain_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.evm_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.evm-node-config.enable-domains} ${var.evm-node-config.domain-id[0]}",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

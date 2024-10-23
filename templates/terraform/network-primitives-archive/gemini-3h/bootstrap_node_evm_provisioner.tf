@@ -1,26 +1,27 @@
 locals {
-  evm_nodes_ip_v4 = flatten([
-    [aws_instance.evm_node.*.public_ip]
+  bootstrap_nodes_evm_ip_v4 = flatten([
+    [aws_instance.bootstrap_node_evm.*.public_ip]
     ]
   )
-  evm_nodes_ip_v6 = flatten([
-    [aws_instance.evm_node.*.ipv6_addresses]
+
+  bootstrap_nodes_evm_ip_v6 = flatten([
+    [aws_instance.bootstrap_node_evm.*.ipv6_addresses]
     ]
   )
 }
 
-resource "null_resource" "setup-evm-nodes" {
-  count = length(local.evm_nodes_ip_v4)
+resource "null_resource" "setup-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [aws_instance.evm_node]
+  depends_on = [aws_instance.bootstrap_node_evm]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.evm_nodes_ip_v4)
+    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_evm_ip_v4)
   }
 
   connection {
-    host        = local.evm_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -48,32 +49,25 @@ resource "null_resource" "setup-evm-nodes" {
     destination = "/home/${var.ssh_user}/subspace/"
   }
 
-  # copy LE script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/acme.sh"
-    destination = "/home/${var.ssh_user}/subspace/acme.sh"
-  }
-
-  # install docker and docker compose and LE script
+  # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
-      "bash /home/${var.ssh_user}/subspace/acme.sh",
     ]
   }
 
 }
 
-resource "null_resource" "prune-evm-nodes" {
-  count      = var.evm-node-config.prune ? length(local.evm_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-evm-nodes]
+resource "null_resource" "prune-bootstrap-nodes-evm" {
+  count      = var.bootstrap-node-evm-config.prune ? length(local.bootstrap_nodes_evm_ip_v4) : 0
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   triggers = {
-    prune = var.evm-node-config.prune
+    prune = var.bootstrap-node-evm-config.prune
   }
 
   connection {
-    host        = local.evm_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -94,19 +88,19 @@ resource "null_resource" "prune-evm-nodes" {
   }
 }
 
-resource "null_resource" "start-evm-nodes" {
-  count = length(local.evm_nodes_ip_v4)
+resource "null_resource" "start-bootstrap-nodes-evm" {
+  count = length(local.bootstrap_nodes_evm_ip_v4)
 
-  depends_on = [null_resource.setup-evm-nodes]
+  depends_on = [null_resource.setup-bootstrap-nodes-evm]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.evm-node-config.deployment-version
-    reserved_only      = var.evm-node-config.reserved-only
+    deployment_version = var.bootstrap-node-evm-config.deployment-version
+    reserved_only      = var.bootstrap-node-evm-config.reserved-only
   }
 
   connection {
-    host        = local.evm_nodes_ip_v4[count.index]
+    host        = local.bootstrap_nodes_evm_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -114,9 +108,9 @@ resource "null_resource" "start-evm-nodes" {
     timeout     = "300s"
   }
 
-  # copy node keys file
+  # copy bootstrap node keys file
   provisioner "file" {
-    source      = "./evm_node_keys.txt"
+    source      = "./bootstrap_node_evm_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -126,28 +120,15 @@ resource "null_resource" "start-evm-nodes" {
     destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
   }
 
-
-  # copy boostrap node keys file
-  provisioner "file" {
-    source      = "./bootstrap_node_evm_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_evm_keys.txt"
-  }
-
-  # copy dsn_boostrap node keys file
+  # copy DSN bootstrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
-  # copy keystore
-  provisioner "file" {
-    source      = "./keystore"
-    destination = "/home/${var.ssh_user}/subspace/keystore/"
-  }
-
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_domain_node_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_bootstrap_node_domain_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
@@ -158,24 +139,27 @@ resource "null_resource" "start-evm-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-evm-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-evm-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.evm-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.evm-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.bootstrap-node-evm-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.bootstrap-node-evm-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.evm-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.evm-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.evm-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.evm-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
+      "echo DSN_LISTEN_PORT=${var.bootstrap-node-evm-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.bootstrap-node-evm-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo OPERATOR_PORT=${var.bootstrap-node-evm-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo GENESIS_HASH=${var.bootstrap-node-evm-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.evm_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.evm-node-config.enable-domains} ${var.evm-node-config.domain-id[0]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-evm-config.reserved-only} ${length(local.bootstrap_nodes_evm_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

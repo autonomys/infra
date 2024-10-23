@@ -37,15 +37,14 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap        = 2
-    rpc              = 2
-    domain           = 2
-    autoid           = 2
-    rpc-squid        = 1
-    nova-squid       = 1
-    farmer           = 1
-    evm_bootstrap    = 1
-    autoid_bootstrap = 1
+    bootstrap     = 2
+    rpc           = 2
+    domain        = 2
+    autoid        = 2
+    rpc-indexer   = 1
+    nova-indexer  = 1
+    farmer        = 1
+    evm_bootstrap = 1
   }
 }
 
@@ -95,6 +94,23 @@ variable "path_to_configs" {
   type        = string
 }
 
+variable "rpc-indexer-node-config" {
+  description = "Full node deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    reserved-only      = bool
+    prune              = bool
+    node-dsn-port      = number
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
 variable "rpc-node-config" {
   description = "RPC node deployment config"
   type = object({
@@ -113,8 +129,8 @@ variable "rpc-node-config" {
   })
 }
 
-variable "rpc-squid-node-config" {
-  description = "RPC squid node deployment config"
+variable "rpc-indexer-node-config" {
+  description = "RPC indexer node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number
@@ -131,7 +147,7 @@ variable "rpc-squid-node-config" {
   })
 }
 
-variable "domain-node-config" {
+variable "evm-node-config" {
   description = "Domain node deployment config"
   type = object({
     instance-type      = string
@@ -173,8 +189,8 @@ variable "autoid-node-config" {
   })
 }
 
-variable "nova-squid-node-config" {
-  description = "Nova squid node deployment config"
+variable "nova-indexer-node-config" {
+  description = "Nova indexer node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number

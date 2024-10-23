@@ -1,4 +1,4 @@
-module "gemini-3h" {
+module "taurus" {
   source          = "../../templates/terraform/network-primitives"
   path_to_scripts = "../../templates/scripts"
   path_to_configs = "../../templates/configs"
@@ -10,7 +10,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "taurus-2024-oct-23"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -26,7 +26,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "taurus-2024-oct-23"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -43,7 +43,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "taurus-2024-oct-23"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -60,7 +60,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-tag         = "taurus-2024-jul-16"
     domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
@@ -75,7 +75,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["nova-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-jul-16"
+    docker-tag         = "taurus-2024-jul-16"
     domain-prefix      = "nova-indexer"
     reserved-only      = false
     prune              = false
@@ -93,7 +93,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "taurus-2024-oct-23"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -102,13 +102,13 @@ module "gemini-3h" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  evm-node-config = {
+  domain-node-config = {
     instance-type      = var.instance_type["domain"]
     deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-sep-03"
+    docker-tag         = "taurus-2024-oct-23"
     domain-prefix      = "nova"
     reserved-only      = false
     prune              = false
@@ -126,7 +126,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid"]
     docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-may-06"
+    docker-tag         = "taurus-2024-may-06"
     domain-prefix      = ["autoid"]
     reserved-only      = false
     prune              = false
@@ -144,13 +144,13 @@ module "gemini-3h" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "gemini-3h-2024-sep-03"
+    docker-tag             = "taurus-2024-oct-23"
     reserved-only          = false
     prune                  = false
-    plot-size              = "20G"
+    plot-size              = "10G"
+    reward-address         = var.farmer_reward_address
     cache-percentage       = var.cache_percentage
     thread_pool_size       = var.thread_pool_size
-    reward-address         = var.farmer_reward_address
     force-block-production = true
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
