@@ -79,13 +79,13 @@ services:
       - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
       - "--external-address"
       - "/dns/bootstrap-${NODE_ID}.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
-      - "--reserved-peers"
+      - "--reserved-peer"
       - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
-      - "--bootstrap-nodes"
+      - "--bootstrap-node"
       - "/dns/bootstrap-0.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_0_SUBSPACE_PEER_ID}"
-      - "--reserved-peers"
+      - "--reserved-peer"
       - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
-      - "--bootstrap-nodes"
+      - "--bootstrap-node"
       - "/dns/bootstrap-1.${NETWORK_NAME}.subspace.network/tcp/30533/p2p/${BOOTSTRAP_1_SUBSPACE_PEER_ID}"
   archival-node:
     image: ghcr.io/${REPO_ORG}/node:${DOCKER_TAG}
@@ -120,7 +120,7 @@ services:
       "--dsn-pending-in-connections", "1000",
       "--dsn-pending-out-connections", "1000",
       "--prometheus-listen-on", "0.0.0.0:9615",
-      "--reserved-nodes", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
-      "--bootstrap-nodes", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
+      "--reserved-peer", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
+      "--bootstrap-node", "/dns/${BOOTSTRAP_NODE_PEER}.${NETWORK_NAME}.subspace.network/tcp/30333/p2p/${BOOTSTRAP_NODE_PEER_ID}",
 
     ]
