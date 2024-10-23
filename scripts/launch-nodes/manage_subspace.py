@@ -35,28 +35,23 @@ def ssh_connect(host, user, key_file):
         logger.error(f"Failed to connect to {host}: {e}")
         raise
 
-def run_command(client, command, retries=3, delay=5):
-    """Run a command over SSH with retries."""
-    for attempt in range(retries):
-        try:
-            stdin, stdout, stderr = client.exec_command(command)
-            stdout.channel.recv_exit_status()
-            output = stdout.read().decode('utf-8')
-            error = stderr.read().decode('utf-8')
+def run_command(client, command):
+    """Run a command over SSH and return the output."""
+    try:
+        stdin, stdout, stderr = client.exec_command(command)
+        output = stdout.read().decode('utf-8')
+        error = stderr.read().decode('utf-8')
 
-            # Treat Docker status updates as INFO instead of ERROR
-            if error and not any(keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
+        # Treat Docker status updates as INFO instead of ERROR
+        if error:
+            if any(keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
+                logger.info(f"Command output: {error.strip()}")
+            else:
                 logger.error(f"Error running command: {error.strip()}")
-            else:
-                logger.info(f"Command output: {output.strip()}")
-            return output, error
-        except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed to run command: {e}")
-            if attempt < retries - 1:
-                logger.info(f"Retrying in {delay} seconds...")
-                sleep(delay)
-            else:
-                raise
+        return output, error
+    except Exception as e:
+        logger.error(f"Failed to run command: {e}")
+        raise
 
 def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None):
     """Modify the .env file to update various settings."""
@@ -94,12 +89,19 @@ def docker_compose_down(client, subspace_dir):
         logger.error(f"Failed to run sudo docker compose down -v: {e}")
         raise
 
-def docker_compose_restart(client, subspace_dir):
+def docker_compose_restart(client, subspace_dir, docker_tag=None):
     """Run sudo docker compose restart in the subspace directory."""
     try:
-        command = f'cd {subspace_dir} && sudo docker compose restart'
+        # Modify .env file if a new DOCKER_TAG is provided
+        if docker_tag:
+            logger.info(f"Updating DOCKER_TAG to {docker_tag} in {subspace_dir}/.env")
+            modify_env_file(client, subspace_dir, release_version=docker_tag)
+
+        # Restart the containers
+        restart_cmd = f'cd {subspace_dir} && sudo docker compose restart'
         logger.info(f"Running sudo docker compose restart in {subspace_dir}")
-        run_command(client, command)
+        run_command(client, restart_cmd)
+
     except Exception as e:
         logger.error(f"Failed to run sudo docker compose restart: {e}")
         raise
@@ -107,9 +109,22 @@ def docker_compose_restart(client, subspace_dir):
 def docker_cleanup(client, subspace_dir):
     """Stop all containers, prune unused containers and images in the subspace directory."""
     try:
-        command = f'cd {subspace_dir} && sudo docker stop $(sudo docker ps -q) && sudo docker container prune -f && sudo docker image prune -a -f'
-        logger.info(f"Running Docker cleanup commands in {subspace_dir}")
-        run_command(client, command)
+        # Check if there are running containers
+        check_running_containers_cmd = f'cd {subspace_dir} && sudo docker ps -q'
+        stdout, _ = run_command(client, check_running_containers_cmd)
+
+        if stdout.strip():  # Only run stop command if there are running containers
+            stop_containers_cmd = f'cd {subspace_dir} && sudo docker stop $(sudo docker ps -q)'
+            logger.info(f"Stopping running containers in {subspace_dir}")
+            run_command(client, stop_containers_cmd)
+        else:
+            logger.info("No running containers found to stop.")
+
+        # Prune unused containers and images
+        prune_cmd = f'cd {subspace_dir} && sudo docker container prune -f && sudo docker image prune -a -f'
+        logger.info(f"Pruning unused containers and images in {subspace_dir}")
+        run_command(client, prune_cmd)
+
     except Exception as e:
         logger.error(f"Failed to run Docker cleanup commands: {e}")
         raise
@@ -147,16 +162,26 @@ def grep_protocol_version(client, retries=5, interval=30):
     logger.error("Failed to retrieve protocol version hash after retries.")
     return None
 
-def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None, prune=False, restart=False):
+def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None,
+                plot_size=None, cache_percentage=None, network=None, prune=False, restart=False,
+                update_genesis_hash=False, genesis_hash=None):
     """Generic function to handle different node types with specified actions."""
     try:
-        if restart:
-            docker_compose_restart(client, subspace_dir)
-        elif prune:
+        if prune:
             docker_cleanup(client, subspace_dir)
+        elif restart:
+            docker_compose_restart(client, subspace_dir)
         else:
             docker_compose_down(client, subspace_dir)
-            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=pot_external_entropy, plot_size=plot_size, cache_percentage=cache_percentage, network=network)
+
+            # Update .env file with the appropriate parameters
+            modify_env_file(client, subspace_dir, release_version,
+                            pot_external_entropy=pot_external_entropy,
+                            plot_size=plot_size,
+                            cache_percentage=cache_percentage,
+                            network=network,
+                            genesis_hash=genesis_hash if update_genesis_hash else None)
+
             docker_compose_up(client, subspace_dir)
 
     except Exception as e:
@@ -225,11 +250,24 @@ def main():
         try:
             logger.info(f"Connecting to RPC node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-            handle_node(client, node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
 
-            # If this is an RPC node, grep the logs for protocol version hash
+            # Handle node operations (prune/restart will be managed here)
+            handle_node(client, node, args.subspace_dir, args.release_version,
+                        pot_external_entropy=args.pot_external_entropy,
+                        network=args.network,
+                        prune=args.prune,
+                        restart=args.restart)
+
+            # Skip protocol version extraction if prune or restart is specified
+            if args.prune or args.restart:
+                logger.info(f"Skipping protocol version extraction for RPC node {node['host']} due to prune/restart.")
+                continue
+
+            # If this is an RPC node, wait and then extract protocol version hash
             logger.info(f"Waiting for RPC node {node['host']} to start...")
             sleep(30)  # Adjust sleep time as necessary
+
+            # Attempt to grep the protocol version from logs
             protocol_version_hash = grep_protocol_version(client)
 
             if not protocol_version_hash:
@@ -242,18 +280,29 @@ def main():
                 client.close()
 
     # Step 4: Handle the bootstrap node, using the protocol version hash if available
-    if protocol_version_hash:
-        try:
-            logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
-            client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
-            handle_node(client, bootstrap_node, args.subspace_dir, args.release_version, genesis_hash=protocol_version_hash, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
-        except Exception as e:
-            logger.error(f"Error handling bootstrap node: {e}")
-        finally:
-            if client:
-                client.close()
-    else:
-        logger.error("Protocol version hash not found; skipping bootstrap node update.")
+    try:
+        logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
+        client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
+
+        # Warn about missing protocol version hash before proceeding with the bootstrap node update
+        if not protocol_version_hash:
+            logger.warning("Protocol version hash not found; proceeding with bootstrap node without genesis_hash update.")
+
+        # Handle node operations, updating genesis_hash only if protocol_version_hash is available
+        handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
+                    pot_external_entropy=args.pot_external_entropy,
+                    network=args.network,
+                    prune=args.prune,
+                    restart=args.restart,
+                    update_genesis_hash=bool(protocol_version_hash),
+                    genesis_hash=protocol_version_hash)
+
+    except Exception as e:
+        logger.error(f"Error handling bootstrap node: {e}")
+    finally:
+        if client:
+            client.close()
+
 
 if __name__ == '__main__':
     main()

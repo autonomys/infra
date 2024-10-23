@@ -88,14 +88,14 @@ Once the configuration file is ready, make the python script executable and run 
 
 ```bash
 chmod +x manage_subspace.py
-python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace \
---pot_external_entropy random_value --network gemini-3h --plot-size 10G --cache-percentage 15
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace \
+--pot_external_entropy random_value --network devnet --plot_size 10G --cache_percentage 15
 
 # prune images
-python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --prune
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --prune
 
 # restart stack
-python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --restart
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --restart
 
 ```
 
@@ -106,8 +106,8 @@ python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-s
 - `--subspace_dir`: Path to the Subspace directory (default: /home/ubuntu/subspace).
 - `--pot_external_entropy`: The random seed for proof of time entropy.
 - `--network`: The network name to be updated in the .env file.
-- `--plot-size`: Plot size to be set for Farmer nodes (e.g., 10G).
-- `--cache-percentage`: Cache percentage to be set for Farmer nodes.
+- `--plot_size`: Plot size to be set for Farmer nodes (e.g., 10G).
+- `--cache_percentage`: Cache percentage to be set for Farmer nodes.
 - `--prune`: Stop containers and remove unused Docker images.
 - `--restart`: Restart containers without wiping data.
 
