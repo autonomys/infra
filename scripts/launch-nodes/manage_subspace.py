@@ -35,22 +35,53 @@ def ssh_connect(host, user, key_file):
         logger.error(f"Failed to connect to {host}: {e}")
         raise
 
-def run_command(client, command):
-    """Run a command over SSH and return the output."""
-    try:
-        stdin, stdout, stderr = client.exec_command(command)
-        output = stdout.read().decode('utf-8')
-        error = stderr.read().decode('utf-8')
+def run_command(client, command, retries=3, delay=5):
+    """Run a command over SSH with retries."""
+    for attempt in range(retries):
+        try:
+            stdin, stdout, stderr = client.exec_command(command)
+            stdout.channel.recv_exit_status()
+            output = stdout.read().decode('utf-8')
+            error = stderr.read().decode('utf-8')
 
-        # Treat Docker status updates as INFO instead of ERROR
-        if error:
-            if any (keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
-                logger.info(f"Command output: {error.strip()}")
-            else:
+            # Treat Docker status updates as INFO instead of ERROR
+            if error and not any(keyword in error for keyword in ["Stopping", "Stopped", "Creating", "Started", "Removing", "Removed"]):
                 logger.error(f"Error running command: {error.strip()}")
-        return output, error
+            else:
+                logger.info(f"Command output: {output.strip()}")
+            return output, error
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed to run command: {e}")
+            if attempt < retries - 1:
+                logger.info(f"Retrying in {delay} seconds...")
+                sleep(delay)
+            else:
+                raise
+
+def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None):
+    """Modify the .env file to update various settings."""
+    try:
+        commands = [
+            f"sed -i '/^DOCKER_TAG=/c\\DOCKER_TAG={release_version}' {subspace_dir}/.env",
+            f"sed -i '/^GENESIS_HASH=/c\\GENESIS_HASH={genesis_hash}' {subspace_dir}/.env" if genesis_hash else "",
+            f"sed -i '/^POT_EXTERNAL_ENTROPY=/c\\POT_EXTERNAL_ENTROPY={pot_external_entropy}' {subspace_dir}/.env" if pot_external_entropy else "",
+            f"sed -i '/^PLOT_SIZE=/c\\PLOT_SIZE={plot_size}' {subspace_dir}/.env" if plot_size else "",
+            f"sed -i '/^CACHE_PERCENTAGE=/c\\CACHE_PERCENTAGE={cache_percentage}' {subspace_dir}/.env" if cache_percentage else "",
+            f"sed -i '/^NETWORK_NAME=/c\\NETWORK_NAME={network}' {subspace_dir}/.env" if network else ""
+        ]
+        for command in filter(bool, commands):
+            stdout, stderr = run_command(client, command)
+            if stderr:
+                logger.error(f"Error modifying .env file with command: {command}, error: {stderr}")
+                raise Exception(f"Error modifying .env file: {stderr}")
+            else:
+                logger.info(f"Successfully executed command: {command}")
     except Exception as e:
-        logger.error(f"Failed to run command: {command}: {e}")
+        logger.error(f"Failed to modify .env file: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"Failed to modify .env file: {e}")
         raise
 
 def docker_compose_down(client, subspace_dir):
@@ -63,40 +94,34 @@ def docker_compose_down(client, subspace_dir):
         logger.error(f"Failed to run sudo docker compose down -v: {e}")
         raise
 
-def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None):
-    """Modify the .env file to update the Docker tag, Genesis Hash, and POT_EXTERNAL_ENTROPY using sed."""
+def docker_compose_restart(client, subspace_dir):
+    """Run sudo docker compose restart in the subspace directory."""
     try:
-        # Command to update DOCKER_TAG
-        commands = [
-            f"sed -i 's/^DOCKER_TAG=.*/DOCKER_TAG={release_version}/' {subspace_dir}/.env"
-        ]
-
-        # Command to update GENESIS_HASH if provided
-        if genesis_hash:
-            commands.append(f"sed -i 's/^GENESIS_HASH=.*/GENESIS_HASH={genesis_hash}/' {subspace_dir}/.env")
-
-        # Command to update POT_EXTERNAL_ENTROPY if provided
-        if pot_external_entropy:
-            # If POT_EXTERNAL_ENTROPY exists, replace it, otherwise append it
-            commands.append(f"grep -q '^POT_EXTERNAL_ENTROPY=' {subspace_dir}/.env && "
-                            f"sed -i 's/^POT_EXTERNAL_ENTROPY=.*/POT_EXTERNAL_ENTROPY={pot_external_entropy}/' {subspace_dir}/.env || "
-                            f"echo 'POT_EXTERNAL_ENTROPY={pot_external_entropy}' >> {subspace_dir}/.env")
-
-        # Execute the commands over SSH
-        for command in commands:
-            logger.debug(f"Executing command: {command}")
-            stdin, stdout, stderr = client.exec_command(command)
-            stdout_text = stdout.read().decode()
-            stderr_text = stderr.read().decode()
-
-            if stderr_text:
-                logger.error(f"Error modifying .env file with command: {command}, error: {stderr_text}")
-                raise Exception(f"Error modifying .env file: {stderr_text}")
-            else:
-                logger.info(f"Successfully executed command: {command}")
-
+        command = f'cd {subspace_dir} && sudo docker compose restart'
+        logger.info(f"Running sudo docker compose restart in {subspace_dir}")
+        run_command(client, command)
     except Exception as e:
-        logger.error(f"Failed to modify .env file: {e}")
+        logger.error(f"Failed to run sudo docker compose restart: {e}")
+        raise
+
+def docker_cleanup(client, subspace_dir):
+    """Stop all containers, prune unused containers and images in the subspace directory."""
+    try:
+        command = f'cd {subspace_dir} && sudo docker stop $(sudo docker ps -q) && sudo docker container prune -f && sudo docker image prune -a -f'
+        logger.info(f"Running Docker cleanup commands in {subspace_dir}")
+        run_command(client, command)
+    except Exception as e:
+        logger.error(f"Failed to run Docker cleanup commands: {e}")
+        raise
+
+def docker_compose_up(client, subspace_dir):
+    """Run sudo docker compose up -d in the subspace directory."""
+    try:
+        command = f'cd {subspace_dir} && sudo docker compose up -d'
+        logger.info(f"Running sudo docker compose up -d in {subspace_dir}")
+        run_command(client, command)
+    except Exception as e:
+        logger.error(f"Failed to run sudo docker compose up -d: {e}")
         raise
 
 def grep_protocol_version(client, retries=5, interval=30):
@@ -122,135 +147,113 @@ def grep_protocol_version(client, retries=5, interval=30):
     logger.error("Failed to retrieve protocol version hash after retries.")
     return None
 
-def docker_compose_up(client, subspace_dir):
-    """Run sudo docker compose up -d in the subspace directory."""
+def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None, prune=False, restart=False):
+    """Generic function to handle different node types with specified actions."""
     try:
-        command = f'cd {subspace_dir} && sudo docker compose up -d'
-        logger.info(f"Running sudo docker compose up -d in {subspace_dir}")
-        run_command(client, command)
+        if restart:
+            docker_compose_restart(client, subspace_dir)
+        elif prune:
+            docker_cleanup(client, subspace_dir)
+        else:
+            docker_compose_down(client, subspace_dir)
+            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=pot_external_entropy, plot_size=plot_size, cache_percentage=cache_percentage, network=network)
+            docker_compose_up(client, subspace_dir)
+
     except Exception as e:
-        logger.error(f"Failed to run sudo docker compose up -d: {e}")
-        raise
+        logger.error(f"Error handling node {node['host']}: {e}")
+    finally:
+        if client:
+            client.close()
 
 def main():
-    # Parse command line arguments
     parser = argparse.ArgumentParser(description="Manage Subspace nodes via SSH")
     parser.add_argument('--config', required=True, help='Path to the TOML config file')
+    parser.add_argument('--network', required=True, help='Network to update in the .env file, i.e devnet, gemini-3h, taurus')
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
-    parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory (default: /home/ubuntu/subspace)')
+    parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory')
     parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for all nodes')
     parser.add_argument('--log_level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR)')
     parser.add_argument('--no-timekeeper', action='store_true', help='Disable launching of the timekeeper node')
+    parser.add_argument('--prune', action='store_true', help='Stop containers and destroy the Docker images')
+    parser.add_argument('--restart', action='store_true', help='Restart the network without wiping the data')
+    parser.add_argument('--plot-size', help='Set plot size on the farmer, i.e 10G')
+    parser.add_argument('--cache-percentage', help='Set the cache percentage on the farmer, i.e 10')
     args = parser.parse_args()
 
     # Set logging level based on user input
     log_level = args.log_level.upper()
     logging.getLogger().setLevel(log_level)
 
-    logger.debug(f"Received POT_EXTERNAL_ENTROPY: {args.pot_external_entropy}")
-
-    # Read configuration from the TOML file using tomli
+    # Read configuration from the TOML file
     with open(args.config, 'rb') as f:
         config = tomli.load(f)
 
     bootstrap_node = config['bootstrap_node']
-    farmer_rpc_nodes = config['farmer_rpc_nodes']
+    farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
+    rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
     timekeeper_node = config['timekeeper']
 
-    release_version = args.release_version
-    subspace_dir = args.subspace_dir
-
-    # Step 1: Handle the timekeeper node first, if present and --no-timekeeper is not set
+    # Step 1: Handle the timekeeper node, if enabled
     if not args.no_timekeeper and timekeeper_node:
-        client = None  # Initialize the client variable
         try:
-            logger.info(f"Connecting to the timekeeper node {timekeeper_node['host']}...")
+            logger.info(f"Connecting to timekeeper node {timekeeper_node['host']}...")
             client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
-
-            # Run sudo docker compose down -v for the timekeeper node
-            docker_compose_down(client, subspace_dir)
-
-            # Modify the .env file with the POT_EXTERNAL_ENTROPY value
-            logger.debug(f"Modifying .env file for timekeeper with POT_EXTERNAL_ENTROPY={args.pot_external_entropy}")
-            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
-
-            # Start the timekeeper node
-            docker_compose_up(client, subspace_dir)
-
-            logger.info("Timekeeper node started with the updated POT_EXTERNAL_ENTROPY value.")
+            handle_node(client, timekeeper_node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
         except Exception as e:
-            logger.error(f"Error during timekeeper node update: {e}")
+            logger.error(f"Error handling timekeeper node: {e}")
         finally:
             if client:
                 client.close()
-                logger.debug(f"Closed connection to timekeeper node {timekeeper_node['host']}")
-    elif args.no_timekeeper:
-        logger.info("Skipping timekeeper node as --no-timekeeper flag is set.")
     else:
-        logger.warning("Timekeeper node not found, proceeding with other nodes.")
+        logger.info("Timekeeper handling is disabled or not specified.")
 
-    # Step 2: Start the other farmer and RPC nodes after the timekeeper node
-    protocol_version_hash = None
-    for node in farmer_rpc_nodes:
-        client = None  # Initialize the client variable
+    # Step 2: Handle farmer nodes
+    for node in farmer_nodes:
         try:
-            logger.info(f"Connecting to {node['host']} for sudo docker compose down -v...")
+            logger.info(f"Connecting to farmer node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-
-            # Run sudo docker compose down -v
-            docker_compose_down(client, subspace_dir)
-
-            # Modify the .env file for farmer and RPC nodes
-            modify_env_file(client, subspace_dir, release_version, pot_external_entropy=args.pot_external_entropy)
-
-            # Start sudo docker compose up -d
-            docker_compose_up(client, subspace_dir)
-
-            # If this is the RPC node, grep the logs for protocol version hash
-            if node['type'] == 'rpc':
-                logger.info(f"Waiting for the RPC node to start...")
-                sleep(30)  # Adjust sleep time as necessary
-
-                logger.info(f"Grep protocol version from logs on {node['host']}...")
-                protocol_version_hash = grep_protocol_version(client)
-
-                if not protocol_version_hash:
-                    logger.error(f"Failed to retrieve protocol version hash on {node['host']}")
-                    continue
-
-            client.close()
+            handle_node(client, node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, plot_size=args.plot_size, cache_percentage=args.cache_percentage, prune=args.prune, restart=args.restart)
         except Exception as e:
-            logger.error(f"Error during update and start on {node['host']}: {e}")
+            logger.error(f"Error handling farmer node {node['host']}: {e}")
         finally:
             if client:
                 client.close()
-                logger.debug(f"Closed connection for node {node['host']}")
 
-    # Step 3: SSH into the bootstrap node and update GENESIS_HASH and POT_EXTERNAL_ENTROPY, then start it
-    if protocol_version_hash:
-        client = None  # Initialize the client variable
+    # Step 3: Handle RPC nodes
+    protocol_version_hash = None
+    for node in rpc_nodes:
         try:
-            logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']} for sudo docker compose down -v...")
-            client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
+            logger.info(f"Connecting to RPC node {node['host']}...")
+            client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+            handle_node(client, node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
 
-            # Run sudo docker compose down -v for the bootstrap node
-            docker_compose_down(client, subspace_dir)
+            # If this is an RPC node, grep the logs for protocol version hash
+            logger.info(f"Waiting for RPC node {node['host']} to start...")
+            sleep(30)  # Adjust sleep time as necessary
+            protocol_version_hash = grep_protocol_version(client)
 
-            # Modify .env with the new GENESIS_HASH and POT_EXTERNAL_ENTROPY
-            modify_env_file(client, subspace_dir, release_version, genesis_hash=protocol_version_hash, pot_external_entropy=args.pot_external_entropy)
-
-            # Start the bootstrap node
-            docker_compose_up(client, subspace_dir)
-
-            client.close()
-            logger.info("Bootstrap node started with the updated Genesis Hash and POT_EXTERNAL_ENTROPY.")
+            if not protocol_version_hash:
+                logger.error(f"Failed to retrieve protocol version hash on RPC node {node['host']}")
+                continue
         except Exception as e:
-            logger.error(f"Error during bootstrap node update: {e}")
+            logger.error(f"Error handling RPC node {node['host']}: {e}")
+        finally:
+            if client:
+                client.close()
+
+    # Step 4: Handle the bootstrap node, using the protocol version hash if available
+    if protocol_version_hash:
+        try:
+            logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
+            client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
+            handle_node(client, bootstrap_node, args.subspace_dir, args.release_version, genesis_hash=protocol_version_hash, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
+        except Exception as e:
+            logger.error(f"Error handling bootstrap node: {e}")
         finally:
             if client:
                 client.close()
     else:
-        logger.error("Protocol version hash not found, skipping bootstrap node start.")
+        logger.error("Protocol version hash not found; skipping bootstrap node update.")
 
 if __name__ == '__main__':
     main()

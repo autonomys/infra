@@ -1,15 +1,16 @@
-
 # Subspace Node Manager
 
-This script manages the deployment of Subspace nodes (RPC, Farmer, and Bootstrap nodes) on multiple servers using SSH. It updates the `.env` file with the specified release version and coordinates the startup sequence to ensure that RPC and Farmer nodes are started first. The Bootstrap node is updated last with the correct `GENESIS_HASH` and then started.
+This script manages the deployment of Subspace nodes (RPC, Farmer, Timekeeper, and Bootstrap nodes) on multiple servers using SSH. It updates the `.env` file with the specified release version, coordinates the startup sequence, and ensures that RPC and Farmer nodes are started before the Bootstrap node, which is updated last with the correct `GENESIS_HASH`.
 
 ## Features
 
 - SSH into multiple servers defined in a TOML configuration file.
-- Modify `.env` files in the Subspace directory with a new release version and update `GENESIS_HASH`.
+- Modify `.env` files in the Subspace directory with the specified release version, `GENESIS_HASH`, `POT_EXTERNAL_ENTROPY`, `NETWORK_NAME`, `PLOT_SIZE`, and `CACHE_PERCENTAGE`.
 - Restart Subspace nodes using `docker-compose down -v` and `docker-compose up -d`.
-- Retrieve the `protocol_version` hash from the RPC node logs and use it to update the Bootstrap node.
-- Ensure proper start order (RPC and Farmer nodes first, Bootstrap node last).
+- Retrieve the `protocol_version` hash from RPC node logs and use it to update the Bootstrap node.
+- Proper start order (RPC and Farmer nodes first, followed by Bootstrap node).
+- Supports pruning of Docker containers and images for cleanup.
+- Supports restart without data loss.
 
 ## Prerequisites
 
@@ -17,6 +18,7 @@ This script manages the deployment of Subspace nodes (RPC, Farmer, and Bootstrap
 - The following Python libraries (installed via the provided `install_dependencies.sh` script):
   - `paramiko` for SSH connections.
   - `toml` for reading the configuration file.
+  - `colorlog` for enhanced logging.
 - SSH access to the remote servers where the Subspace nodes are running.
 - Ensure the remote servers have Docker and Docker Compose installed.
 
@@ -27,12 +29,12 @@ This script manages the deployment of Subspace nodes (RPC, Farmer, and Bootstrap
 1. Clone the repository or download the Python script and associated files.
 2. Use the provided `install_dependencies.sh` script to install the required Python packages in a virtual environment.
 
-```bash
-chmod +x install_dependencies.sh
-./install_dependencies.sh
-```
+    ```bash
+    chmod +x install_dependencies.sh
+    ./install_dependencies.sh
+    ```
 
-This will create a virtual environment (`subspace_env`) and install the required packages: `paramiko` and `toml`.
+    This will create a virtual environment (`subspace_env`) and install the required packages: `paramiko`, `toml`, and `colorlog`.
 
 ### Step 2: Activate the Virtual Environment
 
@@ -67,10 +69,18 @@ host = "farmer.example.com"
 user = "username"
 ssh_key = "/path/to/private/key"
 type = "farmer"
+
+[timekeeper]
+host = "timekeeper.example.com"
+user = "username"
+ssh_key = "/path/to/private/key"
+type = "timekeeper"
+
 ```
 
 - **`bootstrap_node`:** This section defines the Bootstrap node.
 - **`farmer_rpc_nodes`:** This section contains the RPC and Farmer nodes. The `type` field specifies whether the node is an RPC node or a Farmer node.
+- **`timekeeper`:** This section Defines the Timekeeper node..
 
 ### Step 4: Running the Script
 
@@ -78,13 +88,28 @@ Once the configuration file is ready, make the python script executable and run 
 
 ```bash
 chmod +x manage_subspace.py
-python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --pot_external_entropy random_value
+python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace \
+--pot_external_entropy random_value --network gemini-3h --plot-size 10G --cache-percentage 15
+
+# prune images
+python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --prune
+
+# restart stack
+python manage_subspace.py --config nodes.toml --release_version gemini-3h-2024-sep-17 --subspace_dir /home/ubuntu/subspace/subspace --restart
+
 ```
 
+### Command Line Options
+
 - `--config`: Path to the TOML configuration file.
-- `--release_version`: The release version to be used to update the `DOCKER_TAG` in the `.env` files.
-- `--subspace_dir`: Path to the Subspace directory (default: `/home/ubuntu/subspace`).
-- `--pot_external_entropy`: The random seed for proof of time entropy
+- `--release_version`: The release version to be used to update the DOCKER_TAG in the .env files.
+- `--subspace_dir`: Path to the Subspace directory (default: /home/ubuntu/subspace).
+- `--pot_external_entropy`: The random seed for proof of time entropy.
+- `--network`: The network name to be updated in the .env file.
+- `--plot-size`: Plot size to be set for Farmer nodes (e.g., 10G).
+- `--cache-percentage`: Cache percentage to be set for Farmer nodes.
+- `--prune`: Stop containers and remove unused Docker images.
+- `--restart`: Restart containers without wiping data.
 
 ### Step 5: Deactivate the Virtual Environment
 
