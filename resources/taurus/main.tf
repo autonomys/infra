@@ -10,7 +10,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2024-oct-23"
+    docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -26,7 +26,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2024-oct-23"
+    docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -43,7 +43,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2024-oct-23"
+    docker-tag         = "taurus-candidate"
     reserved-only      = false
     prune              = false
     genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
@@ -93,7 +93,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2024-oct-23"
+    docker-tag         = "taurus-candidate"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -108,7 +108,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2024-oct-23"
+    docker-tag         = "taurus-candidate"
     domain-prefix      = "nova"
     reserved-only      = false
     prune              = false
@@ -144,7 +144,7 @@ module "taurus" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "taurus-2024-oct-23"
+    docker-tag             = "taurus-candidate"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
