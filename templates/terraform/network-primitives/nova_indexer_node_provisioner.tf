@@ -1,27 +1,26 @@
 locals {
-  bootstrap_nodes_autoid_ip_v4 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.public_ip]
+  nova_indexer_nodes_ip_v4 = flatten([
+    [aws_instance.nova_indexer_node.*.public_ip]
     ]
   )
-
-  bootstrap_nodes_autoid_ip_v6 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.ipv6_addresses]
+  nova_indexer_nodes_ip_v6 = flatten([
+    [aws_instance.nova_indexer_node.*.ipv6_addresses]
     ]
   )
 }
 
-resource "null_resource" "setup-bootstrap-nodes-autoid" {
-  count = length(local.bootstrap_nodes_autoid_ip_v4)
+resource "null_resource" "setup-nova-indexer-nodes" {
+  count = length(local.nova_indexer_nodes_ip_v4)
 
-  depends_on = [aws_instance.bootstrap_node_autoid]
+  depends_on = [aws_instance.nova_indexer_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.bootstrap_nodes_autoid_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_indexer_nodes_ip_v4)
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.nova_indexer_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -49,25 +48,32 @@ resource "null_resource" "setup-bootstrap-nodes-autoid" {
     destination = "/home/${var.ssh_user}/subspace/"
   }
 
-  # install docker and docker compose
+  # copy LE script
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/acme.sh"
+    destination = "/home/${var.ssh_user}/subspace/acme.sh"
+  }
+
+  # install docker and docker compose and LE script
   provisioner "remote-exec" {
     inline = [
       "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
+      "bash /home/${var.ssh_user}/subspace/acme.sh",
     ]
   }
 
 }
 
-resource "null_resource" "prune-bootstrap-nodes-autoid" {
-  count      = var.bootstrap-node-autoid-config.prune ? length(local.bootstrap_nodes_autoid_ip_v4) : 0
-  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
+resource "null_resource" "prune-nova-indexer-nodes" {
+  count      = var.nova-indexer-node-config.prune ? length(local.nova_indexer_nodes_ip_v4) : 0
+  depends_on = [null_resource.setup-nova-indexer-nodes]
 
   triggers = {
-    prune = var.bootstrap-node-autoid-config.prune
+    prune = var.nova-indexer-node-config.prune
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.nova_indexer_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -88,19 +94,19 @@ resource "null_resource" "prune-bootstrap-nodes-autoid" {
   }
 }
 
-resource "null_resource" "start-bootstrap-nodes-autoid" {
-  count = length(local.bootstrap_nodes_autoid_ip_v4)
+resource "null_resource" "start-nova-indexer-nodes" {
+  count = length(local.nova_indexer_nodes_ip_v4)
 
-  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
+  depends_on = [null_resource.setup-nova-indexer-nodes]
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.bootstrap-node-autoid-config.deployment-version
-    reserved_only      = var.bootstrap-node-autoid-config.reserved-only
+    deployment_version = var.nova-indexer-node-config.deployment-version
+    reserved_only      = var.nova-indexer-node-config.reserved-only
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    host        = local.nova_indexer_nodes_ip_v4[count.index]
     user        = var.ssh_user
     type        = "ssh"
     agent       = true
@@ -108,9 +114,9 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
     timeout     = "300s"
   }
 
-  # copy bootstrap node keys file
+  # copy node keys file
   provisioner "file" {
-    source      = "./bootstrap_node_autoid_keys.txt"
+    source      = "./nova_indexer_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 
@@ -120,15 +126,28 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
     destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
   }
 
-  # copy DSN bootstrap node keys file
+
+  # copy boostrap node keys file
+  provisioner "file" {
+    source      = "./bootstrap_node_evm_keys.txt"
+    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_evm_keys.txt"
+  }
+
+  # copy dsn_boostrap node keys file
   provisioner "file" {
     source      = "./dsn_bootstrap_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
   }
 
+  # copy keystore
+  provisioner "file" {
+    source      = "./keystore"
+    destination = "/home/${var.ssh_user}/subspace/keystore/"
+  }
+
   # copy compose file creation script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_bootstrap_node_domain_compose_file.sh"
+    source      = "${var.path_to_scripts}/create_domain_node_compose_file.sh"
     destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
   }
 
@@ -139,27 +158,25 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-autoid-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-nova-indexer-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-autoid-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.bootstrap-node-autoid-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.nova-indexer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_TAG=${var.nova-indexer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.nova-indexer-node-config.nova-indexer-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      # //todo use a map for domain id and labels
+      "echo DOMAIN_LABEL=${var.nova-indexer-node-config.nova-indexer-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.nova-indexer-node-config.nova-indexer-id[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.evm-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.evm-node-config.domain-id[1]} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo PIECE_CACHE_SIZE=${var.piece_cache_size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_LISTEN_PORT=${var.bootstrap-node-autoid-config.dsn-listen-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.bootstrap-node-autoid-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo OPERATOR_PORT=${var.bootstrap-node-autoid-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-autoid-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.nova-indexer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.evm-node-config.enable-domains} ",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.nova_indexer_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.nova-indexer-node-config.enable-domains} ${var.nova-indexer-node-config.nova-indexer-id[0]}",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
