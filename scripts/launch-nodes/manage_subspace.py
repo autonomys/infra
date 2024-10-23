@@ -89,12 +89,19 @@ def docker_compose_down(client, subspace_dir):
         logger.error(f"Failed to run sudo docker compose down -v: {e}")
         raise
 
-def docker_compose_restart(client, subspace_dir):
+def docker_compose_restart(client, subspace_dir, docker_tag=None):
     """Run sudo docker compose restart in the subspace directory."""
     try:
-        command = f'cd {subspace_dir} && sudo docker compose restart'
+        # Modify .env file if a new DOCKER_TAG is provided
+        if docker_tag:
+            logger.info(f"Updating DOCKER_TAG to {docker_tag} in {subspace_dir}/.env")
+            modify_env_file(client, subspace_dir, release_version=docker_tag)
+
+        # Restart the containers
+        restart_cmd = f'cd {subspace_dir} && sudo docker compose restart'
         logger.info(f"Running sudo docker compose restart in {subspace_dir}")
-        run_command(client, command)
+        run_command(client, restart_cmd)
+
     except Exception as e:
         logger.error(f"Failed to run sudo docker compose restart: {e}")
         raise
