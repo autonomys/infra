@@ -164,7 +164,7 @@ def grep_protocol_version(client, retries=5, interval=30):
 
 def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None,
                 plot_size=None, cache_percentage=None, network=None, prune=False, restart=False,
-                update_genesis_hash=False, genesis_hash=None):
+                update_genesis_hash=True, genesis_hash=None):
     """Generic function to handle different node types with specified actions."""
     try:
         if prune:
@@ -288,13 +288,13 @@ def main():
         if not protocol_version_hash:
             logger.warning("Protocol version hash not found; proceeding with bootstrap node without genesis_hash update.")
 
-        # Handle node operations, updating genesis_hash only if protocol_version_hash is available
+        # Handle node operations with update_genesis_hash set to True
         handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
                     pot_external_entropy=args.pot_external_entropy,
                     network=args.network,
                     prune=args.prune,
                     restart=args.restart,
-                    update_genesis_hash=bool(protocol_version_hash),
+                    update_genesis_hash=True,  # Always update genesis hash
                     genesis_hash=protocol_version_hash)
 
     except Exception as e:
