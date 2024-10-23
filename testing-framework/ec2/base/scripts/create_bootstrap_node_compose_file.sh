@@ -66,9 +66,9 @@ done
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" != "${i}" ]; then
     dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-    echo "      - \"--reserved-peers\"" >> ~/subspace/subspace/docker-compose.yml
+    echo "      - \"--reserved-peer\"" >> ~/subspace/subspace/docker-compose.yml
     echo "      - \"${dsn_addr}\"" >> ~/subspace/subspace/docker-compose.yml
-    echo "      - \"--bootstrap-nodes\"" >> ~/subspace/subspace/docker-compose.yml
+    echo "      - \"--bootstrap-node\"" >> ~/subspace/subspace/docker-compose.yml
     echo "      - \"${dsn_addr}\"" >> ~/subspace/subspace/docker-compose.yml
   fi
 done
@@ -113,8 +113,8 @@ EOF
 
 for (( i = 0; i < node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-  echo "      \"--reserved-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
-  echo "      \"--bootstrap-nodes\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
+  echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
+  echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/subspace/docker-compose.yml
 done
 
 if [ "${reserved_only}" == true ]; then
