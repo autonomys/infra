@@ -30,8 +30,7 @@ resource "aws_instance" "subql_blue_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.subql-gw,
-    aws_instance.archive_node,
+    aws_internet_gateway.subql-gw
 
   ]
 
@@ -47,9 +46,7 @@ resource "aws_instance" "subql_blue_node" {
       "cloud-init status --wait",
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt install wget gnupg openssl net-tools git -y",
-      # install monitoring
-      "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 
@@ -101,8 +98,7 @@ resource "aws_instance" "subql_green_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.subql-gw,
-    aws_instance.archive_node,
+    aws_internet_gateway.subql-gw
   ]
 
   lifecycle {
@@ -118,9 +114,7 @@ resource "aws_instance" "subql_green_node" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools git -y",
-      # install monitoring
-      "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 
@@ -171,8 +165,7 @@ resource "aws_instance" "nova_subql_blue_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.subql-gw,
-    aws_instance.nova_archive_node,
+    aws_internet_gateway.subql-gw
   ]
 
   lifecycle {
@@ -188,9 +181,7 @@ resource "aws_instance" "nova_subql_blue_node" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools git -y",
-      # install monitoring
-      "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 
@@ -241,8 +232,7 @@ resource "aws_instance" "nova_subql_green_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    aws_internet_gateway.subql-gw,
-    aws_instance.nova_archive_node,
+    aws_internet_gateway.subql-gw
   ]
 
   lifecycle {
@@ -258,9 +248,7 @@ resource "aws_instance" "nova_subql_green_node" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
       "sudo apt upgrade -y",
-      "sudo apt install git curl wget gnupg openssl net-tools git -y",
-      # install monitoring
-      "sudo wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud",
+      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 

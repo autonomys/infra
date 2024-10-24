@@ -1,9 +1,3 @@
-variable "netdata_token" {
-  type      = string
-  sensitive = true
-
-}
-
 variable "nr_api_key" {
   description = "New relic API Key"
   type        = string

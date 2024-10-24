@@ -1,9 +1,3 @@
-variable "netdata_token" {
-  type      = string
-  sensitive = true
-
-}
-
 variable "node_tag" {
   type = string
 }
@@ -26,7 +20,7 @@ variable "cloudflare_api_token" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default     = "gemini-3h"
+  default     = "taurus"
 }
 
 variable "instance_type" {
@@ -34,7 +28,7 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "explorer-gemini-3h-vpc"
+  default = "explorer-taurus-vpc"
   type    = string
 }
 
@@ -108,6 +102,11 @@ variable "postgres_password" {
 }
 
 variable "hasura_graphql_admin_secret" {
+  sensitive = true
+  type      = string
+}
+
+variable "hasura_graphql_jwt_secret" {
   sensitive = true
   type      = string
 }

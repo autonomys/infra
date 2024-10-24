@@ -106,7 +106,6 @@ variable "blue-subql-node-config" {
     deployment-version  = number
     regions             = list(string)
     instance-count-blue = number
-    prune               = bool
     disk-volume-size    = number
     disk-volume-type    = string
     environment         = string
@@ -124,7 +123,6 @@ variable "green-subql-node-config" {
     deployment-version   = number
     regions              = list(string)
     instance-count-green = number
-    prune                = bool
     disk-volume-size     = number
     disk-volume-type     = string
     environment          = string
@@ -142,7 +140,6 @@ variable "nova-blue-subql-node-config" {
     deployment-version  = number
     regions             = list(string)
     instance-count-blue = number
-    prune               = bool
     disk-volume-size    = number
     disk-volume-type    = string
     environment         = string
@@ -160,62 +157,9 @@ variable "nova-green-subql-node-config" {
     deployment-version   = number
     regions              = list(string)
     instance-count-green = number
-    prune                = bool
     disk-volume-size     = number
     disk-volume-type     = string
     environment          = string
-  })
-}
-
-variable "archive-node-config" {
-  description = "archive subql configuration"
-  type = object({
-    network-name       = string
-    domain-prefix      = string
-    node-org           = string
-    node-tag           = string
-    docker-tag         = string
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    prune              = bool
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
-variable "nova-archive-node-config" {
-  description = "nova archive subql configuration"
-  type = object({
-    network-name       = string
-    domain-prefix      = string
-    node-org           = string
-    node-tag           = string
-    docker-tag         = string
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    prune              = bool
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
-variable "nova-blockscout-node-config" {
-  description = "Nova blockscout configuration"
-  type = object({
-    network-name       = string
-    domain-prefix      = string
-    docker-tag         = string
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    prune              = bool
-    disk-volume-size   = number
-    disk-volume-type   = string
   })
 }
 
@@ -224,12 +168,12 @@ variable "postgres_password" {
   type      = string
 }
 
-variable "prometheus_secret" {
+variable "hasura_graphql_admin_secret" {
   sensitive = true
   type      = string
 }
 
-variable "hasura_graphql_admin_secret" {
+variable "hasura_graphql_jwt_secret" {
   sensitive = true
   type      = string
 }

@@ -1,30 +1,30 @@
 locals {
-  blue_subql_node_ip_v4 = flatten([
-    [aws_instance.subql_blue_node.*.public_ip],
+  nova_blue_subql_node_ip_v4 = flatten([
+    [aws_instance.nova_subql_blue_node.*.public_ip],
     ]
   )
 
-  green_subql_node_ip_v4 = flatten([
-    [aws_instance.subql_green_node.*.public_ip],
+  nova_green_subql_node_ip_v4 = flatten([
+    [aws_instance.nova_subql_green_node.*.public_ip],
     ]
   )
 }
 
-resource "null_resource" "setup-blue-subql-nodes" {
-  count = length(local.blue_subql_node_ip_v4)
+resource "null_resource" "setup-nova-blue-subql-nodes" {
+  count = length(local.nova_blue_subql_node_ip_v4)
 
-  depends_on = [aws_instance.subql_blue_node]
+  depends_on = [aws_instance.nova_subql_blue_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.blue_subql_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_blue_subql_node_ip_v4)
   }
 
   lifecycle {
     ignore_changes = [triggers]
   }
   connection {
-    host           = local.blue_subql_node_ip_v4[count.index]
+    host           = local.nova_blue_subql_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -80,14 +80,14 @@ resource "null_resource" "setup-blue-subql-nodes" {
 
 }
 
-resource "null_resource" "setup-green-subql-nodes" {
+resource "null_resource" "setup-nova-green-subql-nodes" {
   count = length(local.green_subql_node_ip_v4)
 
-  depends_on = [aws_instance.subql_green_node]
+  depends_on = [aws_instance.nova_subql_green_node]
 
   # trigger on node ip changes
   triggers = {
-    cluster_instance_ipv4s = join(",", local.green_subql_node_ip_v4)
+    cluster_instance_ipv4s = join(",", local.nova_green_subql_node_ip_v4)
   }
 
   lifecycle {
@@ -95,7 +95,7 @@ resource "null_resource" "setup-green-subql-nodes" {
   }
 
   connection {
-    host           = local.green_subql_node_ip_v4[count.index]
+    host           = local.nova_green_subql_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -150,10 +150,10 @@ resource "null_resource" "setup-green-subql-nodes" {
 
 }
 
-resource "null_resource" "start-blue-subql-nodes" {
-  count = length(local.blue_subql_node_ip_v4)
+resource "null_resource" "start-nova-blue-subql-nodes" {
+  count = length(local.nova_blue_subql_node_ip_v4)
 
-  depends_on = [null_resource.setup-blue-subql-nodes]
+  depends_on = [null_resource.setup-nova-blue-subql-nodes]
 
   # trigger on node deployment environment change
   triggers = {
@@ -161,7 +161,7 @@ resource "null_resource" "start-blue-subql-nodes" {
   }
 
   connection {
-    host           = local.blue_subql_node_ip_v4[count.index]
+    host           = local.nova_blue_subql_node_ip_v4[count.index]
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -201,7 +201,6 @@ resource "null_resource" "start-blue-subql-nodes" {
       "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
       "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
       "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
-      "echo HASURA_GRAPHQL_JWT_SECRET=${var.hasura_graphql_jwt_secret} >> /home/${var.ssh_user}/subql/.env",
 
       # run subql lauch script
       "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
@@ -213,10 +212,10 @@ resource "null_resource" "start-blue-subql-nodes" {
 }
 
 
-resource "null_resource" "start-green-subql-nodes" {
-  count = length(local.green_subql_node_ip_v4)
+resource "null_resource" "nova-start-green-subql-nodes" {
+  count = length(local.nova_green_subql_node_ip_v4)
 
-  depends_on = [null_resource.setup-green-subql-nodes]
+  depends_on = [null_resource.setup-nova-green-subql-nodes]
 
   # trigger on node deployment environment change
   triggers = {
@@ -275,6 +274,7 @@ resource "null_resource" "start-green-subql-nodes" {
       "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
       "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
       "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
+      "echo HASURA_GRAPHQL_JWT_SECRET=${var.hasura_graphql_jwt_secret} >> /home/${var.ssh_user}/subql/.env",
 
       # run subql lauch script
       "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
