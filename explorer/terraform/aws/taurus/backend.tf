@@ -3,7 +3,7 @@ terraform {
     organization = "subspace-sre"
 
     workspaces {
-      name = "squid-3g-aws"
+      name = "subql-taurus-aws"
     }
   }
 }

@@ -26,7 +26,7 @@ variable "cloudflare_api_token" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default     = "gemini-3g"
+  default     = "gemini-3h"
 }
 
 variable "instance_type" {
@@ -34,7 +34,7 @@ variable "instance_type" {
 }
 
 variable "vpc_id" {
-  default = "explorer-gemini-3g-vpc"
+  default = "explorer-gemini-3h-vpc"
   type    = string
 }
 
@@ -107,7 +107,7 @@ variable "postgres_password" {
   type      = string
 }
 
-variable "prometheus_secret" {
+variable "hasura_graphql_admin_secret" {
   sensitive = true
   type      = string
 }
