@@ -106,7 +106,6 @@ variable "blue-subql-node-config" {
     deployment-version  = number
     regions             = list(string)
     instance-count-blue = number
-    prune               = bool
     disk-volume-size    = number
     disk-volume-type    = string
     environment         = string
@@ -124,7 +123,6 @@ variable "green-subql-node-config" {
     deployment-version   = number
     regions              = list(string)
     instance-count-green = number
-    prune                = bool
     disk-volume-size     = number
     disk-volume-type     = string
     environment          = string
@@ -142,7 +140,6 @@ variable "nova-blue-subql-node-config" {
     deployment-version  = number
     regions             = list(string)
     instance-count-blue = number
-    prune               = bool
     disk-volume-size    = number
     disk-volume-type    = string
     environment         = string
@@ -160,7 +157,6 @@ variable "nova-green-subql-node-config" {
     deployment-version   = number
     regions              = list(string)
     instance-count-green = number
-    prune                = bool
     disk-volume-size     = number
     disk-volume-type     = string
     environment          = string
@@ -220,11 +216,6 @@ variable "nova-blockscout-node-config" {
 }
 
 variable "postgres_password" {
-  sensitive = true
-  type      = string
-}
-
-variable "prometheus_secret" {
   sensitive = true
   type      = string
 }

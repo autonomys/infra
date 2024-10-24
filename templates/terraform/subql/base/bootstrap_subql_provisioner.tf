@@ -50,10 +50,10 @@ resource "null_resource" "setup-blue-subql-nodes" {
     destination = "/home/${var.ssh_user}/subql/postgresql/conf/postgresql.conf"
   }
 
-  # copy compose file creation script
+  # copy subql launch script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_subql_node_compose_file.sh"
-    destination = "/home/${var.ssh_user}/subql/create_compose_file.sh"
+    source      = "${var.path_to_scripts}/install_subql_stack.sh"
+    destination = "/home/${var.ssh_user}/subql/subql_stack.sh"
   }
 
   # copy docker install file
@@ -120,15 +120,10 @@ resource "null_resource" "setup-green-subql-nodes" {
     destination = "/home/${var.ssh_user}/subql/postgresql/conf/postgresql.conf"
   }
 
-  # copy compose file creation script
+  # copy subql launch script
   provisioner "file" {
-    source      = "${var.path_to_scripts}/create_subql_node_compose_file.sh"
-    destination = "/home/${var.ssh_user}/subql/create_compose_file.sh"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/set_env_vars.sh"
-    destination = "/home/${var.ssh_user}/subql/set_env_vars.sh"
+    source      = "${var.path_to_scripts}/install_subql_stack.sh"
+    destination = "/home/${var.ssh_user}/subql/subql_stack.sh"
   }
 
   # copy docker install file
@@ -153,63 +148,6 @@ resource "null_resource" "setup-green-subql-nodes" {
     destination = "/home/${var.ssh_user}/subql/install_nginx.sh"
   }
 
-}
-
-
-resource "null_resource" "prune-blue-subql-nodes" {
-  count      = var.blue-subql-node-config.prune ? length(local.blue_subql_node_ip_v4) : 0
-  depends_on = [null_resource.setup-blue-subql-nodes]
-
-  triggers = {
-    prune = var.blue-subql-node-config.prune
-  }
-
-  connection {
-    host           = local.blue_subql_node_ip_v4[count.index]
-    user           = var.ssh_user
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    private_key    = file("${var.private_key_path}")
-    timeout        = "300s"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "sudo docker ps -aq | xargs docker stop",
-      "sudo docker system prune -a -f && docker volume ls -q | xargs docker volume rm -f",
-      "cat /dev/null > $HOME/.bash_profile"
-    ]
-  }
-}
-
-resource "null_resource" "prune-green-subql-nodes" {
-  count      = var.green-subql-node-config.prune ? length(local.green_subql_node_ip_v4) : 0
-  depends_on = [null_resource.setup-green-subql-nodes]
-
-  triggers = {
-    prune = var.green-subql-node-config.prune
-  }
-
-  connection {
-    host           = local.green_subql_node_ip_v4[count.index]
-    user           = var.ssh_user
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.aws_key_name
-    private_key    = file("${var.private_key_path}")
-    timeout        = "300s"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "sudo docker ps -aq | xargs sudo docker stop",
-      "sudo docker system prune -a -f && sudo docker volume ls -q | xargs sudo docker volume rm -f",
-      "cat /dev/null > $HOME/.bash_profile",
-    ]
-  }
 }
 
 resource "null_resource" "start-blue-subql-nodes" {
@@ -239,6 +177,9 @@ resource "null_resource" "start-blue-subql-nodes" {
       # install nginx, certbot, docker and docker compose
       "chmod +x /home/${var.ssh_user}/subql/install_docker.sh",
       "sudo bash /home/${var.ssh_user}/subql/install_docker.sh",
+      # start docker daemon
+      "sudo systemctl enable --now docker.service",
+      "sudo systemctl restart docker.service",
       # copy files
       "sudo cp -f /home/${var.ssh_user}/subql/cors-settings.conf /etc/nginx/cors-settings.conf",
       "sudo cp -f /home/${var.ssh_user}/subql/backend.conf /etc/nginx/backend.conf",
@@ -250,47 +191,20 @@ resource "null_resource" "start-blue-subql-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.blue-subql-node-config.domain-prefix}.subql.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.blue-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
-      # install netdata
-      "sudo sh -c \"curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --nightly-channel --claim-token ${var.netdata_token} --claim-url https://app.netdata.cloud\"",
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.network-name}",
 
       # create .env file
-      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subql/.env",
-      "echo DOMAIN_PREFIX=${var.blue-subql-node-config.domain-prefix} >> /home/${var.ssh_user}/subql/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
       "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
-      "echo NODE_NAME=SUBsubql_GEMINI_3h >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_USER=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_DB=subql-archive >> /home/${var.ssh_user}/subql/.env",
       "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_TYPE=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_HOST=db >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_PORT=5432 >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_USER=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_NAME=subql-archive >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_PASS=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo ARCHIVE_ENDPOINT=https://archive.gemini-3h.subspace.network/api >> /home/${var.ssh_user}/subql/.env",
-      "echo CHAIN_RPC_ENDPOINT=wss://rpc-0.gemini-3h.subspace.network/ws >> /home/${var.ssh_user}/subql/.env",
-      "echo PROCESSOR_HEALTH_HOST=http://processor:3000 >> /home/${var.ssh_user}/subql/.env",
-      "echo PROCESSOR_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subql/.env",
-      "echo HEALTH_CHECK_PORT=8080 >> /home/${var.ssh_user}/subql/.env",
-      "echo INGEST_HEALTH_HOST=http://ingest:9090 >> /home/${var.ssh_user}/subql/.env",
-      "echo INGEST_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subql/.env",
-      "echo MY_SECRET=${var.prometheus_secret} >> /home/${var.ssh_user}/subql/.env",
       "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
 
-      # create docker compose file
-      "chmod +x /home/${var.ssh_user}/subql/create_compose_file.sh",
-      "bash /home/${var.ssh_user}/subql/create_compose_file.sh",
-      # start docker daemon
-      "sudo systemctl enable --now docker.service",
-      "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./subql/docker-compose.yml up -d",
+      # run subql lauch script
+      "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
+      "bash /home/${var.ssh_user}/subql/subql_stack.sh",
       "echo 'Installation Complete'",
     ]
   }
@@ -333,6 +247,12 @@ resource "null_resource" "start-green-subql-nodes" {
   # install deployments
   provisioner "remote-exec" {
     inline = [
+      # install nginx, certbot, docker and docker compose
+      "chmod +x /home/${var.ssh_user}/subql/install_docker.sh",
+      "sudo bash /home/${var.ssh_user}/subql/install_docker.sh",
+      # start docker daemon
+      "sudo systemctl enable --now docker.service",
+      "sudo systemctl restart docker.service",
       # copy files
       "sudo cp -f /home/${var.ssh_user}/subql/cors-settings.conf /etc/nginx/cors-settings.conf",
       "sudo cp -f /home/${var.ssh_user}/subql/backend.conf /etc/nginx/backend.conf",
@@ -344,44 +264,20 @@ resource "null_resource" "start-green-subql-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.green-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.blue-subql-node-config.domain-prefix}.subql.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname subql-${var.green-subql-node-config.network-name}",
+      "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.network-name}",
+
       # create .env file
-      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subql/.env",
-      "echo DOMAIN_PREFIX=${var.green-subql-node-config.domain-prefix} >> /home/${var.ssh_user}/subql/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
-      "echo DOCKER_TAG=${var.green-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
-      "echo NODE_NAME=SUBsubql_GEMINI_3h >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_HOST=db >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_PORT=5432 >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_USER=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_DB=subql-archive >> /home/${var.ssh_user}/subql/.env",
+      "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
       "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_TYPE=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_HOST=db >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_PORT=5432 >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_USER=postgres >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_NAME=subql-archive >> /home/${var.ssh_user}/subql/.env",
-      "echo DB_PASS=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo ARCHIVE_ENDPOINT=https://archive.gemini-3h.subspace.network/api >> /home/${var.ssh_user}/subql/.env",
-      "echo CHAIN_RPC_ENDPOINT=wss://rpc-0.gemini-3h.subspace.network/ws >> /home/${var.ssh_user}/subql/.env",
-      "echo PROCESSOR_HEALTH_HOST=http://processor:3000 >> /home/${var.ssh_user}/subql/.env",
-      "echo PROCESSOR_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subql/.env",
-      "echo HEALTH_CHECK_PORT=8080 >> /home/${var.ssh_user}/subql/.env",
-      "echo INGEST_HEALTH_HOST=http://ingest:9090 >> /home/${var.ssh_user}/subql/.env",
-      "echo INGEST_HEALTH_PORT=7070 >> /home/${var.ssh_user}/subql/.env",
-      "echo MY_SECRET=${var.prometheus_secret} >> /home/${var.ssh_user}/subql/.env",
+      "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
 
-      # create docker compose file
-      "chmod +x /home/${var.ssh_user}/subql/create_compose_file.sh",
-      "bash /home/${var.ssh_user}/subql/create_compose_file.sh",
-
-      # start docker daemon
-      "sudo systemctl enable --now docker.service",
-      "sudo systemctl restart docker.service",
-      "sudo docker compose -f ./subql/docker-compose.yml up -d",
+      # run subql lauch script
+      "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
+      "bash /home/${var.ssh_user}/subql/subql_stack.sh",
       "echo 'Installation Complete'",
     ]
   }
