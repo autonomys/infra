@@ -109,28 +109,10 @@ module "gemini-3h" {
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
     docker-tag         = "gemini-3h-2024-oct-10"
-    domain-prefix      = "nova"
+    domain-prefix      = ["nova", "autoid"]
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
-    enable-domains     = true
-    domain-id          = var.domain_id
-    domain-labels      = var.domain_labels
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  autoid-node-config = {
-    instance-type      = var.instance_type["autoid"]
-    deployment-version = 0
-    regions            = var.aws_region
-    instance-count     = var.instance_count["autoid"]
-    docker-org         = "subspace"
-    docker-tag         = "gemini-3h-2024-oct-10"
-    domain-prefix      = ["autoid"]
-    reserved-only      = false
-    prune              = false
-    node-dsn-port      = 30434
     enable-domains     = true
     domain-id          = var.domain_id
     domain-labels      = var.domain_labels
@@ -150,7 +132,7 @@ module "gemini-3h" {
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
     cache-percentage       = var.cache_percentage
-    thread_pool_size       = var.thread_pool_size
+    thread-pool-size       = var.thread_pool_size
     force-block-production = true
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size

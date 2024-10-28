@@ -159,8 +159,8 @@ resource "null_resource" "start-farmer-nodes" {
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
       "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo CACHE_PERCENTAGE=${var.farmer-node-config.cache_percentage} >> /home/${var.ssh_user}/subspace/.env",
-      "echo THREAD_POOL_SIZE=${var.farmer-node-config.thread_pool_size} >> /home/${var.ssh_user}/subspace/.env",
+      "echo CACHE_PERCENTAGE=${var.farmer-node-config.cache-percentage} >> /home/${var.ssh_user}/subspace/.env",
+      "echo THREAD_POOL_SIZE=${var.farmer-node-config.thread-pool-size} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 

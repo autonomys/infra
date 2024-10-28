@@ -152,27 +152,6 @@ variable "domain-node-config" {
   })
 }
 
-variable "autoid-node-config" {
-  description = "AutoID node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    domain-prefix      = list(string)
-    reserved-only      = bool
-    prune              = bool
-    node-dsn-port      = number
-    enable-domains     = bool
-    domain-id          = list(number)
-    domain-labels      = list(string)
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
 variable "nova-squid-node-config" {
   description = "Nova squid node deployment config"
   type = object({
@@ -266,7 +245,7 @@ variable "farmer-node-config" {
     prune                  = bool
     plot-size              = string
     cache-percentage       = number
-    thread_pool_size       = number
+    thread-pool-size       = number
     reward-address         = string
     force-block-production = bool
     node-dsn-port          = number

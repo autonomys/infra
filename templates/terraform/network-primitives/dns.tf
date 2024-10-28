@@ -13,7 +13,7 @@ resource "cloudflare_record" "rpc" {
 resource "cloudflare_record" "nova" {
   count   = length(local.evm_nodes_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.evm-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
   value   = local.evm_nodes_ip_v4[count.index]
   type    = "A"
 }
@@ -21,7 +21,7 @@ resource "cloudflare_record" "nova" {
 resource "cloudflare_record" "nova_ipv6" {
   count   = length(local.evm_nodes_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.evm-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
   value   = local.evm_nodes_ip_v6[count.index]
   type    = "AAAA"
 }
@@ -42,18 +42,18 @@ resource "cloudflare_record" "nova-indexer-rpc" {
   type    = "A"
 }
 
-resource "cloudflare_record" "auto" {
+resource "cloudflare_record" "autoid" {
   count   = length(local.evm_nodes_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.autoid-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
   value   = local.evm_nodes_ip_v4[count.index]
   type    = "A"
 }
 
-resource "cloudflare_record" "auto_ipv6" {
+resource "cloudflare_record" "autoid_ipv6" {
   count   = length(local.evm_nodes_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.autoid-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
+  name    = "${var.domain-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
   value   = local.evm_nodes_ip_v6[count.index]
   type    = "AAAA"
 }

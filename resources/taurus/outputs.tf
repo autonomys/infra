@@ -1,11 +1,11 @@
 //output
 output "rpc-indexer-node-ipv4-addresses" {
-  value       = module.taurus.rpc-indexer_node_public_ip
+  value       = module.taurus.rpc_indexer_node_public_ip
   description = "RPC indexer node IPv4 Addresses"
 }
 
 output "nova-indexer-node-ipv4-addresses" {
-  value       = module.taurus.nova-indexer_node_public_ip
+  value       = module.taurus.nova_indexer_node_public_ip
   description = "Nova indexer node IPv4 Addresses"
 }
 
@@ -30,7 +30,7 @@ output "bootstrap-node-autoid-ipv4-addresses" {
 }
 
 output "domain-node-ipv4-addresses" {
-  value       = module.taurus.domain_node_public_ip
+  value       = module.taurus.evm_node_public_ip
   description = "Domain node IPv4 Addresses"
 }
 

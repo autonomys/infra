@@ -37,15 +37,17 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap       = 2
-    rpc             = 2
-    domain          = 0
-    autoid          = 0
-    rpc-indexer     = 0
-    nova-indexer    = 0
-    farmer          = 1
-    evm_bootstrap   = 0
-    autoid_bootsrap = 0
+    bootstrap         = 2
+    rpc               = 2
+    domain            = 0
+    autoid            = 0
+    rpc-indexer       = 0
+    nova-indexer      = 0
+    farmer            = 1
+    evm_bootstrap     = 0
+    autoid_bootsrap   = 0
+    nova_indexer_node = 0
+    rpc_indexer_node  = 0
   }
 }
 
@@ -131,29 +133,8 @@ variable "rpc-indexer-node-config" {
   })
 }
 
-variable "evm-node-config" {
+variable "domain-node-config" {
   description = "Domain node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    domain-prefix      = list(string)
-    reserved-only      = bool
-    prune              = bool
-    node-dsn-port      = number
-    enable-domains     = bool
-    domain-id          = list(number)
-    domain-labels      = list(string)
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
-variable "autoid-node-config" {
-  description = "AutoID node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number
@@ -266,7 +247,7 @@ variable "farmer-node-config" {
     prune                  = bool
     plot-size              = string
     cache-percentage       = number
-    thread_pool_size       = number
+    thread-pool-size       = number
     reward-address         = string
     force-block-production = bool
     node-dsn-port          = number

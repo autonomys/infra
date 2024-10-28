@@ -1,11 +1,11 @@
 //output
 output "rpc-squid-node-ipv4-addresses" {
-  value       = module.gemini-3h.rpc-squid_node_public_ip
+  value       = module.gemini-3h.rpc_squid_node_public_ip
   description = "RPC squid node IPv4 Addresses"
 }
 
 output "nova-squid-node-ipv4-addresses" {
-  value       = module.gemini-3h.nova-squid_node_public_ip
+  value       = module.gemini-3h.nova_squid_node_public_ip
   description = "Nova Squid node IPv4 Addresses"
 }
 

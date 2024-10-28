@@ -444,9 +444,9 @@ resource "aws_instance" "domain_node" {
 }
 
 resource "aws_instance" "autoid_node" {
-  count              = length(var.aws_region) * var.autoid-node-config.instance-count
+  count              = length(var.aws_region) * (var.domain-node-config.instance-count / 2)
   ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.autoid-node-config.instance-type
+  instance_type      = var.domain-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
   ipv6_address_count = 1
@@ -458,8 +458,8 @@ resource "aws_instance" "autoid_node" {
   ebs_optimized               = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.autoid-node-config.disk-volume-size
-    volume_type = var.autoid-node-config.disk-volume-type
+    volume_size = var.domain-node-config.disk-volume-size
+    volume_type = var.domain-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
