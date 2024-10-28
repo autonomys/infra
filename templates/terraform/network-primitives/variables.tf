@@ -95,23 +95,6 @@ variable "path_to_configs" {
   type        = string
 }
 
-variable "rpc-indexer-node-config" {
-  description = "Full node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    reserved-only      = bool
-    prune              = bool
-    node-dsn-port      = number
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
 variable "rpc-node-config" {
   description = "RPC node deployment config"
   type = object({
