@@ -381,7 +381,7 @@ resource "aws_instance" "rpc_node" {
 
 
 resource "aws_instance" "domain_node" {
-  count              = length(var.aws_region) * var.domain-node-config.instance-count
+  count              = length(var.aws_region) * (var.domain-node-config.instance-count / 2)
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.domain-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)

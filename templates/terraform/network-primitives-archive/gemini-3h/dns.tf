@@ -2,6 +2,26 @@ data "cloudflare_zone" "cloudflare_zone" {
   name = "subspace.network"
 }
 
+locals {
+  # Calculate the split point
+  instance_split = var.domain-node-config.instance-count / 2
+
+  # Create explicit mappings for nova and autoid instances
+  nova_instances = {
+    for idx in range(0, local.instance_split) : idx => {
+      ip_v4 = local.domain_nodes_ip_v4[idx]
+      ip_v6 = local.domain_nodes_ip_v6[idx]
+    }
+  }
+
+  autoid_instances = {
+    for idx in range(local.instance_split, var.domain-node-config.instance-count) : idx - local.instance_split => {
+      ip_v4 = local.domain_nodes_ip_v4[idx]
+      ip_v6 = local.domain_nodes_ip_v6[idx]
+    }
+  }
+}
+
 resource "cloudflare_record" "rpc" {
   count   = length(local.rpc_nodes_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
@@ -11,19 +31,19 @@ resource "cloudflare_record" "rpc" {
 }
 
 resource "cloudflare_record" "nova" {
-  count   = length(local.domain_nodes_ip_v4)
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
-  value   = local.domain_nodes_ip_v4[count.index]
-  type    = "A"
+  for_each = local.nova_instances
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+  name     = "${var.domain-node-config.domain-prefix[0]}-${each.key}.${var.network_name}"
+  value    = each.value.ip_v4
+  type     = "A"
 }
 
 resource "cloudflare_record" "nova_ipv6" {
-  count   = length(local.domain_nodes_ip_v4)
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-prefix[0]}-${count.index}.${var.network_name}"
-  value   = local.domain_nodes_ip_v6[count.index]
-  type    = "AAAA"
+  for_each = local.nova_instances
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+  name     = "${var.domain-node-config.domain-prefix[0]}-${each.key}.${var.network_name}"
+  value    = each.value.ip_v6
+  type     = "AAAA"
 }
 
 resource "cloudflare_record" "rpc-squid" {
@@ -43,19 +63,19 @@ resource "cloudflare_record" "nova-squid-rpc" {
 }
 
 resource "cloudflare_record" "autoid" {
-  count   = length(local.domain_nodes_ip_v4)
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
-  value   = local.domain_nodes_ip_v4[count.index]
-  type    = "A"
+  for_each = local.autoid_instances
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+  name     = "${var.domain-node-config.domain-prefix[1]}-${each.key}.${var.network_name}"
+  value    = each.value.ip_v4
+  type     = "A"
 }
 
 resource "cloudflare_record" "autoid_ipv6" {
-  count   = length(local.domain_nodes_ip_v4)
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain-node-config.domain-prefix[1]}-${count.index}.${var.network_name}"
-  value   = local.domain_nodes_ip_v6[count.index]
-  type    = "AAAA"
+  for_each = local.autoid_instances
+  zone_id  = data.cloudflare_zone.cloudflare_zone.id
+  name     = "${var.domain-node-config.domain-prefix[1]}-${each.key}.${var.network_name}"
+  value    = each.value.ip_v6
+  type     = "AAAA"
 }
 
 resource "cloudflare_record" "bootstrap" {
