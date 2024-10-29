@@ -1,62 +1,57 @@
 #!/bin/bash
 
-# Check if jq is installed and install it if not.
-check_jq() {
-  if ! command -v jq &> /dev/null; then
-    echo "jq not found. Installing..."
-    sudo apt-get update
-    sudo apt-get install -y jq
-  else
-    echo "jq is already installed."
-  fi
-}
-
-# Function to retrieve key-value pair from Hashicorp Vault
-get_from_vault() {
+# Function to retrieve key-value pair from AWS KMS
+get_from_kms() {
   local node_name=$1
+  local aws_region="us-east-2"
+  local kms_key_id="arn:aws:kms:us-west-2:123456789012:key/abcd1234-a123-1234-a123-123456789012"
 
-  local vault_endpoint="https://vault.eks.subspace.network/v1/secret/data/node-keys/${node_name}"
-  local vault_token=$(base64 -d <<< ${VAULT_TOKEN})
+  # Get the encrypted data from KMS
+  local encrypted_data=$(aws kms decrypt \
+    --ciphertext-blob fileb://<(aws kms encrypt \
+      --key-id ${kms_key_id} \
+      --plaintext "key=${node_name}" \
+      --region ${aws_region} \
+      --output text \
+      --query CiphertextBlob) \
+    --region ${aws_region} \
+    --output text \
+    --query Plaintext | base64 --decode)
 
-  local response=$(curl -s -H "X-Vault-Token: ${vault_token}" "${vault_endpoint}")
-  local key_value=$(echo "${response}" | jq -r '.data.data.key')
-
-  echo "Retrieved key-value pair from Hashicorp Vault for node: ${node_name}"
-  echo "${key_value}"
+  echo "${encrypted_data}"
 }
 
-# Function to store key-value pair in .env file
-store_in_env_file() {
-  local node_name=$1
-  local key_id=$2
-  local key_value=$3
+# Function to restore keys for a specific node type
+restore_node_keys() {
+  local node_type=$1
+  local count=$2
 
-  echo "${node_id}=${node_name}" >> ".env"
-  echo "peer_id=${key_id}" >> ".env"
-  echo "node_key=${key_value}" >> ".env"
+  for i in $(seq 0 $((count-1))); do
+    local node_name="${node_type}-${i}"
+    echo "Restoring keys for ${node_name}..."
 
-  echo "Stored key-value pair in .env file for node: ${node_name}"
+    # Get the key data from KMS
+    local key_data=$(get_from_kms "${node_name}")
+
+    # Extract the key and peer ID
+    local node_key=$(echo "${key_data}" | grep -oP '(?<=value=).*')
+    local peer_id=$(echo "${key_data}" | grep -oP '(?<=key=).*(?= value)')
+
+    # Create the key file
+    echo "${peer_id}" > "${node_name}.key"
+    echo "${node_key}" >> "${node_name}.key"
+
+    echo "Restored keys for ${node_name}"
+  done
 }
 
-# Check if node name is provided as an argument
-if [ $# -eq 0 ]; then
-  echo "Please provide the node name as an argument."
-  exit 1
-fi
+# Restore keys for all node types
+restore_node_keys "bootstrap" 2
+restore_node_keys "rpc" 2
+restore_node_keys "nova" 2
+restore_node_keys "autoid" 2
+restore_node_keys "farmer" 1
+restore_node_keys "nova-bootstrap" 2
+restore_node_keys "autoid-bootstrap" 2
 
-node_name=$1
-
-# Check and install jq if needed
-check_jq
-
-# Retrieve key-value pair from Hashicorp Vault
-key_value=$(get_from_vault "${node_name}")
-
-# Extract key_id and key_value from the retrieved key-value pair
-key_id=$(echo "${key_value}" | awk -F'=' '{print $1}')
-key_value=$(echo "${key_value}" | awk -F'=' '{print $2}')
-
-# Store key_id and key_value in .env file
-store_in_env_file "${node_name}" "${key_id}" "${key_value}"
-
-echo "Key-value pair retrieval and storage completed for node: ${node_name}"
+echo "Node key restoration completed."
