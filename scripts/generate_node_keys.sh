@@ -31,7 +31,7 @@ add_to_kms() {
   local node_name=$(basename "${key_file}" .key)
 
   # Add key-value pair to AWS KMS using API call
-  local kms_key_id="arn:aws:kms:us-west-2:123456789012:key/abcd1234-a123-1234-a123-123456789012" # Replace with your KMS key ID
+  local kms_key_id="arn:aws:kms:us-east-2:123456789012:key/abcd1234-a123-1234-a123-123456789012" # Replace with your KMS key ID
   local aws_region="us-east-2"
 
   aws kms encrypt --key-id ${kms_key_id} --plaintext "key=${key_id} value=${key_value}" --region ${aws_region}
