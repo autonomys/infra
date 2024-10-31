@@ -12,6 +12,17 @@ if ! command -v git &> /dev/null; then
   exit 1
 fi
 
+# Install Node.js latest LTS version
+## Fetch the latest LTS version of Node.js using NodeSource
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+
+# Install Node.js
+sudo apt-get install -y nodejs
+
+# Verify installation
+node -v
+npm -v
+
 # clone the astral repository from Github
 git clone https://github.com/autonomys/astral.git
 cd astral

@@ -82,7 +82,7 @@ variable "aws_key_name" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default     = "gemini-3h"
+  default     = "taurus"
 }
 
 variable "path_to_scripts" {

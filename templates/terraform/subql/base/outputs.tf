@@ -1,7 +1,7 @@
 // Output Variables
 
 output "ingress_rules" {
-  value = aws_security_group.gemini-subql-sg.*.ingress
+  value = aws_security_group.subql-sg.*.ingress
 }
 
 output "subql_blue_node_server_id" {

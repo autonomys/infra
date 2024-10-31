@@ -5,7 +5,7 @@ resource "aws_instance" "subql_blue_node" {
   subnet_id         = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone = element(var.azs, 0)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-subql-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.subql-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -73,7 +73,7 @@ resource "aws_instance" "subql_green_node" {
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-subql-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.subql-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -140,7 +140,7 @@ resource "aws_instance" "nova_subql_blue_node" {
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-subql-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.subql-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -207,7 +207,7 @@ resource "aws_instance" "nova_subql_green_node" {
   subnet_id         = element(aws_subnet.public_subnets.*.id, count.index)
   availability_zone = element(var.azs, count.index)
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.gemini-subql-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.subql-sg.id}"]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
