@@ -27,30 +27,30 @@ npm -v
 git clone https://github.com/autonomys/astral.git
 cd astral
 
-# Function to run a command in a new tmux session
-run_in_tmux_session() {
-  local session_name="$1"
-  local cmd="$2"
+# # Function to run a command in a new tmux session
+# run_in_tmux_session() {
+#   local session_name="$1"
+#   local cmd="$2"
 
-  tmux new-session -d -s "$session_name" "$cmd"
-}
+#   tmux new-session -d -s "$session_name" "$cmd"
+# }
 
-# Start indexers stack
-echo "Starting indexers stack..."
-cd indexers || exit 1
-yarn || exit 1
-run_in_tmux_session "indexers_dev" "yarn prod" || exit 1
+# # Start indexers stack
+# echo "Starting indexers stack..."
+# cd indexers || exit 1
+# yarn || exit 1
+# run_in_tmux_session "indexers_dev" "yarn prod" || exit 1
 
-# Wait for indexers to sync (adjust sleep duration as needed)
-echo "Waiting for indexers to sync blocks... (sleeping for 30 seconds)"
-sleep 30
+# # Wait for indexers to sync (adjust sleep duration as needed)
+# echo "Waiting for indexers to sync blocks... (sleeping for 30 seconds)"
+# sleep 30
 
-# Run metadata in a new session
-echo "Running yarn metadata in a new session..."
-run_in_tmux_session "indexers_metadata" "cd indexers && yarn metadata && yarn migrate --database-name taurus" || exit 1
+# # Run metadata in a new session
+# echo "Running yarn metadata in a new session..."
+# run_in_tmux_session "indexers_metadata" "cd indexers && yarn metadata && yarn migrate --database-name taurus" || exit 1
 
-# Start Hasura console in a new session
-echo "Starting Hasura console in a new session..."
-run_in_tmux_session "hasura_console" "cd indexers && yarn console" || exit 1
+# # Start Hasura console in a new session
+# echo "Starting Hasura console in a new session..."
+# run_in_tmux_session "hasura_console" "cd indexers && yarn console" || exit 1
 
 exit 0
