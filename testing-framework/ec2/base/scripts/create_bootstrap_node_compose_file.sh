@@ -96,7 +96,7 @@ cat >> ~/subspace/subspace/docker-compose.yml << EOF
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "256",
-#      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
+      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
