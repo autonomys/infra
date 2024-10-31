@@ -44,9 +44,9 @@ resource "aws_instance" "subql_blue_node" {
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 
@@ -111,10 +111,9 @@ resource "aws_instance" "subql_green_node" {
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl btop wget gnupg openssl net-tools git -y",
 
     ]
 
@@ -156,7 +155,7 @@ resource "aws_instance" "nova_subql_blue_node" {
 
   tags = {
     name       = "subql-${var.nova-blue-subql-node-config.network-name}"
-    Name       = "${var.nova-blue-subql-node-config.domain-prefix}-subql-${var.nova-blue-subql-node-config.network-name}"
+    Name       = "${var.nova-blue-subql-node-config.domain-prefix}-${var.nova-blue-subql-node-config.network-name}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -178,11 +177,9 @@ resource "aws_instance" "nova_subql_blue_node" {
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
-
+      "sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl btop wget gnupg openssl net-tools git -y",
     ]
 
     on_failure = continue
@@ -223,7 +220,7 @@ resource "aws_instance" "nova_subql_green_node" {
 
   tags = {
     name       = "subql-${var.nova-green-subql-node-config.network-name}"
-    Name       = "${var.nova-green-subql-node-config.domain-prefix}-subql-${var.nova-green-subql-node-config.network-name}"
+    Name       = "${var.nova-green-subql-node-config.domain-prefix}-${var.nova-green-subql-node-config.network-name}"
     role       = "block explorer"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -245,11 +242,9 @@ resource "aws_instance" "nova_subql_green_node" {
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt update -y",
-      "sudo apt upgrade -y",
-      "sudo apt install git curl btop wget gnupg openssl net-tools git -y",
-
+      "sudo DEBIAN_FRONTEND=noninteractiveapt upgrade -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt install git curl btop wget gnupg openssl net-tools git -y",
     ]
 
     on_failure = continue
