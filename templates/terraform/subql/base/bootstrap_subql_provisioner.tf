@@ -62,22 +62,6 @@ resource "null_resource" "setup-blue-subql-nodes" {
     destination = "/home/${var.ssh_user}/subql/install_docker.sh"
   }
 
-  # copy nginx config files
-  provisioner "file" {
-    source      = "${var.path_to_configs}/nginx-subql.conf"
-    destination = "/home/${var.ssh_user}/subql/backend.conf"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_configs}/cors-settings.conf"
-    destination = "/home/${var.ssh_user}/subql/cors-settings.conf"
-  }
-  # copy nginx install file
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "/home/${var.ssh_user}/subql/install_nginx.sh"
-  }
-
 }
 
 resource "null_resource" "setup-green-subql-nodes" {
@@ -132,22 +116,6 @@ resource "null_resource" "setup-green-subql-nodes" {
     destination = "/home/${var.ssh_user}/subql/install_docker.sh"
   }
 
-  # copy nginx config files
-  provisioner "file" {
-    source      = "${var.path_to_configs}/nginx-subql.conf"
-    destination = "/home/${var.ssh_user}/subql/backend.conf"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_configs}/cors-settings.conf"
-    destination = "/home/${var.ssh_user}/subql/cors-settings.conf"
-  }
-  # copy nginx install file
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/install_nginx.sh"
-    destination = "/home/${var.ssh_user}/subql/install_nginx.sh"
-  }
-
 }
 
 resource "null_resource" "start-blue-subql-nodes" {
@@ -174,25 +142,13 @@ resource "null_resource" "start-blue-subql-nodes" {
   # install deployments
   provisioner "remote-exec" {
     inline = [
-      # install nginx, certbot, docker and docker compose
+      # install docker and docker compose
       "chmod +x /home/${var.ssh_user}/subql/install_docker.sh",
       "sudo bash /home/${var.ssh_user}/subql/install_docker.sh",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
-      # copy files
-      "sudo cp -f /home/${var.ssh_user}/subql/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f /home/${var.ssh_user}/subql/backend.conf /etc/nginx/backend.conf",
-      "chmod +x /home/${var.ssh_user}/subql/install_nginx.sh",
-      "sudo bash /home/${var.ssh_user}/subql/install_nginx.sh",
-      # start systemd services
-      "sudo systemctl daemon-reload",
-      # start nginx
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx",
-      # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.blue-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
-      "sudo systemctl restart nginx",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name}",
 
@@ -234,39 +190,24 @@ resource "null_resource" "start-green-subql-nodes" {
 
   }
 
-  # install nginx, certbot, docker and docker compose
+  # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/${var.ssh_user}/subql/install_docker.sh",
       "sudo bash /home/${var.ssh_user}/subql/install_docker.sh",
-      # install nginx
-      "chmod +x /home/${var.ssh_user}/subql/install_nginx.sh",
-      "sudo bash /home/${var.ssh_user}/subql/install_nginx.sh",
     ]
   }
 
   # install deployments
   provisioner "remote-exec" {
     inline = [
-      # install nginx, certbot, docker and docker compose
+      # install docker and docker compose
       "chmod +x /home/${var.ssh_user}/subql/install_docker.sh",
       "sudo bash /home/${var.ssh_user}/subql/install_docker.sh",
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
-      # copy files
-      "sudo cp -f /home/${var.ssh_user}/subql/cors-settings.conf /etc/nginx/cors-settings.conf",
-      "sudo cp -f /home/${var.ssh_user}/subql/backend.conf /etc/nginx/backend.conf",
-      "chmod +x /home/${var.ssh_user}/subql/install_nginx.sh",
-      "sudo bash /home/${var.ssh_user}/subql/install_nginx.sh",
-      # start systemd services
-      "sudo systemctl daemon-reload",
-      # start nginx
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx",
-      # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.green-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
-      "sudo systemctl restart nginx",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name}",
 
