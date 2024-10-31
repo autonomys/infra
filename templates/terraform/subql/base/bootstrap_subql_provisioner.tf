@@ -194,7 +194,7 @@ resource "null_resource" "start-blue-subql-nodes" {
       "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d ${var.blue-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.network-name}",
+      "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name}",
 
       # create .env file
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
@@ -265,10 +265,10 @@ resource "null_resource" "start-green-subql-nodes" {
       "sudo systemctl enable nginx",
       "sudo systemctl start nginx",
       # install certbot & generate domain
-      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.blue-subql-node-config.domain-prefix}.subql.${var.network_name}.subspace.network",
+      "sudo certbot --nginx --non-interactive -v --agree-tos -m alerts@subspace.network -d subql.${var.network_name}.subspace.network -d ${var.green-subql-node-config.domain-prefix}.${var.network_name}.subspace.network",
       "sudo systemctl restart nginx",
       # set hostname
-      "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.network-name}",
+      "sudo hostnamectl set-hostname subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name}",
 
       # create .env file
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
