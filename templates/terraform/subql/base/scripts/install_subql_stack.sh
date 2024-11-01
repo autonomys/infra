@@ -72,4 +72,4 @@ sudo docker compose -p prod-astral-indexers \
   --profile dictionary \
   --profile task \
   --profile taurus \
-  up --remove-orphans
+  up -d --remove-orphans
