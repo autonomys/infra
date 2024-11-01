@@ -91,9 +91,10 @@ resource "null_resource" "setup-nova-green-subql-nodes" {
   # create subql dir
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p /home/${var.ssh_user}/subql",
-      "mkdir -p /home/${var.ssh_user}/subql/postgresql",
-      "mkdir -p /home/${var.ssh_user}/subql/postgresql/{conf,data}",
+      "sudo mkdir -p /home/${var.ssh_user}/subql",
+      "sudo mkdir -p /home/${var.ssh_user}/subql/postgresql",
+      "sudo mkdir -p /home/${var.ssh_user}/subql/postgresql/conf",
+      "sudo mkdir -p /home/${var.ssh_user}/subql/postgresql/data",
       "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subql/ && sudo chmod -R 750 /home/${var.ssh_user}/subql/"
     ]
   }
@@ -159,7 +160,6 @@ resource "null_resource" "start-nova-blue-subql-nodes" {
       # run subql install script
       "chmod +x /home/${var.ssh_user}/subql/install_subql_stack.sh",
       "bash /home/${var.ssh_user}/subql/install_subql_stack.sh",
-      "echo 'Installation Complete'",
 
       # create .env file
       "grep -q '^NR_AGENT_IDENTIFIER=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_AGENT_IDENTIFIER=.*/NR_AGENT_IDENTIFIER=subql-${var.nova-blue-subql-node-config.deployment-color}-${var.nova-blue-subql-node-config.network-name}/' /home/${var.ssh_user}/astral/.env || echo NR_AGENT_IDENTIFIER=subql-${var.nova-blue-subql-node-config.deployment-color}-${var.nova-blue-subql-node-config.network-name} >> /home/${var.ssh_user}/astral/.env",
@@ -169,6 +169,13 @@ resource "null_resource" "start-nova-blue-subql-nodes" {
       "grep -q '^HASURA_GRAPHQL_ADMIN_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's/^HASURA_GRAPHQL_ADMIN_SECRET=.*/HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret}/' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/astral/.env",
       "grep -q '^HASURA_GRAPHQL_JWT_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's|^HASURA_GRAPHQL_JWT_SECRET=.*|HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"}|' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"} >> /home/${var.ssh_user}/astral/.env",
 
+      # run subql stack
+      "export $(grep -v '^#' /home/${var.ssh_user}/astral/.env | xargs)",
+      "cd /home/${var.ssh_user}/astral/indexers",
+      "yarn build-dictionary",
+      "npx lerna run codegen",
+      "npx lerna run build",
+      "sudo docker compose -p prod-astral-indexers -f /home/${var.ssh_user}/astral/docker-compose.yml -f /home/${var.ssh_user}/astral/docker-compose.prod.yml --profile dictionary --profile task --profile taurus up -d --remove-orphans",
       "echo 'Installation Complete'",
     ]
   }
@@ -225,7 +232,6 @@ resource "null_resource" "nova-start-green-subql-nodes" {
       # run subql install script
       "chmod +x /home/${var.ssh_user}/subql/install_subql_stack.sh",
       "bash /home/${var.ssh_user}/subql/install_subql_stack.sh",
-      "echo 'Installation Complete'",
 
       # create .env file
       "grep -q '^NR_AGENT_IDENTIFIER=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_AGENT_IDENTIFIER=.*/NR_AGENT_IDENTIFIER=subql-${var.nova-green-subql-node-config.deployment-color}-${var.nova-green-subql-node-config.network-name}/' /home/${var.ssh_user}/astral/.env || echo NR_AGENT_IDENTIFIER=subql-${var.nova-green-subql-node-config.deployment-color}-${var.nova-green-subql-node-config.network-name} >> /home/${var.ssh_user}/astral/.env",
@@ -235,6 +241,13 @@ resource "null_resource" "nova-start-green-subql-nodes" {
       "grep -q '^HASURA_GRAPHQL_ADMIN_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's/^HASURA_GRAPHQL_ADMIN_SECRET=.*/HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret}/' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/astral/.env",
       "grep -q '^HASURA_GRAPHQL_JWT_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's|^HASURA_GRAPHQL_JWT_SECRET=.*|HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"}|' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"} >> /home/${var.ssh_user}/astral/.env",
 
+      # run subql stack
+      "export $(grep -v '^#' /home/${var.ssh_user}/astral/.env | xargs)",
+      "cd /home/${var.ssh_user}/astral/indexers",
+      "yarn build-dictionary",
+      "npx lerna run codegen",
+      "npx lerna run build",
+      "sudo docker compose -p prod-astral-indexers -f /home/${var.ssh_user}/astral/docker-compose.yml -f /home/${var.ssh_user}/astral/docker-compose.prod.yml --profile dictionary --profile task --profile taurus up -d --remove-orphans",
       "echo 'Installation Complete'",
     ]
   }
