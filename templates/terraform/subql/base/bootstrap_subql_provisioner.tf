@@ -53,7 +53,7 @@ resource "null_resource" "setup-blue-subql-nodes" {
   # copy subql launch script
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_subql_stack.sh"
-    destination = "/home/${var.ssh_user}/subql/subql_stack.sh"
+    destination = "/home/${var.ssh_user}/subql/install_subql_stack.sh"
   }
 
   # copy docker install file
@@ -107,7 +107,7 @@ resource "null_resource" "setup-green-subql-nodes" {
   # copy subql launch script
   provisioner "file" {
     source      = "${var.path_to_scripts}/install_subql_stack.sh"
-    destination = "/home/${var.ssh_user}/subql/subql_stack.sh"
+    destination = "/home/${var.ssh_user}/subql/install_subql_stack.sh"
   }
 
   # copy docker install file
@@ -149,19 +149,26 @@ resource "null_resource" "start-blue-subql-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
 
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name}",
 
-      # create .env file
-      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
-      "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
-      "echo HASURA_GRAPHQL_JWT_SECRET=${var.hasura_graphql_jwt_secret} >> /home/${var.ssh_user}/subql/.env",
+      # run subql install script
+      "chmod +x /home/${var.ssh_user}/subql/install_subql_stack.sh",
+      "bash /home/${var.ssh_user}/subql/install_subql_stack.sh",
+      "echo 'Installation Complete'",
 
-      # run subql lauch script
-      "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
-      "bash /home/${var.ssh_user}/subql/subql_stack.sh",
+      # create .env file
+      "grep -q '^NR_AGENT_IDENTIFIER=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_AGENT_IDENTIFIER=.*/NR_AGENT_IDENTIFIER=subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name}/' /home/${var.ssh_user}/astral/.env || echo NR_AGENT_IDENTIFIER=subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^NR_API_KEY=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_API_KEY=.*/NR_API_KEY=${var.nr_api_key}/' /home/${var.ssh_user}/astral/.env || echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^DOCKER_TAG=' /home/${var.ssh_user}/astral/.env && sed -i 's/^DOCKER_TAG=.*/DOCKER_TAG=${var.blue-subql-node-config.docker-tag}/' /home/${var.ssh_user}/astral/.env || echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^DB_PASSWORD=' /home/${var.ssh_user}/astral/.env && sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${var.postgres_password}/' /home/${var.ssh_user}/astral/.env || echo DB_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^HASURA_GRAPHQL_ADMIN_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's/^HASURA_GRAPHQL_ADMIN_SECRET=.*/HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret}/' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^HASURA_GRAPHQL_JWT_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's|^HASURA_GRAPHQL_JWT_SECRET=.*|HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"}|' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"} >> /home/${var.ssh_user}/astral/.env",
+
       "echo 'Installation Complete'",
     ]
   }
@@ -208,18 +215,26 @@ resource "null_resource" "start-green-subql-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
 
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name}",
 
-      # create .env file
-      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subql/.env",
-      "echo DOCKER_TAG=${var.blue-subql-node-config.docker-tag} >> /home/${var.ssh_user}/subql/.env",
-      "echo POSTGRES_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/subql/.env",
-      "echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/subql/.env",
+      # run subql install script
+      "chmod +x /home/${var.ssh_user}/subql/install_subql_stack.sh",
+      "bash /home/${var.ssh_user}/subql/install_subql_stack.sh",
+      "echo 'Installation Complete'",
 
-      # run subql lauch script
-      "chmod +x /home/${var.ssh_user}/subql/subql_stack.sh",
-      "bash /home/${var.ssh_user}/subql/subql_stack.sh",
+      # create .env file
+      "grep -q '^NR_AGENT_IDENTIFIER=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_AGENT_IDENTIFIER=.*/NR_AGENT_IDENTIFIER=subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name}/' /home/${var.ssh_user}/astral/.env || echo NR_AGENT_IDENTIFIER=subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^NR_API_KEY=' /home/${var.ssh_user}/astral/.env && sed -i 's/^NR_API_KEY=.*/NR_API_KEY=${var.nr_api_key}/' /home/${var.ssh_user}/astral/.env || echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^DOCKER_TAG=' /home/${var.ssh_user}/astral/.env && sed -i 's/^DOCKER_TAG=.*/DOCKER_TAG=${var.green-subql-node-config.docker-tag}/' /home/${var.ssh_user}/astral/.env || echo DOCKER_TAG=${var.green-subql-node-config.docker-tag} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^DB_PASSWORD=' /home/${var.ssh_user}/astral/.env && sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${var.postgres_password}/' /home/${var.ssh_user}/astral/.env || echo DB_PASSWORD=${var.postgres_password} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^HASURA_GRAPHQL_ADMIN_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's/^HASURA_GRAPHQL_ADMIN_SECRET=.*/HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret}/' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_ADMIN_SECRET=${var.hasura_graphql_admin_secret} >> /home/${var.ssh_user}/astral/.env",
+      "grep -q '^HASURA_GRAPHQL_JWT_SECRET=' /home/${var.ssh_user}/astral/.env && sed -i 's|^HASURA_GRAPHQL_JWT_SECRET=.*|HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"}|' /home/${var.ssh_user}/astral/.env || echo HASURA_GRAPHQL_JWT_SECRET={\"type\":\"HS256\",\"key\":\"${var.hasura_graphql_jwt_secret}\"} >> /home/${var.ssh_user}/astral/.env",
+
       "echo 'Installation Complete'",
     ]
   }
