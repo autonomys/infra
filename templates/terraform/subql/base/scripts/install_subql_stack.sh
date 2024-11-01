@@ -74,7 +74,7 @@ export $(grep -v '^#' ../.env.prod | xargs) &&
 yarn build-dictionary &&
 lerna run codegen &&
 lerna run build &&
-docker compose -p prod-astral-indexers \
+sudo docker compose -p prod-astral-indexers \
   -f ../docker-compose.yml \
   -f ../docker-compose.prod.yml \
   --profile dictionary \

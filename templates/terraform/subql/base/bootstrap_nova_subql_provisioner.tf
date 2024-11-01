@@ -149,6 +149,10 @@ resource "null_resource" "start-nova-blue-subql-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
 
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.nova-blue-subql-node-config.deployment-color}-${var.nova-blue-subql-node-config.network-name}",
 
@@ -210,6 +214,10 @@ resource "null_resource" "nova-start-green-subql-nodes" {
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
+
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
 
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.nova-green-subql-node-config.deployment-color}-${var.nova-green-subql-node-config.network-name}",

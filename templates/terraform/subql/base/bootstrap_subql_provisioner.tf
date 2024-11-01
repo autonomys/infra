@@ -149,6 +149,10 @@ resource "null_resource" "start-blue-subql-nodes" {
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
 
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
+
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.blue-subql-node-config.deployment-color}-${var.blue-subql-node-config.network-name}",
 
@@ -210,6 +214,10 @@ resource "null_resource" "start-green-subql-nodes" {
       # start docker daemon
       "sudo systemctl enable --now docker.service",
       "sudo systemctl restart docker.service",
+
+      # Add ubuntu user to docker and sudo group
+      "sudo usermod -aG docker ${var.ssh_user}",
+      "sudo usermod -aG sudo ${var.ssh_user}",
 
       # set hostname
       "sudo hostnamectl set-hostname subql-${var.green-subql-node-config.deployment-color}-${var.green-subql-node-config.network-name}",
