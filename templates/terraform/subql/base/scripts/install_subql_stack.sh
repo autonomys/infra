@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Exit on any error
-set -e
-
 # Check if 'git' is installed
 if ! command -v git &> /dev/null; then
   echo "'git' is required but not installed. Please install 'git' and try again."
@@ -63,12 +60,12 @@ yarn -v
 git clone https://github.com/autonomys/astral.git
 cd astral/indexers
 
-yarn
+yarn install --frozen-lockfile
 
-export $(grep -v '^#' ../.env.prod | xargs) &&
+export $(grep -v '^#' ../.env | xargs) &&
 yarn build-dictionary &&
-lerna run codegen &&
-lerna run build &&
+npx lerna run codegen &&
+npx lerna run build &&
 sudo docker compose -p prod-astral-indexers \
   -f ../docker-compose.yml \
   -f ../docker-compose.prod.yml \
