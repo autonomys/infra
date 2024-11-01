@@ -61,15 +61,3 @@ git clone https://github.com/autonomys/astral.git
 cd astral/indexers
 
 yarn install --frozen-lockfile
-
-export $(grep -v '^#' ../.env | xargs) &&
-yarn build-dictionary &&
-npx lerna run codegen &&
-npx lerna run build &&
-sudo docker compose -p prod-astral-indexers \
-  -f ../docker-compose.yml \
-  -f ../docker-compose.prod.yml \
-  --profile dictionary \
-  --profile task \
-  --profile taurus \
-  up -d --remove-orphans
