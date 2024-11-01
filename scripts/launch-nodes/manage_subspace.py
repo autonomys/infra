@@ -201,8 +201,8 @@ def main():
     parser.add_argument('--no-timekeeper', action='store_true', help='Disable launching of the timekeeper node')
     parser.add_argument('--prune', action='store_true', help='Stop containers and destroy the Docker images')
     parser.add_argument('--restart', action='store_true', help='Restart the network without wiping the data')
-    parser.add_argument('--plot-size', help='Set plot size on the farmer, i.e 10G')
-    parser.add_argument('--cache-percentage', help='Set the cache percentage on the farmer, i.e 10')
+    parser.add_argument('--plot_size', help='Set plot size on the farmer, i.e 10G')
+    parser.add_argument('--cache_percentage', help='Set the cache percentage on the farmer, i.e 10')
     args = parser.parse_args()
 
     # Set logging level based on user input
