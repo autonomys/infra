@@ -66,3 +66,18 @@ yarn -v
 
 # clone the astral repository from Github
 git clone https://github.com/autonomys/astral.git
+cd astral/indexers
+
+yarn
+
+export $(grep -v '^#' ../.env.prod | xargs) &&
+yarn build-dictionary &&
+lerna run codegen &&
+lerna run build &&
+docker compose -p prod-astral-indexers \
+  -f ../docker-compose.yml \
+  -f ../docker-compose.prod.yml \
+  --profile dictionary \
+  --profile task \
+  --profile taurus \
+  up --remove-orphans
