@@ -3,17 +3,12 @@
 # Exit on any error
 set -e
 
-# Check if 'tmux' is installed
-if ! command -v tmux &> /dev/null; then
-  echo "'tmux' is required but not installed. Please install 'tmux' and try again."
-  exit 1
-fi
-
 # Check if 'git' is installed
 if ! command -v git &> /dev/null; then
   echo "'git' is required but not installed. Please install 'git' and try again."
   exit 1
 fi
+
 # Install nvm (Node Version Manager)
 export NVM_DIR="$HOME/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
