@@ -75,10 +75,6 @@ def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, po
         logger.error(f"Failed to modify .env file: {e}")
         raise
 
-    except Exception as e:
-        logger.error(f"Failed to modify .env file: {e}")
-        raise
-
 def docker_compose_down(client, subspace_dir):
     """Run sudo docker compose down -v in the subspace directory."""
     try:
@@ -139,32 +135,9 @@ def docker_compose_up(client, subspace_dir):
         logger.error(f"Failed to run sudo docker compose up -d: {e}")
         raise
 
-def grep_protocol_version(client, retries=5, interval=30):
-    """Grep the logs to find the protocol version and extract the hash."""
-    logs_command = 'sudo docker logs --tail 100 subspace-archival-node-1 | grep "protocol_version="'
-
-    for attempt in range(retries):
-        try:
-            stdout, stderr = run_command(client, logs_command)
-            match = re.search(r'protocol_version=/subspace/2/([a-f0-9]+)', stdout)
-            if match:
-                logger.info(f"Protocol version hash found: {match.group(1)}")
-                return match.group(1)
-            else:
-                logger.warning(f"Protocol version hash not found. Attempt {attempt + 1} of {retries}")
-        except Exception as e:
-            logger.error(f"Error grepping protocol version: {e}")
-
-        if attempt < retries - 1:
-            logger.info(f"Retrying in {interval} seconds...")
-            sleep(interval)
-
-    logger.error("Failed to retrieve protocol version hash after retries.")
-    return None
-
 def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None,
                 plot_size=None, cache_percentage=None, network=None, prune=False, restart=False,
-                update_genesis_hash=True, genesis_hash=None):
+                genesis_hash=None):
     """Generic function to handle different node types with specified actions."""
     try:
         if prune:
@@ -180,7 +153,7 @@ def handle_node(client, node, subspace_dir, release_version, pot_external_entrop
                             plot_size=plot_size,
                             cache_percentage=cache_percentage,
                             network=network,
-                            genesis_hash=genesis_hash if update_genesis_hash else None)
+                            genesis_hash=genesis_hash)
 
             docker_compose_up(client, subspace_dir)
 
@@ -197,8 +170,9 @@ def main():
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory')
     parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for all nodes')
+    parser.add_argument('--genesis_hash', help='GENESIS_HASH value for the Bootstrap nodes')
     parser.add_argument('--log_level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR)')
-    parser.add_argument('--no-timekeeper', action='store_true', help='Disable launching of the timekeeper node')
+    parser.add_argument('--no_timekeeper', action='store_true', help='Disable launching of the timekeeper node')
     parser.add_argument('--prune', action='store_true', help='Stop containers and destroy the Docker images')
     parser.add_argument('--restart', action='store_true', help='Restart the network without wiping the data')
     parser.add_argument('--plot_size', help='Set plot size on the farmer, i.e 10G')
@@ -223,7 +197,9 @@ def main():
         try:
             logger.info(f"Connecting to timekeeper node {timekeeper_node['host']}...")
             client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
-            handle_node(client, timekeeper_node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, prune=args.prune, restart=args.restart)
+            handle_node(client, timekeeper_node, args.subspace_dir, args.release_version,
+                       pot_external_entropy=args.pot_external_entropy, network=args.network,
+                       prune=args.prune, restart=args.restart)
         except Exception as e:
             logger.error(f"Error handling timekeeper node: {e}")
         finally:
@@ -237,7 +213,10 @@ def main():
         try:
             logger.info(f"Connecting to farmer node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-            handle_node(client, node, args.subspace_dir, args.release_version, pot_external_entropy=args.pot_external_entropy, network=args.network, plot_size=args.plot_size, cache_percentage=args.cache_percentage, prune=args.prune, restart=args.restart)
+            handle_node(client, node, args.subspace_dir, args.release_version,
+                       pot_external_entropy=args.pot_external_entropy, network=args.network,
+                       plot_size=args.plot_size, cache_percentage=args.cache_percentage,
+                       prune=args.prune, restart=args.restart)
         except Exception as e:
             logger.error(f"Error handling farmer node {node['host']}: {e}")
         finally:
@@ -245,64 +224,34 @@ def main():
                 client.close()
 
     # Step 3: Handle RPC nodes
-    protocol_version_hash = None
     for node in rpc_nodes:
         try:
             logger.info(f"Connecting to RPC node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-
-            # Handle node operations (prune/restart will be managed here)
             handle_node(client, node, args.subspace_dir, args.release_version,
-                        pot_external_entropy=args.pot_external_entropy,
-                        network=args.network,
-                        prune=args.prune,
-                        restart=args.restart)
-
-            # Skip protocol version extraction if prune or restart is specified
-            if args.prune or args.restart:
-                logger.info(f"Skipping protocol version extraction for RPC node {node['host']} due to prune/restart.")
-                continue
-
-            # If this is an RPC node, wait and then extract protocol version hash
-            logger.info(f"Waiting for RPC node {node['host']} to start...")
-            sleep(30)  # Adjust sleep time as necessary
-
-            # Attempt to grep the protocol version from logs
-            protocol_version_hash = grep_protocol_version(client)
-
-            if not protocol_version_hash:
-                logger.error(f"Failed to retrieve protocol version hash on RPC node {node['host']}")
-                continue
+                       pot_external_entropy=args.pot_external_entropy, network=args.network,
+                       prune=args.prune, restart=args.restart)
         except Exception as e:
             logger.error(f"Error handling RPC node {node['host']}: {e}")
         finally:
             if client:
                 client.close()
 
-    # Step 4: Handle the bootstrap node, using the protocol version hash if available
+    # Step 4: Handle the bootstrap node with genesis hash from arguments
     try:
         logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
         client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
 
-        # Warn about missing protocol version hash before proceeding with the bootstrap node update
-        if not protocol_version_hash:
-            logger.warning("Protocol version hash not found; proceeding with bootstrap node without genesis_hash update.")
-
-        # Handle node operations with update_genesis_hash set to True
         handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
-                    pot_external_entropy=args.pot_external_entropy,
-                    network=args.network,
-                    prune=args.prune,
-                    restart=args.restart,
-                    update_genesis_hash=True,  # Always update genesis hash
-                    genesis_hash=protocol_version_hash)
+                   pot_external_entropy=args.pot_external_entropy, network=args.network,
+                   prune=args.prune, restart=args.restart,
+                   genesis_hash=args.genesis_hash)
 
     except Exception as e:
         logger.error(f"Error handling bootstrap node: {e}")
     finally:
         if client:
-            client.close()
-
+                client.close()
 
 if __name__ == '__main__':
     main()
