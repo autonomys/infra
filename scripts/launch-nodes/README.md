@@ -110,6 +110,8 @@ python manage_subspace.py --config nodes.toml --release_version docker-tag --sub
 - `--cache_percentage`: Cache percentage to be set for Farmer nodes.
 - `--prune`: Stop containers and remove unused Docker images.
 - `--restart`: Restart containers without wiping data.
+- `--no_timekeeper`: Disable launching of the timekeeper node. This flag can be used if you do not want the script to handle the timekeeper node during execution.
+- `--wipe`: Wipe data for Farmer nodes before starting them while preserving identity.bin file.
 
 ### Step 5: Deactivate the Virtual Environment
 

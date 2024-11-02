@@ -53,6 +53,44 @@ def run_command(client, command):
         logger.error(f"Failed to run command: {e}")
         raise
 
+def wipe_farmer_data(client, subspace_dir):
+    """Wipe farmer data while preserving identity.bin file."""
+    try:
+        commands = [
+            # Create backup directory if it doesn't exist
+            f"cd {subspace_dir} && sudo mkdir -p backup",
+
+            # Preserve identity.bin if it exists
+            f"cd {subspace_dir} && if [ -f farmer_data/identity.bin ]; then sudo mv farmer_data/identity.bin backup/; fi",
+
+            # Remove farmer_data directory with sudo
+            f"cd {subspace_dir} && sudo rm -rf farmer_data",
+
+            # Recreate farmer_data directory
+            f"cd {subspace_dir} && sudo mkdir -p farmer_data",
+
+            # Restore identity.bin if it was backed up
+            f"cd {subspace_dir} && if [ -f backup/identity.bin ]; then sudo mv backup/identity.bin farmer_data/; fi",
+
+            # Set proper ownership
+            f"cd {subspace_dir} && sudo chown -R nobody:nogroup farmer_data/",
+
+            # Clean up backup directory
+            f"cd {subspace_dir} && sudo rm -rf backup"
+        ]
+
+        for command in commands:
+            logger.info(f"Executing: {command}")
+            stdout, stderr = run_command(client, command)
+            if stderr and not any(keyword in stderr for keyword in ["No such file", "not found"]):
+                logger.error(f"Error during farmer data wipe: {stderr}")
+
+        logger.info("Successfully wiped farmer data while preserving identity.bin")
+
+    except Exception as e:
+        logger.error(f"Failed to wipe farmer data: {e}")
+        raise
+
 def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, pot_external_entropy=None, plot_size=None, cache_percentage=None, network=None):
     """Modify the .env file to update various settings."""
     try:
@@ -137,7 +175,7 @@ def docker_compose_up(client, subspace_dir):
 
 def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None,
                 plot_size=None, cache_percentage=None, network=None, prune=False, restart=False,
-                genesis_hash=None):
+                genesis_hash=None, wipe=False):
     """Generic function to handle different node types with specified actions."""
     try:
         if prune:
@@ -146,6 +184,10 @@ def handle_node(client, node, subspace_dir, release_version, pot_external_entrop
             docker_compose_restart(client, subspace_dir)
         else:
             docker_compose_down(client, subspace_dir)
+
+            # Wipe farmer data if requested
+            if wipe and node.get('type') == 'farmer':
+                wipe_farmer_data(client, subspace_dir)
 
             # Update .env file with the appropriate parameters
             modify_env_file(client, subspace_dir, release_version,
@@ -177,6 +219,7 @@ def main():
     parser.add_argument('--restart', action='store_true', help='Restart the network without wiping the data')
     parser.add_argument('--plot_size', help='Set plot size on the farmer, i.e 10G')
     parser.add_argument('--cache_percentage', help='Set the cache percentage on the farmer, i.e 10')
+    parser.add_argument('--wipe', action='store_true', help='Wipe farmer data while preserving identity.bin')
     args = parser.parse_args()
 
     # Set logging level based on user input
@@ -216,7 +259,7 @@ def main():
             handle_node(client, node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        plot_size=args.plot_size, cache_percentage=args.cache_percentage,
-                       prune=args.prune, restart=args.restart)
+                       prune=args.prune, restart=args.restart, wipe=args.wipe)
         except Exception as e:
             logger.error(f"Error handling farmer node {node['host']}: {e}")
         finally:
