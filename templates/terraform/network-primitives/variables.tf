@@ -40,7 +40,6 @@ variable "instance_count" {
     bootstrap         = 2
     rpc               = 2
     domain            = 0
-    autoid            = 0
     rpc-indexer       = 0
     nova-indexer      = 0
     farmer            = 1

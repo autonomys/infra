@@ -149,11 +149,13 @@ output "farmer_node_ami" {
 
 output "dns-records" {
   value = [
-    cloudflare_record.bootstrap.*.hostname,
-    cloudflare_record.rpc.*.hostname,
-    cloudflare_record.rpc-indexer.*.hostname,
-    cloudflare_record.nova-indexer-rpc.*.hostname,
-    cloudflare_record.nova.*.hostname,
-    cloudflare_record.autoid.*.hostname,
+    cloudflare_record.rpc[*].hostname,
+    cloudflare_record.rpc-indexer[*].hostname,
+    cloudflare_record.nova-indexer-rpc[*].hostname,
+    cloudflare_record.bootstrap[*].hostname,
+    cloudflare_record.bootstrap_evm[*].hostname,
+    cloudflare_record.bootstrap_auto[*].hostname,
+    # cloudflare_record.nova[*].hostname,
+    # cloudflare_record.autoid[*].hostname,
   ]
 }

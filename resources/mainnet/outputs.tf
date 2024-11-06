@@ -1,11 +1,11 @@
 //output
 output "rpc-indexer-node-ipv4-addresses" {
-  value       = module.mainnet.rpc-indexer_node_public_ip
+  value       = module.mainnet.rpc_indexer_node_public_ip
   description = "RPC indexer node IPv4 Addresses"
 }
 
 output "nova-indexer-node-ipv4-addresses" {
-  value       = module.mainnet.nova-indexer_node_public_ip
+  value       = module.mainnet.nova_indexer_node_public_ip
   description = "Nova indexer node IPv4 Addresses"
 }
 
@@ -30,7 +30,7 @@ output "bootstrap-node-autoid-ipv4-addresses" {
 }
 
 output "evm-node-ipv4-addresses" {
-  value       = module.mainnet.domain_node_public_ip
+  value       = module.mainnet.evm_node_public_ip
   description = "Domain node IPv4 Addresses"
 }
 
