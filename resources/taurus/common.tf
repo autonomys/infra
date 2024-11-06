@@ -12,9 +12,3 @@ variable "cloudflare_api_token" {
   type        = string
   description = "cloudflare api token"
 }
-
-variable "netdata_token" {
-  type      = string
-  sensitive = true
-
-}

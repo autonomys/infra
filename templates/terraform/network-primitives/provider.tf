@@ -20,7 +20,7 @@ provider "aws" {
     tags = {
       Environment = var.network_name
       Owner       = "subspace"
-      Project     = "Subspace Gemini network"
+      Project     = "Autonomys network"
     }
   }
 }

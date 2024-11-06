@@ -57,8 +57,7 @@ variable "instance_count" {
   default = {
     bootstrap        = 2
     rpc              = 2
-    domain           = 0
-    autoid           = 0
+    domain           = 2
     rpc-indexer      = 1
     nova-indexer     = 0
     farmer           = 1
