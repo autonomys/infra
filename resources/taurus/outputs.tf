@@ -29,7 +29,7 @@ output "bootstrap-node-autoid-ipv4-addresses" {
   description = "AutoID Bootstrap node IPv4 Addresses"
 }
 
-output "domain-node-ipv4-addresses" {
+output "evm-node-ipv4-addresses" {
   value       = module.taurus.evm_node_public_ip
   description = "Domain node IPv4 Addresses"
 }

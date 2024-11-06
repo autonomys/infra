@@ -9,15 +9,15 @@ locals {
   # Create explicit mappings for nova and autoid instances
   nova_instances = {
     for idx in range(0, local.instance_split) : idx => {
-      ip_v4 = local.domain_nodes_ip_v4[idx]
-      ip_v6 = local.domain_nodes_ip_v6[idx]
+      ip_v4 = local.evm_nodes_ip_v4[idx]
+      ip_v6 = local.evm_nodes_ip_v6[idx]
     }
   }
 
   autoid_instances = {
     for idx in range(local.instance_split, var.domain-node-config.instance-count) : idx - local.instance_split => {
-      ip_v4 = local.domain_nodes_ip_v4[idx]
-      ip_v6 = local.domain_nodes_ip_v6[idx]
+      ip_v4 = local.autoid_nodes_ip_v4[idx]
+      ip_v6 = local.autoid_nodes_ip_v6[idx]
     }
   }
 }
