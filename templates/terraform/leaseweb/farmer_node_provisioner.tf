@@ -146,7 +146,7 @@ resource "null_resource" "start-farmer-nodes" {
 
       # create .env file
       "echo REPO_ORG=${var.farmer-node-config.repo-org} > /root/subspace/.env",
-      "echo NODE_TAG=${var.farmer-node-config.node-tag} >> /root/subspace/.env",
+      "echo DOCKER_TAG=${var.farmer-node-config.docker-tag} >> /root/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /root/subspace/.env",
       "echo NODE_ID=${count.index} >> /root/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /root/subspace/node_keys.txt) >> /root/subspace/.env",

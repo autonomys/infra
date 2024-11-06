@@ -74,7 +74,7 @@ services:
       - ./letsencrypt/acme.json:/acme.json
 
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
       - ./keystore:/var/subspace/keystore:ro

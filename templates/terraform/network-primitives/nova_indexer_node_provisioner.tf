@@ -162,7 +162,7 @@ resource "null_resource" "start-nova-indexer-nodes" {
 
       # create .env file
       "echo NODE_ORG=${var.nova-indexer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.nova-indexer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.nova-indexer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.nova-indexer-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       # //todo use a map for domain id and labels

@@ -14,7 +14,7 @@ variable "node-config" {
     deployment-version  = number
     instance-count      = number
     repo-org            = string
-    node-tag            = string
+    docker-tag          = string
     additional-node-ips = list(string)
     reserved-only       = bool
     prune               = bool
@@ -28,7 +28,7 @@ variable "domain-node-config" {
     deployment-version  = number
     instance-count      = number
     repo-org            = string
-    node-tag            = string
+    docker-tag          = string
     additional-node-ips = list(string)
     domain-prefix       = list(string)
     reserved-only       = bool
@@ -46,7 +46,7 @@ variable "bootstrap-node-config" {
     deployment-version  = number
     instance-count      = number
     repo-org            = string
-    node-tag            = string
+    docker-tag          = string
     additional-node-ips = list(string)
     reserved-only       = bool
     prune               = bool
@@ -62,7 +62,7 @@ variable "bootstrap-node-domain-config" {
     deployment-version  = number
     instance-count      = number
     repo-org            = string
-    node-tag            = string
+    docker-tag          = string
     additional-node-ips = list(string)
     reserved-only       = bool
     prune               = bool
@@ -79,7 +79,7 @@ variable "farmer-node-config" {
     deployment-version     = number
     instance-count         = number
     repo-org               = string
-    node-tag               = string
+    docker-tag             = string
     additional-node-ips    = list(string)
     reserved-only          = bool
     prune                  = bool

@@ -230,7 +230,7 @@ def main():
     with open(args.config, 'rb') as f:
         config = tomli.load(f)
 
-    bootstrap_node = config['bootstrap_node']
+    bootstrap_nodes = [bootstrap_node for bootstrap_node in config['bootstrap_nodes']]
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
     timekeeper_node = config['timekeeper']
@@ -281,19 +281,19 @@ def main():
                 client.close()
 
     # Step 4: Handle the bootstrap node with genesis hash from arguments
-    try:
-        logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
-        client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
+    for bootstrap_node in config['bootstrap_nodes']:
+        try:
+            logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
+            client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
 
-        handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
-                   pot_external_entropy=args.pot_external_entropy, network=args.network,
-                   prune=args.prune, restart=args.restart,
-                   genesis_hash=args.genesis_hash)
-
-    except Exception as e:
-        logger.error(f"Error handling bootstrap node: {e}")
-    finally:
-        if client:
+            handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
+                       pot_external_entropy=args.pot_external_entropy, network=args.network,
+                       prune=args.prune, restart=args.restart,
+                       genesis_hash=args.genesis_hash)
+        except Exception as e:
+            logger.error(f"Error handling bootstrap node {bootstrap_node['host']}: {e}")
+        finally:
+            if client:
                 client.close()
 
 if __name__ == '__main__':

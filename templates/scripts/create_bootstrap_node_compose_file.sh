@@ -47,7 +47,7 @@ services:
     restart: unless-stopped
 
   dsn-bootstrap-node:
-    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${NODE_TAG}
+    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${DOCKER_TAG}
     restart: unless-stopped
     environment:
       - RUST_LOG=info
@@ -104,7 +104,7 @@ done
 
 cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
-    image: ghcr.io/\${NODE_ORG}/node:\${NODE_TAG}
+    image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
     restart: unless-stopped

@@ -162,7 +162,7 @@ resource "null_resource" "start-domain-nodes" {
 
       # create .env file
       "echo NODE_ORG=${var.domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
