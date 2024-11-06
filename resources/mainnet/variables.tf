@@ -20,19 +20,19 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["nova, "autoid"]
+  default     = ["nova", "autoid"]
 }
 
 variable "instance_type" {
   type = map(string)
   default = {
-    bootstrap     = "c7a.2xlarge"
-    rpc           = "m6a.2xlarge"
-    domain        = "m6a.2xlarge"
-    rpc-indexer     = "c7a.2xlarge"
-    nova-indexer    = "c7a.2xlarge"
-    farmer        = "c7a.2xlarge"
-    evm_bootstrap = "c7a.xlarge"
+    bootstrap        = "c7a.2xlarge"
+    rpc              = "m7a.2xlarge"
+    domain           = "m7a.2xlarge"
+    rpc-indexer      = "c7a.4xlarge"
+    nova-indexer     = "c7a.4xlarge"
+    farmer           = "c7a.2xlarge"
+    evm_bootstrap    = "c7a.xlarge"
     autoid_bootstrap = "c7a.xlarge"
   }
 }
@@ -49,20 +49,20 @@ variable "vpc_cidr_block" {
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-east-1b"
+  default     = "us-east-1a"
 }
 
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap     = 2
-    rpc           = 2
-    domain        = 0
-    autoid        = 0
-    rpc-indexer     = 1
-    nova-indexer    = 0
-    farmer        = 0
-    evm_bootstrap = 1
+    bootstrap        = 2
+    rpc              = 2
+    domain           = 0
+    autoid           = 0
+    rpc-indexer      = 1
+    nova-indexer     = 0
+    farmer           = 1
+    evm_bootstrap    = 0
     autoid_bootstrap = 0
   }
 }
