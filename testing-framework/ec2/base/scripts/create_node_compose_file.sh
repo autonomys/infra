@@ -38,7 +38,7 @@ services:
       - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt/acme.json:/acme.json
+      - ./acme.json:/acme.json
 
   archival-node:
     build:
