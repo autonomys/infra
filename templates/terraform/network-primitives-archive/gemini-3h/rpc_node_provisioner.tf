@@ -154,7 +154,7 @@ resource "null_resource" "start-rpc-nodes" {
 
       # create .env file
       "echo NODE_ORG=${var.rpc-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_TAG=${var.rpc-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.rpc-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",

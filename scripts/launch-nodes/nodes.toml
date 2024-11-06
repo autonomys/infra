@@ -2,39 +2,39 @@
 
 [[bootstrap_nodes]]
 host = "34.201.40.91"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 
 [[bootstrap_nodes]]
 host = "35.202.41.92"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 
 [[bootstrap_nodes]]
 host = "36.203.42.93"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 
 [[farmer_rpc_nodes]]
 host = "54.209.76.129"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 type = "rpc"
 
 [[farmer_rpc_nodes]]
 host = "54.209.76.129"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 type = "rpc"
 
 [[farmer_rpc_nodes]]
 host = "44.202.161.154"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 type = "farmer"
 
 [timekeeper]
 host = "54.147.124.232"
-user = "ubuntu"
+user = "user"
 ssh_key = "key.pem"
 type = "timekeeper"
