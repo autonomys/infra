@@ -117,7 +117,7 @@ resource "cloudflare_record" "mail_autonomys_spf" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "mail.autonomys.xyz"
   type    = "TXT"
-  value   = "v=spf1 a mx include:_spf.google.com include:sendgrid.net ~all"
+  value   = "v=spf1 include:_spf.google.com include:sendgrid.net ~all"
   ttl     = 3600
 }
 
@@ -133,7 +133,7 @@ resource "cloudflare_record" "dmarc" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "_dmarc"
   type    = "TXT"
-  value   = "v=DMARC1; p=quarantine; rua=mailto:dmarc@autonomys.xyz; ruf=mailto:dmarc@autonomys.xyz; aspf=r; adkim=r;"
+  value   = "v=DMARC1; p=reject; rua=mailto:dmarc@autonomys.xyz; ruf=mailto:dmarc@autonomys.xyz; aspf=r; adkim=r;"
   ttl     = 3600
 }
 
@@ -141,7 +141,7 @@ resource "cloudflare_record" "spf" {
   zone_id = data.cloudflare_zone.autonomys_xyz.id
   name    = "@"
   type    = "TXT"
-  value   = "v=spf1 a mx include:_spf.google.com include:subspace.network ~all"
+  value   = "v=spf1 include:_spf.google.com include:subspace.network ~all"
   ttl     = 3600
 }
 
