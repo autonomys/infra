@@ -33,7 +33,7 @@ services:
         loki-url: "https://logging.subspace.network/loki/api/v1/push"
     command:
       - start
-      - "--metrics-endpoints=0.0.0.0:9616"
+      - "--prometheus-listen-on=0.0.0.0:9616"
       - "--keypair"
       - \${DSN_NODE_KEY}
       - "--listen-on"
