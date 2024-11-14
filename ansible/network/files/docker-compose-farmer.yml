@@ -63,7 +63,7 @@ services:
       "--listen-on", "/ip4/0.0.0.0/tcp/30533",
       "--listen-on", "/ip6/::/tcp/30533",
       "--reward-address", "${REWARD_ADDRESS}",
-      "--metrics-endpoint=0.0.0.0:9616",
+      "--prometheus-listen-on=0.0.0.0:9616",
       "--cache-percentage", "${CACHE_PERCENTAGE}",
       "--farming-thread-pool-size", "${THREAD_POOL_SIZE}",
     ]
