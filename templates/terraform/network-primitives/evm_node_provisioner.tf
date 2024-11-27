@@ -116,7 +116,7 @@ resource "null_resource" "start-evm-nodes" {
 
   # copy node keys file
   provisioner "file" {
-    source      = "./evm_node_keys.txt"
+    source      = "./nova_node_keys.txt"
     destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
   }
 

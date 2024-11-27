@@ -1,19 +1,19 @@
 module "devnet" {
   source          = "../../templates/terraform/network-primitives"
-  path_to_scripts = "../../templates/terraform/network-primitives/scripts"
-  path_to_configs = "../../templates/terraform/network-primitives/configs"
-  network_name    = "devnet"
+  path_to_scripts = "../../templates/scripts"
+  path_to_configs = "../../templates/configs"
+  network_name    = var.network_name
 
   bootstrap-node-config = {
     instance-type      = var.instance_type["bootstrap"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "snapshot-2024-jan-23-2"
+    docker-tag         = "mainnet-2024-nov-18"
     reserved-only      = false
     prune              = false
-    genesis-hash       = ""
+    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -22,14 +22,14 @@ module "devnet" {
 
   bootstrap-node-evm-config = {
     instance-type      = var.instance_type["evm_bootstrap"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "snapshot-2024-jan-23-2"
+    docker-tag         = "mainnet-2024-nov-18"
     reserved-only      = false
     prune              = false
-    genesis-hash       = ""
+    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -39,14 +39,14 @@ module "devnet" {
 
   bootstrap-node-autoid-config = {
     instance-type      = var.instance_type["autoid_bootstrap"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
-    docker-org         = "subspace"
-    docker-tag         = "snapshot-2024-jan-23-2"
+    docker-org         = "autonomys"
+    docker-tag         = "mainnet-2024-nov-18"
     reserved-only      = false
     prune              = false
-    genesis-hash       = ""
+    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -54,13 +54,14 @@ module "devnet" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  full-node-config = {
-    instance-type      = var.instance_type["full"]
+  rpc-indexer-node-config = {
+    instance-type      = var.instance_type["rpc-indexer"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["full"]
+    instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "snapshot-2024-jan-23-2"
+    docker-tag         = "mainnet-2024-nov-18"
+    domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -68,13 +69,31 @@ module "devnet" {
     disk-volume-type   = var.disk_volume_type
   }
 
+  nova-indexer-node-config = {
+    instance-type      = var.instance_type["nova-indexer"]
+    deployment-version = 0
+    regions            = var.aws_region
+    instance-count     = var.instance_count["nova-indexer"]
+    docker-org         = "autonomys"
+    docker-tag         = "mainnet-2024-nov-18"
+    domain-prefix      = "nova-indexer"
+    reserved-only      = false
+    prune              = false
+    node-dsn-port      = 30433
+    enable-domains     = true
+    domain-id          = var.domain_id
+    domain-labels      = var.domain_labels
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+  }
+
   rpc-node-config = {
     instance-type      = var.instance_type["rpc"]
-    deployment-version = 1
+    deployment-version = 0
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "snapshot-2024-jan-23-2"
+    docker-tag         = "mainnet-2024-nov-18"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -89,29 +108,11 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "snapshot-2024-jan-23-2"
-    domain-prefix      = ["nova"]
+    docker-tag         = "mainnet-2024-nov-18"
+    domain-prefix      = ["nova", "autoid"]
     reserved-only      = false
     prune              = false
-    node-dsn-port      = 30434
-    enable-domains     = true
-    domain-id          = var.domain_id
-    domain-labels      = var.domain_labels
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  autoid-node-config = {
-    instance-type      = var.instance_type["autoid"]
-    deployment-version = 0
-    regions            = var.aws_region
-    instance-count     = var.instance_count["autoid"]
-    docker-org         = "subspace"
-    docker-tag         = "snapshot-2024-jan-23-2"
-    domain-prefix      = ["autoid"]
-    reserved-only      = false
-    prune              = false
-    node-dsn-port      = 30434
+    node-dsn-port      = 30433
     enable-domains     = true
     domain-id          = var.domain_id
     domain-labels      = var.domain_labels
@@ -121,15 +122,17 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type          = var.instance_type["farmer"]
-    deployment-version     = 1
+    deployment-version     = 0
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "snapshot-2024-jan-23-2"
+    docker-tag             = "mainnet-2024-nov-18"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
     reward-address         = var.farmer_reward_address
+    cache-percentage       = var.cache_percentage
+    thread-pool-size       = var.thread_pool_size
     force-block-production = true
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
@@ -146,6 +149,6 @@ module "devnet" {
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
-  pot_external_entropy = ""
+  pot_external_entropy = var.pot_external_entropy
 
 }

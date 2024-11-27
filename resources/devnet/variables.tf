@@ -1,14 +1,22 @@
+variable "network_name" {
+  description = "Network name"
+  type        = string
+  default     = "devnet"
+
+}
 variable "farmer_reward_address" {
   description = "Farmer's reward address"
   type        = string
 }
 
+//todo change this to a map
 variable "domain_id" {
   description = "Domain ID"
   type        = list(number)
   default     = [0, 1]
 }
 
+//todo change this to a map
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
@@ -18,13 +26,13 @@ variable "domain_labels" {
 variable "instance_type" {
   type = map(string)
   default = {
-    bootstrap     = "c6a.2xlarge"
-    rpc           = "m6a.xlarge"
-    domain        = "m6a.xlarge"
-    autoid        = "m6a.xlarge"
-    full          = "m6a.xlarge"
-    farmer        = "c7i.2xlarge"
-    evm_bootstrap = "m6a.xlarge"
+    bootstrap        = "m6a.xlarge"
+    rpc              = "m6a.xlarge"
+    domain           = "m6a.xlarge"
+    rpc-indexer      = "m6a.xlarge"
+    nova-indexer     = "m6a.xlarge"
+    farmer           = "m6a.xlarge"
+    evm_bootstrap    = "m6a.xlarge"
     autoid_bootstrap = "m6a.xlarge"
   }
 }
@@ -47,14 +55,15 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap     = 2
-    rpc           = 1
-    domain        = 1
-    autoid        = 1
-    full          = 0
-    farmer        = 1
-    evm_bootstrap = 1
-    autoid_bootstrap = 1
+    bootstrap        = 2
+    rpc              = 2
+    domain           = 0
+    autoid           = 0
+    rpc-indexer      = 1
+    nova-indexer     = 0
+    farmer           = 1
+    evm_bootstrap    = 0
+    autoid_bootstrap = 0
   }
 }
 
@@ -67,7 +76,7 @@ variable "aws_region" {
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.31.1.0/24"]
+  default     = ["172.35.1.0/24"]
 }
 
 variable "disk_volume_size" {
@@ -102,4 +111,22 @@ variable "ssh_user" {
 variable "private_key_path" {
   type    = string
   default = "~/.ssh/deployer.pem"
+}
+
+variable "pot_external_entropy" {
+  description = "External entropy, used initially when PoT chain starts to derive the first seed"
+  type        = string
+  default     = "test"
+}
+
+variable "cache_percentage" {
+  description = "cache percentage"
+  type        = number
+  default     = 50
+}
+
+variable "thread_pool_size" {
+  description = "thread pool size (number of cpu cores)"
+  type        = number
+  default     = 8
 }

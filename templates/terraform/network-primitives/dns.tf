@@ -15,7 +15,7 @@ locals {
   }
 
   autoid_instances = {
-    for idx in range(local.instance_split, var.domain-node-config.instance-count) : idx - local.instance_split => {
+    for idx in range(0, local.instance_split) : idx => {
       ip_v4 = local.autoid_nodes_ip_v4[idx]
       ip_v6 = local.autoid_nodes_ip_v6[idx]
     }
@@ -98,7 +98,7 @@ resource "cloudflare_record" "bootstrap_evm" {
   count   = length(local.bootstrap_nodes_evm_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "bootstrap-${count.index}.nova.${var.network_name}"
-  value   = local.bootstrap_nodes_evm_ip_v6[count.index]
+  value   = local.bootstrap_nodes_evm_ip_v4[count.index]
   type    = "A"
 }
 
@@ -114,7 +114,7 @@ resource "cloudflare_record" "bootstrap_auto" {
   count   = length(local.bootstrap_nodes_autoid_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
   name    = "bootstrap-${count.index}.auto.${var.network_name}"
-  value   = local.bootstrap_nodes_autoid_ip_v6[count.index]
+  value   = local.bootstrap_nodes_autoid_ip_v4[count.index]
   type    = "A"
 }
 
