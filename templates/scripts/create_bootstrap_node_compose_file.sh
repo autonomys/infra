@@ -77,11 +77,6 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
-## comment to disable external addresses using IP format for now
-#      - "--external-address"
-#      - "/ip4/$EXTERNAL_IP/tcp/30533"
-#      - "--external-address"
-#      - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
