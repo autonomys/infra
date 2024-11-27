@@ -95,7 +95,6 @@ services:
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.docker.network=traefik-proxy"
-      # Rate limiting configuration
       - "traefik.http.middlewares.rate-limit.ratelimit.average=200"
       - "traefik.http.middlewares.rate-limit.ratelimit.burst=300"
       - "traefik.http.middlewares.rate-limit.ratelimit.period=1s"
