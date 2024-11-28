@@ -76,7 +76,7 @@ module "mainnet" {
     instance-count     = var.instance_count["nova-indexer"]
     docker-org         = "autonomys"
     docker-tag         = "mainnet-2024-nov-28"
-    domain-prefix      = "nova-indexer"
+    domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -109,7 +109,7 @@ module "mainnet" {
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
     docker-tag         = "mainnet-2024-nov-28"
-    domain-prefix      = ["nova", "autoid"]
+    domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433

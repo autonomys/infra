@@ -156,6 +156,7 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
       "echo NODE_DSN_PORT=${var.bootstrap-node-autoid-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo OPERATOR_PORT=${var.bootstrap-node-autoid-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-autoid-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
+      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
