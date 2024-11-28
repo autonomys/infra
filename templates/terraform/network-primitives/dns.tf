@@ -97,7 +97,7 @@ resource "cloudflare_record" "bootstrap_ipv6" {
 resource "cloudflare_record" "bootstrap_evm" {
   count   = length(local.bootstrap_nodes_evm_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "bootstrap-${count.index}.nova.${var.network_name}"
+  name    = "bootstrap-${count.index}.${var.domain-node-config.domain-prefix[0]}.${var.network_name}"
   value   = local.bootstrap_nodes_evm_ip_v4[count.index]
   type    = "A"
 }
@@ -105,7 +105,7 @@ resource "cloudflare_record" "bootstrap_evm" {
 resource "cloudflare_record" "bootstrap_evm_ipv6" {
   count   = length(local.bootstrap_nodes_evm_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "bootstrap-${count.index}.nova.${var.network_name}"
+  name    = "bootstrap-${count.index}.${var.domain-node-config.domain-prefix[0]}.${var.network_name}"
   value   = local.bootstrap_nodes_evm_ip_v6[count.index]
   type    = "AAAA"
 }
@@ -113,7 +113,7 @@ resource "cloudflare_record" "bootstrap_evm_ipv6" {
 resource "cloudflare_record" "bootstrap_auto" {
   count   = length(local.bootstrap_nodes_autoid_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "bootstrap-${count.index}.auto.${var.network_name}"
+  name    = "bootstrap-${count.index}.${var.domain-node-config.domain-prefix[1]}.${var.network_name}"
   value   = local.bootstrap_nodes_autoid_ip_v4[count.index]
   type    = "A"
 }
@@ -121,7 +121,7 @@ resource "cloudflare_record" "bootstrap_auto" {
 resource "cloudflare_record" "bootstrap_auto_ipv6" {
   count   = length(local.bootstrap_nodes_autoid_ip_v4)
   zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "bootstrap-${count.index}.auto.${var.network_name}"
+  name    = "bootstrap-${count.index}.${var.domain-node-config.domain-prefix[1]}.${var.network_name}"
   value   = local.bootstrap_nodes_autoid_ip_v6[count.index]
   type    = "AAAA"
 }

@@ -20,7 +20,7 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["nova", "autoid"]
+  default     = ["auto-evm", "autoid"]
 }
 
 variable "instance_type" {
