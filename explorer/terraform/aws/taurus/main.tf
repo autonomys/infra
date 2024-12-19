@@ -8,7 +8,7 @@ module "subql" {
     deployment-color    = "blue"
     network-name        = "${var.network_name}"
     domain-prefix       = "subql.blue"
-    docker-tag          = "taurus-2024-nov-05"
+    docker-tag          = "taurus-2024-dec-03"
     instance-type       = var.instance_type
     deployment-version  = 0
     regions             = var.aws_region
@@ -22,7 +22,7 @@ module "subql" {
     deployment-color     = "green"
     network-name         = "${var.network_name}"
     domain-prefix        = "subql.green"
-    docker-tag           = "taurus-2024-nov-05"
+    docker-tag           = "taurus-2024-dec-03"
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
@@ -36,7 +36,7 @@ module "subql" {
     deployment-color    = "blue"
     network-name        = "${var.network_name}"
     domain-prefix       = "nova.subql.blue"
-    docker-tag          = "taurus-2024-nov-05"
+    docker-tag          = "taurus-2024-dec-03"
     instance-type       = var.instance_type
     deployment-version  = 0
     regions             = var.aws_region
@@ -50,7 +50,7 @@ module "subql" {
     deployment-color     = "green"
     network-name         = "${var.network_name}"
     domain-prefix        = "nova.subql.green"
-    docker-tag           = "taurus-2024-nov-05"
+    docker-tag           = "taurus-2024-dec-03"
     instance-type        = var.instance_type
     deployment-version   = 0
     regions              = var.aws_region
