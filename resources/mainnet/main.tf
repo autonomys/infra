@@ -10,7 +10,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     reserved-only      = false
     prune              = false
     genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
@@ -26,7 +26,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     reserved-only      = false
     prune              = false
     genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
@@ -43,7 +43,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     reserved-only      = false
     prune              = false
     genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
@@ -60,7 +60,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
@@ -75,7 +75,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["nova-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
@@ -93,7 +93,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -108,7 +108,7 @@ module "mainnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2025-jan-03"
+    docker-tag         = "mainnet-2025-jan-14"
     domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
@@ -126,7 +126,7 @@ module "mainnet" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "mainnet-2025-jan-03"
+    docker-tag             = "mainnet-2025-jan-14"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
