@@ -1,0 +1,23 @@
+[Unit]
+Description=Astral Indexers Service
+After=network.target
+
+[Service]
+User=ubuntu
+Environment=NODE_VERSION=22.11.0
+Environment=NVM_DIR=/home/ubuntu/.nvm
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v22.11.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WorkingDirectory=/home/ubuntu/astral/indexers
+ExecStart=/home/ubuntu/.nvm/versions/node/v22.11.0/bin/node /home/ubuntu/.nvm/versions/node/v22.11.0/bin/yarn prod
+Restart=always
+RestartSec=5
+SyslogIdentifier=astral-indexers
+StandardOutput=append:/var/log/astral-indexers.log
+StandardError=append:/var/log/astral-indexers.log
+
+# Resource limits
+CPUQuota=80%
+MemoryMax=52G
+
+[Install]
+WantedBy=multi-user.target
