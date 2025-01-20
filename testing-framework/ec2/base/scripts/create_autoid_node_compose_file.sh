@@ -15,7 +15,7 @@ networks:
 services:
   # traefik reverse proxy with automatic tls management using let encrypt
   traefik:
-    image: traefik:v3.1.6
+    image: traefik:v3.3.2
     container_name: traefik
     restart: unless-stopped
     command:
