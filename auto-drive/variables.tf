@@ -70,13 +70,13 @@ variable "kms_key_id" {
 variable "auto_drive_instance_count" {
   description = "Number of auto-drive instances to create."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "gateway_instance_count" {
   description = "Number of gateway instances to create."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "ingress_cidr_blocks" {

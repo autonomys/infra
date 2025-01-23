@@ -68,12 +68,12 @@ output "ec2_gateway_availability_zones" {
 
 output "auto_drive_eip" {
   description = "Elastic IPs for Auto-Drive instances"
-  value       = aws_eip.auto_drive_eip[*].public_ip
+  value       = module.ec2_auto_drive[*].public_ip
 }
 
 output "gateway_eip" {
   description = "Elastic IPs for Gateway instances"
-  value       = aws_eip.gateway_eip[*].public_ip
+  value       = module.ec2_gateway[*].public_ip
 }
 
 
