@@ -48,7 +48,7 @@ module "vpc" {
 resource "aws_security_group" "auto_drive_sg" {
   name        = "auto_drive_sg"
   description = "auto drive security group"
-  vpc_id      = var.vpc_cidr
+  vpc_id      = module.vpc.vpc_id
 
   # Ingress Rules
   ingress {
