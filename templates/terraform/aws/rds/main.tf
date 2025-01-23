@@ -1,7 +1,7 @@
 locals {
-  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo
-  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo
-  create_db_instance        = var.create_db_instance && var.putin_khuylo
+  create_db_subnet_group    = var.create_db_subnet_group
+  create_db_parameter_group = var.create_db_parameter_group
+  create_db_instance        = var.create_db_instance
 
   db_subnet_group_name    = var.create_db_subnet_group ? module.db_subnet_group.db_subnet_group_id : var.db_subnet_group_name
   parameter_group_name_id = var.create_db_parameter_group ? module.db_parameter_group.db_parameter_group_id : var.parameter_group_name
