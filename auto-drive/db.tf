@@ -17,7 +17,7 @@ module "db" {
   instance_class           = "db.t4g.large"
 
   allocated_storage     = 50
-  max_allocated_storage = 200
+  max_allocated_storage = 500
 
 
   db_name  = "postgres"
@@ -25,7 +25,7 @@ module "db" {
   port     = 5432
 
 
-  manage_master_user_password_rotation              = true
+  manage_master_user_password_rotation              = false
   master_user_password_rotate_immediately           = false
   master_user_password_rotation_schedule_expression = "rate(15 days)"
 
@@ -46,7 +46,7 @@ module "db" {
   performance_insights_retention_period = 7
   create_monitoring_role                = true
   monitoring_interval                   = 60
-  monitoring_role_name                  = "example-monitoring-role-name"
+  monitoring_role_name                  = "auto-drive-db-monitoring-role-name"
   monitoring_role_use_name_prefix       = true
   monitoring_role_description           = "Description for monitoring role"
 
