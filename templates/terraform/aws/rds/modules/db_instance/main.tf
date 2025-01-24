@@ -77,6 +77,12 @@ resource "aws_db_instance" "this" {
   apply_immediately           = var.apply_immediately
   maintenance_window          = var.maintenance_window
 
+  lifecycle {
+    ignore_changes = [
+      vpc_security_group_ids,
+    ]
+  }
+
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html
   dynamic "blue_green_update" {
     for_each = length(var.blue_green_update) > 0 ? [var.blue_green_update] : []
