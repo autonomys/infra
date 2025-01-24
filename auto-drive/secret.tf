@@ -23,7 +23,8 @@ resource "aws_iam_role" "auto_secret_role" {
 # Policy to Access Secrets Manager
 resource "aws_iam_policy" "secrets_manager_policy" {
   name        = "SecretsManagerReadPolicy"
-  description = "Policy to allow reading a specific secret from AWS Secrets Manager"
+  description = "Policy to allow reading the MainnetPublishingPrivateKey secret from AWS Secrets Manager"
+
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -31,12 +32,11 @@ resource "aws_iam_policy" "secrets_manager_policy" {
       {
         Effect   = "Allow"
         Action   = "secretsmanager:GetSecretValue"
-        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:my-app-secret"
+        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:MainnetPublishingPrivateKey"
       }
     ]
   })
 }
-
 
 # Attach Policy to IAM Role
 resource "aws_iam_role_policy_attachment" "attach_policy" {
