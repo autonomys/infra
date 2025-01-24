@@ -14,7 +14,7 @@ module "db" {
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   family                   = "postgres16" # DB parameter group
   major_engine_version     = "16"         # DB option group
-  instance_class           = "db.t4g.large"
+  instance_class           = "db.t4g.2xlarge"
 
   allocated_storage     = 50
   max_allocated_storage = 500
@@ -30,8 +30,9 @@ module "db" {
   master_user_password_rotation_schedule_expression = "rate(15 days)"
 
   multi_az               = true
-  db_subnet_group_name   = module.vpc_rds.database_subnet_group
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.name
   vpc_security_group_ids = [module.security_group.security_group_id]
+  publicly_accessible    = false
 
   maintenance_window              = "Mon:00:00-Mon:03:00"
   backup_window                   = "03:00-06:00"
@@ -71,6 +72,13 @@ module "db" {
   cloudwatch_log_group_tags = {
     "Sensitive" = "high"
   }
+}
+
+resource "aws_db_subnet_group" "db_subnet_group" {
+  name       = "${local.name}-db-subnet-group"
+  subnet_ids = module.vpc.private_subnets
+
+  tags = local.tags
 }
 
 ################################################################################
@@ -115,30 +123,13 @@ module "db_automated_backups_replication" {
 # Supporting Resources
 ################################################################################
 
-module "vpc_rds" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
-
-  name = local.name
-  cidr = local.vpc_cidr
-
-  azs              = local.azs
-  public_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 3)]
-  database_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 6)]
-
-  create_database_subnet_group = true
-
-  tags = local.tags
-}
-
 module "security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
   name        = local.name
   description = "Auto Drive PostgreSQL security group"
-  vpc_id      = module.vpc_rds.vpc_id
+  vpc_id      = module.vpc.vpc_id
 
   # ingress
   ingress_with_cidr_blocks = [
@@ -147,7 +138,7 @@ module "security_group" {
       to_port     = 5432
       protocol    = "tcp"
       description = "PostgreSQL access from within VPC"
-      cidr_blocks = module.vpc_rds.vpc_cidr_block
+      cidr_blocks = module.vpc.vpc_cidr_block
     },
   ]
 

@@ -29,16 +29,16 @@ locals {
 module "vpc" {
   source = "../templates/terraform/aws/vpc"
 
-  name           = "${local.name}-vpc"
-  cidr           = var.vpc_cidr
-  azs            = local.azs
-  public_subnets = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  name            = "${local.name}-vpc"
+  cidr            = var.vpc_cidr
+  azs             = local.azs
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 
   # Configure NAT gateways and private subnets settings
   enable_nat_gateway = false # Set to true to use NAT gateways and private subnets without public IPs
   single_nat_gateway = false # Set to true to use a single NAT gateway
-
-  tags = local.tags
+  tags               = local.tags
 }
 
 ################################################################################
