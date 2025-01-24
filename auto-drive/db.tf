@@ -14,7 +14,7 @@ module "db" {
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   family                   = "postgres16" # DB parameter group
   major_engine_version     = "16"         # DB option group
-  instance_class           = "db.t4g.large"
+  instance_class           = "db.t4g.2xlarge"
 
   allocated_storage     = 50
   max_allocated_storage = 500
