@@ -25,6 +25,7 @@ resource "aws_iam_policy" "secrets_manager_policy" {
   name        = "SecretsManagerReadPolicy"
   description = "Policy to allow reading the MainnetPublishingPrivateKey secret from AWS Secrets Manager"
 
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
