@@ -15,8 +15,8 @@ resource "aws_instance" "subql_blue_node" {
     device_name = "/dev/sda1"
     volume_size = var.blue-subql-node-config.disk-volume-size
     volume_type = var.blue-subql-node-config.disk-volume-type
-    iops        = 3000
-    throughput  = 250
+    iops        = 12000
+    throughput  = 750
   }
 
   tags = {
@@ -83,8 +83,8 @@ resource "aws_instance" "subql_green_node" {
     device_name = "/dev/sda1"
     volume_size = var.green-subql-node-config.disk-volume-size
     volume_type = var.green-subql-node-config.disk-volume-type
-    iops        = 3000
-    throughput  = 250
+    iops        = 12000
+    throughput  = 750
   }
 
   tags = {
@@ -149,8 +149,8 @@ resource "aws_instance" "nova_subql_blue_node" {
     device_name = "/dev/sda1"
     volume_size = var.nova-blue-subql-node-config.disk-volume-size
     volume_type = var.nova-blue-subql-node-config.disk-volume-type
-    iops        = 3000
-    throughput  = 250
+    iops        = 12000
+    throughput  = 750
   }
 
   tags = {
@@ -214,8 +214,8 @@ resource "aws_instance" "nova_subql_green_node" {
     device_name = "/dev/sda1"
     volume_size = var.nova-green-subql-node-config.disk-volume-size
     volume_type = var.nova-green-subql-node-config.disk-volume-type
-    iops        = 3000
-    throughput  = 250
+    iops        = 12000
+    throughput  = 750
   }
 
   tags = {

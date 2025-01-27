@@ -88,7 +88,7 @@ variable "private_key_path" {
 
 variable "disk_volume_size" {
   type    = number
-  default = 200
+  default = 1500
 }
 
 variable "disk_volume_type" {
