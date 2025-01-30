@@ -8,7 +8,8 @@ resource "cloudflare_record" "subql-blue" {
   name    = "${var.blue-subql-node-config.domain-prefix}.${var.blue-subql-node-config.network-name}"
   value   = local.blue_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
 
 resource "cloudflare_record" "subql-green" {
@@ -17,7 +18,8 @@ resource "cloudflare_record" "subql-green" {
   name    = "${var.green-subql-node-config.domain-prefix}.${var.green-subql-node-config.network-name}"
   value   = local.green_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
 
 resource "cloudflare_record" "subql-live" {
@@ -26,7 +28,8 @@ resource "cloudflare_record" "subql-live" {
   name    = "subql.${var.network_name}"
   value   = local.blue_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
 
 resource "cloudflare_record" "nova-subql-blue" {
@@ -35,7 +38,8 @@ resource "cloudflare_record" "nova-subql-blue" {
   name    = "${var.nova-blue-subql-node-config.domain-prefix}.${var.network_name}"
   value   = local.blue_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
 
 resource "cloudflare_record" "nova-subql-green" {
@@ -44,7 +48,8 @@ resource "cloudflare_record" "nova-subql-green" {
   name    = "${var.nova-green-subql-node-config.domain-prefix}.${var.network_name}"
   value   = local.nova_green_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
 
 resource "cloudflare_record" "nova-subql-live" {
@@ -53,5 +58,6 @@ resource "cloudflare_record" "nova-subql-live" {
   name    = "nova.subql.${var.network_name}"
   value   = local.nova_blue_subql_node_ip_v4[count.index]
   type    = "A"
-  ttl     = "3600"
+  ttl     = "1"
+  proxied = true
 }
