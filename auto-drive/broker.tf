@@ -33,7 +33,7 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
   }
 
   maintenance_window_start_time {
-    day_of_week = "Sunday"
+    day_of_week = "SUNDAY"
     time_of_day = "03:00"
     time_zone   = "UTC"
   }
