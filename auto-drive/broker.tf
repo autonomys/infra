@@ -49,50 +49,51 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
   }
 }
 
-resource "aws_mq_broker" "rabbitmq_broker_secondary" {
-  broker_name                = "auto-drive-rabbitmq-broker-secondary"
-  engine_type                = "RabbitMQ"
-  engine_version             = var.rabbitmq_version
-  auto_minor_version_upgrade = true
-  authentication_strategy    = "simple"
-  host_instance_type         = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
-  security_groups            = [aws_security_group.rabbitmq_broker_secondary.id]
-  deployment_mode            = var.rabbitmq_deployment_mode_staging # change to CLUSTER_MULTI_AZ for production
-  storage_type               = "ebs"
-  apply_immediately          = true
+# Data replication is only supported for activemq engine currently.
+# resource "aws_mq_broker" "rabbitmq_broker_secondary" {
+#   broker_name                = "auto-drive-rabbitmq-broker-secondary"
+#   engine_type                = "RabbitMQ"
+#   engine_version             = var.rabbitmq_version
+#   auto_minor_version_upgrade = true
+#   authentication_strategy    = "simple"
+#   host_instance_type         = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
+#   security_groups            = [aws_security_group.rabbitmq_broker_secondary.id]
+#   deployment_mode            = var.rabbitmq_deployment_mode_staging # change to CLUSTER_MULTI_AZ for production
+#   storage_type               = "ebs"
+#   apply_immediately          = true
 
-  data_replication_mode               = "CRDR"
-  data_replication_primary_broker_arn = aws_mq_broker.rabbitmq_broker_primary.arn
+#   data_replication_mode               = "CRDR"
+#   data_replication_primary_broker_arn = aws_mq_broker.rabbitmq_broker_primary.arn
 
-  subnet_ids          = [element(module.vpc.private_subnets, 0)] # Use private subnets from VPC module, in single AZ deployment, use only one subnet, in multi-AZ deployment, use multiple subnets
-  publicly_accessible = false
-  encryption_options {
-    use_aws_owned_key = false
-    kms_key_id        = aws_kms_key.mq_kms_key.arn
-  }
+#   subnet_ids          = [element(module.vpc.private_subnets, 0)] # Use private subnets from VPC module, in single AZ deployment, use only one subnet, in multi-AZ deployment, use multiple subnets
+#   publicly_accessible = false
+#   encryption_options {
+#     use_aws_owned_key = false
+#     kms_key_id        = aws_kms_key.mq_kms_key.arn
+#   }
 
-  logs {
-    general = true
-    audit   = false
-  }
+#   logs {
+#     general = true
+#     audit   = false
+#   }
 
-  maintenance_window_start_time {
-    day_of_week = "Sunday"
-    time_of_day = "04:00"
-    time_zone   = "UTC"
-  }
+#   maintenance_window_start_time {
+#     day_of_week = "Sunday"
+#     time_of_day = "04:00"
+#     time_zone   = "UTC"
+#   }
 
-  user {
-    username         = var.rabbitmq_replication_username
-    password         = random_password.rabbitmq_password.result
-    replication_user = true
-  }
+#   user {
+#     username         = var.rabbitmq_replication_username
+#     password         = random_password.rabbitmq_password.result
+#     replication_user = true
+#   }
 
-  tags = {
-    Environment = "Production"
-    Application = "AutoDrive"
-  }
-}
+#   tags = {
+#     Environment = "Production"
+#     Application = "AutoDrive"
+#   }
+# }
 
 # Security Group for RabbitMQ Primary Broker
 resource "aws_security_group" "rabbitmq_broker_primary" {
@@ -126,37 +127,38 @@ resource "aws_security_group" "rabbitmq_broker_primary" {
   }
 }
 
+# Data replication is only supported for activemq engine currently.
 # Security Group for RabbitMQ Secondary Broker
-resource "aws_security_group" "rabbitmq_broker_secondary" {
-  name        = "rabbitmq-secondary-sg"
-  description = "Security group for RabbitMQ secondary broker"
-  vpc_id      = module.vpc.vpc_id
+# resource "aws_security_group" "rabbitmq_broker_secondary" {
+#   name        = "rabbitmq-secondary-sg"
+#   description = "Security group for RabbitMQ secondary broker"
+#   vpc_id      = module.vpc.vpc_id
 
-  ingress {
-    from_port   = 5671
-    to_port     = 5671
-    protocol    = "tcp"
-    cidr_blocks = var.private_subnet_cidrs
-  }
+#   ingress {
+#     from_port   = 5671
+#     to_port     = 5671
+#     protocol    = "tcp"
+#     cidr_blocks = var.private_subnet_cidrs
+#   }
 
-  ingress {
-    from_port   = 5672
-    to_port     = 5672
-    protocol    = "tcp"
-    cidr_blocks = var.private_subnet_cidrs
-  }
+#   ingress {
+#     from_port   = 5672
+#     to_port     = 5672
+#     protocol    = "tcp"
+#     cidr_blocks = var.private_subnet_cidrs
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  tags = {
-    Name = "rabbitmq-secondary-sg"
-  }
-}
+#   tags = {
+#     Name = "rabbitmq-secondary-sg"
+#   }
+# }
 
 # KMS Key for Encryption
 resource "aws_kms_key" "mq_kms_key" {

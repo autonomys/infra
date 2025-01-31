@@ -193,10 +193,11 @@ output "rabbitmq_primary_endpoint" {
   value       = aws_mq_broker.rabbitmq_broker_primary.instances[0].endpoints[0]
 }
 
-output "rabbitmq_secondary_endpoint" {
-  description = "Secondary RabbitMQ broker endpoint"
-  value       = aws_mq_broker.rabbitmq_broker_secondary.instances[0].endpoints[0]
-}
+# Data replication is only supported for activemq engine currently.
+# output "rabbitmq_secondary_endpoint" {
+#   description = "Secondary RabbitMQ broker endpoint"
+#   value       = aws_mq_broker.rabbitmq_broker_secondary.instances[0].endpoints[0]
+# }
 
 output "rabbitmq_instance_type" {
   description = "Instance type for RabbitMQ broker instances"
