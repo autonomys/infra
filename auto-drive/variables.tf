@@ -100,3 +100,42 @@ variable "rules" {
     https = [443, 443, "tcp", "HTTPS access"]
   }
 }
+
+variable "rabbitmq_username" {
+  description = "RabbitMQ username"
+  type        = string
+  default     = "guru"
+  sensitive   = true
+}
+
+variable "rabbitmq_replication_username" {
+  description = "RabbitMQ replication username"
+  type        = string
+  default     = "guru2"
+  sensitive   = true
+}
+
+variable "rabbitmq_instance_type" {
+  description = "Instance type for RabbitMQ broker instances."
+  type        = string
+  default     = "mq.t3.micro"
+}
+
+variable "rabbitmq_version" {
+  description = "RabbitMQ version."
+  type        = string
+  default     = "3.13"
+}
+
+variable "rabbitmq_deployment_mode_staging" {
+  description = "RabbitMQ deployment mode."
+  type        = string
+  default     = "SINGLE_INSTANCE"
+}
+
+
+variable "rabbitmq_deployment_mode_production" {
+  description = "RabbitMQ deployment mode."
+  type        = string
+  default     = "CLUSTER_MULTI_AZ"
+}

@@ -186,3 +186,38 @@ output "db_instance_secretsmanager_secret_rotation_enabled" {
   description = "Specifies whether automatic rotation is enabled for the secret"
   value       = module.db.db_instance_secretsmanager_secret_rotation_enabled
 }
+
+# RabbitMQ Broker Outputs
+output "rabbitmq_primary_endpoint" {
+  description = "Primary RabbitMQ broker endpoint"
+  value       = aws_mq_broker.rabbitmq_broker_primary.instances[0].endpoints[0]
+}
+
+# Data replication is only supported for activemq engine currently.
+# output "rabbitmq_secondary_endpoint" {
+#   description = "Secondary RabbitMQ broker endpoint"
+#   value       = aws_mq_broker.rabbitmq_broker_secondary.instances[0].endpoints[0]
+# }
+
+output "rabbitmq_instance_type" {
+  description = "Instance type for RabbitMQ broker instances"
+  value       = var.rabbitmq_instance_type
+}
+
+output "rabbitmq_username" {
+  description = "RabbitMQ username"
+  value       = var.rabbitmq_username
+  sensitive   = true
+}
+
+output "rabbitmq_replication_username" {
+  description = "RabbitMQ replication username"
+  value       = var.rabbitmq_replication_username
+  sensitive   = true
+}
+
+output "rabbitmq_password" {
+  description = "RabbitMQ password"
+  value       = random_password.rabbitmq_password.result
+  sensitive   = true
+}
