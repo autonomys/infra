@@ -124,5 +124,18 @@ variable "rabbitmq_instance_type" {
 variable "rabbitmq_version" {
   description = "RabbitMQ version."
   type        = string
-  default     = "3.10.10"
+  default     = "3.13"
+}
+
+variable "rabbitmq_deployment_mode_staging" {
+  description = "RabbitMQ deployment mode."
+  type        = string
+  default     = "SINGLE_INSTANCE"
+}
+
+
+variable "rabbitmq_deployment_mode_production" {
+  description = "RabbitMQ deployment mode."
+  type        = string
+  default     = "CLUSTER_MULTI_AZ"
 }

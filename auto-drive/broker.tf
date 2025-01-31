@@ -9,16 +9,18 @@ variable "private_subnet_cidrs" {
 }
 
 resource "aws_mq_broker" "rabbitmq_broker_primary" {
-  broker_name        = "auto-drive-rabbitmq-broker-primary"
-  engine_type        = "RabbitMQ"
-  engine_version     = var.rabbitmq_version
-  host_instance_type = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
-  security_groups    = [aws_security_group.rabbitmq_broker_primary.id]
-  deployment_mode    = "ACTIVE_STANDBY_MULTI_AZ"
-  storage_type       = "ebs"
-  apply_immediately  = true
+  broker_name                = "auto-drive-rabbitmq-broker-primary"
+  engine_type                = "RabbitMQ"
+  engine_version             = var.rabbitmq_version
+  auto_minor_version_upgrade = true
+  authentication_strategy    = "simple"
+  host_instance_type         = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
+  security_groups            = [aws_security_group.rabbitmq_broker_primary.id]
+  deployment_mode            = var.rabbitmq_deployment_mode_staging # change to CLUSTER_MULTI_AZ for production
+  storage_type               = "ebs"
+  apply_immediately          = true
 
-  subnet_ids          = module.vpc.private_subnets # Use private subnets from VPC module
+  subnet_ids          = [element(module.vpc.private_subnets, 0)] # Use private subnets from VPC module, in single AZ deployment, use only one subnet, in multi-AZ deployment, use multiple subnets
   publicly_accessible = false
   encryption_options {
     use_aws_owned_key = false
@@ -41,12 +43,6 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
     password = random_password.rabbitmq_password.result
   }
 
-  user {
-    username         = var.rabbitmq_replication_username
-    password         = random_password.rabbitmq_password.result
-    replication_user = true
-  }
-
   tags = {
     Environment = "Production"
     Application = "AutoDrive"
@@ -54,19 +50,21 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
 }
 
 resource "aws_mq_broker" "rabbitmq_broker_secondary" {
-  broker_name        = "auto-drive-rabbitmq-broker-secondary"
-  engine_type        = "RabbitMQ"
-  engine_version     = var.rabbitmq_version
-  host_instance_type = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
-  security_groups    = [aws_security_group.rabbitmq_broker_secondary.id]
-  deployment_mode    = "ACTIVE_STANDBY_MULTI_AZ"
-  storage_type       = "ebs"
-  apply_immediately  = true
+  broker_name                = "auto-drive-rabbitmq-broker-secondary"
+  engine_type                = "RabbitMQ"
+  engine_version             = var.rabbitmq_version
+  auto_minor_version_upgrade = true
+  authentication_strategy    = "simple"
+  host_instance_type         = var.rabbitmq_instance_type # t3.micro is the smallest instance type available for Amazon MQ, use mq.m5.large for production
+  security_groups            = [aws_security_group.rabbitmq_broker_secondary.id]
+  deployment_mode            = var.rabbitmq_deployment_mode_staging # change to CLUSTER_MULTI_AZ for production
+  storage_type               = "ebs"
+  apply_immediately          = true
 
   data_replication_mode               = "CRDR"
   data_replication_primary_broker_arn = aws_mq_broker.rabbitmq_broker_primary.arn
 
-  subnet_ids          = module.vpc.private_subnets # Use private subnets from VPC module
+  subnet_ids          = [element(module.vpc.private_subnets, 0)] # Use private subnets from VPC module, in single AZ deployment, use only one subnet, in multi-AZ deployment, use multiple subnets
   publicly_accessible = false
   encryption_options {
     use_aws_owned_key = false
@@ -82,11 +80,6 @@ resource "aws_mq_broker" "rabbitmq_broker_secondary" {
     day_of_week = "Sunday"
     time_of_day = "04:00"
     time_zone   = "UTC"
-  }
-
-  user {
-    username = var.rabbitmq_username
-    password = random_password.rabbitmq_password.result
   }
 
   user {
