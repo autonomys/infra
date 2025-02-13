@@ -102,17 +102,17 @@ resource "aws_security_group" "rabbitmq_broker_primary" {
   vpc_id      = module.vpc.vpc_id
 
   ingress {
-    from_port   = 5671
-    to_port     = 5671
-    protocol    = "tcp"
-    cidr_blocks = var.private_subnet_cidrs
+    from_port       = 5671
+    to_port         = 5671
+    protocol        = "tcp"
+    security_groups = [aws_security_group.auto_drive_sg.id] # Allow traffic from EC2 server's security group
   }
 
   ingress {
-    from_port   = 5672
-    to_port     = 5672
-    protocol    = "tcp"
-    cidr_blocks = var.private_subnet_cidrs
+    from_port       = 5672
+    to_port         = 5672
+    protocol        = "tcp"
+    security_groups = [aws_security_group.auto_drive_sg.id] # Allow traffic from EC2 server's security group
   }
 
   egress {
