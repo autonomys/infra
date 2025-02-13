@@ -84,6 +84,21 @@ resource "aws_security_group" "auto_drive_sg" {
     description = "Allow all outbound traffic"
   }
 
+  # Allow outbound traffic to RabbitMQ broker
+  egress {
+    from_port   = 5671
+    to_port     = 5671
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs # Allow traffic to private subnets
+  }
+
+  egress {
+    from_port   = 5672
+    to_port     = 5672
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs # Allow traffic to private subnets
+  }
+
   tags = {
     Name = "auto-drive-sg"
   }
