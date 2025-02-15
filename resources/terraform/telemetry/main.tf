@@ -1,5 +1,5 @@
 module "telemetry_subspace_node" {
-  source = "../../templates/terraform/aws/ec2"
+  source = "../../../templates/terraform/aws/ec2"
 
   ami                         = data.aws_ami.ubuntu_amd64.image_id
   instance_type               = var.instance_type

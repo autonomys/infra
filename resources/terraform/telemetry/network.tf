@@ -1,5 +1,5 @@
 module "telemetry_vpc" {
-  source = "../../terraform/aws/vpc"
+  source = "../../../templates/terraform/aws/vpc"
 
   cidr_block           = var.public_subnet_cidrs
   enable_dns_support   = true

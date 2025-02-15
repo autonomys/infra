@@ -1,7 +1,7 @@
-module "gemini-3h" {
-  source          = "../../templates/terraform/network-primitives-archive/gemini-3h"
-  path_to_scripts = "../../templates/terraform/network-primitives-archive/gemini-3h/scripts"
-  path_to_configs = "../../templates/terraform/network-primitives-archive/gemini-3h/configs"
+module "taurus" {
+  source          = "../../../templates/terraform/network-primitives"
+  path_to_scripts = "../../../templates/scripts"
+  path_to_configs = "../../../templates/configs"
   network_name    = var.network_name
 
   bootstrap-node-config = {
@@ -10,10 +10,10 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
+    docker-tag         = "taurus-2025-jan-07"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -26,10 +26,10 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
+    docker-tag         = "taurus-2025-jan-07"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -43,10 +43,10 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
+    docker-tag         = "taurus-2025-jan-07"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "0c121c75f4ef450f40619e1fca9d1e8e7fbabc42c895bc4790801e85d5a91c34"
+    genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -54,14 +54,14 @@ module "gemini-3h" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  rpc-squid-node-config = {
-    instance-type      = var.instance_type["rpc-squid"]
+  rpc-indexer-node-config = {
+    instance-type      = var.instance_type["rpc-indexer"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["rpc-squid"]
+    instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
-    domain-prefix      = "rpc-squid"
+    docker-tag         = "taurus-2025-jan-07"
+    domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -69,14 +69,14 @@ module "gemini-3h" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  nova-squid-node-config = {
-    instance-type      = var.instance_type["nova-squid"]
+  nova-indexer-node-config = {
+    instance-type      = var.instance_type["nova-indexer"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["nova-squid"]
+    instance-count     = var.instance_count["nova-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
-    domain-prefix      = "nova-squid"
+    docker-tag         = "taurus-2025-jan-07"
+    domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -93,7 +93,7 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
+    docker-tag         = "taurus-2025-jan-07"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -108,8 +108,8 @@ module "gemini-3h" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "gemini-3h-2024-oct-10"
-    domain-prefix      = ["nova", "autoid"]
+    docker-tag         = "taurus-2025-jan-07"
+    domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -126,7 +126,7 @@ module "gemini-3h" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "gemini-3h-2024-oct-10"
+    docker-tag             = "taurus-2025-jan-07"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"

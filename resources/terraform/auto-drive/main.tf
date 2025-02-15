@@ -27,7 +27,7 @@ locals {
 ################################################################################
 
 module "vpc" {
-  source = "../templates/terraform/aws/vpc"
+  source = "../../../templates/terraform/aws/vpc"
 
   name            = "${local.name}-vpc"
   cidr            = var.vpc_cidr
@@ -134,7 +134,7 @@ data "aws_ami" "ubuntu_amd64" {
 ################################################################################
 
 module "ec2_auto_drive" {
-  source = "../templates/terraform/aws/ec2"
+  source = "../../../templates/terraform/aws/ec2"
 
   name                        = "${local.name}-backend"
   count                       = var.auto_drive_instance_count
@@ -175,7 +175,7 @@ module "ec2_auto_drive" {
 ################################################################################
 
 module "ec2_gateway" {
-  source                      = "../templates/terraform/aws/ec2"
+  source                      = "../../../templates/terraform/aws/ec2"
   name                        = "${local.name}-gateway"
   count                       = var.gateway_instance_count
   ami                         = data.aws_ami.ubuntu_amd64.id
