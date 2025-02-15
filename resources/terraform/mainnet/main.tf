@@ -1,7 +1,7 @@
 module "mainnet" {
-  source          = "../../templates/terraform/network-primitives"
-  path_to_scripts = "../../templates/scripts"
-  path_to_configs = "../../templates/configs"
+  source          = "../../../templates/terraform/network-primitives"
+  path_to_scripts = "../../../templates/scripts"
+  path_to_configs = "../../../templates/configs"
   network_name    = var.network_name
 
   bootstrap-node-config = {
