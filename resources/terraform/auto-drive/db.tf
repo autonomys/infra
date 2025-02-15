@@ -5,7 +5,7 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 
 module "db" {
-  source = "../templates/terraform/aws/rds/"
+  source = "../../../templates/terraform/aws/rds/"
 
   identifier = local.name
 
@@ -109,7 +109,7 @@ module "kms" {
 }
 
 module "db_automated_backups_replication" {
-  source = "../templates/terraform/aws/rds/modules/db_instance_automated_backups_replication"
+  source = "../../../templates/terraform/aws/rds/modules/db_instance_automated_backups_replication"
 
   source_db_instance_arn = module.db.db_instance_arn
   kms_key_arn            = module.kms.key_arn
