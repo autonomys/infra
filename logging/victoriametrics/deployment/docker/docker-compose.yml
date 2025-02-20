@@ -16,6 +16,9 @@ services:
       - "--promscrape.config=/etc/prometheus/prometheus.yml"
       - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
     restart: always
+    networks:
+      - vm_net
+
   # VictoriaMetrics instance, a single process responsible for
   # storing metrics and serve read requests.
   victoriametrics:
@@ -37,11 +40,23 @@ services:
       - "--httpListenAddr=:8428"
       - "--influxListenAddr=:8089"
       - "--vmalert.proxyURL=http://vmalert:8880"
+      - "--httpAuth.username=${HTTP_AUTH_USERNAME}"
+      - "--httpAuth.password=${HTTP_AUTH_PASSWORD}"
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.victoriametrics.loadbalancer.server.port=8428
+      - traefik.http.routers.victoriametrics.rule=Host(`vmetrics.subspace.network`)
+      - traefik.http.routers.victoriametrics.tls.certresolver=le
+      - traefik.http.routers.victoriametrics.entrypoints=websecure
+      - traefik.docker.network=traefik-proxy
+    networks:
+      - vm_net
+      - traefik-proxy
 
   # Grafana instance configured with VictoriaMetrics as datasource
-  grafana:
-    container_name: grafana
+  grafanavm:
+    container_name: grafanavm
     image: grafana/grafana:11.5.0
     depends_on:
       - "victoriametrics"
@@ -55,6 +70,16 @@ services:
       - ./../../dashboards/vmagent.json:/var/lib/grafana/dashboards/vmagent.json
       - ./../../dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.grafanavm.loadbalancer.server.port=3000
+      - traefik.http.routers.grafanavm.rule=Host(`grafana.vmetrics.subspace.network`)
+      - traefik.http.routers.grafanavm.tls.certresolver=le
+      - traefik.http.routers.grafanavm.entrypoints=websecure
+      - traefik.docker.network=traefik-proxy
+    networks:
+      - vm_net
+      - traefik-proxy
 
   # vmalert executes alerting and recording rules
   vmalert:
@@ -80,6 +105,8 @@ services:
       - "--external.url=http://127.0.0.1:3000" #grafana outside container
       - '--external.alert.source=explore?orgId=1&left={"datasource":"VictoriaMetrics","queries":[{"expr":{{.Expr|jsonEscape|queryEscape}},"refId":"A"}],"range":{"from":"{{ .ActiveAt.UnixMilli }}","to":"now"}}'
     restart: always
+    networks:
+      - vm_net
 
   # alertmanager receives alerting notifications from vmalert
   # and distributes them according to --config.file.
@@ -93,8 +120,15 @@ services:
     ports:
       - 9093:9093
     restart: always
+    networks:
+      - vm_net
 
 volumes:
   vmagentdata: {}
   vmdata: {}
   grafanadata: {}
+
+networks:
+  traefik-proxy:
+    external: true
+  vm_net:
