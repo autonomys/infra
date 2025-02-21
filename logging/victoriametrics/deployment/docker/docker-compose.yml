@@ -61,7 +61,7 @@ services:
     depends_on:
       - "victoriametrics"
     ports:
-      - 3000:3000
+      - 3300:3300
     volumes:
       - grafanadata:/var/lib/grafana
       - ./provisioning/datasources/prometheus-datasource/single.yml:/etc/grafana/provisioning/datasources/single.yml
@@ -69,10 +69,11 @@ services:
       - ./../../dashboards/victoriametrics.json:/var/lib/grafana/dashboards/vm.json
       - ./../../dashboards/vmagent.json:/var/lib/grafana/dashboards/vmagent.json
       - ./../../dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
+      - ./grafana.ini:/etc/grafana/grafana.ini
     restart: always
     labels:
       - traefik.enable=true
-      - traefik.http.services.grafanavm.loadbalancer.server.port=3000
+      - traefik.http.services.grafanavm.loadbalancer.server.port=3300
       - traefik.http.routers.grafanavm.rule=Host(`grafana.vmetrics.subspace.network`)
       - traefik.http.routers.grafanavm.tls.certresolver=le
       - traefik.http.routers.grafanavm.entrypoints=websecure
@@ -102,7 +103,7 @@ services:
       - "--notifier.url=http://alertmanager:9093/"
       - "--rule=/etc/alerts/*.yml"
       # display source of alerts in grafana
-      - "--external.url=http://127.0.0.1:3000" #grafana outside container
+      - "--external.url=http://127.0.0.1:3300" #grafana outside container
       - '--external.alert.source=explore?orgId=1&left={"datasource":"VictoriaMetrics","queries":[{"expr":{{.Expr|jsonEscape|queryEscape}},"refId":"A"}],"range":{"from":"{{ .ActiveAt.UnixMilli }}","to":"now"}}'
     restart: always
     networks:
