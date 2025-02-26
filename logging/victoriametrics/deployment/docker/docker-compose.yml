@@ -103,7 +103,7 @@ services:
       - "--notifier.url=http://alertmanager:9093/"
       - "--rule=/etc/alerts/*.yml"
       # display source of alerts in grafana
-      - "--external.url=http://127.0.0.1:3300" #grafana outside container
+      - "--external.url=https://grafana.vmetrics.subspace.network" #grafana outside container
       - '--external.alert.source=explore?orgId=1&left={"datasource":"VictoriaMetrics","queries":[{"expr":{{.Expr|jsonEscape|queryEscape}},"refId":"A"}],"range":{"from":"{{ .ActiveAt.UnixMilli }}","to":"now"}}'
     restart: always
     networks:
