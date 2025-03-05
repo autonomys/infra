@@ -18,6 +18,8 @@ services:
       - traefik.http.routers.loki.tls.certresolver=le
       - traefik.http.routers.loki.entrypoints=websecure
       - traefik.docker.network=traefik-proxy
+      - traefik.http.routers.loki.middlewares=loki-auth
+      - traefik.http.middlewares.loki-auth.basicauth.usersfile=/etc/traefik/loki-auth.txt
     volumes:
       - /root/loki/conf/loki/etc/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     networks:
