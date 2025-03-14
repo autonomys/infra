@@ -32,7 +32,7 @@ variable "tags" {
 variable "auto_drive_instance_type" {
   description = "Instance type for auto-drive instances."
   type        = string
-  default     = "m7a.2xlarge"
+  default     = "m7a.large"
 }
 
 variable "auto_drive_root_volume_size" {
@@ -45,7 +45,14 @@ variable "auto_drive_root_volume_size" {
 variable "gateway_instance_type" {
   description = "Instance type for gateway instances."
   type        = string
-  default     = "m7a.2xlarge"
+  default     = "m7a.large"
+}
+
+# Gateway Instance Configuration
+variable "multi_network_gateway_instance_type" {
+  description = "Instance type for gateway instances."
+  type        = string
+  default     = "t3.medium"
 }
 
 variable "gateway_root_volume_size" {
@@ -70,11 +77,17 @@ variable "kms_key_id" {
 variable "auto_drive_instance_count" {
   description = "Number of auto-drive instances to create."
   type        = number
-  default     = 2
+  default     = 3
 }
 
 variable "gateway_instance_count" {
   description = "Number of gateway instances to create."
+  type        = number
+  default     = 1
+}
+
+variable "multi_network_gateway_instance_count" {
+  description = "Number of multi-network gateway instances to create."
   type        = number
   default     = 1
 }
