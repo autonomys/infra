@@ -130,7 +130,7 @@ data "aws_ami" "ubuntu_amd64" {
 }
 
 ################################################################################
-# Auto-Drive Instances
+# Auto-Drive Instances Mainnet
 ################################################################################
 
 module "ec2_auto_drive" {
@@ -171,7 +171,50 @@ module "ec2_auto_drive" {
 }
 
 ################################################################################
-# Gateway Instances
+# Auto-Drive Instances Testnet
+################################################################################
+
+# note: we have one private auto-drive instance for taurus on hetzner, this is the public one
+
+module "ec2_auto_drive_taurus" {
+  source = "../../../templates/terraform/aws/ec2"
+
+  name                        = "${local.name}-taurus-backend"
+  count                       = 1
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = "t3.medium"
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
+  associate_public_ip_address = false # Gateway instances use EIPs
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.auto_drive_root_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-taurus-backend-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "auto-drive-taurus" })
+}
+
+################################################################################
+# Files Gateway Instances Mainnet
 ################################################################################
 
 module "ec2_gateway" {
@@ -208,4 +251,44 @@ module "ec2_gateway" {
     var.tags
   )
   tags = merge(local.tags, { Role = "gateway" })
+}
+
+################################################################################
+# Multi-Network Gateway Instances
+################################################################################
+
+module "ec2_multi_gateway" {
+  source                      = "../../../templates/terraform/aws/ec2"
+  name                        = "${local.name}-multi-network-gateway"
+  count                       = var.multi_network_gateway_instance_count
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = var.multi_network_gateway_instance_type
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  associate_public_ip_address = false # Gateway instances use EIPs
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.gateway_root_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-multi-network-gateway-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "multi-network-gateway" })
 }

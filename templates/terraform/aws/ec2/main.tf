@@ -197,6 +197,7 @@ resource "aws_instance" "this" {
       private_ip,
       associate_public_ip_address,
       vpc_security_group_ids,
+      instance_type,
     ]
   }
 }
@@ -384,6 +385,7 @@ resource "aws_instance" "ignore_ami" {
       private_ip,
       associate_public_ip_address,
       vpc_security_group_ids,
+      instance_type,
     ]
   }
 }
