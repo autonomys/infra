@@ -27,3 +27,4 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /root/traefik/acme.json:/acme.json
+      - /root/loki/conf/loki-auth.txt:/etc/traefik/loki-auth.txt:ro
