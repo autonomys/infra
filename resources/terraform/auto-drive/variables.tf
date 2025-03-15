@@ -77,7 +77,7 @@ variable "kms_key_id" {
 variable "auto_drive_instance_count" {
   description = "Number of auto-drive instances to create."
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "gateway_instance_count" {
