@@ -115,6 +115,14 @@ resource "aws_security_group" "rabbitmq_broker_primary" {
     security_groups = [aws_security_group.auto_drive_sg.id] # Allow traffic from EC2 server's security group
   }
 
+  # enable RabbitMQ web management console (only accessible from the VPC)
+  ingress {
+    from_port       = 15671
+    to_port         = 15671
+    protocol        = "tcp"
+    security_groups = [aws_security_group.auto_drive_sg.id] # Allow traffic from EC2 server's security group
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
