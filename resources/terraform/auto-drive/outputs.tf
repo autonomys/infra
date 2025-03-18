@@ -1,5 +1,5 @@
 ################################################################################
-# Auto-Drive Instances Outputs
+# Mainnet Auto-Drive Instances Outputs
 ################################################################################
 
 output "ec2_auto_drive_ids" {
@@ -30,6 +30,40 @@ output "ec2_auto_drive_public_ips" {
 output "ec2_auto_drive_availability_zones" {
   description = "The availability zones of the auto-drive instances"
   value       = module.ec2_auto_drive[*].availability_zone
+}
+
+################################################################################
+# Taurus Auto-Drive Instances Outputs
+################################################################################
+
+output "ec2_auto_drive_taurus_ids" {
+  description = "The IDs of the auto-drive instances"
+  value       = module.ec2_auto_drive_taurus[*].id
+}
+
+output "ec2_auto_drive_taurus_arns" {
+  description = "The ARNs of the auto-drive instances"
+  value       = module.ec2_auto_drive_taurus[*].arn
+}
+
+output "ec2_auto_drive_taurus_instance_states" {
+  description = "The states of the auto-drive instances (e.g., pending, running, etc.)"
+  value       = module.ec2_auto_drive_taurus[*].instance_state
+}
+
+output "ec2_auto_drive_taurus_private_ips" {
+  description = "The private IPs of the auto-drive instances"
+  value       = module.ec2_auto_drive_taurus[*].private_ip
+}
+
+output "ec2_auto_drive_taurus_public_ips" {
+  description = "The public IPs of the auto-drive instances, if applicable"
+  value       = module.ec2_auto_drive_taurus[*].public_ip
+}
+
+output "ec2_auto_drive_taurus_availability_zones" {
+  description = "The availability zones of the auto-drive instances"
+  value       = module.ec2_auto_drive_taurus[*].availability_zone
 }
 
 ################################################################################
@@ -76,6 +110,39 @@ output "gateway_eip" {
   value       = module.ec2_gateway[*].public_ip
 }
 
+################################################################################
+# Multi Network Gateway Instances Outputs
+################################################################################
+
+output "ec2_multi_gateway_ids" {
+  description = "The IDs of the gateway instances"
+  value       = module.ec2_multi_gateway[*].id
+}
+
+output "ec2_multi_gateway_arns" {
+  description = "The ARNs of the gateway instances"
+  value       = module.ec2_multi_gateway[*].arn
+}
+
+output "ec2_multi_gateway_instance_states" {
+  description = "The states of the gateway instances (e.g., pending, running, etc.)"
+  value       = module.ec2_multi_gateway[*].instance_state
+}
+
+output "ec2_multi_gateway_private_ips" {
+  description = "The private IPs of the gateway instances"
+  value       = module.ec2_multi_gateway[*].private_ip
+}
+
+output "ec2_multi_gateway_public_ips" {
+  description = "The public IPs of the gateway instances, if applicable"
+  value       = module.ec2_multi_gateway[*].public_ip
+}
+
+output "ec2_multi_gateway_availability_zones" {
+  description = "The availability zones of the gateway instances"
+  value       = module.ec2_multi_gateway[*].availability_zone
+}
 
 ################################################################################
 # RDS Outputs
