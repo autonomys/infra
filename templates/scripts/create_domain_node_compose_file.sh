@@ -55,6 +55,8 @@ services:
       - --api.dashboard=false
       - --providers.docker
       - --log.level=info
+      - --accesslog=true
+      - --accesslog.format=common
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entryPoint.to=websecure
       - --entrypoints.websecure.address=:443
@@ -72,6 +74,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./acme.json:/acme.json
+    logging:
+      driver: loki
+      options:
+        loki-url: "https://logging.subspace.network/loki/api/v1/push"
 
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
