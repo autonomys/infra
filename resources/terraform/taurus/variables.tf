@@ -32,8 +32,8 @@ variable "instance_type" {
     rpc-indexer      = "c7a.4xlarge"
     nova-indexer     = "c7a.4xlarge"
     farmer           = "c7a.2xlarge"
-    evm_bootstrap    = "c7a.xlarge"
-    autoid_bootstrap = "c7a.xlarge"
+    evm_bootstrap    = "m7a.xlarge"
+    autoid_bootstrap = "m7a.xlarge"
   }
 }
 
