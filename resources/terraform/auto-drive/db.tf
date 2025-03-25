@@ -10,10 +10,10 @@ module "db" {
   identifier = local.name
 
   engine                   = "postgres"
-  engine_version           = "16"
+  engine_version           = "17"
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   family                   = "postgres16" # DB parameter group
-  major_engine_version     = "16"         # DB option group
+  major_engine_version     = "17"         # DB option group
   instance_class           = "db.t4g.2xlarge"
 
   allocated_storage     = 50
@@ -39,9 +39,9 @@ module "db" {
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   create_cloudwatch_log_group     = true
 
-  backup_retention_period = 1
+  backup_retention_period = 3
   skip_final_snapshot     = true
-  deletion_protection     = false
+  deletion_protection     = true
 
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
