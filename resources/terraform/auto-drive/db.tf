@@ -9,12 +9,13 @@ module "db" {
 
   identifier = local.name
 
-  engine                   = "postgres"
-  engine_version           = "17"
-  engine_lifecycle_support = "open-source-rds-extended-support-disabled"
-  family                   = "postgres16" # DB parameter group
-  major_engine_version     = "17"         # DB option group
-  instance_class           = "db.t4g.2xlarge"
+  engine                      = "postgres"
+  engine_version              = "17"
+  engine_lifecycle_support    = "open-source-rds-extended-support-disabled"
+  allow_major_version_upgrade = true
+  family                      = "postgres17" # DB parameter group
+  major_engine_version        = "17"         # DB option group
+  instance_class              = "db.t4g.2xlarge"
 
   allocated_storage     = 50
   max_allocated_storage = 500
