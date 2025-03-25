@@ -10,12 +10,14 @@ module "db" {
   identifier = local.name
 
   engine                      = "postgres"
-  engine_version              = "17"
+  engine_version              = "17.4"
   engine_lifecycle_support    = "open-source-rds-extended-support-disabled"
   allow_major_version_upgrade = true
-  family                      = "postgres17" # DB parameter group
-  major_engine_version        = "17"         # DB option group
-  instance_class              = "db.t4g.2xlarge"
+  # DB parameter group, in the future, terraform doesn't handle this well, so need to change parameter group manually in console, then terraform will pick up the new parameter group on re-run.
+  family               = "postgres17"
+  major_engine_version = "17" # DB option group
+  instance_class       = "db.t4g.2xlarge"
+  apply_immediately    = true # Add this to force immediate application
 
   allocated_storage     = 50
   max_allocated_storage = 500
