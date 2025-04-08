@@ -10,7 +10,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     reserved-only      = false
     prune              = false
     genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
@@ -26,7 +26,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     reserved-only      = false
     prune              = false
     genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
@@ -43,7 +43,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     reserved-only      = false
     prune              = false
     genesis-hash       = "295aeafca762a304d92ee1505548695091f6082d3f0aa4d092ac3cd6397a6c5e"
@@ -60,7 +60,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
@@ -75,7 +75,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["nova-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
@@ -93,7 +93,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -108,7 +108,7 @@ module "taurus" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "taurus-2025-mar-17"
+    docker-tag         = "taurus-2025-mar-26"
     domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
@@ -126,7 +126,7 @@ module "taurus" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "taurus-2025-mar-17"
+    docker-tag             = "taurus-2025-mar-26"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
