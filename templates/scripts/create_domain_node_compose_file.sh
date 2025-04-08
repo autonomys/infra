@@ -102,7 +102,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network || \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network || \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
