@@ -3,6 +3,15 @@
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
+reserved_only=${1}
+node_count=${2}
+current_node=${3}
+bootstrap_node_count=${4}
+dsn_bootstrap_node_count=${4}
+bootstrap_node_evm_count=${5}
+enable_domains=${6}
+domain_id=${7}
+
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
@@ -93,7 +102,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network || \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network || \${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -101,8 +110,8 @@ services:
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.docker.network=traefik-proxy"
-      - "traefik.http.middlewares.rate-limit.ratelimit.average=200"
-      - "traefik.http.middlewares.rate-limit.ratelimit.burst=300"
+      - "traefik.http.middlewares.rate-limit.ratelimit.average=500"
+      - "traefik.http.middlewares.rate-limit.ratelimit.burst=500"
       - "traefik.http.middlewares.rate-limit.ratelimit.period=1s"
     networks:
       - traefik-proxy
@@ -116,6 +125,8 @@ services:
       "--base-path", "/var/subspace",
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
+      "--max-runtime-instances", "32",
+      "--trie-cache-size", "1073741824",
       "--sync", "full",
       "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
@@ -129,15 +140,6 @@ services:
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
 EOF
-
-reserved_only=${1}
-node_count=${2}
-current_node=${3}
-bootstrap_node_count=${4}
-dsn_bootstrap_node_count=${4}
-bootstrap_node_evm_count=${5}
-enable_domains=${6}
-domain_id=${7}
 
 for (( i = 0; i < node_count; i++ )); do
   if [ "${current_node}" == "${i}" ]; then
@@ -169,7 +171,13 @@ if [ "${enable_domains}" == "true" ]; then
     echo '      "--domain-id", "${DOMAIN_ID}",'
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
-    echo '      "--operator-id", "0",'
+    echo '      "--max-runtime-instances", "32",'
+    if [ "${DOMAIN_ID}" -eq 0 ]; then
+      echo '      "--trie-cache-size", "1073741824",'
+    fi
+    for (( i = 0; i < node_count; i++ )); do
+      echo "      \"--operator-id\", \"${i}\"," >> ~/subspace/docker-compose.yml
+    done
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
     echo '      "--listen-on", "/ip6/::/tcp/30334",'
     echo '      "--rpc-cors", "all",'
@@ -182,6 +190,10 @@ if [ "${enable_domains}" == "true" ]; then
       echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/docker-compose.yml
       echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
     done
+
+    if [ "${DOMAIN_ID}" -eq 0 ]; then
+      echo '      "--eth-statuses-cache", "6710886",' >> ~/subspace/docker-compose.yml
+    fi
   } >> ~/subspace/docker-compose.yml
 fi
 
