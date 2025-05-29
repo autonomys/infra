@@ -58,7 +58,7 @@ variable "multi_network_gateway_instance_type" {
 variable "gateway_root_volume_size" {
   description = "Size of the root volume (in GB) for gateway instances."
   type        = number
-  default     = 150
+  default     = 250
 }
 
 variable "iam_role_policy_arn" {

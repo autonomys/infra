@@ -123,6 +123,24 @@ resource "aws_security_group" "rabbitmq_broker_primary" {
     security_groups = [aws_security_group.auto_drive_sg.id] # Allow traffic from EC2 server's security group
   }
 
+  # Allow from specific external IP address temporarily for testing purposes
+  ingress {
+    from_port   = 5671
+    to_port     = 5671
+    protocol    = "tcp"
+    cidr_blocks = ["136.243.147.181/32"]
+    description = "Allow RabbitMQ access from external IP"
+  }
+
+  # Allow from specific external IP address temporarily for testing purposes
+  ingress {
+    from_port   = 5672
+    to_port     = 5672
+    protocol    = "tcp"
+    cidr_blocks = ["136.243.147.181/32"]
+    description = "Allow RabbitMQ access from external IP"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
