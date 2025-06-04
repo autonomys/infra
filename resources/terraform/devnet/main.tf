@@ -142,6 +142,7 @@ module "devnet" {
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email
+  cloudflare_zone_id   = var.cloudflare_zone_id
   nr_api_key           = var.nr_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key

@@ -10,6 +10,12 @@ variable "cloudflare_email" {
   sensitive   = true
 }
 
+variable "cloudflare_zone_id" {
+  type        = string
+  description = "cloudflare zone id"
+  sensitive   = true
+}
+
 variable "cloudflare_api_token" {
   type        = string
   description = "cloudflare api token"
@@ -154,7 +160,7 @@ variable "domain-node-config" {
 }
 
 variable "auto-evm-indexer-node-config" {
-  description = "Nova indexer node deployment config"
+  description = "Auto EVM indexer node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number

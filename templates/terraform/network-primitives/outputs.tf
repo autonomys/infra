@@ -148,14 +148,12 @@ output "farmer_node_ami" {
 }
 
 output "dns-records" {
-  value = [
-    cloudflare_record.rpc[*].hostname,
-    cloudflare_record.rpc-indexer[*].hostname,
-    cloudflare_record.auto-evm-indexer-rpc[*].hostname,
-    cloudflare_record.bootstrap[*].hostname,
-    cloudflare_record.bootstrap_evm[*].hostname,
-    cloudflare_record.bootstrap_auto[*].hostname,
-    # cloudflare_record.auto_evm[*].hostname,
-    # cloudflare_record.autoid[*].hostname,
-  ]
+  value = concat(
+    [for record in cloudflare_dns_record.rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.rpc-indexer : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.auto-evm-indexer-rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap_evm : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap_auto : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"]
+  )
 }
