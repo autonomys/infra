@@ -20,7 +20,7 @@ variable "domain_id" {
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["nova", "autoid"]
+  default     = ["auto-evm", "autoid"]
 }
 
 variable "instance_type" {
@@ -30,7 +30,7 @@ variable "instance_type" {
     rpc              = "m6a.xlarge"
     domain           = "m6a.xlarge"
     rpc-indexer      = "m6a.xlarge"
-    nova-indexer     = "m6a.xlarge"
+    auto-evm-indexer = "m6a.xlarge"
     farmer           = "m6a.xlarge"
     evm_bootstrap    = "m6a.xlarge"
     autoid_bootstrap = "m6a.xlarge"
@@ -60,7 +60,7 @@ variable "instance_count" {
     domain           = 0
     autoid           = 0
     rpc-indexer      = 1
-    nova-indexer     = 0
+    auto-evm-indexer = 0
     farmer           = 1
     evm_bootstrap    = 0
     autoid_bootstrap = 0

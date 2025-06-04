@@ -4,7 +4,7 @@ output "rpc-indexer-node-ipv4-addresses" {
   description = "RPC indexer node IPv4 Addresses"
 }
 
-output "nova-indexer-node-ipv4-addresses" {
+output "auto-evm-indexer-node-ipv4-addresses" {
   value       = module.devnet.nova_indexer_node_public_ip
   description = "Nova indexer node IPv4 Addresses"
 }

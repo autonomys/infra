@@ -69,14 +69,14 @@ module "devnet" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  nova-indexer-node-config = {
-    instance-type      = var.instance_type["nova-indexer"]
+  auto-evm-indexer-node-config = {
+    instance-type      = var.instance_type["auto-evm-indexer"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["nova-indexer"]
+    instance-count     = var.instance_count["auto-evm-indexer"]
     docker-org         = "autonomys"
     docker-tag         = "mainnet-2024-nov-18"
-    domain-prefix      = "nova-indexer"
+    domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
@@ -109,7 +109,7 @@ module "devnet" {
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
     docker-tag         = "mainnet-2024-nov-18"
-    domain-prefix      = ["nova", "autoid"]
+    domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
     node-dsn-port      = 30433
