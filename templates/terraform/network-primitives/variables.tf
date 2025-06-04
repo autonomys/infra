@@ -43,16 +43,13 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap             = 2
-    rpc                   = 2
-    domain                = 0
-    rpc-indexer           = 0
-    auto-evm-indexer      = 0
-    farmer                = 1
-    evm_bootstrap         = 0
-    autoid_bootsrap       = 0
-    auto_evm_indexer_node = 0
-    rpc_indexer_node      = 0
+    bootstrap        = 2
+    rpc              = 2
+    rpc-indexer      = 0
+    auto-evm-indexer = 0
+    farmer           = 1
+    evm_bootstrap    = 0
+    autoid_bootsrap  = 0
   }
 }
 

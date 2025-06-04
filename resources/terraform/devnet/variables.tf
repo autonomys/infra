@@ -32,14 +32,14 @@ variable "domain_labels" {
 variable "instance_type" {
   type = map(string)
   default = {
-    bootstrap        = "m6a.xlarge"
-    rpc              = "m6a.xlarge"
-    domain           = "m6a.xlarge"
-    rpc-indexer      = "m6a.xlarge"
-    auto-evm-indexer = "m6a.xlarge"
-    farmer           = "m6a.xlarge"
-    evm_bootstrap    = "m6a.xlarge"
-    autoid_bootstrap = "m6a.xlarge"
+    bootstrap        = "m7a.xlarge"
+    rpc              = "m7a.xlarge"
+    domain           = "m7a.xlarge"
+    rpc-indexer      = "m7a.xlarge"
+    auto-evm-indexer = "m7a.xlarge"
+    farmer           = "c7a.2xlarge"
+    evm_bootstrap    = "m7a.xlarge"
+    autoid_bootstrap = "m7a.xlarge"
   }
 }
 
@@ -65,7 +65,7 @@ variable "instance_count" {
     rpc              = 2
     domain           = 0
     autoid           = 0
-    rpc-indexer      = 1
+    rpc-indexer      = 0
     auto-evm-indexer = 0
     farmer           = 1
     evm_bootstrap    = 0
