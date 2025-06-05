@@ -253,10 +253,10 @@ resource "aws_instance" "rpc_indexer_node" {
 
 }
 
-resource "aws_instance" "nova_indexer_node" {
-  count              = length(var.aws_region) * var.nova-indexer-node-config.instance-count
+resource "aws_instance" "auto_evm_indexer_node" {
+  count              = length(var.aws_region) * var.auto-evm-indexer-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.nova-indexer-node-config.instance-type
+  instance_type      = var.auto-evm-indexer-node-config.instance-type
   subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
   availability_zone  = var.azs
   ipv6_address_count = 1
@@ -268,16 +268,16 @@ resource "aws_instance" "nova_indexer_node" {
   ebs_optimized               = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.nova-indexer-node-config.disk-volume-size
-    volume_type = var.nova-indexer-node-config.disk-volume-type
+    volume_size = var.auto-evm-indexer-node-config.disk-volume-size
+    volume_type = var.auto-evm-indexer-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
 
   tags = {
-    Name       = "${var.network_name}-nova-indexer-${count.index}"
-    name       = "${var.network_name}-nova-indexer-${count.index}"
-    role       = "nova-indexer node"
+    Name       = "${var.network_name}-auto-evm-indexer-${count.index}"
+    name       = "${var.network_name}-auto-evm-indexer-${count.index}"
+    role       = "auto-evm-indexer node"
     os_name    = "ubuntu"
     os_version = "22.04"
     arch       = "x86_64"

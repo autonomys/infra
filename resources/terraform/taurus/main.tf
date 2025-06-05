@@ -69,11 +69,11 @@ module "taurus" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  nova-indexer-node-config = {
-    instance-type      = var.instance_type["nova-indexer"]
+  auto-evm-indexer-node-config = {
+    instance-type      = var.instance_type["auto-evm-indexer"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["nova-indexer"]
+    instance-count     = var.instance_count["auto-evm-indexer"]
     docker-org         = "autonomys"
     docker-tag         = "taurus-2025-may-27"
     domain-prefix      = "auto-evm-indexer"

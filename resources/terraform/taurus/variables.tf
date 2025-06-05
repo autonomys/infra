@@ -30,7 +30,7 @@ variable "instance_type" {
     rpc              = "m7a.2xlarge"
     domain           = "m7a.2xlarge"
     rpc-indexer      = "c7a.4xlarge"
-    nova-indexer     = "c7a.4xlarge"
+    auto-evm-indexer = "c7a.4xlarge"
     farmer           = "c7a.2xlarge"
     evm_bootstrap    = "m7a.xlarge"
     autoid_bootstrap = "m7a.xlarge"
@@ -60,7 +60,7 @@ variable "instance_count" {
     domain           = 0
     autoid           = 0
     rpc-indexer      = 1
-    nova-indexer     = 0
+    auto-evm-indexer = 0
     farmer           = 1
     evm_bootstrap    = 0
     autoid_bootstrap = 0

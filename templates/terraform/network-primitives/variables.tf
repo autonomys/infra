@@ -10,6 +10,12 @@ variable "cloudflare_email" {
   sensitive   = true
 }
 
+variable "cloudflare_zone_id" {
+  type        = string
+  description = "cloudflare zone id"
+  sensitive   = true
+}
+
 variable "cloudflare_api_token" {
   type        = string
   description = "cloudflare api token"
@@ -37,16 +43,13 @@ variable "azs" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap         = 2
-    rpc               = 2
-    domain            = 0
-    rpc-indexer       = 0
-    nova-indexer      = 0
-    farmer            = 1
-    evm_bootstrap     = 0
-    autoid_bootsrap   = 0
-    nova_indexer_node = 0
-    rpc_indexer_node  = 0
+    bootstrap        = 2
+    rpc              = 2
+    rpc-indexer      = 0
+    auto-evm-indexer = 0
+    farmer           = 1
+    evm_bootstrap    = 0
+    autoid_bootsrap  = 0
   }
 }
 
@@ -153,8 +156,8 @@ variable "domain-node-config" {
   })
 }
 
-variable "nova-indexer-node-config" {
-  description = "Nova indexer node deployment config"
+variable "auto-evm-indexer-node-config" {
+  description = "Auto EVM indexer node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number

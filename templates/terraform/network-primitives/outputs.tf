@@ -64,20 +64,20 @@ output "rpc_indexer_node_ami" {
   value = aws_instance.rpc_indexer_node.*.ami
 }
 
-output "nova_indexer_node_server_id" {
-  value = aws_instance.nova_indexer_node.*.id
+output "auto_evm_indexer_node_server_id" {
+  value = aws_instance.auto_evm_indexer_node.*.id
 }
 
-output "nova_indexer_node_private_ip" {
-  value = aws_instance.nova_indexer_node.*.private_ip
+output "auto_evm_indexer_node_private_ip" {
+  value = aws_instance.auto_evm_indexer_node.*.private_ip
 }
 
-output "nova_indexer_node_public_ip" {
-  value = aws_instance.nova_indexer_node.*.public_ip
+output "auto_evm_indexer_node_public_ip" {
+  value = aws_instance.auto_evm_indexer_node.*.public_ip
 }
 
-output "nova_indexer_node_ami" {
-  value = aws_instance.nova_indexer_node.*.ami
+output "auto_evm_indexer_node_ami" {
+  value = aws_instance.auto_evm_indexer_node.*.ami
 }
 
 
@@ -148,14 +148,12 @@ output "farmer_node_ami" {
 }
 
 output "dns-records" {
-  value = [
-    cloudflare_record.rpc[*].hostname,
-    cloudflare_record.rpc-indexer[*].hostname,
-    cloudflare_record.nova-indexer-rpc[*].hostname,
-    cloudflare_record.bootstrap[*].hostname,
-    cloudflare_record.bootstrap_evm[*].hostname,
-    cloudflare_record.bootstrap_auto[*].hostname,
-    # cloudflare_record.nova[*].hostname,
-    # cloudflare_record.autoid[*].hostname,
-  ]
+  value = concat(
+    [for record in cloudflare_dns_record.rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.rpc-indexer : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.auto-evm-indexer-rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap_evm : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
+    [for record in cloudflare_dns_record.bootstrap_auto : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"]
+  )
 }

@@ -108,6 +108,7 @@ resource "null_resource" "start-farmer-nodes" {
     timeout     = "300s"
   }
 
+  # comment out for devnet, as identity is not needed
   provisioner "file" {
     source      = "./identity.bin"
     destination = "/home/${var.ssh_user}/subspace/identity.bin"
