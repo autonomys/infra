@@ -30,6 +30,7 @@ resource "cloudflare_dns_record" "rpc" {
   content = local.rpc_nodes_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "auto_evm" {
@@ -39,6 +40,7 @@ resource "cloudflare_dns_record" "auto_evm" {
   content  = each.value.ip_v4
   type     = "A"
   ttl      = 3600
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "auto_evm_ipv6" {
@@ -48,6 +50,7 @@ resource "cloudflare_dns_record" "auto_evm_ipv6" {
   content  = each.value.ip_v6
   type     = "AAAA"
   ttl      = 3600
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "rpc-indexer" {
@@ -57,6 +60,7 @@ resource "cloudflare_dns_record" "rpc-indexer" {
   content = local.rpc_indexer_nodes_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "auto-evm-indexer-rpc" {
@@ -66,6 +70,7 @@ resource "cloudflare_dns_record" "auto-evm-indexer-rpc" {
   content = local.auto_evm_indexer_nodes_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "autoid" {
@@ -75,6 +80,7 @@ resource "cloudflare_dns_record" "autoid" {
   content  = each.value.ip_v4
   type     = "A"
   ttl      = 3600
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "autoid_ipv6" {
@@ -84,6 +90,7 @@ resource "cloudflare_dns_record" "autoid_ipv6" {
   content  = each.value.ip_v6
   type     = "AAAA"
   ttl      = 3600
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "bootstrap" {
@@ -93,6 +100,7 @@ resource "cloudflare_dns_record" "bootstrap" {
   content = local.bootstrap_nodes_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "bootstrap_ipv6" {
@@ -102,6 +110,7 @@ resource "cloudflare_dns_record" "bootstrap_ipv6" {
   content = local.bootstrap_nodes_ip_v6[count.index]
   type    = "AAAA"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "bootstrap_evm" {
@@ -111,6 +120,7 @@ resource "cloudflare_dns_record" "bootstrap_evm" {
   content = local.bootstrap_nodes_evm_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "bootstrap_evm_ipv6" {
@@ -120,6 +130,7 @@ resource "cloudflare_dns_record" "bootstrap_evm_ipv6" {
   content = local.bootstrap_nodes_evm_ip_v6[count.index]
   type    = "AAAA"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "bootstrap_auto" {
@@ -129,6 +140,7 @@ resource "cloudflare_dns_record" "bootstrap_auto" {
   content = local.bootstrap_nodes_autoid_ip_v4[count.index]
   type    = "A"
   ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "bootstrap_auto_ipv6" {
@@ -138,4 +150,5 @@ resource "cloudflare_dns_record" "bootstrap_auto_ipv6" {
   content = local.bootstrap_nodes_autoid_ip_v6[count.index]
   type    = "AAAA"
   ttl     = 3600
+  proxied = false
 }
