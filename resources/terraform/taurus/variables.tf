@@ -49,15 +49,15 @@ variable "vpc_cidr_block" {
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap        = 2
+    bootstrap        = 0
     rpc              = 2
-    domain           = 0
-    autoid           = 0
-    rpc-indexer      = 1
+    domain           = 2
+    autoid           = 2
+    rpc-indexer      = 0
     auto-evm-indexer = 0
-    farmer           = 1
-    evm_bootstrap    = 0
-    autoid_bootstrap = 0
+    farmer           = 0
+    evm_bootstrap    = 1
+    autoid_bootstrap = 1
   }
 }
 
