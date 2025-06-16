@@ -34,12 +34,6 @@ variable "vpc_cidr_block" {
   type = string
 }
 
-variable "azs" {
-  type        = string
-  description = "Availability Zones"
-  default     = "us-east-1a"
-}
-
 variable "instance_count" {
   type = map(number)
   default = {
@@ -56,7 +50,13 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-east-2"]
+}
+
+variable "azs" {
+  type        = string
+  description = "Availability Zones"
+  default     = "us-east-2a"
 }
 
 variable "public_subnet_cidrs" {
