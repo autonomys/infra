@@ -29,7 +29,7 @@ resource "cloudflare_dns_record" "rpc" {
   name    = "${var.rpc-node-config.domain-prefix}-${count.index}.${var.network_name}"
   content = local.rpc_nodes_ip_v4[count.index]
   type    = "A"
-  ttl     = 3600
+  ttl     = 1
   proxied = true
 }
 
@@ -39,8 +39,8 @@ resource "cloudflare_dns_record" "auto_evm" {
   name     = "${var.domain-node-config.domain-prefix[0]}-${each.key}.${var.network_name}"
   content  = each.value.ip_v4
   type     = "A"
-  ttl      = 3600
-  proxied = true
+  ttl      = 1
+  proxied  = true
 }
 
 resource "cloudflare_dns_record" "auto_evm_ipv6" {
@@ -49,8 +49,8 @@ resource "cloudflare_dns_record" "auto_evm_ipv6" {
   name     = "${var.domain-node-config.domain-prefix[0]}-${each.key}.${var.network_name}"
   content  = each.value.ip_v6
   type     = "AAAA"
-  ttl      = 3600
-  proxied = true
+  ttl      = 1
+  proxied  = true
 }
 
 resource "cloudflare_dns_record" "rpc-indexer" {
@@ -79,8 +79,8 @@ resource "cloudflare_dns_record" "autoid" {
   name     = "${var.domain-node-config.domain-prefix[1]}-${each.key}.${var.network_name}"
   content  = each.value.ip_v4
   type     = "A"
-  ttl      = 3600
-  proxied = true
+  ttl      = 1
+  proxied  = true
 }
 
 resource "cloudflare_dns_record" "autoid_ipv6" {
@@ -89,8 +89,8 @@ resource "cloudflare_dns_record" "autoid_ipv6" {
   name     = "${var.domain-node-config.domain-prefix[1]}-${each.key}.${var.network_name}"
   content  = each.value.ip_v6
   type     = "AAAA"
-  ttl      = 3600
-  proxied = true
+  ttl      = 1
+  proxied  = true
 }
 
 resource "cloudflare_dns_record" "bootstrap" {

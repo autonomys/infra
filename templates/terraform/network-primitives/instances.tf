@@ -37,7 +37,7 @@ resource "aws_instance" "bootstrap_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -101,7 +101,7 @@ resource "aws_instance" "bootstrap_node_evm" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -165,7 +165,7 @@ resource "aws_instance" "bootstrap_node_autoid" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -228,7 +228,7 @@ resource "aws_instance" "rpc_indexer_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -291,7 +291,7 @@ resource "aws_instance" "auto_evm_indexer_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -353,7 +353,7 @@ resource "aws_instance" "rpc_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -418,7 +418,7 @@ resource "aws_instance" "evm_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -481,7 +481,7 @@ resource "aws_instance" "autoid_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
@@ -543,7 +543,7 @@ resource "aws_instance" "farmer_node" {
 
   lifecycle {
 
-    ignore_changes = [ami, ipv6_address_count]
+    ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
 
   }
 
