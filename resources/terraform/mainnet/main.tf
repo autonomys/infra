@@ -153,5 +153,6 @@ module "mainnet" {
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
   pot_external_entropy = var.pot_external_entropy
+  private_key_path     = var.private_key_path
 
 }
