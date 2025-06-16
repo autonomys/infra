@@ -10,10 +10,10 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
+    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -26,10 +26,10 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
+    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -43,10 +43,10 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     reserved-only      = false
     prune              = false
-    genesis-hash       = "b256e3ca1d3ef43c1e52799df670aa307671b9e468c500def1f5b6b77173b5d4"
+    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -60,7 +60,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     domain-prefix      = "rpc-indexer"
     reserved-only      = false
     prune              = false
@@ -75,7 +75,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["auto-evm-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
     prune              = false
@@ -93,7 +93,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     domain-prefix      = "rpc"
     reserved-only      = false
     prune              = false
@@ -108,7 +108,7 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["domain"]
     docker-org         = "autonomys"
-    docker-tag         = "mainnet-2024-nov-18"
+    docker-tag         = "test-mainnet-upgrade"
     domain-prefix      = ["auto-evm", "autoid"]
     reserved-only      = false
     prune              = false
@@ -126,7 +126,7 @@ module "devnet" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "mainnet-2024-nov-18"
+    docker-tag             = "test-mainnet-upgrade"
     reserved-only          = false
     prune                  = false
     plot-size              = "10G"
