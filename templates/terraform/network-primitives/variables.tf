@@ -50,13 +50,11 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-2"]
 }
 
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-east-2a"
 }
 
 variable "public_subnet_cidrs" {
@@ -80,8 +78,7 @@ variable "ssh_user" {
 }
 
 variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/deployer.pem"
+  type = string
 }
 
 variable "network_name" {
