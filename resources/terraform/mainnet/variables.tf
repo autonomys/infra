@@ -4,6 +4,12 @@ variable "network_name" {
   default     = "mainnet"
 
 }
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID"
+  type        = string
+}
+
 variable "farmer_reward_address" {
   description = "Farmer's reward address"
   type        = string
@@ -49,19 +55,19 @@ variable "vpc_cidr_block" {
 variable "azs" {
   type        = string
   description = "Availability Zones"
-  default     = "us-east-1a"
+  default     = "us-west-1a"
 }
 
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap        = 2
-    rpc              = 2
-    domain           = 2
-    rpc-indexer      = 1
+    bootstrap        = 0
+    rpc              = 0
+    domain           = 4
+    rpc-indexer      = 0
     auto-evm-indexer = 0
-    farmer           = 1
-    evm_bootstrap    = 0
+    farmer           = 0
+    evm_bootstrap    = 1
     autoid_bootstrap = 0
   }
 }
@@ -69,7 +75,7 @@ variable "instance_count" {
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-west-2"]
 }
 
 variable "public_subnet_cidrs" {
