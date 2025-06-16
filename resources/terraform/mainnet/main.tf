@@ -146,6 +146,8 @@ module "mainnet" {
   nr_api_key           = var.nr_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
+  aws_region           = var.aws_region
+  azs                  = var.azs
   vpc_id               = var.vpc_id
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
