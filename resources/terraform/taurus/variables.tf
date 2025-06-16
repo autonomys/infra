@@ -4,6 +4,12 @@ variable "network_name" {
   default     = "taurus"
 
 }
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID"
+  type        = string
+}
+
 variable "farmer_reward_address" {
   description = "Farmer's reward address"
   type        = string
