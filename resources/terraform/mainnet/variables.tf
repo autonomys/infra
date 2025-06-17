@@ -58,6 +58,7 @@ variable "instance_count" {
     bootstrap        = 0
     rpc              = 2
     domain           = 4
+    autoid           = 0
     rpc-indexer      = 0
     auto-evm-indexer = 0
     farmer           = 0
