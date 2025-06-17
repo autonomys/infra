@@ -142,13 +142,17 @@ module "taurus" {
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_email     = var.cloudflare_email
+  cloudflare_zone_id   = var.cloudflare_zone_id
   nr_api_key           = var.nr_api_key
   access_key           = var.access_key
   secret_key           = var.secret_key
+  aws_region           = var.aws_region
+  azs                  = var.azs
   vpc_id               = var.vpc_id
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
   pot_external_entropy = var.pot_external_entropy
+  private_key_path     = var.private_key_path
 
 }

@@ -4,6 +4,12 @@ variable "network_name" {
   default     = "taurus"
 
 }
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID"
+  type        = string
+}
+
 variable "farmer_reward_address" {
   description = "Farmer's reward address"
   type        = string
@@ -46,37 +52,37 @@ variable "vpc_cidr_block" {
   type = string
 }
 
-variable "azs" {
-  type        = string
-  description = "Availability Zones"
-  default     = "us-east-1a"
-}
-
 variable "instance_count" {
   type = map(number)
   default = {
-    bootstrap        = 2
+    bootstrap        = 0
     rpc              = 2
-    domain           = 0
-    autoid           = 0
-    rpc-indexer      = 1
+    domain           = 2
+    autoid           = 2
+    rpc-indexer      = 0
     auto-evm-indexer = 0
-    farmer           = 1
-    evm_bootstrap    = 0
-    autoid_bootstrap = 0
+    farmer           = 0
+    evm_bootstrap    = 1
+    autoid_bootstrap = 1
   }
 }
 
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["us-west-2"]
+}
+
+variable "azs" {
+  type        = string
+  description = "Availability Zones"
+  default     = "us-west-2a"
 }
 
 variable "public_subnet_cidrs" {
   type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = ["172.35.1.0/24"]
+  default     = ["172.39.1.0/24"]
 }
 
 variable "disk_volume_size" {
