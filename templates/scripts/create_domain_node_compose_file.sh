@@ -176,7 +176,9 @@ if [ "${enable_domains}" == "true" ]; then
       echo '      "--trie-cache-size", "1073741824",'
     fi
     for (( i = 0; i < node_count; i++ )); do
-      echo "      \"--operator-id\", \"${i}\"," >> ~/subspace/docker-compose.yml
+      if [ "${current_node}" == "${i}" ]; then
+        echo "      \"--operator-id\", \"${i}\"," >> ~/subspace/docker-compose.yml
+      fi
     done
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
     echo '      "--listen-on", "/ip6/::/tcp/30334",'
