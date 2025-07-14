@@ -208,7 +208,7 @@ def handle_node(client, node, subspace_dir, release_version, pot_external_entrop
 def main():
     parser = argparse.ArgumentParser(description="Manage Subspace nodes via SSH")
     parser.add_argument('--config', required=True, help='Path to the TOML config file')
-    parser.add_argument('--network', required=True, help='Network to update in the .env file, i.e devnet, gemini-3h, taurus')
+    parser.add_argument('--network', required=True, help='Network to update in the .env file, i.e devnet, taurus, mainnet')
     parser.add_argument('--release_version', required=True, help='Release version to update in the .env file')
     parser.add_argument('--subspace_dir', default='/home/ubuntu/subspace', help='Path to the Subspace directory')
     parser.add_argument('--pot_external_entropy', help='POT_EXTERNAL_ENTROPY value for all nodes')
@@ -217,6 +217,7 @@ def main():
     parser.add_argument('--no_timekeeper', action='store_true', help='Disable launching of the timekeeper node')
     parser.add_argument('--prune', action='store_true', help='Stop containers and destroy the Docker images')
     parser.add_argument('--restart', action='store_true', help='Restart the network without wiping the data')
+    parser.add_argument('--no_farmer', action='store_true', help='Dont update the farmer nodes')
     parser.add_argument('--plot_size', help='Set plot size on the farmer, i.e 10G')
     parser.add_argument('--cache_percentage', help='Set the cache percentage on the farmer, i.e 10')
     parser.add_argument('--wipe', action='store_true', help='Wipe farmer data while preserving identity.bin')
@@ -233,6 +234,7 @@ def main():
     bootstrap_nodes = [bootstrap_node for bootstrap_node in config['bootstrap_nodes']]
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
+    domain_nodes = [node for node in config['domain_nodes'] if node['type'] == 'domain']
     timekeeper_node = config['timekeeper']
 
     # Step 1: Handle the timekeeper node, if enabled
@@ -252,19 +254,22 @@ def main():
         logger.info("Timekeeper handling is disabled or not specified.")
 
     # Step 2: Handle farmer nodes
-    for node in farmer_nodes:
-        try:
-            logger.info(f"Connecting to farmer node {node['host']}...")
-            client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-            handle_node(client, node, args.subspace_dir, args.release_version,
-                       pot_external_entropy=args.pot_external_entropy, network=args.network,
-                       plot_size=args.plot_size, cache_percentage=args.cache_percentage,
-                       prune=args.prune, restart=args.restart, wipe=args.wipe)
-        except Exception as e:
-            logger.error(f"Error handling farmer node {node['host']}: {e}")
-        finally:
-            if client:
-                client.close()
+    if not args.no_farmer:
+        for node in farmer_nodes:
+            try:
+                logger.info(f"Connecting to farmer node {node['host']}...")
+                client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+                handle_node(client, node, args.subspace_dir, args.release_version,
+                           pot_external_entropy=args.pot_external_entropy, network=args.network,
+                           plot_size=args.plot_size, cache_percentage=args.cache_percentage,
+                           prune=args.prune, restart=args.restart, wipe=args.wipe)
+            except Exception as e:
+                logger.error(f"Error handling farmer node {node['host']}: {e}")
+            finally:
+                if client:
+                    client.close()
+    else:
+        logger.info("Skipping farmer nodes due to --no_farmer flag.")
 
     # Step 3: Handle RPC nodes
     for node in rpc_nodes:
@@ -280,7 +285,21 @@ def main():
             if client:
                 client.close()
 
-    # Step 4: Handle the bootstrap node with genesis hash from arguments
+    # Step 4: Handle RPC Domain nodes
+    for node in domain_nodes:
+        try:
+            logger.info(f"Connecting to RPC Domain node {node['host']}...")
+            client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+            handle_node(client, domain_node, args.subspace_dir, args.release_version,
+                       pot_external_entropy=args.pot_external_entropy, network=args.network,
+                       prune=args.prune, restart=args.restart)
+        except Exception as e:
+            logger.error(f"Error handling RPC Domain node {node['host']}: {e}")
+        finally:
+            if client:
+                client.close()
+
+    # Step 5: Handle the bootstrap node with genesis hash from arguments
     for bootstrap_node in config['bootstrap_nodes']:
         try:
             logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
