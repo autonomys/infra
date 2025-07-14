@@ -234,22 +234,23 @@ def main():
     bootstrap_nodes = [bootstrap_node for bootstrap_node in config['bootstrap_nodes']]
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
-    domain_nodes = [node for node in config['domain_nodes'] if node['type'] == 'domain']
-    timekeeper_node = config['timekeeper']
+    domain_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'domain']
+    timekeeper_node = [node for node in config['timekeeper_nodes']]
 
     # Step 1: Handle the timekeeper node, if enabled
     if not args.no_timekeeper and timekeeper_node:
-        try:
-            logger.info(f"Connecting to timekeeper node {timekeeper_node['host']}...")
-            client = ssh_connect(timekeeper_node['host'], timekeeper_node['user'], timekeeper_node['ssh_key'])
-            handle_node(client, timekeeper_node, args.subspace_dir, args.release_version,
-                       pot_external_entropy=args.pot_external_entropy, network=args.network,
-                       prune=args.prune, restart=args.restart)
-        except Exception as e:
-            logger.error(f"Error handling timekeeper node: {e}")
-        finally:
-            if client:
-                client.close()
+        for node in timekeeper_node:
+            try:
+                logger.info(f"Connecting to timekeeper node {node['host']}...")
+                client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+                handle_node(client, node, args.subspace_dir, args.release_version,
+                        pot_external_entropy=args.pot_external_entropy, network=args.network,
+                        prune=args.prune, restart=args.restart)
+            except Exception as e:
+                logger.error(f"Error handling timekeeper node: {e}")
+            finally:
+                if client:
+                    client.close()
     else:
         logger.info("Timekeeper handling is disabled or not specified.")
 
