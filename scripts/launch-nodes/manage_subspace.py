@@ -1,3 +1,12 @@
+# This script is designed to manage Subspace nodes by connecting to them via SSH,
+# executing commands to wipe data, update configurations, and manage Docker containers.
+# It supports various node types including farmers, RPC nodes, and timekeepers.
+# The script uses paramiko for SSH connections and colorlog for colored logging output.
+# It can handle node data wiping, Docker compose commands, and environment variable modifications.
+# The script is configurable via command line arguments and a TOML configuration file.
+# It is intended for use in a Subspace network management context, allowing administrators to maintain and update nodes efficiently.
+# Ensure you have the required libraries installed
+
 import os
 import paramiko
 import argparse
@@ -53,15 +62,35 @@ def run_command(client, command):
         logger.error(f"Failed to run command: {e}")
         raise
 
+def wipe_node_data(client, subspace_dir):
+    """Wipe node data for non-farmer nodes."""
+    try:
+        commands = [
+            # Remove node data directory
+            f"cd {subspace_dir} && sudo rm -rf *",
+        ]
+
+        for command in commands:
+            logger.info(f"Executing: {command}")
+            stdout, stderr = run_command(client, command)
+            if stderr and not any(keyword in stderr for keyword in ["No such file", "not found"]):
+                logger.error(f"Error during node data wipe: {stderr}")
+
+        logger.info("Successfully wiped node data")
+
+    except Exception as e:
+        logger.error(f"Failed to wipe node data: {e}")
+        raise
+
 def wipe_farmer_data(client, subspace_dir):
     """Wipe farmer data while preserving identity.bin file."""
     try:
         commands = [
             # Create backup directory if it doesn't exist
-            f"cd {subspace_dir} && sudo mkdir -p backup",
+            f"cd {subspace_dir} && sudo mkdir -p ~/backup",
 
             # Preserve identity.bin if it exists
-            f"cd {subspace_dir} && if [ -f farmer_data/identity.bin ]; then sudo mv farmer_data/identity.bin backup/; fi",
+            f"cd {subspace_dir} && if [ -f farmer_data/identity.bin ]; then sudo mv farmer_data/identity.bin ~/backup/; fi",
 
             # Remove farmer_data directory with sudo
             f"cd {subspace_dir} && sudo rm -rf farmer_data",
@@ -70,7 +99,7 @@ def wipe_farmer_data(client, subspace_dir):
             f"cd {subspace_dir} && sudo mkdir -p farmer_data",
 
             # Restore identity.bin if it was backed up
-            f"cd {subspace_dir} && if [ -f backup/identity.bin ]; then sudo mv backup/identity.bin farmer_data/; fi",
+            f"cd {subspace_dir} && if [ -f ~/backup/identity.bin ]; then sudo mv ~/backup/identity.bin farmer_data/; fi",
 
             # Set proper ownership
             f"cd {subspace_dir} && sudo chown -R nobody:nogroup farmer_data/",
@@ -114,13 +143,13 @@ def modify_env_file(client, subspace_dir, release_version, genesis_hash=None, po
         raise
 
 def docker_compose_down(client, subspace_dir):
-    """Run sudo docker compose down -v in the subspace directory."""
+    """Run sudo docker compose down in the subspace directory."""
     try:
-        command = f'cd {subspace_dir} && sudo docker compose down -v'
-        logger.info(f"Running sudo docker compose down -v in {subspace_dir}")
+        command = f'cd {subspace_dir} && sudo docker compose down'
+        logger.info(f"Running sudo docker compose down in {subspace_dir}")
         run_command(client, command)
     except Exception as e:
-        logger.error(f"Failed to run sudo docker compose down -v: {e}")
+        logger.error(f"Failed to run sudo docker compose down: {e}")
         raise
 
 def docker_compose_restart(client, subspace_dir, docker_tag=None):
@@ -155,7 +184,7 @@ def docker_cleanup(client, subspace_dir):
             logger.info("No running containers found to stop.")
 
         # Prune unused containers and images
-        prune_cmd = f'cd {subspace_dir} && sudo docker container prune -f && sudo docker image prune -a -f'
+        prune_cmd = f'cd {subspace_dir} && sudo docker container prune -f && sudo docker image prune -a -f && sudo docker volume prune -f'
         logger.info(f"Pruning unused containers and images in {subspace_dir}")
         run_command(client, prune_cmd)
 
@@ -175,15 +204,20 @@ def docker_compose_up(client, subspace_dir):
 
 def handle_node(client, node, subspace_dir, release_version, pot_external_entropy=None,
                 plot_size=None, cache_percentage=None, network=None, prune=False, restart=False,
-                genesis_hash=None, wipe=False):
+                genesis_hash=None, wipe=False, ssh_key=None, ssh_user=None):
     """Generic function to handle different node types with specified actions."""
     try:
         if prune:
+            docker_compose_down(client, subspace_dir)
             docker_cleanup(client, subspace_dir)
         elif restart:
             docker_compose_restart(client, subspace_dir)
         else:
             docker_compose_down(client, subspace_dir)
+
+            # Wipe node data if requested (for non-farmer and non-timekeeper nodes)
+            if wipe and node.get('type') != 'farmer' and node.get('type') != 'timekeeper':
+                wipe_node_data(client, subspace_dir)
 
             # Wipe farmer data if requested
             if wipe and node.get('type') == 'farmer':
@@ -220,7 +254,8 @@ def main():
     parser.add_argument('--no_farmer', action='store_true', help='Dont update the farmer nodes')
     parser.add_argument('--plot_size', help='Set plot size on the farmer, i.e 10G')
     parser.add_argument('--cache_percentage', help='Set the cache percentage on the farmer, i.e 10')
-    parser.add_argument('--wipe', action='store_true', help='Wipe farmer data while preserving identity.bin')
+    parser.add_argument('--wipe', action='store_true', help='Wipe the node and farmer data. It preserves the identity.bin of the farmer nodes')
+
     args = parser.parse_args()
 
     # Set logging level based on user input
@@ -235,17 +270,19 @@ def main():
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
     domain_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'domain']
-    timekeeper_node = [node for node in config['timekeeper_nodes']]
+    timekeeper_node = [node for node in config['timekeeper']]
 
     # Step 1: Handle the timekeeper node, if enabled
     if not args.no_timekeeper and timekeeper_node:
         for node in timekeeper_node:
+            client = None
             try:
                 logger.info(f"Connecting to timekeeper node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
                 handle_node(client, node, args.subspace_dir, args.release_version,
                         pot_external_entropy=args.pot_external_entropy, network=args.network,
-                        prune=args.prune, restart=args.restart)
+                        prune=args.prune, restart=args.restart, wipe=args.wipe)
+                logger.info(f"Successfully handled timekeeper node {node['host']}")
             except Exception as e:
                 logger.error(f"Error handling timekeeper node: {e}")
             finally:
@@ -257,6 +294,7 @@ def main():
     # Step 2: Handle farmer nodes
     if not args.no_farmer:
         for node in farmer_nodes:
+            client = None
             try:
                 logger.info(f"Connecting to farmer node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
@@ -264,6 +302,7 @@ def main():
                            pot_external_entropy=args.pot_external_entropy, network=args.network,
                            plot_size=args.plot_size, cache_percentage=args.cache_percentage,
                            prune=args.prune, restart=args.restart, wipe=args.wipe)
+                logger.info(f"Successfully handled farmer node {node['host']}")
             except Exception as e:
                 logger.error(f"Error handling farmer node {node['host']}: {e}")
             finally:
@@ -274,12 +313,14 @@ def main():
 
     # Step 3: Handle RPC nodes
     for node in rpc_nodes:
+        client = None
         try:
             logger.info(f"Connecting to RPC node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
             handle_node(client, node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
-                       prune=args.prune, restart=args.restart)
+                       prune=args.prune, restart=args.restart, wipe=args.wipe)
+            logger.info(f"Successfully handled RPC node {node['host']}")
         except Exception as e:
             logger.error(f"Error handling RPC node {node['host']}: {e}")
         finally:
@@ -288,12 +329,14 @@ def main():
 
     # Step 4: Handle RPC Domain nodes
     for node in domain_nodes:
+        client = None
         try:
             logger.info(f"Connecting to RPC Domain node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
-            handle_node(client, domain_node, args.subspace_dir, args.release_version,
+            handle_node(client, node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
-                       prune=args.prune, restart=args.restart)
+                       prune=args.prune, restart=args.restart, wipe=args.wipe)
+            logger.info(f"Successfully handled RPC Domain node {node['host']}")
         except Exception as e:
             logger.error(f"Error handling RPC Domain node {node['host']}: {e}")
         finally:
@@ -302,6 +345,7 @@ def main():
 
     # Step 5: Handle the bootstrap node with genesis hash from arguments
     for bootstrap_node in config['bootstrap_nodes']:
+        client = None
         try:
             logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
             client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
@@ -309,7 +353,8 @@ def main():
             handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart,
-                       genesis_hash=args.genesis_hash)
+                       genesis_hash=args.genesis_hash, wipe=args.wipe)
+            logger.info(f"Successfully handled bootstrap node {bootstrap_node['host']}")
         except Exception as e:
             logger.error(f"Error handling bootstrap node {bootstrap_node['host']}: {e}")
         finally:

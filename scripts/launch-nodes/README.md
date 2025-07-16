@@ -1,6 +1,6 @@
 # Subspace Node Manager
 
-This script manages the deployment of Subspace nodes (RPC, Farmer, Timekeeper, and Bootstrap nodes) on multiple servers using SSH. It updates the `.env` file with the specified release version, coordinates the startup sequence, and ensures that RPC and Farmer nodes are started before the Bootstrap node, which is updated last with the correct `GENESIS_HASH`.
+This script manages the deployment and upgrades of Subspace nodes (RPC, Farmer, Timekeeper, Domain, and Bootstrap nodes) on multiple servers using SSH. It updates the `.env` file with the specified release version, coordinates the startup sequence, and ensures that RPC and Farmer nodes are started before the Bootstrap node, which is updated last with the correct `GENESIS_HASH`.
 
 ## Features
 
@@ -111,7 +111,8 @@ python manage_subspace.py --config nodes.toml --release_version docker-tag --sub
 - `--prune`: Stop containers and remove unused Docker images.
 - `--restart`: Restart containers without wiping data.
 - `--no_timekeeper`: Disable launching of the timekeeper node. This flag can be used if you do not want the script to handle the timekeeper node during execution.
-- `--wipe`: Wipe data for Farmer nodes before starting them while preserving identity.bin file.
+- `--no_farmer`: Disable launching or updating the farmer node. This flag can be used if you do not want the script to handle the farmer node during execution.
+- `--wipe`: Wipe the node and farmer data. It preserves the identity.bin of the farmer nodes.
 
 ### Step 5: Deactivate the Virtual Environment
 
