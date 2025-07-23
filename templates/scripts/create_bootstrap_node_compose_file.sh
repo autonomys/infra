@@ -77,6 +77,10 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
+      - "--external-address"
+      - "/ip4/$EXTERNAL_IP/tcp/30533"
+      - "--external-address"
+      - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
@@ -115,9 +119,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "256",
-      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
+      "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
@@ -130,6 +132,8 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-pending-in-connections", "2000",
       "--dsn-pending-out-connections", "2000",
       "--prometheus-listen-on", "0.0.0.0:9615",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do

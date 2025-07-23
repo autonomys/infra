@@ -1,12 +1,5 @@
 locals {
-  rpc_indexer_nodes_ip_v4 = flatten([
-    [aws_instance.rpc_indexer_node.*.public_ip]
-    ]
-  )
-  rpc_indexer_nodes_ip_v6 = flatten([
-    [aws_instance.rpc_indexer_node.*.ipv6_addresses]
-    ]
-  )
+  rpc_indexer_nodes_ip_v4 = flatten([[aws_instance.rpc_indexer_node.*.public_ip]])
 }
 
 resource "null_resource" "setup-rpc-indexer-nodes" {
@@ -20,12 +13,12 @@ resource "null_resource" "setup-rpc-indexer-nodes" {
   }
 
   connection {
-    host        = local.rpc_indexer_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.rpc_indexer_nodes_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # create subspace dir
@@ -63,36 +56,6 @@ resource "null_resource" "setup-rpc-indexer-nodes" {
   }
 }
 
-resource "null_resource" "prune-rpc-indexer-nodes" {
-  count      = var.rpc-indexer-node-config.prune ? length(local.rpc_indexer_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-rpc-indexer-nodes]
-
-  triggers = {
-    prune = var.rpc-indexer-node-config.prune
-  }
-
-  connection {
-    host        = local.rpc_indexer_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
-    ]
-  }
-}
-
 resource "null_resource" "start-rpc-indexer-nodes" {
   count = length(local.rpc_indexer_nodes_ip_v4)
 
@@ -101,16 +64,15 @@ resource "null_resource" "start-rpc-indexer-nodes" {
   # trigger on node deployment version change
   triggers = {
     deployment_version = var.rpc-indexer-node-config.deployment-version
-    reserved_only      = var.rpc-indexer-node-config.reserved-only
   }
 
   connection {
-    host        = local.rpc_indexer_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.rpc_indexer_nodes_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # copy node keys file
@@ -133,8 +95,8 @@ resource "null_resource" "start-rpc-indexer-nodes" {
 
   # copy keystore
   provisioner "file" {
-    source      = "./keystore"
-    destination = "/home/${var.ssh_user}/subspace/keystore/"
+    source      = "./domains"
+    destination = "/home/${var.ssh_user}/subspace/domains/"
   }
 
   # copy compose file creation script
@@ -161,10 +123,9 @@ resource "null_resource" "start-rpc-indexer-nodes" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_DSN_PORT=${var.rpc-indexer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.rpc_indexer_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)}",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

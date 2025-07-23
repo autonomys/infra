@@ -3,12 +3,16 @@
 EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
+reserved_only=${1}
+bootstrap_node_count=${2}
+dsn_bootstrap_node_count=${2}
+force_block_production=${3}
+faster_sector_plotting=${4}
+
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
 
 volumes:
-  archival_node_data: {}
-  farmer_data: {}
   vmagentdata: {}
 
 services:
@@ -49,7 +53,7 @@ services:
         condition: service_healthy
     image: ghcr.io/\${NODE_ORG}/farmer:\${DOCKER_TAG}
     volumes:
-      - /home/$USER/subspace/farmer_data:/var/subspace:rw
+      - /subspace_data/farmer/:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30533:30533/tcp"
@@ -69,12 +73,19 @@ services:
       "--prometheus-listen-on", "0.0.0.0:9616",
       "--cache-percentage", "\${CACHE_PERCENTAGE}",
       "--farming-thread-pool-size", "\${THREAD_POOL_SIZE}",
-    ]
+EOF
 
+if [ "${faster_sector_plotting}" == true ]; then
+  echo "      \"--max-pieces-in-sector\", \"10\"," >> ~/subspace/docker-compose.yml
+fi
+
+echo '    ]' >> ~/subspace/docker-compose.yml
+
+cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
     volumes:
-      - archival_node_data:/var/subspace:rw
+      - /subspace_data/node/:/var/subspace:rw
     restart: unless-stopped
     ports:
       - "30333:30333/tcp"
@@ -88,9 +99,7 @@ services:
       "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "256",
-      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
+      "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
@@ -102,14 +111,9 @@ services:
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "unsafe",
       "--prometheus-listen-on", "0.0.0.0:9615",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
-
-reserved_only=${1}
-node_count=${2}
-current_node=${3}
-bootstrap_node_count=${4}
-dsn_bootstrap_node_count=${4}
-force_block_production=${5}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)

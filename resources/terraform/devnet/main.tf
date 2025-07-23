@@ -10,10 +10,9 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     reserved-only      = false
-    prune              = false
-    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
+    genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
@@ -26,10 +25,9 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["evm_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     reserved-only      = false
-    prune              = false
-    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
+    genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -43,10 +41,9 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["autoid_bootstrap"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     reserved-only      = false
-    prune              = false
-    genesis-hash       = "296aab9fb53eeb37a1757b35ed4c4b6c6f903d6b996cf7cd908a753f6eb762d5"
+    genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
     dsn-listen-port    = 30533
     node-dsn-port      = 30433
     operator-port      = 30334
@@ -60,10 +57,9 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     domain-prefix      = "rpc-indexer"
     reserved-only      = false
-    prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -75,13 +71,11 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["auto-evm-indexer"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     domain-prefix      = "auto-evm-indexer"
     reserved-only      = false
-    prune              = false
     node-dsn-port      = 30433
-    enable-domains     = true
-    domain-id          = var.domain_id
+    domain-id          = 0
     domain-labels      = var.domain_labels
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -93,28 +87,41 @@ module "devnet" {
     regions            = var.aws_region
     instance-count     = var.instance_count["rpc"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
+    docker-tag         = "versioned_bundle"
     domain-prefix      = "rpc"
     reserved-only      = false
-    prune              = false
     node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
-  domain-node-config = {
-    instance-type      = var.instance_type["domain"]
+  auto-evm-domain-node-config = {
+    instance-type      = var.instance_type["auto-evm"]
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["domain"]
+    instance-count     = var.instance_count["auto-evm"]
     docker-org         = "autonomys"
-    docker-tag         = "test-mainnet-upgrade"
-    domain-prefix      = ["auto-evm", "autoid"]
+    docker-tag         = "versioned_bundle"
+    domain-prefix      = "auto-evm"
     reserved-only      = false
-    prune              = false
     node-dsn-port      = 30433
-    enable-domains     = true
-    domain-id          = var.domain_id
+    domain-id          = 0
+    domain-labels      = var.domain_labels
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+  }
+
+  auto-id-domain-node-config = {
+    instance-type      = var.instance_type["auto-id"]
+    deployment-version = 0
+    regions            = var.aws_region
+    instance-count     = var.instance_count["auto-id"]
+    docker-org         = "autonomys"
+    docker-tag         = "versioned_bundle"
+    domain-prefix      = "autoid"
+    reserved-only      = false
+    node-dsn-port      = 30433
+    domain-id          = 1
     domain-labels      = var.domain_labels
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -126,10 +133,9 @@ module "devnet" {
     regions                = var.aws_region
     instance-count         = var.instance_count["farmer"]
     docker-org             = "autonomys"
-    docker-tag             = "test-mainnet-upgrade"
+    docker-tag             = "versioned_bundle"
     reserved-only          = false
-    prune                  = false
-    plot-size              = "10G"
+    plot-size              = "2G"
     reward-address         = var.farmer_reward_address
     cache-percentage       = var.cache_percentage
     thread-pool-size       = var.thread_pool_size
@@ -137,11 +143,10 @@ module "devnet" {
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
     disk-volume-type       = var.disk_volume_type
-
+    faster-sector-plotting = true
   }
 
   cloudflare_api_token = var.cloudflare_api_token
-  cloudflare_email     = var.cloudflare_email
   cloudflare_zone_id   = var.cloudflare_zone_id
   nr_api_key           = var.nr_api_key
   access_key           = var.access_key
@@ -152,7 +157,6 @@ module "devnet" {
   instance_type        = var.instance_type
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
-  pot_external_entropy = var.pot_external_entropy
-  private_key_path     = var.private_key_path
-
+  aws_key_name         = var.aws_key_name
+  ssh_agent_identity   = var.ssh_agent_identity
 }

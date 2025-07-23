@@ -16,17 +16,10 @@ variable "farmer_reward_address" {
 }
 
 //todo change this to a map
-variable "domain_id" {
-  description = "Domain ID"
-  type        = list(number)
-  default     = [0, 1]
-}
-
-//todo change this to a map
 variable "domain_labels" {
   description = "Tag of the domain to run"
   type        = list(string)
-  default     = ["auto-evm", "autoid"]
+  default     = ["auto-evm"]
 }
 
 variable "instance_type" {
@@ -34,10 +27,11 @@ variable "instance_type" {
   default = {
     bootstrap        = "m6a.xlarge"
     rpc              = "m6a.xlarge"
-    domain           = "m6a.xlarge"
+    auto-evm         = "m6a.xlarge"
+    auto-id          = "m6a.xlarge"
     rpc-indexer      = "m6a.xlarge"
     auto-evm-indexer = "m6a.xlarge"
-    farmer           = "c7a.2xlarge"
+    farmer           = "c6id.2xlarge"
     evm_bootstrap    = "m6a.xlarge"
     autoid_bootstrap = "m6a.xlarge"
   }
@@ -56,12 +50,12 @@ variable "instance_count" {
   type = map(number)
   default = {
     bootstrap        = 2
-    rpc              = 2
-    domain           = 0
-    autoid           = 0
+    rpc              = 1
+    auto-evm         = 1
+    auto-id          = 0
     rpc-indexer      = 0
     auto-evm-indexer = 0
-    farmer           = 0
+    farmer           = 1
     evm_bootstrap    = 1
     autoid_bootstrap = 0
   }
@@ -103,8 +97,7 @@ variable "access_key" {
 }
 
 variable "aws_key_name" {
-  default = "deployer"
-  type    = string
+  type = string
 }
 
 variable "ssh_user" {
@@ -112,15 +105,8 @@ variable "ssh_user" {
   type    = string
 }
 
-variable "private_key_path" {
-  type    = string
-  default = "~/.ssh/deployer.pem"
-}
-
-variable "pot_external_entropy" {
-  description = "External entropy, used initially when PoT chain starts to derive the first seed"
-  type        = string
-  default     = "test"
+variable "ssh_agent_identity" {
+  type = string
 }
 
 variable "cache_percentage" {
@@ -133,4 +119,14 @@ variable "thread_pool_size" {
   description = "thread pool size (number of cpu cores)"
   type        = number
   default     = 8
+}
+
+variable "nr_api_key" {
+  description = "New relic API Key"
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  type        = string
+  description = "cloudflare api token"
 }

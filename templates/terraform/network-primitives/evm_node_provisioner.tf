@@ -1,18 +1,12 @@
 locals {
-  evm_nodes_ip_v4 = flatten([
-    [aws_instance.evm_node.*.public_ip]
-    ]
-  )
-  evm_nodes_ip_v6 = flatten([
-    [aws_instance.evm_node.*.ipv6_addresses]
-    ]
-  )
+  evm_nodes_ip_v4 = flatten([[aws_instance.evm_node.*.public_ip]])
+  evm_nodes_ip_v6 = flatten([[aws_instance.evm_node.*.ipv6_addresses]])
 }
 
 resource "null_resource" "setup-evm-nodes" {
   count = length(local.evm_nodes_ip_v4)
 
-  depends_on = [aws_instance.evm_node]
+  depends_on = [aws_instance.evm_node, cloudflare_dns_record.auto_evm]
 
   # trigger on node ip changes
   triggers = {
@@ -20,12 +14,12 @@ resource "null_resource" "setup-evm-nodes" {
   }
 
   connection {
-    host        = local.evm_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.evm_nodes_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # create subspace dir
@@ -64,36 +58,6 @@ resource "null_resource" "setup-evm-nodes" {
 
 }
 
-resource "null_resource" "prune-evm-nodes" {
-  count      = var.domain-node-config.prune ? length(local.evm_nodes_ip_v4) : 0
-  depends_on = [null_resource.setup-evm-nodes]
-
-  triggers = {
-    prune = var.domain-node-config.prune
-  }
-
-  connection {
-    host        = local.evm_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
-    ]
-  }
-}
-
 resource "null_resource" "start-evm-nodes" {
   count = length(local.evm_nodes_ip_v4)
 
@@ -101,17 +65,16 @@ resource "null_resource" "start-evm-nodes" {
 
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.domain-node-config.deployment-version
-    reserved_only      = var.domain-node-config.reserved-only
+    deployment_version = var.auto-evm-domain-node-config.deployment-version
   }
 
   connection {
-    host        = local.evm_nodes_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.evm_nodes_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # copy node keys file
@@ -141,8 +104,8 @@ resource "null_resource" "start-evm-nodes" {
 
   # copy keystore
   provisioner "file" {
-    source      = "./keystore"
-    destination = "/home/${var.ssh_user}/subspace/keystore/"
+    source      = "./domains"
+    destination = "/home/${var.ssh_user}/subspace/domains/"
   }
 
   # copy compose file creation script
@@ -161,23 +124,30 @@ resource "null_resource" "start-evm-nodes" {
       "sudo hostnamectl set-hostname ${var.network_name}-evm-node-${count.index}",
 
       # create .env file
-      "echo NODE_ORG=${var.domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_ORG=${var.auto-evm-domain-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
+      "echo DOCKER_TAG=${var.auto-evm-domain-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.domain-node-config.domain-prefix[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_PREFIX=${var.auto-evm-domain-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.auto-evm-domain-node-config.domain-labels[0]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.auto-evm-domain-node-config.domain-id} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NODE_DSN_PORT=${var.auto-evm-domain-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
+      "echo FQDN=${data.cloudflare_zone.cloudflare_zone.name} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.evm_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.domain-node-config.enable-domains} ${var.domain-node-config.domain-id[0]}",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.evm_nodes_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${length(local.bootstrap_nodes_evm_ip_v4)} ${var.auto-evm-domain-node-config.domain-id}",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+
+      # wait until container is created
+      "sudo sh -c 'until docker ps -f \"name=subspace-archival-node-1\" --format \"{{.ID}}\" | grep -q .; do sleep 1; done'",
+
+      # copy domain keystore to named volume
+      "sudo docker exec subspace-archival-node-1 mkdir -p /var/subspace/domains/0/keystore/",
+      "sudo docker cp /home/${var.ssh_user}/subspace/domains/${var.auto-evm-domain-node-config.domain-id}/keystore/. subspace-archival-node-1:/var/subspace/domains/${var.auto-evm-domain-node-config.domain-id}/keystore/"
     ]
   }
 }

@@ -1,13 +1,6 @@
 locals {
-  bootstrap_nodes_autoid_ip_v4 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.public_ip]
-    ]
-  )
-
-  bootstrap_nodes_autoid_ip_v6 = flatten([
-    [aws_instance.bootstrap_node_autoid.*.ipv6_addresses]
-    ]
-  )
+  bootstrap_nodes_autoid_ip_v4 = flatten([[aws_instance.bootstrap_node_autoid.*.public_ip]])
+  bootstrap_nodes_autoid_ip_v6 = flatten([[aws_instance.bootstrap_node_autoid.*.ipv6_addresses]])
 }
 
 resource "null_resource" "setup-bootstrap-nodes-autoid" {
@@ -21,12 +14,12 @@ resource "null_resource" "setup-bootstrap-nodes-autoid" {
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # create subspace dir
@@ -58,36 +51,6 @@ resource "null_resource" "setup-bootstrap-nodes-autoid" {
 
 }
 
-resource "null_resource" "prune-bootstrap-nodes-autoid" {
-  count      = var.bootstrap-node-autoid-config.prune ? length(local.bootstrap_nodes_autoid_ip_v4) : 0
-  depends_on = [null_resource.setup-bootstrap-nodes-autoid]
-
-  triggers = {
-    prune = var.bootstrap-node-autoid-config.prune
-  }
-
-  connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/prune_docker_system.sh"
-    destination = "/home/${var.ssh_user}/subspace/prune_docker_system.sh"
-  }
-
-  # prune network
-  provisioner "remote-exec" {
-    inline = [
-      "sudo bash /home/${var.ssh_user}/subspace/prune_docker_system.sh"
-    ]
-  }
-}
-
 resource "null_resource" "start-bootstrap-nodes-autoid" {
   count = length(local.bootstrap_nodes_autoid_ip_v4)
 
@@ -96,16 +59,15 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
   # trigger on node deployment version change
   triggers = {
     deployment_version = var.bootstrap-node-autoid-config.deployment-version
-    reserved_only      = var.bootstrap-node-autoid-config.reserved-only
   }
 
   connection {
-    host        = local.bootstrap_nodes_autoid_ip_v4[count.index]
-    user        = var.ssh_user
-    type        = "ssh"
-    agent       = true
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    host           = local.bootstrap_nodes_autoid_ip_v4[count.index]
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
   # copy bootstrap node keys file
@@ -147,8 +109,8 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_LABEL=${var.domain-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_ID=${var.domain-node-config.domain-id[1]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_LABEL=${var.auto-id-domain-node-config.domain-labels[1]} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DOMAIN_ID=${var.auto-id-domain-node-config.domain-id} >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
       "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_DSN_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
@@ -156,10 +118,9 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
       "echo NODE_DSN_PORT=${var.bootstrap-node-autoid-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo OPERATOR_PORT=${var.bootstrap-node-autoid-config.operator-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo GENESIS_HASH=${var.bootstrap-node-autoid-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
-      "echo POT_EXTERNAL_ENTROPY=${var.pot_external_entropy} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ${var.domain-node-config.enable-domains} ",
+      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${count.index} ${length(local.bootstrap_nodes_ip_v4)} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

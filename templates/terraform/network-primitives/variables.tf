@@ -4,12 +4,6 @@ variable "nr_api_key" {
   sensitive   = true
 }
 
-variable "cloudflare_email" {
-  type        = string
-  description = "cloudflare email address"
-  sensitive   = true
-}
-
 variable "cloudflare_zone_id" {
   type        = string
   description = "cloudflare zone id"
@@ -34,19 +28,6 @@ variable "vpc_cidr_block" {
   type = string
 }
 
-variable "instance_count" {
-  type = map(number)
-  default = {
-    bootstrap        = 2
-    rpc              = 2
-    rpc-indexer      = 0
-    auto-evm-indexer = 0
-    farmer           = 1
-    evm_bootstrap    = 0
-    autoid_bootsrap  = 0
-  }
-}
-
 variable "aws_region" {
   description = "aws region"
   type        = list(string)
@@ -62,14 +43,8 @@ variable "public_subnet_cidrs" {
   description = "Public Subnet CIDR values"
 }
 
-variable "disk_volume_type" {
-  type    = string
-  default = "gp3"
-}
-
 variable "aws_key_name" {
-  default = "deployer"
-  type    = string
+  type = string
 }
 
 variable "ssh_user" {
@@ -77,7 +52,7 @@ variable "ssh_user" {
   type    = string
 }
 
-variable "private_key_path" {
+variable "ssh_agent_identity" {
   type = string
 }
 
@@ -107,7 +82,6 @@ variable "rpc-node-config" {
     docker-tag         = string
     domain-prefix      = string
     reserved-only      = bool
-    prune              = bool
     node-dsn-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
@@ -125,15 +99,14 @@ variable "rpc-indexer-node-config" {
     docker-tag         = string
     domain-prefix      = string
     reserved-only      = bool
-    prune              = bool
     node-dsn-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })
 }
 
-variable "domain-node-config" {
-  description = "Domain node deployment config"
+variable "auto-evm-domain-node-config" {
+  description = "EVM Domain node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number
@@ -141,12 +114,29 @@ variable "domain-node-config" {
     instance-count     = number
     docker-org         = string
     docker-tag         = string
-    domain-prefix      = list(string)
+    domain-prefix      = string
     reserved-only      = bool
-    prune              = bool
     node-dsn-port      = number
-    enable-domains     = bool
-    domain-id          = list(number)
+    domain-id          = number
+    domain-labels      = list(string)
+    disk-volume-size   = number
+    disk-volume-type   = string
+  })
+}
+
+variable "auto-id-domain-node-config" {
+  description = "Auto ID Domain node deployment config"
+  type = object({
+    instance-type      = string
+    deployment-version = number
+    regions            = list(string)
+    instance-count     = number
+    docker-org         = string
+    docker-tag         = string
+    domain-prefix      = string
+    reserved-only      = bool
+    node-dsn-port      = number
+    domain-id          = number
     domain-labels      = list(string)
     disk-volume-size   = number
     disk-volume-type   = string
@@ -164,10 +154,8 @@ variable "auto-evm-indexer-node-config" {
     docker-tag         = string
     domain-prefix      = string
     reserved-only      = bool
-    prune              = bool
     node-dsn-port      = number
-    enable-domains     = bool
-    domain-id          = list(number)
+    domain-id          = number
     domain-labels      = list(string)
     disk-volume-size   = number
     disk-volume-type   = string
@@ -184,7 +172,6 @@ variable "bootstrap-node-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
-    prune              = bool
     genesis-hash       = string
     dsn-listen-port    = number
     node-dsn-port      = number
@@ -203,7 +190,6 @@ variable "bootstrap-node-evm-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
-    prune              = bool
     genesis-hash       = string
     dsn-listen-port    = number
     node-dsn-port      = number
@@ -223,7 +209,6 @@ variable "bootstrap-node-autoid-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
-    prune              = bool
     genesis-hash       = string
     dsn-listen-port    = number
     node-dsn-port      = number
@@ -243,7 +228,6 @@ variable "farmer-node-config" {
     docker-org             = string
     docker-tag             = string
     reserved-only          = bool
-    prune                  = bool
     plot-size              = string
     cache-percentage       = number
     thread-pool-size       = number
@@ -252,6 +236,7 @@ variable "farmer-node-config" {
     node-dsn-port          = number
     disk-volume-size       = number
     disk-volume-type       = string
+    faster-sector-plotting = bool
   })
 }
 
@@ -263,9 +248,4 @@ variable "secret_key" {
 variable "access_key" {
   type      = string
   sensitive = true
-}
-
-variable "pot_external_entropy" {
-  description = "External entropy, used initially when PoT chain starts to derive the first seed"
-  type        = string
 }

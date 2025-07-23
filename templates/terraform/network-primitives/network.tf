@@ -12,7 +12,7 @@ resource "aws_vpc" "network_vpc" {
 resource "aws_subnet" "public_subnets" {
   count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.network_vpc.id
-  cidr_block              = element(var.public_subnet_cidrs, count.index)
+  cidr_block              = var.public_subnet_cidrs[count.index]
   ipv6_cidr_block         = cidrsubnet(aws_vpc.network_vpc.ipv6_cidr_block, 8, count.index)
   availability_zone       = var.azs
   map_public_ip_on_launch = true
@@ -61,8 +61,8 @@ resource "aws_route_table" "public_route_table" {
 
 resource "aws_route_table_association" "public_route_table_subnets_association" {
   count          = length(var.public_subnet_cidrs)
-  subnet_id      = element(aws_subnet.public_subnets.*.id, count.index)
-  route_table_id = element(aws_route_table.public_route_table.*.id, count.index)
+  subnet_id      = aws_subnet.public_subnets.*.id[count.index]
+  route_table_id = aws_route_table.public_route_table.*.id[count.index]
 }
 
 resource "aws_security_group" "network_sg" {
@@ -119,15 +119,6 @@ resource "aws_security_group" "network_sg" {
     description      = "Node Port 30334 Domain port for VPC"
     from_port        = 30334
     to_port          = 30334
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  ingress {
-    description      = "Domain Operator Node Port 40333 for VPC"
-    from_port        = 40333
-    to_port          = 40333
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
@@ -198,25 +189,3 @@ resource "aws_security_group" "network_sg" {
     aws_vpc.network_vpc
   ]
 }
-
-## Allocate EIP to NAT Gateway (NOTE: Disable for now since not using private VPC)
-
-# resource "aws_eip" "public_subnet_eip" {
-#   count = length(var.public_subnet_cidrs)
-#   vpc   = true
-
-#   depends_on = [
-#     aws_internet_gateway.gw,
-#   ]
-# }
-
-# # NAT Gateway for public subnet
-# resource "aws_nat_gateway" "nat_gateway" {
-#   count         = length(var.public_subnet_cidrs)
-#   allocation_id = element(aws_eip.public_subnet_eip.*.allocation_id, count.index)
-#   subnet_id     = element(aws_subnet.public_subnets.*.id, count.index)
-
-#   tags = {
-#     Name = "${var.network_name}-public-subnet-nat-GTW-${count.index}"
-#   }
-# }

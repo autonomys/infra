@@ -9,8 +9,7 @@ current_node=${3}
 bootstrap_node_count=${4}
 dsn_bootstrap_node_count=${4}
 bootstrap_node_evm_count=${5}
-enable_domains=${6}
-domain_id=${7}
+domain_id=${6}
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -92,7 +91,6 @@ services:
     image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
     volumes:
       - archival_node_data:/var/subspace:rw
-      - ./keystore:/var/subspace/keystore:ro
     restart: unless-stopped
     ports:
       - "30333:30333/tcp"
@@ -101,8 +99,8 @@ services:
       - "9615:9615"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.archival-node.loadbalancer.server.port=8944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
+      - "traefik.http.services.archival-node.loadbalancer.server.port=9945"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.\${FQDN}\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -128,7 +126,6 @@ services:
       "--max-runtime-instances", "32",
       "--trie-cache-size", "1073741824",
       "--sync", "full",
-      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--node-key", "\${NODE_KEY}",
@@ -139,6 +136,9 @@ services:
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
+      "--timekeeper",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
@@ -164,39 +164,41 @@ if [ "${reserved_only}" == "true" ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
 
-if [ "${enable_domains}" == "true" ]; then
-  {
+{
     # core domain
     echo '      "--",'
     echo '      "--domain-id", "${DOMAIN_ID}",'
     echo '      "--state-pruning", "archive",'
     echo '      "--blocks-pruning", "archive",'
     echo '      "--max-runtime-instances", "32",'
-    if [ "${DOMAIN_ID}" -eq 0 ]; then
+    if [ "${domain_id}" -eq 0 ]; then
       echo '      "--trie-cache-size", "1073741824",'
     fi
     for (( i = 0; i < node_count; i++ )); do
       if [ "${current_node}" == "${i}" ]; then
-        echo "      \"--operator-id\", \"${i}\"," >> ~/subspace/docker-compose.yml
+        echo "      \"--operator-id\", \"${i}\","
       fi
     done
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
     echo '      "--listen-on", "/ip6/::/tcp/30334",'
     echo '      "--rpc-cors", "all",'
     echo '      "--rpc-methods", "safe",'
-    echo '      "--rpc-listen-on", "0.0.0.0:8944",'
+    echo '      "--rpc-listen-on", "0.0.0.0:9945",'
     echo '      "--rpc-max-connections", "10000",'
+    echo '      "--public-addr", "/ip4/'"$EXTERNAL_IP"'/tcp/30334",'
+    echo '      "--public-addr", "/ip6/'"$EXTERNAL_IP_V6"'/tcp/30334",'
 
     for (( i = 0; i < bootstrap_node_evm_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_evm_keys.txt)
-      echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--reserved-peer\", \"${addr}\","
+      echo "      \"--bootstrap-node\", \"${addr}\","
     done
 
-    if [ "${DOMAIN_ID}" -eq 0 ]; then
-      echo '      "--eth-statuses-cache", "6710886",' >> ~/subspace/docker-compose.yml
+    if [ "${domain_id}" -eq 0 ]; then
+      echo '      "--",'
+      echo '      "--eth-statuses-cache", "6710886",'
     fi
-  } >> ~/subspace/docker-compose.yml
-fi
 
-echo '    ]' >> ~/subspace/docker-compose.yml
+    echo '    ]'
+} >> ~/subspace/docker-compose.yml
+

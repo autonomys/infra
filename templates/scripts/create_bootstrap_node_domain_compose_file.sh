@@ -7,7 +7,6 @@ reserved_only=${1}
 node_count=${2}
 current_node=${3}
 bootstrap_node_count=${4}
-enable_domains=${5}
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -79,10 +78,10 @@ services:
       - "1000"
       - "--pending-out-peers"
       - "1000"
-      # - "--external-address"
-      # - "/ip4/$EXTERNAL_IP/tcp/30533"
-      # - "--external-address"
-      # - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
+      - "--external-address"
+      - "/ip4/$EXTERNAL_IP/tcp/30533"
+      - "--external-address"
+      - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
@@ -123,7 +122,6 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--sync", "full",
-      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--node-key", "\${NODE_KEY}",
@@ -134,6 +132,8 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-pending-in-connections", "2000",
       "--dsn-pending-out-connections", "2000",
       "--prometheus-listen-on", "0.0.0.0:9615",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do
@@ -149,7 +149,7 @@ for (( i = 0; i < bootstrap_node_count; i++ )); do
     echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
-for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
+for (( i = 0; i < bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
   echo "      \"--dsn-reserved-peer\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--dsn-bootstrap-node\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
@@ -159,21 +159,21 @@ if [ "${reserved_only}" == true ]; then
     echo "      \"--reserved-only\"," >> ~/subspace/docker-compose.yml
 fi
 
-if [ "${enable_domains}" == "true" ]; then
-    {
+{
     # core domain
-      echo '      "--",'
-      echo '      "--domain-id", "${DOMAIN_ID}",'
-      echo '      "--state-pruning", "archive",'
-      echo '      "--blocks-pruning", "archive",'
-      echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
-      echo '      "--rpc-cors", "all",'
-      echo '      "--rpc-listen-on", "0.0.0.0:8944",'
+    echo '      "--",'
+    echo '      "--domain-id", "${DOMAIN_ID}",'
+    echo '      "--state-pruning", "archive",'
+    echo '      "--blocks-pruning", "archive",'
+    echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
+    echo '      "--rpc-cors", "all",'
+    echo '      "--rpc-listen-on", "0.0.0.0:9945",'
+    echo '      "--public-addr", "/ip4/'"$EXTERNAL_IP"'/tcp/${OPERATOR_PORT}",'
+    echo '      "--public-addr", "/ip6/'"$EXTERNAL_IP_V6"'/tcp/${OPERATOR_PORT}",'
     for (( i = 0; i < node_count; i++ )); do
       addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-      echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/docker-compose.yml
-      echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
+      echo "      \"--reserved-peer\", \"${addr}\","
+      echo "      \"--bootstrap-node\", \"${addr}\","
     done
-    }  >> ~/subspace/docker-compose.yml
-fi
-echo '    ]' >> ~/subspace/docker-compose.yml
+    echo '    ]'
+}  >> ~/subspace/docker-compose.yml

@@ -44,8 +44,7 @@ output "rpc-node-ipv4-addresses" {
   description = "RPC node IPv4 Addresses"
 }
 
-output "pot_external_entropy" {
-  value       = var.pot_external_entropy
-  description = "Pot external entropy"
-
+output "dns-records" {
+  value       = module.devnet.dns-records
+  description = "DNS records"
 }

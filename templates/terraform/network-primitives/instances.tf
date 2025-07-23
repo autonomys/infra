@@ -2,11 +2,11 @@ resource "aws_instance" "bootstrap_node" {
   count              = length(var.aws_region) * var.bootstrap-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -31,14 +31,11 @@ resource "aws_instance" "bootstrap_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -48,16 +45,16 @@ resource "aws_instance" "bootstrap_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
 }
@@ -66,11 +63,11 @@ resource "aws_instance" "bootstrap_node_evm" {
   count              = length(var.aws_region) * var.bootstrap-node-evm-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-evm-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -95,14 +92,11 @@ resource "aws_instance" "bootstrap_node_evm" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -112,29 +106,28 @@ resource "aws_instance" "bootstrap_node_evm" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "bootstrap_node_autoid" {
   count              = length(var.aws_region) * var.bootstrap-node-autoid-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-autoid-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -159,14 +152,11 @@ resource "aws_instance" "bootstrap_node_autoid" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -176,29 +166,28 @@ resource "aws_instance" "bootstrap_node_autoid" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "rpc_indexer_node" {
   count              = length(var.aws_region) * var.rpc-indexer-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.rpc-indexer-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -222,14 +211,11 @@ resource "aws_instance" "rpc_indexer_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -239,29 +225,28 @@ resource "aws_instance" "rpc_indexer_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "auto_evm_indexer_node" {
   count              = length(var.aws_region) * var.auto-evm-indexer-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.auto-evm-indexer-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -285,14 +270,11 @@ resource "aws_instance" "auto_evm_indexer_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -302,29 +284,28 @@ resource "aws_instance" "auto_evm_indexer_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "rpc_node" {
   count              = length(var.aws_region) * var.rpc-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.rpc-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
@@ -347,14 +328,11 @@ resource "aws_instance" "rpc_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -365,38 +343,37 @@ resource "aws_instance" "rpc_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 
 resource "aws_instance" "evm_node" {
-  count              = length(var.aws_region) * (var.domain-node-config.instance-count / 2)
+  count              = length(var.aws_region) * (var.auto-evm-domain-node-config.instance-count)
   ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.domain-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  instance_type      = var.auto-evm-domain-node-config.instance-type
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.domain-node-config.disk-volume-size
-    volume_type = var.domain-node-config.disk-volume-type
+    volume_size = var.auto-evm-domain-node-config.disk-volume-size
+    volume_type = var.auto-evm-domain-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
@@ -412,14 +389,11 @@ resource "aws_instance" "evm_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -429,37 +403,37 @@ resource "aws_instance" "evm_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
 
 }
 
 resource "aws_instance" "autoid_node" {
-  count              = length(var.aws_region) * (var.domain-node-config.instance-count / 2)
+  count              = length(var.aws_region) * (var.auto-id-domain-node-config.instance-count)
   ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.domain-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  instance_type      = var.auto-id-domain-node-config.instance-type
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
     device_name = "/dev/sda1"
-    volume_size = var.domain-node-config.disk-volume-size
-    volume_type = var.domain-node-config.disk-volume-type
+    volume_size = var.auto-id-domain-node-config.disk-volume-size
+    volume_type = var.auto-id-domain-node-config.disk-volume-type
     iops        = 3000
     throughput  = 250
   }
@@ -475,14 +449,11 @@ resource "aws_instance" "autoid_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
   provisioner "remote-exec" {
@@ -492,40 +463,31 @@ resource "aws_instance" "autoid_node" {
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "farmer_node" {
   count              = length(var.aws_region) * var.farmer-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.farmer-node-config.instance-type
-  subnet_id          = element(aws_subnet.public_subnets.*.id, 0)
+  subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
-  vpc_security_group_ids = ["${aws_security_group.network_sg.id}"]
+  vpc_security_group_ids = [aws_security_group.network_sg.id]
   # the Public SSH key
   key_name                    = var.aws_key_name
   associate_public_ip_address = true
-  ebs_optimized               = true
-  ebs_block_device {
-    device_name = "/dev/sda1"
-    volume_size = var.farmer-node-config.disk-volume-size
-    volume_type = var.farmer-node-config.disk-volume-type
-    iops        = 3000
-    throughput  = 250
-  }
   tags = {
     Name       = "${var.network_name}-farmer-${count.index}"
     name       = "${var.network_name}-farmer-${count.index}"
@@ -537,33 +499,37 @@ resource "aws_instance" "farmer_node" {
 
   depends_on = [
     aws_subnet.public_subnets,
-    #aws_nat_gateway.nat_gateway,
     aws_internet_gateway.gw
   ]
 
   lifecycle {
-
     ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-
   }
 
+  // farmer node should have an nvme based local instance store
+  // we cannot use EBS here since proving timeouts with EBS
+  // TODO: currently assumes nvme1n1 drive name but ideally
+  //  we should use nvme-cli to get the correct drive and
+  //  and then mount it instead
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
       "sudo apt update -y",
+      "sudo mkfs -t ext4 /dev/nvme1n1",
+      "sudo mkdir /subspace_data",
+      "sudo mount /dev/nvme1n1 /subspace_data",
     ]
 
     on_failure = continue
-
   }
 
   # Setting up the ssh connection
   connection {
-    type        = "ssh"
-    host        = element(self.*.public_ip, count.index)
-    user        = var.ssh_user
-    private_key = file("${var.private_key_path}")
-    timeout     = "300s"
+    type           = "ssh"
+    host           = self.*.public_ip[count.index]
+    user           = var.ssh_user
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
   }
-
 }

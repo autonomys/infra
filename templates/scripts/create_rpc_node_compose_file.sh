@@ -87,7 +87,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=9944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.subspace.network\`) || Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.autonomys.xyz\`) || Host(\`\${DOMAIN_PREFIX}.\${NETWORK_NAME}.autonomys.xyz\`) && Path(\`/ws\`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.\${FQDN}\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -113,7 +113,6 @@ services:
       "--state-pruning", "archive",
       "--blocks-pruning", "archive",
       "--sync", "full",
-      "--pot-external-entropy", "\${POT_EXTERNAL_ENTROPY}",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
@@ -126,16 +125,16 @@ services:
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 reserved_only=${1}
-node_count=${2}
-current_node=${3}
-bootstrap_node_count=${4}
-dsn_bootstrap_node_count=${4}
+bootstrap_node_count=${2}
+dsn_bootstrap_node_count=${2}
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
   echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
