@@ -2,13 +2,13 @@ module "devnet" {
   source          = "../../../templates/terraform/network-primitives"
   path_to_scripts = "../../../templates/scripts"
   path_to_configs = "../../../templates/configs"
-  network_name    = var.network_name
+  network_name    = "devnet"
 
   bootstrap-node-config = {
-    instance-type      = var.instance_type["bootstrap"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["bootstrap"]
+    instance-count     = 2
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
@@ -20,10 +20,10 @@ module "devnet" {
   }
 
   bootstrap-node-evm-config = {
-    instance-type      = var.instance_type["evm_bootstrap"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["evm_bootstrap"]
+    instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
@@ -36,10 +36,10 @@ module "devnet" {
   }
 
   bootstrap-node-autoid-config = {
-    instance-type      = var.instance_type["autoid_bootstrap"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["autoid_bootstrap"]
+    instance-count     = 0
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
@@ -51,41 +51,11 @@ module "devnet" {
     disk-volume-type   = var.disk_volume_type
   }
 
-  rpc-indexer-node-config = {
-    instance-type      = var.instance_type["rpc-indexer"]
-    deployment-version = 0
-    regions            = var.aws_region
-    instance-count     = var.instance_count["rpc-indexer"]
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    domain-prefix      = "rpc-indexer"
-    reserved-only      = false
-    node-dsn-port      = 30433
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  auto-evm-indexer-node-config = {
-    instance-type      = var.instance_type["auto-evm-indexer"]
-    deployment-version = 0
-    regions            = var.aws_region
-    instance-count     = var.instance_count["auto-evm-indexer"]
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    domain-prefix      = "auto-evm-indexer"
-    reserved-only      = false
-    node-dsn-port      = 30433
-    domain-id          = 0
-    domain-labels      = var.domain_labels
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
   rpc-node-config = {
-    instance-type      = var.instance_type["rpc"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["rpc"]
+    instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     domain-prefix      = "rpc"
@@ -96,49 +66,49 @@ module "devnet" {
   }
 
   auto-evm-domain-node-config = {
-    instance-type      = var.instance_type["auto-evm"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["auto-evm"]
+    instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     domain-prefix      = "auto-evm"
     reserved-only      = false
     node-dsn-port      = 30433
     domain-id          = 0
-    domain-labels      = var.domain_labels
+    domain-labels      = ["auto-evm"]
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
   auto-id-domain-node-config = {
-    instance-type      = var.instance_type["auto-id"]
+    instance-type      = "m6a.xlarge"
     deployment-version = 0
     regions            = var.aws_region
-    instance-count     = var.instance_count["auto-id"]
+    instance-count     = 0
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     domain-prefix      = "autoid"
     reserved-only      = false
     node-dsn-port      = 30433
     domain-id          = 1
-    domain-labels      = var.domain_labels
+    domain-labels      = ["autoid"]
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
   farmer-node-config = {
-    instance-type          = var.instance_type["farmer"]
+    instance-type          = "c6id.2xlarge"
     deployment-version     = 0
     regions                = var.aws_region
-    instance-count         = var.instance_count["farmer"]
+    instance-count         = 1
     docker-org             = "autonomys"
     docker-tag             = "versioned_bundle"
     reserved-only          = false
     plot-size              = "2G"
-    reward-address         = var.farmer_reward_address
-    cache-percentage       = var.cache_percentage
-    thread-pool-size       = var.thread_pool_size
+    reward-address         = "sufsKsx4kZ26i7bJXc1TFguysVzjkzsDtE2VDiCEBY2WjyGAj"
+    cache-percentage       = 50
+    thread-pool-size       = 8
     force-block-production = true
     node-dsn-port          = 30433
     disk-volume-size       = var.disk_volume_size
@@ -153,10 +123,10 @@ module "devnet" {
   secret_key           = var.secret_key
   aws_region           = var.aws_region
   azs                  = var.azs
-  vpc_id               = var.vpc_id
-  instance_type        = var.instance_type
-  vpc_cidr_block       = var.vpc_cidr_block
-  public_subnet_cidrs  = var.public_subnet_cidrs
+  vpc_id               = "devnet-vpc"
+  vpc_cidr_block       = "172.31.0.0/16"
+  public_subnet_cidrs  = ["172.31.1.0/24"]
   aws_key_name         = var.aws_key_name
   ssh_agent_identity   = var.ssh_agent_identity
+  ssh_user             = "ubuntu"
 }

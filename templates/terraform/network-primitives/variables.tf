@@ -16,10 +16,6 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
-variable "instance_type" {
-  type = map(string)
-}
-
 variable "vpc_id" {
   type = string
 }
@@ -48,8 +44,7 @@ variable "aws_key_name" {
 }
 
 variable "ssh_user" {
-  default = "ubuntu"
-  type    = string
+  type = string
 }
 
 variable "ssh_agent_identity" {
@@ -88,23 +83,6 @@ variable "rpc-node-config" {
   })
 }
 
-variable "rpc-indexer-node-config" {
-  description = "RPC indexer node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    domain-prefix      = string
-    reserved-only      = bool
-    node-dsn-port      = number
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
 variable "auto-evm-domain-node-config" {
   description = "EVM Domain node deployment config"
   type = object({
@@ -126,25 +104,6 @@ variable "auto-evm-domain-node-config" {
 
 variable "auto-id-domain-node-config" {
   description = "Auto ID Domain node deployment config"
-  type = object({
-    instance-type      = string
-    deployment-version = number
-    regions            = list(string)
-    instance-count     = number
-    docker-org         = string
-    docker-tag         = string
-    domain-prefix      = string
-    reserved-only      = bool
-    node-dsn-port      = number
-    domain-id          = number
-    domain-labels      = list(string)
-    disk-volume-size   = number
-    disk-volume-type   = string
-  })
-}
-
-variable "auto-evm-indexer-node-config" {
-  description = "Auto EVM indexer node deployment config"
   type = object({
     instance-type      = string
     deployment-version = number

@@ -41,32 +41,6 @@ resource "cloudflare_dns_record" "auto_evm_ipv6" {
   proxied = true
 }
 
-resource "cloudflare_dns_record" "rpc-indexer" {
-  lifecycle {
-    ignore_changes = [name]
-  }
-  count   = length(local.rpc_indexer_nodes_ip_v4)
-  zone_id = var.cloudflare_zone_id
-  name    = "${var.rpc-indexer-node-config.domain-prefix}-${count.index}.${var.network_name}"
-  content = local.rpc_indexer_nodes_ip_v4[count.index]
-  type    = "A"
-  ttl     = 3600
-  proxied = false
-}
-
-resource "cloudflare_dns_record" "auto-evm-indexer-rpc" {
-  lifecycle {
-    ignore_changes = [name]
-  }
-  count   = length(local.auto_evm_indexer_nodes_ip_v4)
-  zone_id = var.cloudflare_zone_id
-  name    = "${var.auto-evm-indexer-node-config.domain-prefix}-${count.index}.${var.network_name}"
-  content = local.auto_evm_indexer_nodes_ip_v4[count.index]
-  type    = "A"
-  ttl     = 3600
-  proxied = false
-}
-
 resource "cloudflare_dns_record" "autoid" {
   lifecycle {
     ignore_changes = [name]

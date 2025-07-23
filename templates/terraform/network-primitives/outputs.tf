@@ -48,38 +48,6 @@ output "bootstrap_node_autoid_ami" {
   value = aws_instance.bootstrap_node_autoid.*.ami
 }
 
-output "rpc_indexer_node_server_id" {
-  value = aws_instance.rpc_indexer_node.*.id
-}
-
-output "rpc_indexer_node_private_ip" {
-  value = aws_instance.rpc_indexer_node.*.private_ip
-}
-
-output "rpc_indexer_node_public_ip" {
-  value = aws_instance.rpc_indexer_node.*.public_ip
-}
-
-output "rpc_indexer_node_ami" {
-  value = aws_instance.rpc_indexer_node.*.ami
-}
-
-output "auto_evm_indexer_node_server_id" {
-  value = aws_instance.auto_evm_indexer_node.*.id
-}
-
-output "auto_evm_indexer_node_private_ip" {
-  value = aws_instance.auto_evm_indexer_node.*.private_ip
-}
-
-output "auto_evm_indexer_node_public_ip" {
-  value = aws_instance.auto_evm_indexer_node.*.public_ip
-}
-
-output "auto_evm_indexer_node_ami" {
-  value = aws_instance.auto_evm_indexer_node.*.ami
-}
-
 output "rpc_node_server_id" {
   value = aws_instance.rpc_node.*.id
 }
@@ -147,12 +115,10 @@ output "farmer_node_ami" {
 output "dns-records" {
   value = concat(
     [for record in cloudflare_dns_record.rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
-    [for record in cloudflare_dns_record.rpc-indexer : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
     [for record in cloudflare_dns_record.bootstrap : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
     [for record in cloudflare_dns_record.bootstrap_evm : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
     [for record in cloudflare_dns_record.bootstrap_auto : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
     [for record in cloudflare_dns_record.auto_evm : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
-    [for record in cloudflare_dns_record.auto-evm-indexer-rpc : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
     [for record in cloudflare_dns_record.autoid : "${record.name}.${data.cloudflare_zone.cloudflare_zone.name}"],
   )
 }
