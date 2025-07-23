@@ -4,3 +4,4 @@ hosts.yml  filter=crypt diff=crypt merge=crypt
 testing-framework/hetzner/network/keystore/*  filter=crypt diff=crypt merge=crypt
 *.pem  filter=crypt diff=crypt merge=crypt
 *.key  filter=crypt diff=crypt merge=crypt
+*.toml.*  filter=crypt diff=crypt merge=crypt

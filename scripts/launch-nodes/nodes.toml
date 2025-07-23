@@ -4,37 +4,38 @@
 host = "34.201.40.91"
 user = "user"
 ssh_key = "key.pem"
+name = "bootstrap-0"
 
 [[bootstrap_nodes]]
 host = "35.202.41.92"
 user = "user"
 ssh_key = "key.pem"
-
-[[bootstrap_nodes]]
-host = "36.203.42.93"
-user = "user"
-ssh_key = "key.pem"
+name = "bootstrap-1"
 
 [[farmer_rpc_nodes]]
 host = "54.209.76.129"
 user = "user"
 ssh_key = "key.pem"
 type = "rpc"
+name = "rpc-0"
 
 [[farmer_rpc_nodes]]
 host = "54.209.76.129"
 user = "user"
 ssh_key = "key.pem"
 type = "rpc"
+name = "rpc-1"
 
 [[farmer_rpc_nodes]]
 host = "44.202.161.154"
 user = "user"
 ssh_key = "key.pem"
 type = "farmer"
+name = "farmer-0"
 
 [timekeeper]
 host = "54.147.124.232"
 user = "user"
 ssh_key = "key.pem"
 type = "timekeeper"
+name = "timekeeper-0"
