@@ -95,7 +95,7 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type          = "c6id.2xlarge"
-    deployment-version     = 0
+    deployment-version     = 1
     instance-count         = 1
     docker-org             = "autonomys"
     docker-tag             = "versioned_bundle"
@@ -103,11 +103,7 @@ module "devnet" {
     plot-size              = "2G"
     reward-address         = "sufsKsx4kZ26i7bJXc1TFguysVzjkzsDtE2VDiCEBY2WjyGAj"
     cache-percentage       = 50
-    thread-pool-size       = 8
     force-block-production = true
-    node-dsn-port          = 30433
-    disk-volume-size       = var.disk_volume_size
-    disk-volume-type       = var.disk_volume_type
     faster-sector-plotting = true
   }
 }

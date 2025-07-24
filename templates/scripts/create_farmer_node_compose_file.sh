@@ -72,7 +72,6 @@ services:
       "--reward-address", "\${REWARD_ADDRESS}",
       "--prometheus-listen-on", "0.0.0.0:9616",
       "--cache-percentage", "\${CACHE_PERCENTAGE}",
-      "--farming-thread-pool-size", "\${THREAD_POOL_SIZE}",
 EOF
 
 if [ "${faster_sector_plotting}" == true ]; then
@@ -104,7 +103,6 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
-      "--node-key", "\${NODE_KEY}",
       "--farmer",
       "--timekeeper",
       "--rpc-cors", "all",
@@ -116,12 +114,14 @@ cat >> ~/subspace/docker-compose.yml << EOF
 EOF
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
-  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
+  addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
+  echo "      \"--reserved-peer\", \"${addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--bootstrap-node\", \"${addr}\"," >> ~/subspace/docker-compose.yml
 done
 
 for (( i = 0; i < dsn_bootstrap_node_count; i++ )); do
   dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
+  echo "      \"--dsn-reserved-peer\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
   echo "      \"--dsn-bootstrap-node\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
 done
 

@@ -171,12 +171,8 @@ variable "farmer-node-config" {
     reserved-only          = bool
     plot-size              = string
     cache-percentage       = number
-    thread-pool-size       = number
     reward-address         = string
     force-block-production = bool
-    node-dsn-port          = number
-    disk-volume-size       = number
-    disk-volume-type       = string
     faster-sector-plotting = bool
   })
 }

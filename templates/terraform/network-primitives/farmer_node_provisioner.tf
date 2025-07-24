@@ -72,12 +72,6 @@ resource "null_resource" "start-farmer-nodes" {
     timeout        = "300s"
   }
 
-  # copy node keys file
-  provisioner "file" {
-    source      = "./farmer_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
-  }
-
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
@@ -110,13 +104,10 @@ resource "null_resource" "start-farmer-nodes" {
       "echo DOCKER_TAG=${var.farmer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
       "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
       "echo CACHE_PERCENTAGE=${var.farmer-node-config.cache-percentage} >> /home/${var.ssh_user}/subspace/.env",
-      "echo THREAD_POOL_SIZE=${var.farmer-node-config.thread-pool-size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.farmer-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production} ${var.farmer-node-config.faster-sector-plotting} ",
