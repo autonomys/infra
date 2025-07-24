@@ -74,9 +74,8 @@ variable "rpc-node-config" {
     instance-count     = number
     docker-org         = string
     docker-tag         = string
-    domain-prefix      = string
+    dns-prefix         = string
     reserved-only      = bool
-    node-dsn-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })

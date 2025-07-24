@@ -53,13 +53,12 @@ module "devnet" {
 
   rpc-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 0
+    deployment-version = 1
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
-    domain-prefix      = "rpc"
+    dns-prefix         = "rpc"
     reserved-only      = false
-    node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }

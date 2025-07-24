@@ -77,12 +77,6 @@ resource "null_resource" "start-rpc-nodes" {
     timeout        = "300s"
   }
 
-  # copy node keys file
-  provisioner "file" {
-    source      = "./rpc_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
-  }
-
   # copy boostrap node keys file
   provisioner "file" {
     source      = "./bootstrap_node_keys.txt"
@@ -114,11 +108,9 @@ resource "null_resource" "start-rpc-nodes" {
       "echo NODE_ORG=${var.rpc-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
       "echo DOCKER_TAG=${var.rpc-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
       "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DOMAIN_PREFIX=${var.rpc-node-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
+      "echo DNS_PREFIX=${var.rpc-node-config.dns-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_DSN_PORT=${var.rpc-node-config.node-dsn-port} >> /home/${var.ssh_user}/subspace/.env",
       "echo FQDN=${data.cloudflare_zone.cloudflare_zone.name} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file

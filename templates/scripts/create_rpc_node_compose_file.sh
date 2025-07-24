@@ -42,7 +42,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       NRIA_LICENSE_KEY: "\${NR_API_KEY}"
-      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-\${DOMAIN_PREFIX}-node-\${NODE_ID}"
+      NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-\${DNS_PREFIX}-node-\${NODE_ID}"
     restart: unless-stopped
 
   # traefik reverse proxy with automatic tls management using let encrypt
@@ -87,7 +87,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.archival-node.loadbalancer.server.port=9944"
-      - "traefik.http.routers.archival-node.rule=Host(\`\${DOMAIN_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.\${FQDN}\`) && Path(\`/ws\`)"
+      - "traefik.http.routers.archival-node.rule=Host(\`\${DNS_PREFIX}-\${NODE_ID}.\${NETWORK_NAME}.\${FQDN}\`) && Path(\`/ws\`)"
       - "traefik.http.routers.archival-node.tls=true"
       - "traefik.http.routers.archival-node.tls.certresolver=le"
       - "traefik.http.routers.archival-node.entrypoints=websecure"
@@ -117,7 +117,6 @@ services:
       "--listen-on", "/ip6/::/tcp/30333",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
-      "--node-key", "\${NODE_KEY}",
       "--in-peers", "500",
       "--out-peers", "250",
       "--rpc-max-connections", "20000",

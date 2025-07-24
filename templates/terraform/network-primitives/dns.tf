@@ -8,7 +8,7 @@ resource "cloudflare_dns_record" "rpc" {
   }
   count   = length(local.rpc_nodes_ip_v4)
   zone_id = var.cloudflare_zone_id
-  name    = "${var.rpc-node-config.domain-prefix}-${count.index}.${var.network_name}"
+  name    = "${var.rpc-node-config.dns-prefix}-${count.index}.${var.network_name}"
   content = local.rpc_nodes_ip_v4[count.index]
   type    = "A"
   ttl     = 1
