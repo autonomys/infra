@@ -1,9 +1,10 @@
 resource "aws_instance" "bootstrap_node" {
-  count              = length(var.aws_region) * var.bootstrap-node-config.instance-count
+  count              = var.bootstrap-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
   availability_zone  = var.azs
+  region             = var.aws_region
   ipv6_address_count = 1
   # Security Group
   vpc_security_group_ids = [aws_security_group.network_sg.id]
@@ -56,14 +57,14 @@ resource "aws_instance" "bootstrap_node" {
     agent_identity = var.ssh_agent_identity
     timeout        = "300s"
   }
-
 }
 
 resource "aws_instance" "bootstrap_node_evm" {
-  count              = length(var.aws_region) * var.bootstrap-node-evm-config.instance-count
+  count              = var.bootstrap-node-evm-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-evm-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
@@ -120,10 +121,11 @@ resource "aws_instance" "bootstrap_node_evm" {
 }
 
 resource "aws_instance" "bootstrap_node_autoid" {
-  count              = length(var.aws_region) * var.bootstrap-node-autoid-config.instance-count
+  count              = var.bootstrap-node-autoid-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.bootstrap-node-autoid-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
@@ -180,10 +182,11 @@ resource "aws_instance" "bootstrap_node_autoid" {
 }
 
 resource "aws_instance" "rpc_node" {
-  count              = length(var.aws_region) * var.rpc-node-config.instance-count
+  count              = var.rpc-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.rpc-node-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
@@ -240,10 +243,11 @@ resource "aws_instance" "rpc_node" {
 
 
 resource "aws_instance" "evm_node" {
-  count              = length(var.aws_region) * (var.auto-evm-domain-node-config.instance-count)
+  count              = var.auto-evm-domain-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.auto-evm-domain-node-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
@@ -300,10 +304,11 @@ resource "aws_instance" "evm_node" {
 }
 
 resource "aws_instance" "autoid_node" {
-  count              = length(var.aws_region) * (var.auto-id-domain-node-config.instance-count)
+  count              = var.auto-id-domain-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.auto-id-domain-node-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group
@@ -359,10 +364,11 @@ resource "aws_instance" "autoid_node" {
 }
 
 resource "aws_instance" "farmer_node" {
-  count              = length(var.aws_region) * var.farmer-node-config.instance-count
+  count              = var.farmer-node-config.instance-count
   ami                = data.aws_ami.ubuntu_amd64.image_id
   instance_type      = var.farmer-node-config.instance-type
   subnet_id          = aws_subnet.public_subnets.*.id[0]
+  region             = var.aws_region
   availability_zone  = var.azs
   ipv6_address_count = 1
   # Security Group

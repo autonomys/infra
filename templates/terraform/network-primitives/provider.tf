@@ -15,7 +15,7 @@ terraform {
 provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
-  region     = var.aws_region[0]
+  region     = var.aws_region
   default_tags {
     tags = {
       Environment = var.network_name

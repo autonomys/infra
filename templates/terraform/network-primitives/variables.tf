@@ -26,7 +26,7 @@ variable "vpc_cidr_block" {
 
 variable "aws_region" {
   description = "aws region"
-  type        = list(string)
+  type        = string
 }
 
 variable "azs" {
@@ -71,7 +71,6 @@ variable "rpc-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -88,7 +87,6 @@ variable "auto-evm-domain-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -107,7 +105,6 @@ variable "auto-id-domain-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -126,7 +123,6 @@ variable "bootstrap-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -144,7 +140,6 @@ variable "bootstrap-node-evm-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -163,7 +158,6 @@ variable "bootstrap-node-autoid-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    regions            = list(string)
     instance-count     = number
     docker-org         = string
     docker-tag         = string
@@ -182,7 +176,6 @@ variable "farmer-node-config" {
   type = object({
     instance-type          = string
     deployment-version     = number
-    regions                = list(string)
     instance-count         = number
     docker-org             = string
     docker-tag             = string

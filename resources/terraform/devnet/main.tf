@@ -1,13 +1,25 @@
 module "devnet" {
-  source          = "../../../templates/terraform/network-primitives"
-  path_to_scripts = "../../../templates/scripts"
-  path_to_configs = "../../../templates/configs"
-  network_name    = "devnet"
+  source               = "../../../templates/terraform/network-primitives"
+  path_to_scripts      = "../../../templates/scripts"
+  path_to_configs      = "../../../templates/configs"
+  network_name         = "devnet"
+  vpc_id               = "devnet-vpc"
+  vpc_cidr_block       = "172.31.0.0/16"
+  public_subnet_cidrs  = ["172.31.1.0/24"]
+  ssh_user             = "ubuntu"
+  cloudflare_api_token = var.cloudflare_api_token
+  cloudflare_zone_id   = var.cloudflare_zone_id
+  nr_api_key           = var.nr_api_key
+  access_key           = var.access_key
+  secret_key           = var.secret_key
+  aws_key_name         = var.aws_key_name
+  ssh_agent_identity   = var.ssh_agent_identity
+  aws_region           = var.aws_region
+  azs                  = var.azs
 
   bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 2
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -22,7 +34,6 @@ module "devnet" {
   bootstrap-node-evm-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -38,7 +49,6 @@ module "devnet" {
   bootstrap-node-autoid-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 0
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -54,7 +64,6 @@ module "devnet" {
   rpc-node-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -68,7 +77,6 @@ module "devnet" {
   auto-evm-domain-node-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -84,7 +92,6 @@ module "devnet" {
   auto-id-domain-node-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    regions            = var.aws_region
     instance-count     = 0
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -100,7 +107,6 @@ module "devnet" {
   farmer-node-config = {
     instance-type          = "c6id.2xlarge"
     deployment-version     = 0
-    regions                = var.aws_region
     instance-count         = 1
     docker-org             = "autonomys"
     docker-tag             = "versioned_bundle"
@@ -115,18 +121,4 @@ module "devnet" {
     disk-volume-type       = var.disk_volume_type
     faster-sector-plotting = true
   }
-
-  cloudflare_api_token = var.cloudflare_api_token
-  cloudflare_zone_id   = var.cloudflare_zone_id
-  nr_api_key           = var.nr_api_key
-  access_key           = var.access_key
-  secret_key           = var.secret_key
-  aws_region           = var.aws_region
-  azs                  = var.azs
-  vpc_id               = "devnet-vpc"
-  vpc_cidr_block       = "172.31.0.0/16"
-  public_subnet_cidrs  = ["172.31.1.0/24"]
-  aws_key_name         = var.aws_key_name
-  ssh_agent_identity   = var.ssh_agent_identity
-  ssh_user             = "ubuntu"
 }
