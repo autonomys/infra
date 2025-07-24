@@ -124,7 +124,7 @@ resource "null_resource" "start-evm-nodes" {
       "echo DOMAIN_ID=${var.auto-evm-domain-node-config.domain-id} >> /home/${var.ssh_user}/subspace/.env",
       "echo OPERATOR_ID=${var.auto-evm-domain-node-config.operator-id} >> /home/${var.ssh_user}/subspace/.env",
       "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NEW_RELIC_API_KEY=${var.new_relic_api_key} >> /home/${var.ssh_user}/subspace/.env",
       "echo FQDN=${data.cloudflare_zone.cloudflare_zone.name} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file

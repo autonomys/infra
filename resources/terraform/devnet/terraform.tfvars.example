@@ -1,9 +1,7 @@
-# AWS access key used to create infrastructure
-access_key = ""
-# AWS secret key used to create AWS infrastructure
-secret_key           = ""
-aws_key_name         = ""
+aws_access_key       = ""
+aws_secret_key       = ""
+aws_ssh_key_name     = ""
 ssh_agent_identity   = ""
 cloudflare_api_token = ""
 cloudflare_zone_id   = ""
-nr_api_key           = ""
+new_relic_api_key    = ""

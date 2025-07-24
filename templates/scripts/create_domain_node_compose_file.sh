@@ -47,7 +47,7 @@ services:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
-      NRIA_LICENSE_KEY: "\${NR_API_KEY}"
+      NRIA_LICENSE_KEY: "\${NEW_RELIC_API_KEY}"
       NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-\${DOMAIN_PREFIX}-node-\${NODE_ID}"
     restart: unless-stopped
 

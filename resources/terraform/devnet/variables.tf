@@ -3,54 +3,48 @@ variable "cloudflare_zone_id" {
   type        = string
 }
 
-variable "aws_region" {
-  description = "aws region"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "azs" {
-  type        = string
-  description = "Availability Zones"
-  default     = "us-east-1a"
-}
-
 variable "disk_volume_size" {
-  type    = number
-  default = 100
+  description = "EBS disk volume size in GiB"
+  type        = number
+  default     = 100
 }
 
 variable "disk_volume_type" {
-  type    = string
-  default = "gp3"
+  description = "EBS disk volume type"
+  type        = string
+  default     = "gp3"
 }
 
-variable "secret_key" {
-  type      = string
-  sensitive = true
+variable "aws_secret_key" {
+  description = "AWS secret key"
+  type        = string
+  sensitive   = true
 }
 
-variable "access_key" {
-  type      = string
-  sensitive = true
+variable "aws_access_key" {
+  description = "AWS access key"
+  type        = string
+  sensitive   = true
 }
 
-variable "aws_key_name" {
-  type = string
+variable "aws_ssh_key_name" {
+  description = "AWS deployer's SSH key"
+  type        = string
 }
 
 variable "ssh_agent_identity" {
-  type = string
+  description = "AWS SSH key's public key that is loaded into SSH-Agent"
+  type        = string
 }
 
-variable "nr_api_key" {
+variable "new_relic_api_key" {
   description = "New relic API Key"
   type        = string
   sensitive   = true
 }
 
 variable "cloudflare_api_token" {
+  description = "Cloudflare api token"
   type        = string
-  description = "cloudflare api token"
   sensitive   = true
 }

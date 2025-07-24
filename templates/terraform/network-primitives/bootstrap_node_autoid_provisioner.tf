@@ -110,7 +110,7 @@ resource "null_resource" "start-bootstrap-nodes-autoid" {
       "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_PREFIX=${var.bootstrap-node-autoid-config.domain-prefix} >> /home/${var.ssh_user}/subspace/.env",
       "echo DOMAIN_ID=${var.bootstrap-node-autoid-config.domain-id} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NR_API_KEY=${var.nr_api_key} >> /home/${var.ssh_user}/subspace/.env",
+      "echo NEW_RELIC_API_KEY=${var.new_relic_api_key} >> /home/${var.ssh_user}/subspace/.env",
 
       # create docker compose file
       "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-autoid-config.reserved-only} ${length(local.bootstrap_nodes_autoid_ip_v4)} ${length(local.bootstrap_nodes_ip_v4)} ",

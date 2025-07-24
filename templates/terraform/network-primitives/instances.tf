@@ -1,15 +1,13 @@
 resource "aws_instance" "bootstrap_node" {
-  count              = var.bootstrap-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.bootstrap-node-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  availability_zone  = var.azs
-  region             = var.aws_region
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.bootstrap-node-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.bootstrap-node-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  availability_zone           = var.availability_zone
+  region                      = var.aws_region
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -60,17 +58,15 @@ resource "aws_instance" "bootstrap_node" {
 }
 
 resource "aws_instance" "bootstrap_node_evm" {
-  count              = var.bootstrap-node-evm-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.bootstrap-node-evm-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.bootstrap-node-evm-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.bootstrap-node-evm-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -121,17 +117,15 @@ resource "aws_instance" "bootstrap_node_evm" {
 }
 
 resource "aws_instance" "bootstrap_node_autoid" {
-  count              = var.bootstrap-node-autoid-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.bootstrap-node-autoid-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.bootstrap-node-autoid-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.bootstrap-node-autoid-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -182,17 +176,15 @@ resource "aws_instance" "bootstrap_node_autoid" {
 }
 
 resource "aws_instance" "rpc_node" {
-  count              = var.rpc-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.rpc-node-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.rpc-node-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.rpc-node-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -243,17 +235,15 @@ resource "aws_instance" "rpc_node" {
 
 
 resource "aws_instance" "evm_node" {
-  count              = var.auto-evm-domain-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.auto-evm-domain-node-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.auto-evm-domain-node-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.auto-evm-domain-node-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -304,17 +294,15 @@ resource "aws_instance" "evm_node" {
 }
 
 resource "aws_instance" "autoid_node" {
-  count              = var.auto-id-domain-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.auto-id-domain-node-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.auto-id-domain-node-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.auto-id-domain-node-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
   ebs_block_device {
@@ -364,17 +352,15 @@ resource "aws_instance" "autoid_node" {
 }
 
 resource "aws_instance" "farmer_node" {
-  count              = var.farmer-node-config.instance-count
-  ami                = data.aws_ami.ubuntu_amd64.image_id
-  instance_type      = var.farmer-node-config.instance-type
-  subnet_id          = aws_subnet.public_subnets.*.id[0]
-  region             = var.aws_region
-  availability_zone  = var.azs
-  ipv6_address_count = 1
-  # Security Group
-  vpc_security_group_ids = [aws_security_group.network_sg.id]
-  # the Public SSH key
-  key_name                    = var.aws_key_name
+  count                       = var.farmer-node-config.instance-count
+  ami                         = data.aws_ami.ubuntu_amd64.image_id
+  instance_type               = var.farmer-node-config.instance-type
+  subnet_id                   = aws_subnet.public_subnets.*.id[0]
+  region                      = var.aws_region
+  availability_zone           = var.availability_zone
+  ipv6_address_count          = 1
+  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   tags = {
     Name       = "${var.network_name}-farmer-${count.index}"
