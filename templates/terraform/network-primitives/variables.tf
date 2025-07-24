@@ -89,11 +89,10 @@ variable "auto-evm-domain-node-config" {
     instance-count     = number
     docker-org         = string
     docker-tag         = string
-    domain-prefix      = string
     reserved-only      = bool
-    node-dsn-port      = number
     domain-id          = number
-    domain-labels      = list(string)
+    operator-id        = number
+    domain-prefix      = string
     disk-volume-size   = number
     disk-volume-type   = string
   })
@@ -107,11 +106,10 @@ variable "auto-id-domain-node-config" {
     instance-count     = number
     docker-org         = string
     docker-tag         = string
-    domain-prefix      = string
     reserved-only      = bool
-    node-dsn-port      = number
     domain-id          = number
-    domain-labels      = list(string)
+    operator-id        = number
+    domain-prefix      = string
     disk-volume-size   = number
     disk-volume-type   = string
   })
@@ -141,6 +139,8 @@ variable "bootstrap-node-evm-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
+    domain-id          = number
+    domain-prefix      = string
     disk-volume-size   = number
     disk-volume-type   = string
   })
@@ -155,6 +155,8 @@ variable "bootstrap-node-autoid-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
+    domain-id          = number
+    domain-prefix      = string
     disk-volume-size   = number
     disk-volume-type   = string
   })

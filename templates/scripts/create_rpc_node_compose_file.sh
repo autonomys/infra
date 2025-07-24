@@ -115,6 +115,10 @@ services:
       "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
+      "--dsn-listen-on", "/ip4/0.0.0.0/tcp/30433",
+      "--dsn-listen-on", "/ip6/::/tcp/30433",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--in-peers", "500",
@@ -124,8 +128,6 @@ services:
       "--rpc-listen-on", "0.0.0.0:9944",
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
-      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
-      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 reserved_only=${1}

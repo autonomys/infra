@@ -4,12 +4,10 @@ EXTERNAL_IP=`curl -s -4 https://ifconfig.me`
 EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 reserved_only=${1}
-node_count=${2}
-current_node=${3}
-bootstrap_node_count=${4}
-dsn_bootstrap_node_count=${4}
-bootstrap_node_evm_count=${5}
-domain_id=${6}
+bootstrap_node_count=${2}
+dsn_bootstrap_node_count=${2}
+bootstrap_node_evm_count=${3}
+domain_id=${4}
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -128,7 +126,12 @@ services:
       "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
-      "--node-key", "\${NODE_KEY}",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
+      "--dsn-listen-on", "/ip4/0.0.0.0/tcp/30433",
+      "--dsn-listen-on", "/ip6/::/tcp/30433",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--in-peers", "500",
       "--out-peers", "250",
       "--rpc-max-connections", "1000",
@@ -137,16 +140,7 @@ services:
       "--rpc-methods", "safe",
       "--prometheus-listen-on", "0.0.0.0:9615",
       "--timekeeper",
-      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
-      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
-
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" == "${i}" ]; then
-    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      \"--dsn-external-address\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
-  fi
-done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace//bootstrap_node_keys.txt)
@@ -174,11 +168,7 @@ fi
     if [ "${domain_id}" -eq 0 ]; then
       echo '      "--trie-cache-size", "1073741824",'
     fi
-    for (( i = 0; i < node_count; i++ )); do
-      if [ "${current_node}" == "${i}" ]; then
-        echo "      \"--operator-id\", \"${i}\","
-      fi
-    done
+    echo '      "--operator-id", "${OPERATOR_ID}",'
     echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
     echo '      "--listen-on", "/ip6/::/tcp/30334",'
     echo '      "--rpc-cors", "all",'

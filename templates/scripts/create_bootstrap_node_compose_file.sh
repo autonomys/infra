@@ -122,6 +122,10 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
+      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
+      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
+      "--dsn-listen-on", "/ip4/0.0.0.0/tcp/30433",
+      "--dsn-listen-on", "/ip6/::/tcp/30433",
       "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
       "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--node-key", "\${NODE_KEY}",
@@ -132,8 +136,6 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--dsn-pending-in-connections", "2000",
       "--dsn-pending-out-connections", "2000",
       "--prometheus-listen-on", "0.0.0.0:9615",
-      "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
-      "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
 
 for (( i = 0; i < node_count; i++ )); do

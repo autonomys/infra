@@ -19,7 +19,7 @@ module "devnet" {
 
   bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 1
+    deployment-version = 3
     instance-count     = 2
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -31,11 +31,13 @@ module "devnet" {
 
   bootstrap-node-evm-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 1
+    deployment-version = 3
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
+    domain-id          = 0
+    domain-prefix      = "auto-evm"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
@@ -47,13 +49,15 @@ module "devnet" {
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
+    domain-id          = 1
+    domain-prefix      = "autoid"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
   rpc-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 1
+    deployment-version = 3
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
@@ -65,15 +69,14 @@ module "devnet" {
 
   auto-evm-domain-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 0
+    deployment-version = 3
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
-    domain-prefix      = "auto-evm"
     reserved-only      = false
-    node-dsn-port      = 30433
     domain-id          = 0
-    domain-labels      = ["auto-evm"]
+    operator-id        = 0
+    domain-prefix      = "auto-evm"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
@@ -84,18 +87,17 @@ module "devnet" {
     instance-count     = 0
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
-    domain-prefix      = "autoid"
     reserved-only      = false
-    node-dsn-port      = 30433
     domain-id          = 1
-    domain-labels      = ["autoid"]
+    operator-id        = 1
+    domain-prefix      = "autoid"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
   farmer-node-config = {
     instance-type          = "c6id.2xlarge"
-    deployment-version     = 1
+    deployment-version     = 3
     instance-count         = 1
     docker-org             = "autonomys"
     docker-tag             = "versioned_bundle"
