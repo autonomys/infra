@@ -128,8 +128,6 @@ variable "bootstrap-node-config" {
     docker-tag         = string
     reserved-only      = bool
     genesis-hash       = string
-    dsn-listen-port    = number
-    node-dsn-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })
@@ -144,10 +142,6 @@ variable "bootstrap-node-evm-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
-    genesis-hash       = string
-    dsn-listen-port    = number
-    node-dsn-port      = number
-    operator-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })
@@ -162,10 +156,6 @@ variable "bootstrap-node-autoid-config" {
     docker-org         = string
     docker-tag         = string
     reserved-only      = bool
-    genesis-hash       = string
-    dsn-listen-port    = number
-    node-dsn-port      = number
-    operator-port      = number
     disk-volume-size   = number
     disk-volume-type   = string
   })

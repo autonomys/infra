@@ -5,8 +5,7 @@ EXTERNAL_IP_V6=`curl -s -6 https://ifconfig.me`
 
 reserved_only=${1}
 node_count=${2}
-current_node=${3}
-bootstrap_node_count=${4}
+bootstrap_node_count=${3}
 
 cat > ~/subspace/docker-compose.yml << EOF
 version: "3.7"
@@ -47,60 +46,6 @@ services:
       NRIA_DISPLAY_NAME: "\${NETWORK_NAME}-bootstrap-node-\${DOMAIN_LABEL}-\${NODE_ID}"
     restart: unless-stopped
 
-  dsn-bootstrap-node:
-    image: ghcr.io/\${NODE_ORG}/bootstrap-node:\${DOCKER_TAG}
-    restart: unless-stopped
-    environment:
-      - RUST_LOG=info
-    ports:
-      - "30533:30533/udp"
-      - "9616:9616"
-    logging:
-      driver: loki
-      options:
-        loki-url: "https://logging.subspace.network/loki/api/v1/push"
-    command:
-      - start
-      - "--prometheus-listen-on=0.0.0.0:9616"
-      - "--keypair"
-      - \${DSN_NODE_KEY}
-      - "--listen-on"
-      - /ip4/0.0.0.0/tcp/30533
-      - "--listen-on"
-      - /ip6/::/tcp/30533
-      - --protocol-version
-      - \${GENESIS_HASH}
-      - "--in-peers"
-      - "1000"
-      - "--out-peers"
-      - "1000"
-      - "--pending-in-peers"
-      - "1000"
-      - "--pending-out-peers"
-      - "1000"
-      - "--external-address"
-      - "/ip4/$EXTERNAL_IP/tcp/30533"
-      - "--external-address"
-      - "/ip6/$EXTERNAL_IP_V6/tcp/30533"
-EOF
-
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" == "${i}" ]; then
-    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      - \"--external-address\"" >> ~/subspace/docker-compose.yml
-    echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
-  fi
-done
-
-for (( i = 0; i < bootstrap_node_count; i++ )); do
-  dsn_addr=$(sed -nr "s/NODE_${i}_SUBSPACE_MULTI_ADDR=//p" ~/subspace/dsn_bootstrap_node_keys.txt)
-  echo "      - \"--reserved-peer\"" >> ~/subspace/docker-compose.yml
-  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
-  echo "      - \"--bootstrap-node\"" >> ~/subspace/docker-compose.yml
-  echo "      - \"${dsn_addr}\"" >> ~/subspace/docker-compose.yml
-done
-
-cat >> ~/subspace/docker-compose.yml << EOF
   archival-node:
     image: ghcr.io/\${NODE_ORG}/node:\${DOCKER_TAG}
     volumes:
@@ -109,7 +54,7 @@ cat >> ~/subspace/docker-compose.yml << EOF
     ports:
       - "30333:30333/tcp"
       - "30433:30433/tcp"
-      - "\${OPERATOR_PORT}:30334/tcp"
+      - "30334:30334/tcp"
       - "9615:9615"
     logging:
       driver: loki
@@ -119,14 +64,14 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "run",
       "--chain", "\${NETWORK_NAME}",
       "--base-path", "/var/subspace",
-      "--state-pruning", "archive",
-      "--blocks-pruning", "archive",
       "--sync", "full",
       "--listen-on", "/ip4/0.0.0.0/tcp/30333",
       "--listen-on", "/ip6/::/tcp/30333",
       "--node-key", "\${NODE_KEY}",
       "--in-peers", "2000",
       "--out-peers", "2000",
+      "--dsn-external-address", "/ip4/$EXTERNAL_IP/tcp/30433",
+      "--dsn-external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30433",
       "--dsn-in-connections", "2000",
       "--dsn-out-connections", "2000",
       "--dsn-pending-in-connections", "2000",
@@ -135,13 +80,6 @@ cat >> ~/subspace/docker-compose.yml << EOF
       "--external-address", "/ip4/$EXTERNAL_IP/tcp/30333",
       "--external-address", "/ip6/$EXTERNAL_IP_V6/tcp/30333",
 EOF
-
-for (( i = 0; i < node_count; i++ )); do
-  if [ "${current_node}" == "${i}" ]; then
-    dsn_addr=$(sed -nr "s/NODE_${i}_DSN_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
-    echo "      \"--dsn-external-address\", \"${dsn_addr}\"," >> ~/subspace/docker-compose.yml
-  fi
-done
 
 for (( i = 0; i < bootstrap_node_count; i++ )); do
   addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/bootstrap_node_keys.txt)
@@ -160,20 +98,20 @@ if [ "${reserved_only}" == true ]; then
 fi
 
 {
-    # core domain
+    # domain args
     echo '      "--",'
     echo '      "--domain-id", "${DOMAIN_ID}",'
-    echo '      "--state-pruning", "archive",'
-    echo '      "--blocks-pruning", "archive",'
-    echo '      "--listen-on", "/ip4/0.0.0.0/tcp/${OPERATOR_PORT}",'
-    echo '      "--rpc-cors", "all",'
-    echo '      "--rpc-listen-on", "0.0.0.0:9945",'
-    echo '      "--public-addr", "/ip4/'"$EXTERNAL_IP"'/tcp/${OPERATOR_PORT}",'
-    echo '      "--public-addr", "/ip6/'"$EXTERNAL_IP_V6"'/tcp/${OPERATOR_PORT}",'
+    echo '      "--listen-on", "/ip4/0.0.0.0/tcp/30334",'
+    echo '      "--listen-on", "/ip6/::/tcp/30334",'
+    echo '      "--public-addr", "/ip4/'"$EXTERNAL_IP"'/tcp/30334",'
+    echo '      "--public-addr", "/ip6/'"$EXTERNAL_IP_V6"'/tcp/30334",'
     for (( i = 0; i < node_count; i++ )); do
-      addr=$(sed -nr "s/NODE_${i}_OPERATOR_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
+      addr=$(sed -nr "s/NODE_${i}_MULTI_ADDR=//p" ~/subspace/node_keys.txt)
       echo "      \"--reserved-peer\", \"${addr}\","
       echo "      \"--bootstrap-node\", \"${addr}\","
     done
+    if [ "${reserved_only}" == true ]; then
+        echo "      \"--reserved-only\","
+    fi
     echo '    ]'
 }  >> ~/subspace/docker-compose.yml

@@ -19,29 +19,23 @@ module "devnet" {
 
   bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 0
+    deployment-version = 1
     instance-count     = 2
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
     genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
-    dsn-listen-port    = 30533
-    node-dsn-port      = 30433
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
 
   bootstrap-node-evm-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 0
+    deployment-version = 1
     instance-count     = 1
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
-    genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
-    dsn-listen-port    = 30533
-    node-dsn-port      = 30433
-    operator-port      = 30334
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
@@ -53,10 +47,6 @@ module "devnet" {
     docker-org         = "autonomys"
     docker-tag         = "versioned_bundle"
     reserved-only      = false
-    genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
-    dsn-listen-port    = 30533
-    node-dsn-port      = 30433
-    operator-port      = 30334
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
   }
