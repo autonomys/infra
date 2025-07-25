@@ -1,0 +1,3 @@
+cloudflare_api_token  = "api_token_here"
+cloudflare_zone_id    = "zone_id_here"
+cloudflare_account_id = "account_id_here"
