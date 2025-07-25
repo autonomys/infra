@@ -51,9 +51,9 @@ for i in {0..1}; do
   generate_node_key "rpc" "${i}"
 done
 
-# Generate node keys for nova nodes
+# Generate node keys for auto-evm nodes
 for i in {0..1}; do
-  generate_node_key "nova" "${i}"
+  generate_node_key "auto-evm" "${i}"
 done
 
 # Generate node keys for autoid nodes
@@ -64,9 +64,9 @@ done
 # Generate node key for farmer node
 generate_node_key "farmer" "0"
 
-# Generate node keys for nova-bootstrap nodes
+# Generate node keys for auto-evm-bootstrap nodes
 for i in {0..1}; do
-  generate_node_key "nova-bootstrap" "${i}"
+  generate_node_key "auto-evm-bootstrap" "${i}"
 done
 
 # Generate node keys for autoid-bootstrap nodes
