@@ -16,3 +16,6 @@ resources/taurus/*_node_keys.txt
 resources/taurus/keystore/*
 resources/mainnet/*_node_keys.txt
 resources/mainnet/keystore/*
+/modules/node-utils/config.toml
+/.idea
+/modules/node-utils/target
