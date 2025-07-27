@@ -270,7 +270,7 @@ def main():
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
     domain_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'domain']
-    timekeeper_node = config['timekeeper']
+    timekeeper_node = [timekeeper_node for timekeeper_node in config['timekeepers']]
 
 
     # Step 1: Handle the timekeeper node, if enabled
@@ -281,7 +281,7 @@ def main():
                 logger.info(f"Connecting to timekeeper node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
                 subspace_dir = node.get('path', args.subspace_dir)
-                handle_node(client, node, args.subspace_dir, args.release_version,
+                handle_node(client, node, subspace_dir, args.release_version,
                         pot_external_entropy=args.pot_external_entropy, network=args.network,
                         prune=args.prune, restart=args.restart, wipe=args.wipe)
                 logger.info(f"Successfully handled timekeeper node {node['host']}")
@@ -301,7 +301,7 @@ def main():
                 logger.info(f"Connecting to farmer node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
                 subspace_dir = node.get('path', args.subspace_dir)
-                handle_node(client, node, args.subspace_dir, args.release_version,
+                handle_node(client, node, subspace_dir, args.release_version,
                            pot_external_entropy=args.pot_external_entropy, network=args.network,
                            plot_size=args.plot_size, cache_percentage=args.cache_percentage,
                            prune=args.prune, restart=args.restart, wipe=args.wipe)
@@ -321,7 +321,7 @@ def main():
             logger.info(f"Connecting to RPC node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
             subspace_dir = node.get('path', args.subspace_dir)
-            handle_node(client, node, args.subspace_dir, args.release_version,
+            handle_node(client, node, subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart, wipe=args.wipe)
             logger.info(f"Successfully handled RPC node {node['host']}")
@@ -338,7 +338,7 @@ def main():
             logger.info(f"Connecting to RPC Domain node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
             subspace_dir = node.get('path', args.subspace_dir)
-            handle_node(client, node, args.subspace_dir, args.release_version,
+            handle_node(client, node, subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart, wipe=args.wipe)
             logger.info(f"Successfully handled RPC Domain node {node['host']}")
