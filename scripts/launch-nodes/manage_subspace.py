@@ -270,7 +270,8 @@ def main():
     farmer_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'farmer']
     rpc_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'rpc']
     domain_nodes = [node for node in config['farmer_rpc_nodes'] if node['type'] == 'domain']
-    timekeeper_node = [node for node in config['timekeeper']]
+    timekeeper_node = config['timekeeper']
+
 
     # Step 1: Handle the timekeeper node, if enabled
     if not args.no_timekeeper and timekeeper_node:
@@ -279,6 +280,7 @@ def main():
             try:
                 logger.info(f"Connecting to timekeeper node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+                subspace_dir = node.get('path', args.subspace_dir)
                 handle_node(client, node, args.subspace_dir, args.release_version,
                         pot_external_entropy=args.pot_external_entropy, network=args.network,
                         prune=args.prune, restart=args.restart, wipe=args.wipe)
@@ -298,6 +300,7 @@ def main():
             try:
                 logger.info(f"Connecting to farmer node {node['host']}...")
                 client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+                subspace_dir = node.get('path', args.subspace_dir)
                 handle_node(client, node, args.subspace_dir, args.release_version,
                            pot_external_entropy=args.pot_external_entropy, network=args.network,
                            plot_size=args.plot_size, cache_percentage=args.cache_percentage,
@@ -317,6 +320,7 @@ def main():
         try:
             logger.info(f"Connecting to RPC node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+            subspace_dir = node.get('path', args.subspace_dir)
             handle_node(client, node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart, wipe=args.wipe)
@@ -333,6 +337,7 @@ def main():
         try:
             logger.info(f"Connecting to RPC Domain node {node['host']}...")
             client = ssh_connect(node['host'], node['user'], node['ssh_key'])
+            subspace_dir = node.get('path', args.subspace_dir)
             handle_node(client, node, args.subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart, wipe=args.wipe)
@@ -349,8 +354,8 @@ def main():
         try:
             logger.info(f"Connecting to the bootstrap node {bootstrap_node['host']}...")
             client = ssh_connect(bootstrap_node['host'], bootstrap_node['user'], bootstrap_node['ssh_key'])
-
-            handle_node(client, bootstrap_node, args.subspace_dir, args.release_version,
+            subspace_dir = bootstrap_node.get('path', args.subspace_dir)
+            handle_node(client, bootstrap_node, subspace_dir, args.release_version,
                        pot_external_entropy=args.pot_external_entropy, network=args.network,
                        prune=args.prune, restart=args.restart,
                        genesis_hash=args.genesis_hash, wipe=args.wipe)
