@@ -51,10 +51,12 @@ Create a TOML configuration file (`nodes.toml`) with details for your Bootstrap,
 ```toml
 # TOML file containing server details
 
-[bootstrap_node]
+[[bootstrap_nodes]]
 host = "bootstrap.example.com"
 user = "username"
 ssh_key = "/path/to/private/key"
+name = "bootstrap-0"
+path = "~/subspace"
 
 [farmer_rpc_nodes]
 
@@ -63,24 +65,30 @@ host = "rpc.example.com"
 user = "username"
 ssh_key = "/path/to/private/key"
 type = "rpc"
+name = "rpc-0"
+path = "~/subspace"
 
 [[farmer_rpc_nodes]]
 host = "farmer.example.com"
 user = "username"
 ssh_key = "/path/to/private/key"
 type = "farmer"
+name = "farmer-0"
+path = "~/subspace"
 
-[timekeeper]
+[[timekeepers]]
 host = "timekeeper.example.com"
 user = "username"
 ssh_key = "/path/to/private/key"
 type = "timekeeper"
+name = "timekeeper-0"
+path = "~/subspace"
 
 ```
 
-- **`bootstrap_node`:** This section defines the Bootstrap node.
+- **`bootstrap_nodes`:** This section defines the Bootstrap node.
 - **`farmer_rpc_nodes`:** This section contains the RPC and Farmer nodes. The `type` field specifies whether the node is an RPC node or a Farmer node.
-- **`timekeeper`:** This section Defines the Timekeeper node..
+- **`timekeepers`:** This section Defines the Timekeeper node..
 
 ### Step 4: Running the Script
 
@@ -88,14 +96,16 @@ Once the configuration file is ready, make the python script executable and run 
 
 ```bash
 chmod +x manage_subspace.py
-python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace \
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/ \
 --pot_external_entropy random_value --network devnet --plot_size 10G --cache_percentage 15
 
 # prune images
-python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --prune
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/ --network devnet --prune
 
 # restart stack
-python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/subspace --network devnet --restart
+python manage_subspace.py --config nodes.toml --release_version docker-tag --subspace_dir /home/ubuntu/subspace/ --network devnet --restart
+
+python3 manage_subspace.py --config nodes.toml.taurus --network taurus --release_version taurus-2025-jul-14 --no_farmer --restart
 
 ```
 
