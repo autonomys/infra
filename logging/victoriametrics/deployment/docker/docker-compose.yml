@@ -124,30 +124,6 @@ services:
     networks:
       - vm_net
 
-  rabbitmq-exporter:
-    image: kbudde/rabbitmq-exporter:latest
-    container_name: rabbitmq-exporter
-    ports:
-      - "9419:9419"  # Prometheus metrics port
-    environment:
-      # AWS MQ RabbitMQ connection details
-      RABBIT_URL: "${RABBIT_URL}"  # Use environment variable for RabbitMQ URL
-      RABBIT_PORT: "${RABBIT_PORT}"  # Use environment variable for RabbitMQ port
-      RABBIT_USER: "${RABBIT_USER}"  # Use environment variable for username
-      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"  # Use environment variable for password
-
-      # Optional: Enable specific capabilities
-      RABBIT_CAPABILITIES: "bert,no_sort"
-
-      # Optional: Configure what to export
-      PUBLISH_PORT: "9419"
-      OUTPUT_FORMAT: "TTY"
-      LOG_LEVEL: "info"
-
-    restart: unless-stopped
-    networks:
-      - vm_net
-
 volumes:
   vmagentdata: {}
   vmdata: {}
