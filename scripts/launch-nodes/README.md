@@ -86,7 +86,7 @@ path = "~/subspace"
 
 ```
 
-- **`bootstrap_nodes`:** This section defines the Bootstrap node.
+- **`bootstrap_nodes`:** This section defines the Bootstrap nodes.
 - **`farmer_rpc_nodes`:** This section contains the RPC and Farmer nodes. The `type` field specifies whether the node is an RPC node or a Farmer node.
 - **`timekeepers`:** This section Defines the Timekeeper nodes.
 
