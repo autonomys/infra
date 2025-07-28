@@ -40,13 +40,12 @@ data "aws_ami" "ubuntu_arm64" {
   owners = ["099720109477"]
 }
 
-
 data "aws_ami" "mac_x86_64" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["amzn-ec2-macos-12.6.3-20230201-041127"]
+    values = ["amzn-ec2-macos-12.*"]
   }
 
   filter {
@@ -62,18 +61,12 @@ data "aws_ami" "mac_x86_64" {
   owners = ["634519214787"]
 }
 
-
 data "aws_ami" "mac_arm64" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["amzn-ec2-macos-12.6.3-20230201-190453-arm64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    values = ["amzn-ec2-macos-12.*-arm64"]
   }
 
   filter {
@@ -81,16 +74,20 @@ data "aws_ami" "mac_arm64" {
     values = ["arm64_mac"]
   }
 
-  owners = ["634519214787"]
-}
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 
+  owners = ["634519214787"] # Amazon's EC2 macOS AMI owner ID
+}
 
 data "aws_ami" "windows_x86_64" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["Windows_Server-2022-English-Full-Base-2023.07.12"]
+    values = ["Windows_Server-2022-English-Full-Base-*"]
   }
 
   filter {
