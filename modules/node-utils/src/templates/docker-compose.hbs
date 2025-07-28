@@ -1,0 +1,279 @@
+version: "3.7"
+
+volumes:
+{{#unless farmer_node}}
+    node_data: {}
+{{/unless}}
+    vmagentdata: {}
+
+{{#if rpc_node}}
+networks:
+    traefik-proxy:
+{{/if}}
+
+services:
+    vmagent:
+        container_name: vmagent
+        image: victoriametrics/vmagent:latest
+        depends_on:
+            - "node"
+        ports:
+            - 8429:8429
+        volumes:
+            - vmagentdata:/vmagentdata
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        command:
+            - "--httpListenAddr=0.0.0.0:8429"
+            - "--promscrape.config=/etc/prometheus/prometheus.yml"
+            - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+
+    agent:
+        container_name: newrelic-infra
+        image: newrelic/infrastructure:latest
+        cap_add:
+            - SYS_PTRACE
+        network_mode: bridge
+        pid: host
+        privileged: true
+        volumes:
+            - "/:/host:ro"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        environment:
+            NRIA_LICENSE_KEY: "{{new_relic_api_key}}"
+            NRIA_DISPLAY_NAME: "{{network_name}}-{{node_prefix}}-node-{{node_id}}"
+        restart: unless-stopped
+
+{{#if rpc_node}}
+    # traefik reverse proxy with automatic tls management using let encrypt
+    traefik:
+        image: traefik:v3.3.2
+        container_name: traefik
+        restart: unless-stopped
+        command:
+            - --api=false
+            - --api.dashboard=false
+            - --providers.docker
+            - --log.level=info
+            - --accesslog=true
+            - --accesslog.format=common
+            - --entrypoints.web.address=:80
+            - --entrypoints.web.http.redirections.entryPoint.to=websecure
+            - --entrypoints.websecure.address=:443
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --certificatesresolvers.le.acme.email=alerts@subspace.network
+            - --certificatesresolvers.le.acme.storage=/acme.json
+            - --certificatesresolvers.le.acme.tlschallenge=true
+            - "traefik.docker.network=traefik-proxy"
+        networks:
+            - traefik-proxy
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./acme.json:/acme.json
+        logging:
+            driver: loki
+            options:
+                loki-url: "https://logging.subspace.network/loki/api/v1/push"
+{{/if}}
+
+{{#if dsn_node}}
+    dsn-bootstrap-node:
+        image: ghcr.io/autonomys/bootstrap-node:{{docker_tag}}
+        restart: unless-stopped
+        environment:
+            - RUST_LOG=info
+        ports:
+            - "30533:30533/tcp"
+            - "9616:9616"
+        logging:
+            driver: loki
+            options:
+                loki-url: "https://logging.subspace.network/loki/api/v1/push"
+        command: [
+            "start",
+            "--prometheus-listen-on", "0.0.0.0:9616",
+            "--keypair", "{{dsn_node.key}}",
+            "--listen-on", "/ip4/0.0.0.0/tcp/30533",
+            "--listen-on", "/ip6/::/tcp/30533",
+            "--protocol-version", "{{dsn_node.genesis_hash}}",
+            "--in-peers", "1000",
+            "--out-peers", "1000",
+            "--pending-in-peers", "1000",
+            "--pending-out-peers", "1000",
+            "--external-address", "/ip4/{{external_ip_v4}}/tcp/30533",
+            "--external-address", "/ip6/{{external_ip_v6}}/tcp/30533",
+            "--external-address", "{{dsn_node.multi_address}}",
+        {{#each dsn_bootstrap_nodes}}
+            "--reserved-peer", "{{this}}",
+            "--bootstrap-node", "{{this}}",
+        {{/each}}
+        ]
+{{/if}}
+
+{{#if farmer_node}}
+    farmer:
+        depends_on:
+            node:
+                condition: service_healthy
+        image: ghcr.io/autonomys/farmer:{{docker_tag}}
+        volumes:
+            - /subspace_data/farmer/:/var/subspace:rw
+        restart: unless-stopped
+        ports:
+            - "30533:30533/tcp"
+            - "9616:9616"
+        logging:
+            driver: loki
+            options:
+                loki-url: "https://logging.subspace.network/loki/api/v1/push"
+        command: [
+            "farm", "path=/var/subspace,size={{farmer_node.plot_size}}",
+            "--node-rpc-url", "ws://archival-node:9944",
+            "--external-address", "/ip4/{{external_ip_v4}}/tcp/30533",
+            "--external-address", "/ip6/{{external_ip_v6}}/tcp/30533",
+            "--listen-on", "/ip4/0.0.0.0/tcp/30533",
+            "--listen-on", "/ip6/::/tcp/30533",
+            "--reward-address", "{{farmer_node.reward_address}}",
+            "--prometheus-listen-on", "0.0.0.0:9616",
+            "--cache-percentage", "{{farmer_node.cache_percentage}}",
+        {{#if farmer_node.faster_sector_plotting}}
+            "--max-pieces-in-sector", "10",
+        {{/if}}
+        ]
+{{/if}}
+
+    node:
+        image: ghcr.io/autonomys/node:{{docker_tag}}
+        volumes:
+        {{#if farmer_node}}
+            - /subspace_data/node/:/var/subspace:rw
+        {{else}}
+            - node_data:/var/subspace:rw
+        {{/if}}
+        restart: unless-stopped
+    {{#if rpc_node}}
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.services.archival-node.loadbalancer.server.port={{rpc_node.port}}"
+            - "traefik.http.routers.archival-node.rule=Host(`{{node_prefix}}-{{node_id}}.{{network_name}}.{{fqdn}}`) && Path(`/ws`)"
+            - "traefik.http.routers.archival-node.tls=true"
+            - "traefik.http.routers.archival-node.tls.certresolver=le"
+            - "traefik.http.routers.archival-node.entrypoints=websecure"
+            - "traefik.http.routers.archival-node.middlewares=redirect-https,rate-limit"
+            - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+            - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+            - "traefik.docker.network=traefik-proxy"
+            - "traefik.http.middlewares.rate-limit.ratelimit.average=200"
+            - "traefik.http.middlewares.rate-limit.ratelimit.burst=300"
+            - "traefik.http.middlewares.rate-limit.ratelimit.period=1s"
+    {{/if}}
+        ports:
+            - "30333:30333/tcp"
+            - "30433:30433/tcp"
+        {{#if domain_node}}
+            - "30334:30334/tcp"
+        {{/if}}
+            - "9615:9615"
+        logging:
+            driver: loki
+            options:
+                loki-url: "https://logging.subspace.network/loki/api/v1/push"
+        command: [
+            "run",
+            "--chain", "{{network_name}}",
+            "--base-path", "/var/subspace",
+            "--sync", "full",
+            "--listen-on", "/ip4/0.0.0.0/tcp/30333",
+            "--listen-on", "/ip6/::/tcp/30333",
+            "--external-address", "/ip4/{{external_ip_v4}}/tcp/30333",
+            "--external-address", "/ip6/{{external_ip_v6}}/tcp/30333",
+            "--dsn-listen-on", "/ip4/0.0.0.0/tcp/30433",
+            "--dsn-listen-on", "/ip6/::/tcp/30433",
+            "--dsn-external-address", "/ip4/{{external_ip_v4}}/tcp/30433",
+            "--dsn-external-address", "/ip6/{{external_ip_v6}}/tcp/30433",
+            "--prometheus-listen-on", "0.0.0.0:9615",
+        {{#if node_key}}
+            "--node-key", "{{node_key}}",
+        {{/if}}
+        {{#if rpc_node.is_consensus}}
+            "--in-peers", "500",
+            "--out-peers", "250",
+            "--rpc-max-connections", "20000",
+            "--rpc-cors", "all",
+            "--rpc-listen-on", "0.0.0.0:{{rpc_node.port}}",
+            "--rpc-methods", "safe",
+            "--state-pruning", "archive",
+            "--blocks-pruning", "archive",
+            "--max-runtime-instances", "32",
+            "--trie-cache-size", "1073741824",
+        {{else}}
+            "--in-peers", "2000",
+            "--out-peers", "2000",
+            "--dsn-in-connections", "2000",
+            "--dsn-out-connections", "2000",
+            "--dsn-pending-in-connections", "2000",
+            "--dsn-pending-out-connections", "2000",
+        {{/if}}
+        {{#each bootstrap_nodes}}
+            "--reserved-peer", "{{this}}",
+            "--bootstrap-node", "{{this}}",
+        {{/each}}
+        {{#each dsn_bootstrap_nodes}}
+            "--dsn-reserved-peer", "{{this}}",
+            "--dsn-bootstrap-node", "{{this}}",
+        {{/each}}
+        {{#if is_reserved}}
+            "--reserved-only",
+        {{/if}}
+        {{#if farmer_node.force_block_production}}
+            "--force-synced",
+            "--force-authoring",
+        {{/if}}
+        {{#if farmer_node}}
+            "--farmer",
+            "--timekeeper",
+            "--rpc-cors", "all",
+            "--rpc-listen-on", "0.0.0.0:9944",
+            "--rpc-methods", "unsafe",
+        {{/if}}
+        {{#if domain_node}}
+          {{#if domain_node.operator_id}}
+            "--timekeeper",
+          {{/if}}
+            "--",
+            "--domain-id", "{{domain_node.domain_id}}",
+          {{#if domain_node.operator_id}}
+            "--operator-id", "{{domain_node.operator_id}}"
+          {{/if}}
+            "--listen-on", "/ip4/0.0.0.0/tcp/30334",
+            "--listen-on", "/ip6/::/tcp/30334",
+            "--public-addr", "/ip4/{{external_ip_v4}}/tcp/30334",
+            "--public-addr", "/ip6/{{external_ip_v6}}/tcp/30334",
+          {{#each domain_node.domain_bootstrap_nodes}}
+            "--reserved-peer", "{{this}}",
+            "--bootstrap-node", "{{this}}",
+          {{/each}}
+          {{#if is_reserved}}
+            "--reserved-only",
+          {{/if}}
+          {{#if rpc_node.is_domain}}
+            "--in-peers", "500",
+            "--out-peers", "250",
+            "--rpc-max-connections", "20000",
+            "--rpc-cors", "all",
+            "--rpc-listen-on", "0.0.0.0:{{rpc_node.port}}",
+            "--rpc-methods", "safe",
+            "--state-pruning", "archive",
+            "--blocks-pruning", "archive",
+            "--max-runtime-instances", "32",
+            "--trie-cache-size", "1073741824",
+          {{/if}}
+          {{#if domain_node.eth_cache}}
+            "--",
+            "--eth-statuses-cache", "6710886",
+          {{/if}}
+        {{/if}}
+        ]

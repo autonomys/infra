@@ -1,4 +1,5 @@
-use crate::types::{Config, NodeKey, OperatorKeypair, SyncConfigParams};
+use crate::cli::SyncConfigParams;
+use crate::types::{Config, NodeKey, OperatorKeypair};
 use bip39::Mnemonic;
 use ed25519_dalek::SigningKey;
 use libp2p_identity::Keypair;
@@ -12,6 +13,8 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
     let SyncConfigParams {
         network,
         genesis_hash,
+        new_relic_api_key,
+        fqdn,
         bootstrap_node_count,
         domain_bootstrap_node_count,
         domain_operators,
@@ -21,6 +24,8 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
         None => Config {
             network,
             genesis_hash,
+            new_relic_api_key,
+            fqdn,
             bootstrap_node_keys: BTreeMap::new(),
             bootstrap_dsn_keys: BTreeMap::new(),
             domain_bootstrap_node_keys: BTreeMap::new(),
@@ -29,6 +34,8 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
         Some(mut config) => {
             config.genesis_hash = genesis_hash;
             config.network = network;
+            config.new_relic_api_key = new_relic_api_key;
+            config.fqdn = fqdn;
             config
         }
     };
@@ -76,11 +83,11 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
             }
         });
 
-    fs::write("config.toml", toml::to_string(&config).unwrap()).unwrap();
+    fs::write("data/config.toml", toml::to_string(&config).unwrap()).unwrap();
 }
 
-fn load_config() -> Option<Config> {
-    let config = fs::read_to_string("config.toml").ok()?;
+pub(crate) fn load_config() -> Option<Config> {
+    let config = fs::read_to_string("data/config.toml").ok()?;
     toml::from_str::<Config>(&config).ok()
 }
 
