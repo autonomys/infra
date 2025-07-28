@@ -69,14 +69,14 @@ resource "cloudflare_load_balancer_pool" "mainnet_rpc" {
 
   origins {
     name    = "rpc-0.mainnet"
-    address = "54.82.252.177"
+    address = "3.15.239.60"
     enabled = true
     weight  = 0.5
   }
 
   origins {
     name    = "rpc-1.mainnet"
-    address = "52.90.85.214"
+    address = "3.148.174.0"
     enabled = true
     weight  = 0.5
   }
