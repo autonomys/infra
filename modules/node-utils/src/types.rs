@@ -78,6 +78,18 @@ pub struct DomainNode {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+pub struct PrometheusNodeData {
+    pub job_name: String,
+    pub node: String,
+    pub port: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct PrometheusTemplateData {
+    pub nodes: Vec<PrometheusNodeData>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ComposeTemplateData {
     pub network_name: String,
     pub node_prefix: String,

@@ -1,7 +1,6 @@
 module "devnet" {
   source               = "../../../templates/terraform/network-primitives"
   path_to_scripts      = "../../../templates/scripts"
-  path_to_configs      = "../../../templates/configs"
   network_name         = "devnet"
   vpc_id               = "devnet-vpc"
   vpc_cidr_block       = "172.31.0.0/16"
@@ -17,95 +16,116 @@ module "devnet" {
   aws_ssh_key_name     = var.aws_ssh_key_name
   ssh_agent_identity   = var.ssh_agent_identity
 
-  bootstrap-node-config = {
+  consensus-bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 3
-    instance-count     = 2
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    reserved-only      = false
+    deployment-version = 0
     genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
+    bootstrap-nodes = [
+      {
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 0
+      },
+      {
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 1
+      }
+    ]
   }
 
-  bootstrap-node-evm-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 3
-    instance-count     = 1
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    reserved-only      = false
-    domain-id          = 0
-    domain-prefix      = "auto-evm"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  bootstrap-node-autoid-config = {
+  consensus-rpc-node-config = {
     instance-type      = "m6a.xlarge"
     deployment-version = 0
-    instance-count     = 0
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    reserved-only      = false
-    domain-id          = 1
-    domain-prefix      = "autoid"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  rpc-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 3
-    instance-count     = 1
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
     dns-prefix         = "rpc"
-    reserved-only      = false
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
-  }
-
-  auto-evm-domain-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 3
-    instance-count     = 1
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    reserved-only      = false
-    domain-id          = 0
-    operator-id        = 0
-    domain-prefix      = "auto-evm"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-  }
-
-  auto-id-domain-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    instance-count     = 0
-    docker-org         = "autonomys"
-    docker-tag         = "versioned_bundle"
-    reserved-only      = false
-    domain-id          = 1
-    operator-id        = 1
-    domain-prefix      = "autoid"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
+    rpc-nodes = [
+      {
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 0
+      }
+    ]
   }
 
   farmer-node-config = {
-    instance-type          = "c6id.2xlarge"
-    deployment-version     = 3
-    instance-count         = 1
-    docker-org             = "autonomys"
-    docker-tag             = "versioned_bundle"
-    reserved-only          = false
-    plot-size              = "2G"
-    reward-address         = "sufsKsx4kZ26i7bJXc1TFguysVzjkzsDtE2VDiCEBY2WjyGAj"
-    cache-percentage       = 50
-    force-block-production = true
-    faster-sector-plotting = true
+    instance-type      = "c6id.2xlarge"
+    deployment-version = 0
+    farmer-nodes = [
+      {
+        docker-tag             = "versioned_bundle"
+        reserved-only          = false
+        plot-size              = "2G"
+        reward-address         = "sufsKsx4kZ26i7bJXc1TFguysVzjkzsDtE2VDiCEBY2WjyGAj"
+        cache-percentage       = 50
+        force-block-production = true
+        faster-sector-plotting = true
+        index                  = 0
+      }
+    ]
+  }
+
+  domain-bootstrap-node-config = {
+    instance-type      = "m6a.xlarge"
+    deployment-version = 0
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+    domains = [
+      {
+        domain-id   = 0
+        domain-name = "auto-evm"
+        bootstrap-nodes = [
+          {
+            docker-tag    = "versioned_bundle"
+            reserved-only = false
+            index         = 0
+          }
+        ]
+      }
+    ]
+  }
+
+  domain-rpc-node-config = {
+    instance-type      = "m6a.xlarge"
+    deployment-version = 0
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+    domains = [
+      {
+        domain-id   = 0
+        domain-name = "auto-evm"
+        rpc-nodes = [
+          {
+            docker-tag    = "versioned_bundle"
+            reserved-only = false
+            index         = 0
+          }
+        ]
+      }
+    ]
+  }
+
+  domain-operator-node-config = {
+    instance-type      = "m6a.xlarge"
+    deployment-version = 0
+    disk-volume-size   = var.disk_volume_size
+    disk-volume-type   = var.disk_volume_type
+    domains = [
+      {
+        domain-id   = 0
+        domain-name = "auto-evm"
+        operator-nodes = [
+          {
+            docker-tag    = "versioned_bundle"
+            reserved-only = false
+            index         = 0
+            operator-id   = 0
+          }
+        ]
+      }
+    ]
   }
 }

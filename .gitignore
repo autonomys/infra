@@ -19,3 +19,4 @@ resources/mainnet/keystore/*
 /.idea
 /modules/node-utils/target
 /modules/node-utils/data
+/resources/terraform/devnet/config.toml

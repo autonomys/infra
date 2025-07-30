@@ -1,11 +1,12 @@
 locals {
-  farmer_nodes_ipv4 = flatten([[aws_instance.farmer_node.*.public_ip]])
+  farmer_nodes_ipv4 = flatten([[aws_instance.consensus_farmer_nodes.*.public_ip]])
+  farmer_nodes_ipv6 = flatten([[aws_instance.consensus_farmer_nodes.*.ipv6_addresses]])
 }
 
-resource "null_resource" "setup-farmer-nodes" {
+resource "null_resource" "setup_consensus_farmer_nodes" {
   count = length(local.farmer_nodes_ipv4)
 
-  depends_on = [aws_instance.farmer_node]
+  depends_on = [aws_instance.consensus_farmer_nodes]
 
   # trigger on node ip changes
   triggers = {
@@ -38,12 +39,6 @@ resource "null_resource" "setup-farmer-nodes" {
     destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
-  # copy config files
-  provisioner "file" {
-    source      = "${var.path_to_configs}/"
-    destination = "/home/${var.ssh_user}/subspace/"
-  }
-
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
@@ -53,10 +48,10 @@ resource "null_resource" "setup-farmer-nodes" {
 
 }
 
-resource "null_resource" "start-farmer-nodes" {
+resource "null_resource" "start_consensus_farmer_nodes" {
   count = length(local.farmer_nodes_ipv4)
 
-  depends_on = [null_resource.setup-farmer-nodes]
+  depends_on = [null_resource.setup_consensus_farmer_nodes]
 
   # trigger on node deployment version change
   triggers = {
@@ -72,22 +67,10 @@ resource "null_resource" "start-farmer-nodes" {
     timeout        = "300s"
   }
 
-  # copy boostrap node keys file
+  # copy config file
   provisioner "file" {
-    source      = "./bootstrap_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/bootstrap_node_keys.txt"
-  }
-
-  # copy DSN bootstrap node keys file
-  provisioner "file" {
-    source      = "./dsn_bootstrap_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
-  }
-
-  # copy compose file creation script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/create_farmer_node_compose_file.sh"
-    destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
+    source      = "./config.toml"
+    destination = "/home/${var.ssh_user}/subspace/config.toml"
   }
 
   # start docker containers
@@ -97,20 +80,20 @@ resource "null_resource" "start-farmer-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${var.farmer-node-config.farmer-nodes[count.index].index}",
 
-      # create .env file
-      "echo NODE_ORG=${var.farmer-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.farmer-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NEW_RELIC_API_KEY=${var.new_relic_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo REWARD_ADDRESS=${var.farmer-node-config.reward-address} >> /home/${var.ssh_user}/subspace/.env",
-      "echo PLOT_SIZE=${var.farmer-node-config.plot-size} >> /home/${var.ssh_user}/subspace/.env",
-      "echo CACHE_PERCENTAGE=${var.farmer-node-config.cache-percentage} >> /home/${var.ssh_user}/subspace/.env",
-
-      # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${var.farmer-node-config.force-block-production} ${var.farmer-node-config.faster-sector-plotting} ",
+      # create docker compose
+      "sudo docker run --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest farmer " +
+      "--node-id ${var.farmer-node-config.farmer-nodes[count.index].index} " +
+      "--docker-tag ${var.farmer-node-config.farmer-nodes[count.index].docker-tag} " +
+      "--external-ip-v4 ${local.farmer_nodes_ipv4[count.index]} " +
+      "--external-ip-v6 ${local.farmer_nodes_ipv6[count.index]} " +
+      "--plot-size ${var.farmer-node-config.farmer-nodes[count.index].plot-size} " +
+      "--reward-address ${var.farmer-node-config.farmer-nodes[count.index].reward-address} " +
+      "--cache-percentage ${var.farmer-node-config.farmer-nodes[count.index].cache-percentage} " +
+      "--faster-sector-plotting ${var.farmer-node-config.farmer-nodes[count.index].faster-sector-plotting} " +
+      "--force-block-production ${var.farmer-node-config.farmer-nodes[count.index].force-block-production} " +
+      "--is-reserved ${var.farmer-node-config.farmer-nodes[count.index].reserved-only} ",
 
       # start subspace
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

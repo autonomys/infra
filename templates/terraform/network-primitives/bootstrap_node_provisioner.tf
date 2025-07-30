@@ -1,13 +1,11 @@
 locals {
-  bootstrap_nodes_ip_v4 = flatten([[aws_instance.bootstrap_node.*.public_ip]])
-  bootstrap_nodes_ip_v6 = flatten([[aws_instance.bootstrap_node.*.ipv6_addresses]])
+  bootstrap_nodes_ip_v4 = flatten([[aws_instance.consensus_bootstrap_nodes.*.public_ip]])
+  bootstrap_nodes_ip_v6 = flatten([[aws_instance.consensus_bootstrap_nodes.*.ipv6_addresses]])
 }
 
-resource "null_resource" "setup-bootstrap-nodes" {
-  count = length(local.bootstrap_nodes_ip_v4)
-
-  depends_on = [aws_instance.bootstrap_node]
-
+resource "null_resource" "setup-consensus-bootstrap-nodes" {
+  count      = length(local.bootstrap_nodes_ip_v4)
+  depends_on = [aws_instance.consensus_bootstrap_nodes]
   # trigger on node ip changes
   triggers = {
     cluster_instance_ipv4s = join(",", local.bootstrap_nodes_ip_v4)
@@ -36,12 +34,6 @@ resource "null_resource" "setup-bootstrap-nodes" {
     destination = "/home/${var.ssh_user}/subspace/installer.sh"
   }
 
-  # copy config files
-  provisioner "file" {
-    source      = "${var.path_to_configs}/"
-    destination = "/home/${var.ssh_user}/subspace/"
-  }
-
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
@@ -51,14 +43,12 @@ resource "null_resource" "setup-bootstrap-nodes" {
 
 }
 
-resource "null_resource" "start-boostrap-nodes" {
-  count = length(local.bootstrap_nodes_ip_v4)
-
-  depends_on = [null_resource.setup-bootstrap-nodes]
-
+resource "null_resource" "start-consensus-boostrap-nodes" {
+  count      = length(local.bootstrap_nodes_ip_v4)
+  depends_on = [null_resource.setup-consensus-bootstrap-nodes]
   # trigger on node deployment version change
   triggers = {
-    deployment_version = var.bootstrap-node-config.deployment-version
+    deployment_version = var.consensus-bootstrap-node-config.deployment-version
   }
 
   connection {
@@ -70,22 +60,10 @@ resource "null_resource" "start-boostrap-nodes" {
     timeout        = "300s"
   }
 
-  # copy bootstrap node keys file
+  # copy config file
   provisioner "file" {
-    source      = "./bootstrap_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/node_keys.txt"
-  }
-
-  # copy DSN bootstrap node keys file
-  provisioner "file" {
-    source      = "./dsn_bootstrap_node_keys.txt"
-    destination = "/home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt"
-  }
-
-  # copy compose file creation script
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/create_bootstrap_node_compose_file.sh"
-    destination = "/home/${var.ssh_user}/subspace/create_compose_file.sh"
+    source      = "./config.toml"
+    destination = "/home/${var.ssh_user}/subspace/config.toml"
   }
 
   # start docker containers
@@ -95,20 +73,15 @@ resource "null_resource" "start-boostrap-nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-bootstrap-node-${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].index}",
 
-      # create .env file
-      "echo NODE_ORG=${var.bootstrap-node-config.docker-org} > /home/${var.ssh_user}/subspace/.env",
-      "echo DOCKER_TAG=${var.bootstrap-node-config.docker-tag} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NETWORK_NAME=${var.network_name} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_ID=${count.index} >> /home/${var.ssh_user}/subspace/.env",
-      "echo NODE_KEY=$(sed -nr 's/NODE_${count.index}_KEY=//p' /home/${var.ssh_user}/subspace/node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo NEW_RELIC_API_KEY=${var.new_relic_api_key} >> /home/${var.ssh_user}/subspace/.env",
-      "echo DSN_NODE_KEY=$(sed -nr 's/NODE_${count.index}_SUBSPACE_KEY=//p' /home/${var.ssh_user}/subspace/dsn_bootstrap_node_keys.txt) >> /home/${var.ssh_user}/subspace/.env",
-      "echo GENESIS_HASH=${var.bootstrap-node-config.genesis-hash} >> /home/${var.ssh_user}/subspace/.env",
-
-      # create docker compose file
-      "bash /home/${var.ssh_user}/subspace/create_compose_file.sh ${var.bootstrap-node-config.reserved-only} ${length(local.bootstrap_nodes_ip_v4)} ${count.index}",
+      # create docker compose
+      "sudo docker run --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest bootstrap " +
+      "--node-id ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].index} " +
+      "--docker-tag ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} " +
+      "--external-ip-v4 ${local.bootstrap_nodes_ip_v4[count.index]} " +
+      "--external-ip-v6 ${local.bootstrap_nodes_ip_v6[count.index]} " +
+      "--is-reserved ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].reserved-only} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

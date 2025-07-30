@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
@@ -57,7 +57,15 @@ pub struct CommonParams {
     pub external_ip_v4: String,
     #[arg(long, required = true)]
     pub external_ip_v6: String,
-    #[arg(long, required = true)]
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
     pub is_reserved: bool,
 }
 
@@ -91,7 +99,15 @@ pub struct DomainCommonParams {
 pub struct DomainRpcParams {
     #[clap(flatten)]
     pub common: DomainCommonParams,
-    #[arg(long)]
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
     pub eth_cache: bool,
 }
 
@@ -111,9 +127,25 @@ pub struct FarmerNodeParams {
     pub reward_address: String,
     #[arg(long, required = true)]
     pub cache_percentage: String,
-    #[arg(long)]
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
     pub faster_sector_plotting: bool,
-    #[arg(long)]
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
     pub force_block_production: bool,
 }
 
