@@ -169,22 +169,8 @@ resource "aws_instance" "consensus_farmer_nodes" {
   }
 }
 
-locals {
-  domain_bootstrap_nodes_list = var.domain-bootstrap-node-config != null ? flatten([
-    for domain in var.domain-bootstrap-node-config.domains : [
-      for bootstrap_node in domain.bootstrap-nodes : {
-        domain-id     = domain.domain-id
-        domain-name   = domain.domain-name
-        docker-tag    = bootstrap_node.docker-tag
-        reserved-only = bootstrap_node.reserved-only
-        index         = bootstrap_node.index
-      }
-    ]
-  ]) : []
-}
-
 resource "aws_instance" "domain_bootstrap_nodes" {
-  count                       = length(local.domain_bootstrap_nodes_list)
+  count                       = var.domain-bootstrap-node-config == null ? 0 : length(var.domain-bootstrap-node-config.bootstrap-nodes)
   ami                         = data.aws_ami.ubuntu_amd64.image_id
   instance_type               = var.domain-bootstrap-node-config.instance-type
   subnet_id                   = aws_subnet.public_subnets.*.id[0]
@@ -204,7 +190,7 @@ resource "aws_instance" "domain_bootstrap_nodes" {
   }
 
   tags = {
-    Name       = "${var.network_name}-${local.domain_bootstrap_nodes_list[count.index].domain-name}-bootstrap-${local.domain_bootstrap_nodes_list[count.index].index}"
+    Name       = "${var.network_name}-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-name}-bootstrap-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index}"
     role       = "Domain bootstrap node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -240,22 +226,8 @@ resource "aws_instance" "domain_bootstrap_nodes" {
   }
 }
 
-locals {
-  domain_rpc_nodes_list = var.domain-rpc-node-config != null ? flatten([
-    for domain in var.domain-rpc-node-config.domains : [
-      for rpc_node in domain.rpc-nodes : {
-        domain-id     = domain.domain-id
-        domain-name   = domain.domain-name
-        docker-tag    = rpc_node.docker-tag
-        reserved-only = rpc_node.reserved-only
-        index         = rpc_node.index
-      }
-    ]
-  ]) : []
-}
-
 resource "aws_instance" "domain_rpc_nodes" {
-  count                       = length(local.domain_rpc_nodes_list)
+  count                       = var.domain-rpc-node-config == null ? 0 : length(var.domain-rpc-node-config.rpc-nodes)
   ami                         = data.aws_ami.ubuntu_amd64.image_id
   instance_type               = var.domain-rpc-node-config.instance-type
   subnet_id                   = aws_subnet.public_subnets.*.id[0]
@@ -275,7 +247,7 @@ resource "aws_instance" "domain_rpc_nodes" {
   }
 
   tags = {
-    Name       = "${var.network_name}-${local.domain_rpc_nodes_list[count.index].domain-name}-rpc-${local.domain_rpc_nodes_list[count.index].index}"
+    Name       = "${var.network_name}-${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name}-rpc-${var.domain-rpc-node-config.rpc-nodes[count.index].index}"
     role       = "Domain RPC node"
     os_name    = "ubuntu"
     os_version = "22.04"
@@ -311,23 +283,8 @@ resource "aws_instance" "domain_rpc_nodes" {
   }
 }
 
-locals {
-  domain_operator_nodes_list = var.domain-operator-node-config != null ? flatten([
-    for domain in var.domain-operator-node-config.domains : [
-      for operator_node in domain.operator-nodes : {
-        domain-id     = domain.domain-id
-        domain-name   = domain.domain-name
-        docker-tag    = operator_node.docker-tag
-        reserved-only = operator_node.reserved-only
-        operator-id   = operator_node.operator-id
-        index         = operator_node.index
-      }
-    ]
-  ]) : []
-}
-
 resource "aws_instance" "domain_operator_nodes" {
-  count                       = length(local.domain_operator_nodes_list)
+  count                       = var.domain-operator-node-config == null ? 0 : length(var.domain-operator-node-config.operator-nodes)
   ami                         = data.aws_ami.ubuntu_amd64.image_id
   instance_type               = var.domain-operator-node-config.instance-type
   subnet_id                   = aws_subnet.public_subnets.*.id[0]
@@ -347,7 +304,7 @@ resource "aws_instance" "domain_operator_nodes" {
   }
 
   tags = {
-    Name       = "${var.network_name}-${local.domain_operator_nodes_list[count.index].domain-name}-operator-${local.domain_operator_nodes_list[count.index].index}"
+    Name       = "${var.network_name}-${var.domain-operator-node-config.operator-nodes[count.index].domain-name}-operator-${var.domain-operator-node-config.operator-nodes[count.index].index}"
     role       = "Domain Operator node"
     os_name    = "ubuntu"
     os_version = "22.04"

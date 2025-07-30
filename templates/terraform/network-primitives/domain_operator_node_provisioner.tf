@@ -77,18 +77,19 @@ resource "null_resource" "start_domain_operator_nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-${local.domain_operator_nodes_list[count.index].domain-id}-operator-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-operator-node-config.operator-nodes[count.index].domain-id}-operator-node-${var.domain-operator-node-config.operator-nodes[count.index].index}",
 
       # create docker compose
       "sudo docker run --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-operator " +
-      "--node-id ${local.domain_operator_nodes_list[count.index].index} " +
-      "--docker-tag ${local.domain_operator_nodes_list[count.index].docker-tag} " +
+      "--node-id ${var.domain-operator-node-config.operator-nodes[count.index].index} " +
+      "--docker-tag ${var.domain-operator-node-config.operator-nodes[count.index].docker-tag} " +
       "--external-ip-v4 ${local.domain_operator_nodes_ipv4[count.index]} " +
       "--external-ip-v6 ${local.domain_operator_nodes_ipv6[count.index]} " +
-      "--node-prefix ${local.domain_operator_nodes_list[count.index].domain-name} " +
-      "--domain-id ${local.domain_operator_nodes_list[count.index].domain-id} " +
-      "--domain-id ${local.domain_operator_nodes_list[count.index].operator-id} " +
-      "--is-reserved ${local.domain_operator_nodes_list[count.index].reserved-only} ",
+      "--node-prefix ${var.domain-operator-node-config.operator-nodes[count.index].domain-name} " +
+      "--domain-id ${var.domain-operator-node-config.operator-nodes[count.index].domain-id} " +
+      "--operator-id ${var.domain-operator-node-config.operator-nodes[count.index].operator-id} " +
+      "--sync-mode ${var.domain-operator-node-config.operator-nodes[count.index].sync-mode} " +
+      "--is-reserved ${var.domain-operator-node-config.operator-nodes[count.index].reserved-only} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

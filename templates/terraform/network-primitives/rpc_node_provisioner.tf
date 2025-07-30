@@ -94,6 +94,8 @@ resource "null_resource" "start_consensus_rpc_nodes" {
       "--external-ip-v4 ${local.rpc_nodes_ip_v4[count.index]} " +
       "--external-ip-v6 ${local.rpc_nodes_ip_v6[count.index]} " +
       "--node-prefix ${var.consensus-rpc-node-config.dns-prefix} " +
+      "--enable-reverse-proxy ${var.consensus-rpc-node-config.enable-reverse-proxy} " +
+      "--sync-mode ${var.consensus-rpc-node-config.rpc-nodes[count.index].sync-mode} " +
       "--is-reserved ${var.consensus-rpc-node-config.rpc-nodes[count.index].reserved-only} ",
 
       # start subspace node

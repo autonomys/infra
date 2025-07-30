@@ -60,6 +60,12 @@ pub struct CommonParams {
     #[arg(
         long,
         required = true,
+        value_parser = clap::builder::PossibleValuesParser::new(["full", "snap"]))
+    ]
+    pub sync_mode: String,
+    #[arg(
+        long,
+        required = true,
         action = ArgAction::Set,
         default_value_t = false,
         default_missing_value = "false",
@@ -83,6 +89,16 @@ pub struct RpcParams {
     pub common: CommonParams,
     #[arg(long, required = true)]
     pub node_prefix: String,
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
+    pub enable_reverse_proxy: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -109,6 +125,16 @@ pub struct DomainRpcParams {
         require_equals = false,
     )]
     pub eth_cache: bool,
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
+    pub enable_reverse_proxy: bool,
 }
 
 #[derive(Debug, Parser)]

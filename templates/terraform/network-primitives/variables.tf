@@ -29,6 +29,12 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
+variable "cloudflare_account_id" {
+  description = "Zone specific account id"
+  type        = string
+  sensitive   = true
+}
+
 variable "vpc_id" {
   description = "AWS VPC name"
   type        = string
@@ -89,6 +95,7 @@ variable "consensus-bootstrap-node-config" {
       docker-tag    = string
       reserved-only = bool
       index         = number
+      sync-mode     = string
     }))
     genesis-hash     = string
     disk-volume-size = number
@@ -100,13 +107,15 @@ variable "consensus-bootstrap-node-config" {
 variable "consensus-rpc-node-config" {
   description = "Consensus RPC node deployment config"
   type = object({
-    instance-type      = string
-    deployment-version = number
-    dns-prefix         = string
+    instance-type        = string
+    deployment-version   = number
+    dns-prefix           = string
+    enable-reverse-proxy = bool
     rpc-nodes = list(object({
       docker-tag    = string
       reserved-only = bool
       index         = number
+      sync-mode     = string
     }))
     disk-volume-size = number
     disk-volume-type = string
@@ -128,6 +137,7 @@ variable "farmer-node-config" {
       force-block-production = bool
       faster-sector-plotting = bool
       index                  = number
+      sync-mode              = string
     }))
   })
   default = null
@@ -138,14 +148,13 @@ variable "domain-bootstrap-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    domains = list(object({
-      domain-id   = number
-      domain-name = string
-      bootstrap-nodes = list(object({
-        docker-tag    = string
-        reserved-only = bool
-        index         = number
-      }))
+    bootstrap-nodes = list(object({
+      domain-id     = number
+      domain-name   = string
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
     }))
     disk-volume-size = number
     disk-volume-type = string
@@ -156,16 +165,16 @@ variable "domain-bootstrap-node-config" {
 variable "domain-rpc-node-config" {
   description = "Domain RPC node deployment config"
   type = object({
-    instance-type      = string
-    deployment-version = number
-    domains = list(object({
-      domain-id   = number
-      domain-name = string
-      rpc-nodes = list(object({
-        docker-tag    = string
-        reserved-only = bool
-        index         = number
-      }))
+    instance-type        = string
+    deployment-version   = number
+    enable-reverse-proxy = bool
+    rpc-nodes = list(object({
+      domain-id     = number
+      domain-name   = string
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
     }))
     disk-volume-size = number
     disk-volume-type = string
@@ -178,15 +187,14 @@ variable "domain-operator-node-config" {
   type = object({
     instance-type      = string
     deployment-version = number
-    domains = list(object({
-      domain-id   = number
-      domain-name = string
-      operator-nodes = list(object({
-        docker-tag    = string
-        reserved-only = bool
-        operator-id   = number
-        index         = number
-      }))
+    operator-nodes = list(object({
+      domain-id     = number
+      domain-name   = string
+      docker-tag    = string
+      reserved-only = bool
+      operator-id   = number
+      index         = number
+      sync-mode     = string
     }))
     disk-volume-size = number
     disk-volume-type = string

@@ -81,6 +81,7 @@ resource "null_resource" "start-consensus-boostrap-nodes" {
       "--docker-tag ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} " +
       "--external-ip-v4 ${local.bootstrap_nodes_ip_v4[count.index]} " +
       "--external-ip-v6 ${local.bootstrap_nodes_ip_v6[count.index]} " +
+      "--sync-mode ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].sync-mode} " +
       "--is-reserved ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].reserved-only} ",
 
       # start subspace node

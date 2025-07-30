@@ -27,26 +27,30 @@ module "devnet" {
         docker-tag    = "versioned_bundle"
         reserved-only = false
         index         = 0
+        sync-mode     = "full"
       },
       {
         docker-tag    = "versioned_bundle"
         reserved-only = false
         index         = 1
+        sync-mode     = "full"
       }
     ]
   }
 
   consensus-rpc-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    dns-prefix         = "rpc"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
+    instance-type        = "m6a.xlarge"
+    deployment-version   = 0
+    dns-prefix           = "rpc"
+    disk-volume-size     = var.disk_volume_size
+    disk-volume-type     = var.disk_volume_type
+    enable-reverse-proxy = false
     rpc-nodes = [
       {
         docker-tag    = "versioned_bundle"
         reserved-only = false
         index         = 0
+        sync-mode     = "full"
       }
     ]
   }
@@ -64,6 +68,7 @@ module "devnet" {
         force-block-production = true
         faster-sector-plotting = true
         index                  = 0
+        sync-mode              = "full"
       }
     ]
   }
@@ -73,37 +78,32 @@ module "devnet" {
     deployment-version = 0
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
-    domains = [
+    bootstrap-nodes = [
       {
-        domain-id   = 0
-        domain-name = "auto-evm"
-        bootstrap-nodes = [
-          {
-            docker-tag    = "versioned_bundle"
-            reserved-only = false
-            index         = 0
-          }
-        ]
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
       }
     ]
   }
 
   domain-rpc-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
-    domains = [
+    instance-type        = "m6a.xlarge"
+    deployment-version   = 0
+    disk-volume-size     = var.disk_volume_size
+    disk-volume-type     = var.disk_volume_type
+    enable-reverse-proxy = false
+    rpc-nodes = [
       {
-        domain-id   = 0
-        domain-name = "auto-evm"
-        rpc-nodes = [
-          {
-            docker-tag    = "versioned_bundle"
-            reserved-only = false
-            index         = 0
-          }
-        ]
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
       }
     ]
   }
@@ -113,18 +113,15 @@ module "devnet" {
     deployment-version = 0
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
-    domains = [
+    operator-nodes = [
       {
-        domain-id   = 0
-        domain-name = "auto-evm"
-        operator-nodes = [
-          {
-            docker-tag    = "versioned_bundle"
-            reserved-only = false
-            index         = 0
-            operator-id   = 0
-          }
-        ]
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "versioned_bundle"
+        reserved-only = false
+        index         = 0
+        operator-id   = 0
+        sync-mode     = "full"
       }
     ]
   }

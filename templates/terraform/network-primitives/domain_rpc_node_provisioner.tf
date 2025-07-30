@@ -84,17 +84,19 @@ resource "null_resource" "start_domain_rpc_nodes" {
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-${local.domain_rpc_nodes_list[count.index].domain-id}-rpc-node-${count.index}",
+      "sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-rpc-node-config.rpc-nodes[count.index].domain-id}-rpc-node-${var.domain-rpc-node-config.rpc-nodes[count.index].index}",
 
       # create docker compose
       "sudo docker run --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-rpc " +
-      "--node-id ${local.domain_rpc_nodes_list[count.index].index} " +
-      "--docker-tag ${local.domain_rpc_nodes_list[count.index].docker-tag} " +
+      "--node-id ${var.domain-rpc-node-config.rpc-nodes[count.index].index} " +
+      "--docker-tag ${var.domain-rpc-node-config.rpc-nodes[count.index].docker-tag} " +
       "--external-ip-v4 ${local.domain_rpc_nodes_ipv4[count.index]} " +
       "--external-ip-v6 ${local.domain_rpc_nodes_ipv6[count.index]} " +
-      "--node-prefix ${local.domain_rpc_nodes_list[count.index].domain-name} " +
-      "--domain-id ${local.domain_rpc_nodes_list[count.index].domain-id} " +
-      "--is-reserved ${local.domain_rpc_nodes_list[count.index].reserved-only} ",
+      "--node-prefix ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name} " +
+      "--domain-id ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-id} " +
+      "--enable-reverse-proxy ${var.domain-rpc-node-config.enable-reverse-proxy} " +
+      "--sync-mode ${var.domain-rpc-node-config.rpc-nodes[count.index].sync-mode} " +
+      "--is-reserved ${var.domain-rpc-node-config.rpc-nodes[count.index].reserved-only} ",
 
       # start subspace node
       "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",

@@ -73,6 +73,10 @@ services:
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - ./acme.json:/acme.json
+    {{#unless rpc_node.enable_reverse_proxy}}
+        profiles:
+            - donotstart
+    {{/unless}}
         logging:
             driver: loki
             options:
@@ -185,7 +189,7 @@ services:
             "run",
             "--chain", "{{network_name}}",
             "--base-path", "/var/subspace",
-            "--sync", "full",
+            "--sync", "{{sync_mode}}",
             "--listen-on", "/ip4/0.0.0.0/tcp/30333",
             "--listen-on", "/ip6/::/tcp/30333",
             "--external-address", "/ip4/{{external_ip_v4}}/tcp/30333",

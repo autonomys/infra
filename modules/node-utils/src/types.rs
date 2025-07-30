@@ -60,6 +60,7 @@ pub struct RpcNode {
     pub port: String,
     pub is_consensus: bool,
     pub is_domain: bool,
+    pub enable_reverse_proxy: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -101,6 +102,7 @@ pub struct ComposeTemplateData {
     pub bootstrap_nodes: Vec<String>,
     pub dsn_bootstrap_nodes: Vec<String>,
     pub is_reserved: bool,
+    pub sync_mode: String,
     pub fqdn: String,
     pub node_key: Option<String>,
     pub farmer_node: Option<FarmerNodeParams>,
@@ -121,6 +123,7 @@ impl ComposeTemplateData {
             docker_tag,
             external_ip_v4,
             external_ip_v6,
+            sync_mode,
             is_reserved,
         } = node_params;
         ComposeTemplateData {
@@ -167,6 +170,7 @@ impl ComposeTemplateData {
                 .collect(),
             is_reserved,
             fqdn: config.fqdn.clone(),
+            sync_mode,
             ..Default::default()
         }
     }
@@ -219,6 +223,7 @@ impl ComposeTemplateData {
             port: "9944".to_string(),
             is_consensus: true,
             is_domain: false,
+            enable_reverse_proxy: node_params.enable_reverse_proxy,
         });
         data
     }
@@ -283,6 +288,7 @@ impl ComposeTemplateData {
             port: "9945".to_string(),
             is_consensus: false,
             is_domain: true,
+            enable_reverse_proxy: node_params.enable_reverse_proxy,
         });
         let mut domain_data = data.domain_node.take().unwrap();
         domain_data.eth_cache = node_params.eth_cache;
