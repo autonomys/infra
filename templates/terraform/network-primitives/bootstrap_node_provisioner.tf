@@ -65,6 +65,7 @@ resource "null_resource" "start-consensus-boostrap-nodes" {
   }
 
   # start docker containers
+  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT

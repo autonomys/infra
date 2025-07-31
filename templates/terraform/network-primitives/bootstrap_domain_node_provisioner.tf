@@ -65,6 +65,7 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
   }
 
   # start docker containers
+  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT

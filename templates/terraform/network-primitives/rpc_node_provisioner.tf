@@ -72,6 +72,7 @@ resource "null_resource" "start_consensus_rpc_nodes" {
   }
 
   # start docker containers
+  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT

@@ -63,6 +63,7 @@ resource "null_resource" "start_domain_operator_nodes" {
   }
 
   # start docker containers
+  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT

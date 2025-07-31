@@ -75,6 +75,7 @@ resource "null_resource" "start_consensus_farmer_nodes" {
   }
 
   # start docker containers
+  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT
