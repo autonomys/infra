@@ -29,12 +29,6 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
-variable "cloudflare_account_id" {
-  description = "Zone specific account id"
-  type        = string
-  sensitive   = true
-}
-
 variable "vpc_id" {
   description = "AWS VPC name"
   type        = string
@@ -175,6 +169,7 @@ variable "domain-rpc-node-config" {
       reserved-only = bool
       index         = number
       sync-mode     = string
+      eth-cache     = bool
     }))
     disk-volume-size = number
     disk-volume-type = string

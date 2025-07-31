@@ -18,7 +18,7 @@ module "devnet" {
 
   consensus-bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
-    deployment-version = 0
+    deployment-version = 1
     genesis-hash       = "4d5fe311c169ac8f090de6e44fa0dce2ed2c116ffdb475139896f645fc32cccf"
     disk-volume-size   = var.disk_volume_size
     disk-volume-type   = var.disk_volume_type
@@ -40,11 +40,11 @@ module "devnet" {
 
   consensus-rpc-node-config = {
     instance-type        = "m6a.xlarge"
-    deployment-version   = 0
+    deployment-version   = 1
     dns-prefix           = "rpc"
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
-    enable-reverse-proxy = false
+    enable-reverse-proxy = true
     rpc-nodes = [
       {
         docker-tag    = "versioned_bundle"
@@ -57,7 +57,7 @@ module "devnet" {
 
   farmer-node-config = {
     instance-type      = "c6id.2xlarge"
-    deployment-version = 0
+    deployment-version = 1
     farmer-nodes = [
       {
         docker-tag             = "versioned_bundle"
@@ -95,7 +95,7 @@ module "devnet" {
     deployment-version   = 0
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
-    enable-reverse-proxy = false
+    enable-reverse-proxy = true
     rpc-nodes = [
       {
         domain-id     = 0
@@ -104,6 +104,7 @@ module "devnet" {
         reserved-only = false
         index         = 0
         sync-mode     = "full"
+        eth-cache     = true
       }
     ]
   }

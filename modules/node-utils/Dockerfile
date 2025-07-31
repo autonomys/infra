@@ -94,8 +94,6 @@ FROM ubuntu:22.04
 
 COPY --from=0 /code/node-utils /node-utils
 
-USER nobody:nogroup
-
 WORKDIR /
 
 ENTRYPOINT ["/node-utils"]

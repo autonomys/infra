@@ -22,7 +22,6 @@ resource "aws_subnet" "public_subnets" {
   }
 }
 
-
 resource "aws_internet_gateway" "gw" {
   count  = length(var.public_subnet_cidrs)
   vpc_id = aws_vpc.network_vpc.id

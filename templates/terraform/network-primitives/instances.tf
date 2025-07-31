@@ -32,28 +32,6 @@ resource "aws_instance" "consensus_bootstrap_nodes" {
     aws_internet_gateway.gw
   ]
 
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }
 
 resource "aws_instance" "consensus_rpc_nodes" {
@@ -87,30 +65,6 @@ resource "aws_instance" "consensus_rpc_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
-
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install curl gnupg openssl net-tools -y",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }
 
 resource "aws_instance" "consensus_farmer_nodes" {
@@ -137,36 +91,6 @@ resource "aws_instance" "consensus_farmer_nodes" {
     aws_internet_gateway.gw
   ]
 
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  // farmer node should have an nvme based local instance store
-  // we cannot use EBS here since proving timeouts with EBS
-  // TODO: currently assumes nvme1n1 drive name but ideally
-  //  we should use nvme-cli to get the correct drive and
-  //  and then mount it instead
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-      "sudo mkfs -t ext4 /dev/nvme1n1",
-      "sudo mkdir /subspace_data",
-      "sudo mount /dev/nvme1n1 /subspace_data",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }
 
 resource "aws_instance" "domain_bootstrap_nodes" {
@@ -201,29 +125,6 @@ resource "aws_instance" "domain_bootstrap_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
-
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }
 
 resource "aws_instance" "domain_rpc_nodes" {
@@ -258,29 +159,6 @@ resource "aws_instance" "domain_rpc_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
-
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }
 
 resource "aws_instance" "domain_operator_nodes" {
@@ -315,27 +193,4 @@ resource "aws_instance" "domain_operator_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
-
-  # lifecycle {
-  #   ignore_changes = [ami, ipv6_address_count, associate_public_ip_address]
-  # }
-
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo apt update -y",
-    ]
-
-    on_failure = continue
-  }
-
-  # Setting up the ssh connection
-  connection {
-    type           = "ssh"
-    host           = self.*.public_ip[count.index]
-    user           = var.ssh_user
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
 }

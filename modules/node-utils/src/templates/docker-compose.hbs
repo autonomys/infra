@@ -27,8 +27,8 @@ services:
             - "--promscrape.config=/etc/prometheus/prometheus.yml"
             - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
 
-    agent:
-        container_name: newrelic-infra
+    newrelic:
+        container_name: newrelic
         image: newrelic/infrastructure:latest
         cap_add:
             - SYS_PTRACE
@@ -86,6 +86,7 @@ services:
 {{#if dsn_node}}
     dsn-bootstrap-node:
         image: ghcr.io/autonomys/bootstrap-node:{{docker_tag}}
+        container_name: dsn-bootstrap-node
         restart: unless-stopped
         environment:
             - RUST_LOG=info
@@ -123,6 +124,7 @@ services:
             node:
                 condition: service_healthy
         image: ghcr.io/autonomys/farmer:{{docker_tag}}
+        container_name: farmer
         volumes:
             - /subspace_data/farmer/:/var/subspace:rw
         restart: unless-stopped
@@ -135,7 +137,7 @@ services:
                 loki-url: "https://logging.subspace.network/loki/api/v1/push"
         command: [
             "farm", "path=/var/subspace,size={{farmer_node.plot_size}}",
-            "--node-rpc-url", "ws://archival-node:9944",
+            "--node-rpc-url", "ws://node:9944",
             "--external-address", "/ip4/{{external_ip_v4}}/tcp/30533",
             "--external-address", "/ip6/{{external_ip_v6}}/tcp/30533",
             "--listen-on", "/ip4/0.0.0.0/tcp/30533",
@@ -151,6 +153,7 @@ services:
 
     node:
         image: ghcr.io/autonomys/node:{{docker_tag}}
+        container_name: node
         volumes:
         {{#if farmer_node}}
             - /subspace_data/node/:/var/subspace:rw
@@ -161,12 +164,12 @@ services:
     {{#if rpc_node}}
         labels:
             - "traefik.enable=true"
-            - "traefik.http.services.archival-node.loadbalancer.server.port={{rpc_node.port}}"
-            - "traefik.http.routers.archival-node.rule=Host(`{{node_prefix}}-{{node_id}}.{{network_name}}.{{fqdn}}`) && Path(`/ws`)"
-            - "traefik.http.routers.archival-node.tls=true"
-            - "traefik.http.routers.archival-node.tls.certresolver=le"
-            - "traefik.http.routers.archival-node.entrypoints=websecure"
-            - "traefik.http.routers.archival-node.middlewares=redirect-https,rate-limit"
+            - "traefik.http.services.node.loadbalancer.server.port={{rpc_node.port}}"
+            - "traefik.http.routers.node.rule=Host(`{{node_prefix}}-{{node_id}}.{{network_name}}.{{fqdn}}`) && Path(`/ws`)"
+            - "traefik.http.routers.node.tls=true"
+            - "traefik.http.routers.node.tls.certresolver=le"
+            - "traefik.http.routers.node.entrypoints=websecure"
+            - "traefik.http.routers.node.middlewares=redirect-https,rate-limit"
             - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
             - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
             - "traefik.docker.network=traefik-proxy"
@@ -250,7 +253,7 @@ services:
             "--",
             "--domain-id", "{{domain_node.domain_id}}",
           {{#if domain_node.operator_id}}
-            "--operator-id", "{{domain_node.operator_id}}"
+            "--operator-id", "{{domain_node.operator_id}}",
           {{/if}}
             "--listen-on", "/ip4/0.0.0.0/tcp/30334",
             "--listen-on", "/ip6/::/tcp/30334",

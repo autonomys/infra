@@ -1,20 +1,9 @@
-locals {
-  domain_bootstrap_nodes_ip_v4 = flatten([[aws_instance.domain_bootstrap_nodes.*.public_ip]])
-  domain_bootstrap_nodes_ip_v6 = flatten([[aws_instance.domain_bootstrap_nodes.*.ipv6_addresses]])
-}
-
 resource "null_resource" "setup-domain-bootstrap-nodes" {
-  count = length(local.domain_bootstrap_nodes_ip_v4)
-
+  count      = length(aws_instance.domain_bootstrap_nodes)
   depends_on = [aws_instance.domain_bootstrap_nodes]
 
-  # trigger on node ip changes
-  triggers = {
-    cluster_instance_ipv4s = join(",", local.domain_bootstrap_nodes_ip_v4)
-  }
-
   connection {
-    host           = local.domain_bootstrap_nodes_ip_v4[count.index]
+    host           = aws_instance.domain_bootstrap_nodes[count.index].public_ip
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -25,8 +14,12 @@ resource "null_resource" "setup-domain-bootstrap-nodes" {
   # create subspace dir
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /home/${var.ssh_user}/subspace/",
-      "sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/"
+      <<-EOT
+      cloud-init status --wait
+      sudo apt update -y
+      sudo mkdir -p /home/${var.ssh_user}/subspace/
+      sudo chown -R ${var.ssh_user}:${var.ssh_user} /home/${var.ssh_user}/subspace/ && sudo chmod -R 750 /home/${var.ssh_user}/subspace/
+      EOT
     ]
   }
 
@@ -39,15 +32,16 @@ resource "null_resource" "setup-domain-bootstrap-nodes" {
   # install docker and docker compose
   provisioner "remote-exec" {
     inline = [
-      "sudo bash /home/${var.ssh_user}/subspace/installer.sh",
+      <<-EOT
+      sudo bash /home/${var.ssh_user}/subspace/installer.sh
+      EOT
     ]
   }
 
 }
 
 resource "null_resource" "start-domain-bootstrap-nodes" {
-  count = length(local.domain_bootstrap_nodes_ip_v4)
-
+  count      = length(aws_instance.domain_bootstrap_nodes)
   depends_on = [null_resource.setup-domain-bootstrap-nodes]
 
   # trigger on node deployment version change
@@ -56,7 +50,7 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
   }
 
   connection {
-    host           = local.domain_bootstrap_nodes_ip_v4[count.index]
+    host           = aws_instance.domain_bootstrap_nodes[count.index].public_ip
     user           = var.ssh_user
     type           = "ssh"
     agent          = true
@@ -73,25 +67,27 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
   # start docker containers
   provisioner "remote-exec" {
     inline = [
+      <<-EOT
       # stop any running service
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down ",
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
 
       # set hostname
-      "sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-id}-bootstrap-node-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index}",
+      sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-id}-bootstrap-node-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index}
 
       # create docker compose
-      "sudo docker run --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-bootstrap " +
-      "--node-id ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index} " +
-      "--docker-tag ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} " +
-      "--external-ip-v4 ${local.domain_bootstrap_nodes_ip_v4[count.index]} " +
-      "--external-ip-v6 ${local.domain_bootstrap_nodes_ip_v6[count.index]} " +
-      "--node-prefix ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-name} " +
-      "--domain-id ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-id} " +
-      "--sync-mode ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].sync-mode} " +
-      "--is-reserved ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].reserved-only} ",
+      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-bootstrap \
+          --node-id ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index} \
+          --docker-tag ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} \
+          --external-ip-v4 ${aws_instance.domain_bootstrap_nodes[count.index].public_ip} \
+          --external-ip-v6 ${aws_instance.domain_bootstrap_nodes[count.index].ipv6_addresses[0]} \
+          --node-prefix ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-name} \
+          --domain-id ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-id} \
+          --sync-mode ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].sync-mode} \
+          --is-reserved ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].reserved-only}
 
       # start subspace node
-      "sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d",
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
+      EOT
     ]
   }
 }
