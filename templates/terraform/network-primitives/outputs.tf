@@ -25,9 +25,23 @@ output "domain_operator_node_public_ip" {
 
 output "dns-records" {
   value = concat(
-    [for record in cloudflare_dns_record.consensus_bootstrap_ipv4 : record.name],
-    [for record in cloudflare_dns_record.consensus_rpc : record.name],
-    [for record in cloudflare_dns_record.domain_bootstrap_ipv4 : record.name],
-    [for record in cloudflare_dns_record.domain_rpc : record.name],
+    [for record in cloudflare_dns_record.consensus_bootstrap_ipv4 :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.consensus_rpc :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.consensus_rpc_lb :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.domain_bootstrap_ipv4 :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.domain_rpc :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.domain_rpc_lb :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
   )
 }
