@@ -101,6 +101,7 @@ fn generate_node_key() -> NodeKey {
     NodeKey {
         peer_id,
         key: hex::encode(secret),
+        multiaddr: None,
     }
 }
 
@@ -117,6 +118,7 @@ fn generate_dsn_node_key() -> NodeKey {
     NodeKey {
         peer_id,
         key: keypair_bytes,
+        multiaddr: None,
     }
 }
 

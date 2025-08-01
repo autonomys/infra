@@ -211,6 +211,10 @@ services:
         {{#if node_key}}
             "--node-key", "{{node_key}}",
         {{/if}}
+        {{#if rpc_node}}
+            "--max-runtime-instances", "32",
+            "--trie-cache-size", "1073741824",
+        {{/if}}
         {{#if rpc_node.is_consensus}}
             "--in-peers", "500",
             "--out-peers", "250",
@@ -220,8 +224,6 @@ services:
             "--rpc-methods", "safe",
             "--state-pruning", "archive",
             "--blocks-pruning", "archive",
-            "--max-runtime-instances", "32",
-            "--trie-cache-size", "1073741824",
         {{else}}
             "--in-peers", "2000",
             "--out-peers", "2000",

@@ -32,6 +32,8 @@ resource "aws_instance" "consensus_bootstrap_nodes" {
     aws_internet_gateway.gw
   ]
 
+  lifecycle { ignore_changes = [ami] }
+
 }
 
 resource "aws_instance" "consensus_rpc_nodes" {
@@ -65,6 +67,8 @@ resource "aws_instance" "consensus_rpc_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
+
+  lifecycle { ignore_changes = [ami] }
 }
 
 resource "aws_instance" "consensus_farmer_nodes" {
@@ -90,6 +94,8 @@ resource "aws_instance" "consensus_farmer_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
+
+  lifecycle { ignore_changes = [ami] }
 
 }
 
@@ -125,6 +131,8 @@ resource "aws_instance" "domain_bootstrap_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
+
+  lifecycle { ignore_changes = [ami] }
 }
 
 resource "aws_instance" "domain_rpc_nodes" {
@@ -159,6 +167,8 @@ resource "aws_instance" "domain_rpc_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
+
+  lifecycle { ignore_changes = [ami] }
 }
 
 resource "aws_instance" "domain_operator_nodes" {
@@ -193,4 +203,6 @@ resource "aws_instance" "domain_operator_nodes" {
     aws_subnet.public_subnets,
     aws_internet_gateway.gw
   ]
+
+  lifecycle { ignore_changes = [ami] }
 }

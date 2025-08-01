@@ -37,7 +37,7 @@ resource "cloudflare_dns_record" "consensus_rpc" {
     ignore_changes = [name]
   }
   depends_on = [aws_instance.consensus_rpc_nodes]
-  count      = var.consensus-rpc-node-config.enable-reverse-proxy ? length(aws_instance.consensus_rpc_nodes) : 0
+  count      = var.consensus-rpc-node-config == null ? 0 : var.consensus-rpc-node-config.enable-reverse-proxy ? length(aws_instance.consensus_rpc_nodes) : 0
   zone_id    = var.cloudflare_zone_id
   name       = "${var.consensus-rpc-node-config.dns-prefix}-${count.index}.${var.network_name}"
   content    = aws_instance.consensus_rpc_nodes[count.index].public_ip
@@ -80,7 +80,7 @@ resource "cloudflare_dns_record" "domain_rpc" {
     ignore_changes = [name]
   }
   depends_on = [aws_instance.domain_rpc_nodes]
-  count      = var.domain-rpc-node-config.enable-reverse-proxy ? length(aws_instance.domain_rpc_nodes) : 0
+  count      = var.domain-rpc-node-config == null ? 0 : var.domain-rpc-node-config.enable-reverse-proxy ? length(aws_instance.domain_rpc_nodes) : 0
   zone_id    = var.cloudflare_zone_id
   name       = "${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name}-${var.domain-rpc-node-config.rpc-nodes[count.index].index}.${var.network_name}"
   content    = aws_instance.domain_rpc_nodes[count.index].public_ip

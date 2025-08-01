@@ -23,6 +23,7 @@ pub struct Config {
 pub struct NodeKey {
     pub peer_id: String,
     pub key: String,
+    pub multiaddr: Option<String>,
 }
 
 impl NodeKey {
@@ -34,7 +35,9 @@ impl NodeKey {
         port: String,
         maybe_prefix: Option<String>,
     ) -> String {
-        if let Some(prefix) = maybe_prefix {
+        if let Some(multiaddr) = self.multiaddr.clone() {
+            multiaddr
+        } else if let Some(prefix) = maybe_prefix {
             format!(
                 "/dns/bootstrap-{}.{}.{}.{}/tcp/{}/p2p/{}",
                 node_id, prefix, network, fqdn, port, self.peer_id
