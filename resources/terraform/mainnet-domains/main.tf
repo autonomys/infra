@@ -48,10 +48,10 @@ module "mainnet_domains" {
 
   domain-rpc-node-config = {
     instance-type        = "c7a.4xlarge"
-    deployment-version   = 1
+    deployment-version   = 2
     disk-volume-size     = 500
     disk-volume-type     = var.disk_volume_type
-    enable-reverse-proxy = false
+    enable-reverse-proxy = true
     rpc-nodes = [
       {
         domain-id     = 0
