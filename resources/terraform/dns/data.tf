@@ -45,3 +45,7 @@ data "cloudflare_zone" "subspace_network" {
     name = "subspace.network"
   }
 }
+
+locals {
+  proxied_data = jsondecode(file("${path.module}/proxied.json"))
+}

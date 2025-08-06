@@ -21,3 +21,4 @@ resources/mainnet/keystore/*
 /modules/node-utils/data
 /resources/terraform/devnet/config.toml
 /resources/terraform/mainnet-domains/config.toml
+/resources/terraform/dns/proxied.json
