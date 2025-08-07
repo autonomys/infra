@@ -1,21 +1,21 @@
 module "devnet" {
-  source                = "../../../templates/terraform/network-primitives"
-  path_to_scripts       = "../../../templates/scripts"
-  network_name          = "devnet"
-  vpc_id                = "devnet-vpc"
-  vpc_cidr_block        = "172.31.0.0/16"
-  public_subnet_cidrs   = ["172.31.1.0/24"]
-  ssh_user              = "ubuntu"
-  aws_region            = "us-east-1"
-  availability_zone     = "us-east-1a"
-  cloudflare_api_token  = var.cloudflare_api_token
-  cloudflare_account_id = var.cloudflare_account_id
-  cloudflare_zone_id    = var.cloudflare_zone_id
-  new_relic_api_key     = var.new_relic_api_key
-  aws_access_key        = var.aws_access_key
-  aws_secret_key        = var.aws_secret_key
-  aws_ssh_key_name      = var.aws_ssh_key_name
-  ssh_agent_identity    = var.ssh_agent_identity
+  source                 = "../../../templates/terraform/network-primitives"
+  path_to_scripts        = "../../../templates/scripts"
+  network_name           = "devnet"
+  vpc_id                 = "devnet-vpc"
+  vpc_cidr_block         = "172.31.0.0/16"
+  public_subnet_cidrs    = ["172.31.1.0/24"]
+  ssh_user               = "ubuntu"
+  aws_region             = "us-east-1"
+  availability_zone      = "us-east-1a"
+  cloudflare_api_token   = var.cloudflare_api_token
+  cloudflare_account_id  = var.cloudflare_account_id
+  cloudflare_domain_fqdn = "autonomys.xyz"
+  new_relic_api_key      = var.new_relic_api_key
+  aws_access_key         = var.aws_access_key
+  aws_secret_key         = var.aws_secret_key
+  aws_ssh_key_name       = var.aws_ssh_key_name
+  ssh_agent_identity     = var.ssh_agent_identity
 
   consensus-bootstrap-node-config = {
     instance-type      = "m6a.xlarge"
@@ -46,6 +46,7 @@ module "devnet" {
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
+    enable-load-balancer = true
     rpc-nodes = [
       {
         docker-tag    = "update-devnet-spec"
@@ -97,6 +98,7 @@ module "devnet" {
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
+    enable-load-balancer = true
     rpc-nodes = [
       {
         domain-id     = 0

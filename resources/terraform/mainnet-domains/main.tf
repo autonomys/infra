@@ -1,25 +1,21 @@
 module "mainnet_domains" {
-  source                = "../../../templates/terraform/network-primitives"
-  path_to_scripts       = "../../../templates/scripts"
-  network_name          = "mainnet"
-  vpc_id                = "mainnet-domains-vpc"
-  vpc_cidr_block        = "172.32.0.0/16"
-  public_subnet_cidrs   = ["172.32.1.0/24"]
-  ssh_user              = "ubuntu"
-  aws_region            = "us-east-1"
-  availability_zone     = "us-east-1a"
-  cloudflare_api_token  = var.cloudflare_api_token
-  cloudflare_account_id = var.cloudflare_account_id
-  cloudflare_zone_id    = var.cloudflare_zone_id
-  new_relic_api_key     = var.new_relic_api_key
-  aws_access_key        = var.aws_access_key
-  aws_secret_key        = var.aws_secret_key
-  aws_ssh_key_name      = var.aws_ssh_key_name
-  ssh_agent_identity    = var.ssh_agent_identity
-
-  consensus-bootstrap-node-config = null
-  consensus-rpc-node-config       = null
-  farmer-node-config              = null
+  source                 = "../../../templates/terraform/network-primitives"
+  path_to_scripts        = "../../../templates/scripts"
+  network_name           = "mainnet"
+  vpc_id                 = "mainnet-domains-vpc"
+  vpc_cidr_block         = "172.32.0.0/16"
+  public_subnet_cidrs    = ["172.32.1.0/24"]
+  ssh_user               = "ubuntu"
+  aws_region             = "us-east-1"
+  availability_zone      = "us-east-1a"
+  cloudflare_api_token   = var.cloudflare_api_token
+  cloudflare_account_id  = var.cloudflare_account_id
+  cloudflare_domain_fqdn = "autonomys.xyz"
+  new_relic_api_key      = var.new_relic_api_key
+  aws_access_key         = var.aws_access_key
+  aws_secret_key         = var.aws_secret_key
+  aws_ssh_key_name       = var.aws_ssh_key_name
+  ssh_agent_identity     = var.ssh_agent_identity
 
   domain-bootstrap-node-config = {
     instance-type      = "c7a.2xlarge"
@@ -52,6 +48,7 @@ module "mainnet_domains" {
     disk-volume-size     = 500
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
+    enable-load-balancer = true
     rpc-nodes = [
       {
         domain-id     = 0

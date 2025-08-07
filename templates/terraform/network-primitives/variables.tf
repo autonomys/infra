@@ -17,10 +17,9 @@ variable "new_relic_api_key" {
   sensitive   = true
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID"
+variable "cloudflare_domain_fqdn" {
+  description = "Domain FQDN for DNS records"
   type        = string
-  sensitive   = true
 }
 
 variable "cloudflare_account_id" {
@@ -111,6 +110,7 @@ variable "consensus-rpc-node-config" {
     deployment-version   = number
     dns-prefix           = string
     enable-reverse-proxy = bool
+    enable-load-balancer = bool
     rpc-nodes = list(object({
       docker-tag    = string
       reserved-only = bool
@@ -168,6 +168,7 @@ variable "domain-rpc-node-config" {
     instance-type        = string
     deployment-version   = number
     enable-reverse-proxy = bool
+    enable-load-balancer = bool
     rpc-nodes = list(object({
       domain-id     = number
       domain-name   = string

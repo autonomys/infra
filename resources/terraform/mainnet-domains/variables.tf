@@ -10,11 +10,6 @@ variable "cloudflare_account_id" {
   sensitive   = true
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID"
-  type        = string
-}
-
 variable "disk_volume_type" {
   description = "EBS disk volume type"
   type        = string
