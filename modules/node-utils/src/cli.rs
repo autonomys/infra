@@ -99,6 +99,16 @@ pub struct RpcParams {
         require_equals = false,
     )]
     pub enable_reverse_proxy: bool,
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
+    pub enable_load_balancer: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -135,6 +145,16 @@ pub struct DomainRpcParams {
         require_equals = false,
     )]
     pub enable_reverse_proxy: bool,
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
+    pub enable_load_balancer: bool,
 }
 
 #[derive(Debug, Parser)]

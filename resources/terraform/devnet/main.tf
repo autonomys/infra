@@ -18,11 +18,10 @@ module "devnet" {
   ssh_agent_identity     = var.ssh_agent_identity
 
   consensus-bootstrap-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    genesis-hash       = "79d5a50059ea893fa76d59dac27af5352ae64c989ede77a31464df7ce0c24836"
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
+    instance-type    = "m6a.xlarge"
+    genesis-hash     = "79d5a50059ea893fa76d59dac27af5352ae64c989ede77a31464df7ce0c24836"
+    disk-volume-size = var.disk_volume_size
+    disk-volume-type = var.disk_volume_type
     bootstrap-nodes = [
       {
         docker-tag    = "update-devnet-spec"
@@ -41,7 +40,6 @@ module "devnet" {
 
   consensus-rpc-node-config = {
     instance-type        = "m6a.xlarge"
-    deployment-version   = 0
     dns-prefix           = "rpc"
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
@@ -58,8 +56,7 @@ module "devnet" {
   }
 
   farmer-node-config = {
-    instance-type      = "c6id.2xlarge"
-    deployment-version = 0
+    instance-type = "c6id.2xlarge"
     farmer-nodes = [
       {
         docker-tag             = "update-devnet-spec"
@@ -76,10 +73,9 @@ module "devnet" {
   }
 
   domain-bootstrap-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
+    instance-type    = "m6a.xlarge"
+    disk-volume-size = var.disk_volume_size
+    disk-volume-type = var.disk_volume_type
     bootstrap-nodes = [
       {
         domain-id     = 0
@@ -94,7 +90,6 @@ module "devnet" {
 
   domain-rpc-node-config = {
     instance-type        = "m6a.xlarge"
-    deployment-version   = 0
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
@@ -113,10 +108,9 @@ module "devnet" {
   }
 
   domain-operator-node-config = {
-    instance-type      = "m6a.xlarge"
-    deployment-version = 0
-    disk-volume-size   = var.disk_volume_size
-    disk-volume-type   = var.disk_volume_type
+    instance-type    = "m6a.xlarge"
+    disk-volume-size = var.disk_volume_size
+    disk-volume-type = var.disk_volume_type
     operator-nodes = [
       {
         domain-id     = 0

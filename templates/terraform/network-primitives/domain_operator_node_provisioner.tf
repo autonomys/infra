@@ -42,10 +42,8 @@ resource "null_resource" "start_domain_operator_nodes" {
   count      = length(aws_instance.domain_operator_nodes)
   depends_on = [null_resource.setup_domain_operator_nodes]
 
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.domain-operator-node-config.deployment-version
-  }
+  # trigger node deployment on node object change
+  triggers = var.domain-operator-node-config.operator-nodes[count.index]
 
   connection {
     host           = aws_instance.domain_operator_nodes[count.index].public_ip

@@ -51,9 +51,17 @@ resource "null_resource" "start_domain_rpc_nodes" {
   count      = length(aws_instance.domain_rpc_nodes)
   depends_on = [null_resource.setup_domain_rpc_nodes]
 
-  # trigger on node deployment version change
+  # trigger node re-deployment on any of the following changes
   triggers = {
-    deployment_version = var.domain-rpc-node-config.deployment-version
+    domain-id            = var.domain-rpc-node-config.rpc-nodes[count.index].domain-id
+    domain-name          = var.domain-rpc-node-config.rpc-nodes[count.index].domain-name
+    docker-tag           = var.domain-rpc-node-config.rpc-nodes[count.index].docker-tag
+    reserved-only        = var.domain-rpc-node-config.rpc-nodes[count.index].reserved-only
+    index                = var.domain-rpc-node-config.rpc-nodes[count.index].index
+    sync-mode            = var.domain-rpc-node-config.rpc-nodes[count.index].sync-mode
+    eth-cache            = var.domain-rpc-node-config.rpc-nodes[count.index].eth-cache
+    enable-reverse-proxy = var.domain-rpc-node-config.enable-reverse-proxy
+    enable-load-balancer = var.domain-rpc-node-config.enable-load-balancer
   }
 
   connection {
@@ -91,6 +99,7 @@ resource "null_resource" "start_domain_rpc_nodes" {
           --node-prefix ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name} \
           --domain-id ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-id} \
           --enable-reverse-proxy ${var.domain-rpc-node-config.enable-reverse-proxy} \
+		  --enable-load-balancer ${var.domain-rpc-node-config.enable-load-balancer} \
           --sync-mode ${var.domain-rpc-node-config.rpc-nodes[count.index].sync-mode} \
           --eth-cache ${var.domain-rpc-node-config.rpc-nodes[count.index].eth-cache} \
           --is-reserved ${var.domain-rpc-node-config.rpc-nodes[count.index].reserved-only}

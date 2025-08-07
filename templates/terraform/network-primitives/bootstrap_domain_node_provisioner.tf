@@ -44,10 +44,8 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
   count      = length(aws_instance.domain_bootstrap_nodes)
   depends_on = [null_resource.setup-domain-bootstrap-nodes]
 
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.domain-bootstrap-node-config.deployment-version
-  }
+  # trigger node deployment of the node object changes
+  triggers = var.domain-bootstrap-node-config.bootstrap-nodes[count.index]
 
   connection {
     host           = aws_instance.domain_bootstrap_nodes[count.index].public_ip

@@ -51,9 +51,14 @@ resource "null_resource" "start_consensus_rpc_nodes" {
   count      = length(aws_instance.consensus_rpc_nodes)
   depends_on = [null_resource.setup_consensus_rpc_nodes]
 
-  # trigger on node deployment version change
+  # trigger node re-deployment on any of the following changes
   triggers = {
-    deployment_version = var.consensus-rpc-node-config.deployment-version
+    index                = var.consensus-rpc-node-config.rpc-nodes[count.index].index
+    docker-tag           = var.consensus-rpc-node-config.rpc-nodes[count.index].docker-tag
+    reserved-only        = var.consensus-rpc-node-config.rpc-nodes[count.index].reserved-only
+    sync-mode            = var.consensus-rpc-node-config.rpc-nodes[count.index].sync-mode
+    enable-reverse-proxy = var.consensus-rpc-node-config.enable-reverse-proxy
+    enable-load-balancer = var.consensus-rpc-node-config.enable-load-balancer
   }
 
   connection {
@@ -90,6 +95,7 @@ resource "null_resource" "start_consensus_rpc_nodes" {
           --external-ip-v6 ${aws_instance.consensus_rpc_nodes[count.index].ipv6_addresses[0]} \
           --node-prefix ${var.consensus-rpc-node-config.dns-prefix} \
           --enable-reverse-proxy ${var.consensus-rpc-node-config.enable-reverse-proxy} \
+		  --enable-load-balancer ${var.consensus-rpc-node-config.enable-load-balancer} \
           --sync-mode ${var.consensus-rpc-node-config.rpc-nodes[count.index].sync-mode} \
           --is-reserved ${var.consensus-rpc-node-config.rpc-nodes[count.index].reserved-only}
 

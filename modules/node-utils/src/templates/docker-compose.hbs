@@ -171,7 +171,7 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.http.services.node.loadbalancer.server.port={{rpc_node.port}}"
-            - "traefik.http.routers.node.rule=Host(`{{node_prefix}}-{{node_id}}.{{network_name}}.{{fqdn}}`) || Host(`{{node_prefix}}.{{network_name}}.{{fqdn}}`) && Path(`/ws`)"
+            - "traefik.http.routers.node.rule=Host(`{{node_prefix}}-{{node_id}}.{{network_name}}.{{fqdn}}`) {{#if rpc_node.enable_load_balancer}}|| Host(`{{node_prefix}}.{{network_name}}.{{fqdn}}`) {{/if}} && Path(`/ws`)"
             - "traefik.http.routers.node.tls=true"
             - "traefik.http.routers.node.tls.certresolver=le"
             - "traefik.http.routers.node.entrypoints=websecure"

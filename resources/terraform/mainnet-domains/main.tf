@@ -18,10 +18,9 @@ module "mainnet_domains" {
   ssh_agent_identity     = var.ssh_agent_identity
 
   domain-bootstrap-node-config = {
-    instance-type      = "c7a.2xlarge"
-    deployment-version = 1
-    disk-volume-size   = 300
-    disk-volume-type   = var.disk_volume_type
+    instance-type    = "c7a.2xlarge"
+    disk-volume-size = 300
+    disk-volume-type = var.disk_volume_type
     bootstrap-nodes = [
       {
         domain-id     = 0
@@ -44,7 +43,6 @@ module "mainnet_domains" {
 
   domain-rpc-node-config = {
     instance-type        = "c7a.4xlarge"
-    deployment-version   = 2
     disk-volume-size     = 500
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
@@ -72,10 +70,9 @@ module "mainnet_domains" {
   }
 
   domain-operator-node-config = {
-    instance-type      = "c7a.2xlarge"
-    deployment-version = 1
-    disk-volume-size   = 300
-    disk-volume-type   = var.disk_volume_type
+    instance-type    = "c7a.2xlarge"
+    disk-volume-size = 300
+    disk-volume-type = var.disk_volume_type
     operator-nodes = [
       {
         domain-id     = 0

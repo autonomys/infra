@@ -88,8 +88,7 @@ variable "path_to_scripts" {
 variable "consensus-bootstrap-node-config" {
   description = "Consensus Bootstrap node deployment config"
   type = object({
-    instance-type      = string
-    deployment-version = number
+    instance-type = string
     bootstrap-nodes = list(object({
       docker-tag    = string
       reserved-only = bool
@@ -107,7 +106,6 @@ variable "consensus-rpc-node-config" {
   description = "Consensus RPC node deployment config"
   type = object({
     instance-type        = string
-    deployment-version   = number
     dns-prefix           = string
     enable-reverse-proxy = bool
     enable-load-balancer = bool
@@ -126,8 +124,7 @@ variable "consensus-rpc-node-config" {
 variable "farmer-node-config" {
   description = "Farmer and Node configuration. Requires an NVME instance storage and not EBS"
   type = object({
-    instance-type      = string
-    deployment-version = number
+    instance-type = string
     farmer-nodes = list(object({
       docker-tag             = string
       reserved-only          = bool
@@ -146,8 +143,7 @@ variable "farmer-node-config" {
 variable "domain-bootstrap-node-config" {
   description = "Domain Bootstrap node deployment config"
   type = object({
-    instance-type      = string
-    deployment-version = number
+    instance-type = string
     bootstrap-nodes = list(object({
       domain-id     = number
       domain-name   = string
@@ -166,7 +162,6 @@ variable "domain-rpc-node-config" {
   description = "Domain RPC node deployment config"
   type = object({
     instance-type        = string
-    deployment-version   = number
     enable-reverse-proxy = bool
     enable-load-balancer = bool
     rpc-nodes = list(object({
@@ -187,8 +182,7 @@ variable "domain-rpc-node-config" {
 variable "domain-operator-node-config" {
   description = "Domain Operator node deployment config"
   type = object({
-    instance-type      = string
-    deployment-version = number
+    instance-type = string
     operator-nodes = list(object({
       domain-id     = number
       domain-name   = string

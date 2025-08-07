@@ -1,9 +1,23 @@
 locals {
-  consensus_load_balancer_count = var.consensus-rpc-node-config == null ? 0 : length(cloudflare_dns_record.consensus_rpc) < 1 ? 0 : var.consensus-rpc-node-config.enable-load-balancer ? 1 : 0
+  consensus_load_balancer_count = var.consensus-rpc-node-config == null || length(cloudflare_dns_record.consensus_rpc) < 1 || !var.consensus-rpc-node-config.enable-load-balancer ? 0 : 1
+}
+
+resource "cloudflare_dns_record" "consensus_rpc_lb" {
+  lifecycle {
+    ignore_changes = [name]
+  }
+  depends_on = [aws_instance.consensus_rpc_nodes]
+  count      = var.consensus-rpc-node-config == null || !var.consensus-rpc-node-config.enable-reverse-proxy || !var.consensus-rpc-node-config.enable-load-balancer ? 0 : length(aws_instance.consensus_rpc_nodes)
+  zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
+  name       = "${var.consensus-rpc-node-config.dns-prefix}.${var.network_name}"
+  content    = aws_instance.consensus_rpc_nodes[count.index].public_ip
+  type       = "A"
+  ttl        = 1
+  proxied    = true
 }
 
 resource "cloudflare_load_balancer_monitor" "consensus_rpc_health_check" {
-  depends_on  = [cloudflare_dns_record.consensus_rpc]
+  depends_on  = [cloudflare_dns_record.consensus_rpc_lb]
   count       = local.consensus_load_balancer_count
   account_id  = var.cloudflare_account_id
   type        = "tcp"
@@ -105,9 +119,23 @@ locals {
   }
 }
 
+resource "cloudflare_dns_record" "domain_rpc_lb" {
+  lifecycle {
+    ignore_changes = [name]
+  }
+  depends_on = [aws_instance.domain_rpc_nodes]
+  count      = var.domain-rpc-node-config == null || !var.domain-rpc-node-config.enable-reverse-proxy || !var.domain-rpc-node-config.enable-load-balancer ? 0 : length(aws_instance.domain_rpc_nodes)
+  zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
+  name       = "${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name}.${var.network_name}"
+  content    = aws_instance.domain_rpc_nodes[count.index].public_ip
+  type       = "A"
+  ttl        = 1
+  proxied    = true
+}
+
 resource "cloudflare_load_balancer_monitor" "domain_rpc_health_check" {
   for_each    = local.domain_name_map
-  depends_on  = [cloudflare_dns_record.domain_rpc]
+  depends_on  = [cloudflare_dns_record.domain_rpc_lb]
   account_id  = var.cloudflare_account_id
   type        = "tcp"
   port        = 30334

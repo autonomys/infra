@@ -54,10 +54,8 @@ resource "null_resource" "start_consensus_farmer_nodes" {
   count      = length(aws_instance.consensus_farmer_nodes)
   depends_on = [null_resource.setup_consensus_farmer_nodes]
 
-  # trigger on node deployment version change
-  triggers = {
-    deployment_version = var.farmer-node-config.deployment-version
-  }
+  # trigger node deployment if node details change
+  triggers = var.farmer-node-config.farmer-nodes[count.index]
 
   connection {
     host           = aws_instance.consensus_farmer_nodes[count.index].public_ip
