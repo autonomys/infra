@@ -1,5 +1,5 @@
 module "devnet" {
-  source                 = "../../../templates/terraform/network-primitives"
+  source                 = "../../../modules/network-primitives"
   path_to_scripts        = "../../../templates/scripts"
   network_name           = "devnet"
   vpc_id                 = "devnet-vpc"

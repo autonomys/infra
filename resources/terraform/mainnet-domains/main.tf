@@ -1,5 +1,5 @@
 module "mainnet_domains" {
-  source                 = "../../../templates/terraform/network-primitives"
+  source                 = "../../../modules/network-primitives"
   path_to_scripts        = "../../../templates/scripts"
   network_name           = "mainnet"
   vpc_id                 = "mainnet-domains-vpc"
