@@ -63,7 +63,6 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
   }
 
   # start docker containers
-  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -74,7 +73,7 @@ resource "null_resource" "start-domain-bootstrap-nodes" {
       sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].domain-id}-bootstrap-node-${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index}
 
       # create docker compose
-      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-bootstrap \
+      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-bootstrap \
           --node-id ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].index} \
           --docker-tag ${var.domain-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} \
           --external-ip-v4 ${aws_instance.domain_bootstrap_nodes[count.index].public_ip} \

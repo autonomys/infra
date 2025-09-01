@@ -80,7 +80,6 @@ resource "null_resource" "start_domain_rpc_nodes" {
   }
 
   # start docker containers
-  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -91,7 +90,7 @@ resource "null_resource" "start_domain_rpc_nodes" {
       sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-rpc-node-config.rpc-nodes[count.index].domain-id}-rpc-node-${var.domain-rpc-node-config.rpc-nodes[count.index].index}
 
       # create docker compose
-      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-rpc \
+      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-rpc \
           --node-id ${var.domain-rpc-node-config.rpc-nodes[count.index].index} \
           --docker-tag ${var.domain-rpc-node-config.rpc-nodes[count.index].docker-tag} \
           --external-ip-v4 ${aws_instance.domain_rpc_nodes[count.index].public_ip} \
