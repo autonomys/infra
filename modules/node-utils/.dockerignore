@@ -1,0 +1,7 @@
+# Exclude everything
+*
+# Then just include only the files required for builds
+!/src
+!/Cargo.lock
+!/Cargo.toml
+!/rust-toolchain.toml

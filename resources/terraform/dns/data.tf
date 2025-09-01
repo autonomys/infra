@@ -1,34 +1,51 @@
-// ## Subspace.network zone ##
-data "cloudflare_zone" "subspace_network" {
-  name = "subspace.network"
+data "cloudflare_zone" "ai3_storage" {
+  filter = {
+    name = "ai3.storage"
+  }
 }
 
-// ## Subspace.net zone ##
-data "cloudflare_zone" "subspace_net" {
-  name = "subspace.net"
-}
-
-// ## continuim.cc zone ##
-data "cloudflare_zone" "continuim_cc" {
-  name = "continuim.cc"
-}
-
-// ## continuum.co zone ##
-data "cloudflare_zone" "continuum_co" {
-  name = "continuum.co"
-}
-
-// ## autonomys.net zone ##
 data "cloudflare_zone" "autonomys_net" {
-  name = "autonomys.net"
+  filter = {
+    name = "autonomys.net"
+  }
 }
 
-// ## autonomys.xyz zone ##
+data "cloudflare_zone" "autonomys_network" {
+  filter = {
+    name = "autonomys.network"
+  }
+}
+
 data "cloudflare_zone" "autonomys_xyz" {
-  name = "autonomys.xyz"
+  filter = {
+    name = "autonomys.xyz"
+  }
 }
 
-// ## subspace.foundation zone ##
+data "cloudflare_zone" "continuum_co" {
+  filter = {
+    name = "continuum.co"
+  }
+}
+
 data "cloudflare_zone" "subspace_foundation" {
-  name = "subspace.foundation"
+  filter = {
+    name = "subspace.foundation"
+  }
+}
+
+data "cloudflare_zone" "subspace_net" {
+  filter = {
+    name = "subspace.net"
+  }
+}
+
+data "cloudflare_zone" "subspace_network" {
+  filter = {
+    name = "subspace.network"
+  }
+}
+
+locals {
+  proxied_data = jsondecode(file("${path.module}/proxied.json"))
 }

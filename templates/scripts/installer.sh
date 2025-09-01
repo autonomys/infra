@@ -24,4 +24,5 @@ fi
 
 sudo sysctl -p /etc/sysctl.conf
 
-sudo docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+#sudo docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+sudo docker plugin inspect loki:latest >/dev/null 2>&1 || sudo docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions

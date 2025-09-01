@@ -13,7 +13,7 @@ variable "cloudflare_account_id" {
 variable "disk_volume_size" {
   description = "EBS disk volume size in GiB"
   type        = number
-  default     = 100
+  default     = 500
 }
 
 variable "disk_volume_type" {

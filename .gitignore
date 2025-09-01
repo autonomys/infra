@@ -16,3 +16,10 @@ resources/taurus/*_node_keys.txt
 resources/taurus/keystore/*
 resources/mainnet/*_node_keys.txt
 resources/mainnet/keystore/*
+/.idea
+/modules/node-utils/target
+/modules/node-utils/data
+/resources/terraform/devnet/config.toml
+/resources/terraform/mainnet-domains/config.toml
+/resources/terraform/dns/proxied.json
+/resources/terraform/chronos/config.toml

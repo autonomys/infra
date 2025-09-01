@@ -10,12 +10,6 @@ variable "cloudflare_account_id" {
   sensitive   = true
 }
 
-variable "disk_volume_size" {
-  description = "EBS disk volume size in GiB"
-  type        = number
-  default     = 100
-}
-
 variable "disk_volume_type" {
   description = "EBS disk volume type"
   type        = string
