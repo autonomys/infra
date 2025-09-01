@@ -19,18 +19,18 @@ module "chronos" {
 
   consensus-bootstrap-node-config = {
     instance-type    = "c7a.2xlarge"
-    genesis-hash     = "e979a8ec5540bfe824aa25b6a43452aff4afe71a75c467766fe17bb8d4e7a86c"
+    genesis-hash     = "91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
     disk-volume-size = var.disk_volume_size
     disk-volume-type = var.disk_volume_type
     bootstrap-nodes = [
       {
-        docker-tag    = "chronos_testnet"
+        docker-tag    = "chronos"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
       },
       {
-        docker-tag    = "chronos_testnet"
+        docker-tag    = "chronos"
         reserved-only = false
         index         = 1
         sync-mode     = "full"
@@ -47,13 +47,13 @@ module "chronos" {
     enable-load-balancer = true
     rpc-nodes = [
       {
-        docker-tag    = "chronos_testnet"
+        docker-tag    = "chronos"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
       },
       {
-        docker-tag    = "chronos_testnet"
+        docker-tag    = "chronos"
         reserved-only = false
         index         = 1
         sync-mode     = "full"
@@ -65,7 +65,7 @@ module "chronos" {
     instance-type = "c6id.4xlarge"
     farmer-nodes = [
       {
-        docker-tag             = "chronos_testnet"
+        docker-tag             = "chronos"
         reserved-only          = false
         plot-size              = "50G"
         reward-address         = "sucqjUNjJBYALeKNnhhwLAkW6zuvTFVnAzhaTgjK6B1gqfNyo"

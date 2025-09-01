@@ -1,5 +1,5 @@
 resource "null_resource" "setup_bare_domain_operator_nodes" {
-  count = length(var.bare-domain-operator-node-config.operator-nodes)
+  count = var.bare-domain-operator-node-config == null ? 0 : length(var.bare-domain-operator-node-config.operator-nodes)
 
   connection {
     host           = var.bare-domain-operator-node-config.operator-nodes[count.index].ipv4
@@ -37,7 +37,7 @@ resource "null_resource" "setup_bare_domain_operator_nodes" {
 }
 
 resource "null_resource" "start_bare_domain_operator_nodes" {
-  count      = length(var.bare-domain-operator-node-config.operator-nodes)
+  count      = var.bare-domain-operator-node-config == null ? 0 : length(var.bare-domain-operator-node-config.operator-nodes)
   depends_on = [null_resource.setup_bare_domain_operator_nodes]
 
   # trigger node deployment on node object change

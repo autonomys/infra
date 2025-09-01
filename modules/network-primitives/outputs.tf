@@ -24,7 +24,7 @@ output "domain_operator_node_public_ip" {
 }
 
 output "bare_domain_operator_node_public_ip" {
-  value = var.bare-domain-operator-node-config.operator-nodes.*.ipv4
+  value = var.bare-domain-operator-node-config == null ? null : var.bare-domain-operator-node-config.operator-nodes.*.ipv4
 }
 
 output "dns-records" {
