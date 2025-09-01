@@ -55,8 +55,8 @@ pub struct CommonParams {
     pub docker_tag: String,
     #[arg(long, required = true)]
     pub external_ip_v4: String,
-    #[arg(long, required = true)]
-    pub external_ip_v6: String,
+    #[arg(long)]
+    pub external_ip_v6: Option<String>,
     #[arg(
         long,
         required = true,

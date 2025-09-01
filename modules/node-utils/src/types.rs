@@ -102,7 +102,7 @@ pub struct ComposeTemplateData {
     pub new_relic_api_key: String,
     pub docker_tag: String,
     pub external_ip_v4: String,
-    pub external_ip_v6: String,
+    pub external_ip_v6: Option<String>,
     pub bootstrap_nodes: Vec<String>,
     pub dsn_bootstrap_nodes: Vec<String>,
     pub is_reserved: bool,
@@ -241,8 +241,7 @@ impl ComposeTemplateData {
         let domain_id = node_params.domain_id;
         let node_id = node_params.common.node_id.clone();
         let node_prefix = node_params.node_prefix;
-        let mut data =
-            Self::new_base_common(&config, node_prefix.clone(), node_params.common, true);
+        let mut data = Self::new_base_common(config, node_prefix.clone(), node_params.common, true);
         data.domain_node = Some(DomainNode {
             domain_id: domain_id.clone(),
             operator_id: None,

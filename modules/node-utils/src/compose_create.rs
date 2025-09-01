@@ -29,7 +29,7 @@ pub(crate) fn create_boostrap_node_docker_compose(node_params: CommonParams) {
                 port: "9615".to_string(),
             },
             PrometheusNodeData {
-                job_name: format!("{}-dsn-bootstrap-{}-node", network_name, node_id,),
+                job_name: format!("{network_name}-dsn-bootstrap-{node_id}-node"),
                 node: "dsn-bootstrap-node".to_string(),
                 port: "9616".to_string(),
             },
@@ -45,7 +45,7 @@ pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) {
     create_compose_file(template_data);
     create_prometheus_config(PrometheusTemplateData {
         nodes: vec![PrometheusNodeData {
-            job_name: format!("{}-rpc-{}-node", network_name, node_id,),
+            job_name: format!("{network_name}-rpc-{node_id}-node"),
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
@@ -70,7 +70,7 @@ pub(crate) fn create_farmer_node_docker_compose(farmer_params: FarmerParams) {
                 port: "9615".to_string(),
             },
             PrometheusNodeData {
-                job_name: format!("{}-farmer-{}-node", network_name, node_id,),
+                job_name: format!("{network_name}-farmer-{node_id}-node"),
                 node: "farmer".to_string(),
                 port: "9616".to_string(),
             },
@@ -87,10 +87,7 @@ pub(crate) fn create_domain_bootstrap_node_docker_compose(domain_params: DomainC
     create_compose_file(template_data);
     create_prometheus_config(PrometheusTemplateData {
         nodes: vec![PrometheusNodeData {
-            job_name: format!(
-                "{}-domain-{}-bootstrap-{}-node",
-                network_name, domain_id, node_id,
-            ),
+            job_name: format!("{network_name}-domain-{domain_id}-bootstrap-{node_id}-node",),
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
@@ -106,7 +103,7 @@ pub(crate) fn create_domain_rpc_node_docker_compose(domain_params: DomainRpcPara
     create_compose_file(template_data);
     create_prometheus_config(PrometheusTemplateData {
         nodes: vec![PrometheusNodeData {
-            job_name: format!("{}-domain-{}-rpc-{}-node", network_name, domain_id, node_id,),
+            job_name: format!("{network_name}-domain-{domain_id}-rpc-{node_id}-node"),
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
@@ -132,10 +129,7 @@ pub(crate) fn create_domain_operator_node_docker_compose(domain_params: DomainOp
     file.write_all(operator_suri.as_ref()).unwrap();
     create_prometheus_config(PrometheusTemplateData {
         nodes: vec![PrometheusNodeData {
-            job_name: format!(
-                "{}-domain-{}-operator-{}-node",
-                network_name, domain_id, operator_id,
-            ),
+            job_name: format!("{network_name}-domain-{domain_id}-operator-{operator_id}-node",),
             node: "node".to_string(),
             port: "9615".to_string(),
         }],

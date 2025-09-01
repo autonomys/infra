@@ -40,20 +40,20 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
         }
     };
 
-    (0..bootstrap_node_count).into_iter().for_each(|idx| {
+    (0..bootstrap_node_count).for_each(|idx| {
         let idx = idx.to_string();
-        if !config.bootstrap_node_keys.contains_key(&idx) {
-            config.bootstrap_node_keys.insert(idx, generate_node_key());
-        }
+        config
+            .bootstrap_node_keys
+            .entry(idx)
+            .or_insert_with(generate_node_key);
     });
 
-    (0..bootstrap_node_count).into_iter().for_each(|idx| {
+    (0..bootstrap_node_count).for_each(|idx| {
         let idx = idx.to_string();
-        if !config.bootstrap_dsn_keys.contains_key(&idx) {
-            config
-                .bootstrap_dsn_keys
-                .insert(idx, generate_dsn_node_key());
-        }
+        config
+            .bootstrap_dsn_keys
+            .entry(idx)
+            .or_insert_with(generate_dsn_node_key);
     });
 
     domain_bootstrap_node_count
@@ -64,11 +64,9 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
                 .domain_bootstrap_node_keys
                 .entry(domain_id)
                 .or_default();
-            (0..count).into_iter().for_each(|idx| {
+            (0..count).for_each(|idx| {
                 let idx = idx.to_string();
-                if !domain_config.contains_key(&idx) {
-                    domain_config.insert(idx, generate_node_key());
-                }
+                domain_config.entry(idx).or_insert_with(generate_node_key);
             })
         });
 
@@ -78,9 +76,9 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
             let domain_id = domain_id.to_string();
             let operator_id = operator_id.to_string();
             let domain_config = config.domain_operator_keys.entry(domain_id).or_default();
-            if !domain_config.contains_key(&operator_id) {
-                domain_config.insert(operator_id, generate_mnemonic());
-            }
+            domain_config
+                .entry(operator_id)
+                .or_insert_with(generate_mnemonic);
         });
 
     fs::write("data/config.toml", toml::to_string(&config).unwrap()).unwrap();
