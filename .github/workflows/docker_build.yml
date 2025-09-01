@@ -20,7 +20,7 @@ jobs:
       matrix:
         build:
           - image: node-utils
-            docker-file: modules/node-utils/Dockerfile
+            context: modules/node-utils
       fail-fast: false
 
     steps:
@@ -52,7 +52,7 @@ jobs:
       - name: Build and push ${{ matrix.build.image }} image
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
-          file: ${{ matrix.build.docker-file }}
+          context: ${{ matrix.build.context }}
           platforms: linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
