@@ -25,7 +25,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -33,7 +33,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 1
         sync-mode     = "full"
@@ -51,7 +51,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -60,7 +60,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 1
         sync-mode     = "full"
@@ -77,7 +77,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 0
         operator-id   = 0
@@ -86,7 +86,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-1"
+        docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 1
         operator-id   = 1
@@ -104,7 +104,7 @@ module "mainnet_domains" {
         reserved-only = false
         index         = 2
         operator-id   = 2
-        sync-mode     = "snap"
+        sync-mode     = "full"
         ipv4          = "173.208.0.24"
       }
     ]
