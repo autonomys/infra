@@ -73,7 +73,6 @@ resource "null_resource" "start_consensus_farmer_nodes" {
   }
 
   # start docker containers
-  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -84,7 +83,7 @@ resource "null_resource" "start_consensus_farmer_nodes" {
       sudo hostnamectl set-hostname ${var.network_name}-farmer-node-${var.farmer-node-config.farmer-nodes[count.index].index}
 
       # create docker compose
-      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest farmer \
+      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest farmer \
           --node-id ${var.farmer-node-config.farmer-nodes[count.index].index} \
           --docker-tag ${var.farmer-node-config.farmer-nodes[count.index].docker-tag} \
           --external-ip-v4 ${aws_instance.consensus_farmer_nodes[count.index].public_ip} \

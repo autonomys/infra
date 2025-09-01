@@ -61,7 +61,6 @@ resource "null_resource" "start_domain_operator_nodes" {
   }
 
   # start docker containers
-  # TODO: use autonomys ghcr
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -72,7 +71,7 @@ resource "null_resource" "start_domain_operator_nodes" {
       sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-operator-node-config.operator-nodes[count.index].domain-id}-operator-node-${var.domain-operator-node-config.operator-nodes[count.index].index}
 
       # create docker compose
-      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data vedhavyas/node-utils:latest domain-operator \
+      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-operator \
           --node-id ${var.domain-operator-node-config.operator-nodes[count.index].index} \
           --docker-tag ${var.domain-operator-node-config.operator-nodes[count.index].docker-tag} \
           --external-ip-v4 ${aws_instance.domain_operator_nodes[count.index].public_ip} \
