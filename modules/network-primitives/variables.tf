@@ -197,3 +197,20 @@ variable "domain-operator-node-config" {
   })
   default = null
 }
+
+variable "bare-domain-operator-node-config" {
+  description = "Domain Operator node deployment config for Bare servers"
+  type = object({
+    operator-nodes = list(object({
+      domain-id     = number
+      domain-name   = string
+      docker-tag    = string
+      reserved-only = bool
+      operator-id   = number
+      index         = number
+      sync-mode     = string
+      ipv4          = string
+    }))
+  })
+  default = null
+}

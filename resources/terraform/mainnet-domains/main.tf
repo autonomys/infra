@@ -94,4 +94,19 @@ module "mainnet_domains" {
       }
     ]
   }
+
+  bare-domain-operator-node-config = {
+    operator-nodes = [
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "mainnet-2025-aug-20"
+        reserved-only = false
+        index         = 2
+        operator-id   = 2
+        sync-mode     = "snap"
+        ipv4          = "173.208.0.24"
+      }
+    ]
+  }
 }
