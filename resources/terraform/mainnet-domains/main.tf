@@ -105,7 +105,7 @@ module "mainnet_domains" {
         index         = 2
         operator-id   = 2
         sync-mode     = "full"
-        ipv4          = "173.208.0.24"
+        ipv4          = var.bare_domain_operator_ipv4.operator_2
       }
     ]
   }
