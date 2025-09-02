@@ -28,12 +28,6 @@ module "devnet" {
         reserved-only = false
         index         = 0
         sync-mode     = "full"
-      },
-      {
-        docker-tag    = "update-devnet-spec"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
       }
     ]
   }
