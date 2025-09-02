@@ -43,3 +43,8 @@ variable "new_relic_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "bare_domain_operator_ipv4" {
+  description = "List of Bare metal IPs for domain operators"
+  type        = map(string)
+}
