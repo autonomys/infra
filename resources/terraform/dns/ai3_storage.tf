@@ -18,3 +18,13 @@ resource "cloudflare_dns_record" "ai3_storage_auto_drive_demo" {
   settings = {}
 }
 
+resource "cloudflare_dns_record" "ai3_storage_auto_drive_explorer" {
+  content  = "auto-drive-storage.netlify.app"
+  name     = "explorer.ai3.storage"
+  proxied  = false
+  ttl      = 1
+  type     = "CNAME"
+  zone_id  = data.cloudflare_zone.ai3_storage.zone_id
+  settings = {}
+}
+
