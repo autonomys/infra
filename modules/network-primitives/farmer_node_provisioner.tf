@@ -94,6 +94,7 @@ resource "null_resource" "start_consensus_farmer_nodes" {
           --faster-sector-plotting ${var.farmer-node-config.farmer-nodes[count.index].faster-sector-plotting} \
           --force-block-production ${var.farmer-node-config.farmer-nodes[count.index].force-block-production} \
           --sync-mode ${var.farmer-node-config.farmer-nodes[count.index].sync-mode} \
+          --is-timekeeper ${var.farmer-node-config.farmer-nodes[count.index].is-timekeeper} \
           --is-reserved ${var.farmer-node-config.farmer-nodes[count.index].reserved-only}
 
       # start subspace

@@ -62,6 +62,7 @@ module "devnet" {
         faster-sector-plotting = true
         index                  = 0
         sync-mode              = "full"
+        is-timekeeper          = true
       }
     ]
   }

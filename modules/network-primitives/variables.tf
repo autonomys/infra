@@ -135,6 +135,10 @@ variable "farmer-node-config" {
       faster-sector-plotting = bool
       index                  = number
       sync-mode              = string
+      // also run farmer node as timekeeper
+      // should be used only for dev network where
+      // dedicated timekeepers are deployed
+      is-timekeeper = bool
     }))
   })
   default = null
