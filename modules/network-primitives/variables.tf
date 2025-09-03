@@ -144,6 +144,20 @@ variable "farmer-node-config" {
   default = null
 }
 
+variable "timekeeper-node-config" {
+  description = "Timekeeper node deployment config for Bare servers"
+  type = object({
+    timekeeper-nodes = list(object({
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
+      ipv4          = string
+    }))
+  })
+  default = null
+}
+
 variable "domain-bootstrap-node-config" {
   description = "Domain Bootstrap node deployment config"
   type = object({
