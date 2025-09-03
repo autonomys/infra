@@ -49,3 +49,8 @@ variable "new_relic_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "timekeeper_node_ipv4" {
+  description = "Timekeeper node IPv4"
+  type        = map(string)
+}
