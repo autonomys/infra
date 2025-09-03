@@ -113,6 +113,7 @@ pub struct ComposeTemplateData {
     pub rpc_node: Option<RpcNode>,
     pub dsn_node: Option<DsnNode>,
     pub domain_node: Option<DomainNode>,
+    pub is_timekeeper: bool,
 }
 
 impl ComposeTemplateData {
@@ -216,6 +217,7 @@ impl ComposeTemplateData {
     pub fn new_farmer(config: Config, farmer_params: FarmerParams) -> ComposeTemplateData {
         let mut data =
             Self::new_base_common(&config, "farmer".to_string(), farmer_params.common, true);
+        data.is_timekeeper = farmer_params.is_timekeeper;
         data.farmer_node = Some(farmer_params.farmer_params);
         data
     }
@@ -230,6 +232,12 @@ impl ComposeTemplateData {
             enable_reverse_proxy: node_params.enable_reverse_proxy,
             enable_load_balancer: node_params.enable_load_balancer,
         });
+        data
+    }
+
+    pub fn new_timekeeper(config: Config, node_params: CommonParams) -> ComposeTemplateData {
+        let mut data = Self::new_base_common(&config, "timekeeper".to_string(), node_params, true);
+        data.is_timekeeper = true;
         data
     }
 

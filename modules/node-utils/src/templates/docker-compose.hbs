@@ -257,15 +257,14 @@ services:
         {{/if}}
         {{#if farmer_node}}
             "--farmer",
-            "--timekeeper",
             "--rpc-cors", "all",
             "--rpc-listen-on", "0.0.0.0:9944",
             "--rpc-methods", "unsafe",
         {{/if}}
-        {{#if domain_node}}
-          {{#if domain_node.operator_id}}
+        {{#if is_timekeeper}}
             "--timekeeper",
-          {{/if}}
+        {{/if}}
+        {{#if domain_node}}
             "--",
             "--domain-id", "{{domain_node.domain_id}}",
           {{#if domain_node.operator_id}}
