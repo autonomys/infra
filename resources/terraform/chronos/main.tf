@@ -74,6 +74,7 @@ module "chronos" {
         faster-sector-plotting = false
         index                  = 0
         sync-mode              = "full"
+        is-timekeeper          = true
       }
     ]
   }
