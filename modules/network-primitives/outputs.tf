@@ -27,6 +27,10 @@ output "bare_domain_operator_node_public_ip" {
   value = var.bare-domain-operator-node-config == null ? null : var.bare-domain-operator-node-config.operator-nodes.*.ipv4
 }
 
+output "timekeeper_node_public_ip" {
+  value = var.timekeeper-node-config == null ? null : var.timekeeper-node-config.timekeeper-nodes.*.ipv4
+}
+
 output "dns-records" {
   value = concat(
     [for record in cloudflare_dns_record.consensus_bootstrap_ipv4 :

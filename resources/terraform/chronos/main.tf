@@ -74,6 +74,19 @@ module "chronos" {
         faster-sector-plotting = false
         index                  = 0
         sync-mode              = "full"
+        is-timekeeper          = true
+      }
+    ]
+  }
+
+  timekeeper-node-config = {
+    timekeeper-nodes = [
+      {
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+        ipv4          = var.timekeeper_node_ipv4.timekeeper-0
       }
     ]
   }

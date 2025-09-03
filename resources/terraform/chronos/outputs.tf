@@ -13,6 +13,11 @@ output "farmer-node-ipv4-addresses" {
   description = "Farmer node IPv4 Addresses"
 }
 
+output "timekeeper-node-ipv4-addresses" {
+  value       = module.chronos.timekeeper_node_public_ip
+  description = "Timekeeper node IPv4 addresses"
+}
+
 output "domain-bootstrap-node-ipv4-addresses" {
   value       = module.chronos.domain_bootstrap_node_public_ip
   description = "Domain Bootstrap node IPv4 Addresses"

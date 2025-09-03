@@ -135,6 +135,24 @@ variable "farmer-node-config" {
       faster-sector-plotting = bool
       index                  = number
       sync-mode              = string
+      // also run farmer node as timekeeper
+      // should be used only for dev network where
+      // dedicated timekeepers are deployed
+      is-timekeeper = bool
+    }))
+  })
+  default = null
+}
+
+variable "timekeeper-node-config" {
+  description = "Timekeeper node deployment config for Bare servers"
+  type = object({
+    timekeeper-nodes = list(object({
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
+      ipv4          = string
     }))
   })
   default = null
