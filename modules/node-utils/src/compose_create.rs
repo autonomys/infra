@@ -52,6 +52,21 @@ pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) {
     });
 }
 
+pub(crate) fn create_timekeeper_node_docker_compose(params: CommonParams) {
+    let config = load_config().unwrap();
+    let network_name = config.network.clone();
+    let node_id = params.node_id.clone();
+    let template_data = ComposeTemplateData::new_timekeeper(config, params);
+    create_compose_file(template_data);
+    create_prometheus_config(PrometheusTemplateData {
+        nodes: vec![PrometheusNodeData {
+            job_name: format!("{network_name}-timekeeper-{node_id}-node"),
+            node: "node".to_string(),
+            port: "9615".to_string(),
+        }],
+    });
+}
+
 pub(crate) fn create_farmer_node_docker_compose(farmer_params: FarmerParams) {
     let config = load_config().unwrap();
     let network_name = config.network.clone();
