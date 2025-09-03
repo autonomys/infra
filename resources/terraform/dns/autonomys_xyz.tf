@@ -1107,3 +1107,13 @@ resource "cloudflare_dns_record" "terraform_managed_resource_6125859f850be53926a
   settings = {}
 }
 
+resource "cloudflare_dns_record" "staking_autonomys_xyz" {
+  content  = "7d1c8898fca10668.vercel-dns-016.com"
+  name     = "staking.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "CNAME"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
