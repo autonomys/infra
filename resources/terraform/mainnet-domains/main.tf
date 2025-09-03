@@ -114,7 +114,7 @@ module "mainnet_domains" {
         reserved-only = false
         index         = 3
         operator-id   = 3
-        sync-mode     = "snap"
+        sync-mode     = "full"
         ipv4          = var.bare_domain_operator_ipv4.operator_3
       }
     ]

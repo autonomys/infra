@@ -10,6 +10,7 @@ pub enum Command {
     Bootstrap(CommonParams),
     Farmer(FarmerParams),
     Rpc(RpcParams),
+    Timekeeper(CommonParams),
     DomainBootstrap(DomainCommonParams),
     DomainRpc(DomainRpcParams),
     DomainOperator(DomainOperatorParams),
@@ -81,6 +82,16 @@ pub struct FarmerParams {
     pub common: CommonParams,
     #[clap(flatten)]
     pub farmer_params: FarmerNodeParams,
+    #[arg(
+        long,
+        required = true,
+        action = ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        num_args = 0..=1,
+        require_equals = false,
+    )]
+    pub is_timekeeper: bool,
 }
 
 #[derive(Debug, Parser)]
