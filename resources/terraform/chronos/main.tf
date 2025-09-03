@@ -70,11 +70,11 @@ module "chronos" {
         plot-size              = "50G"
         reward-address         = "sucqjUNjJBYALeKNnhhwLAkW6zuvTFVnAzhaTgjK6B1gqfNyo"
         cache-percentage       = 50
-        force-block-production = true
+        force-block-production = false
         faster-sector-plotting = false
         index                  = 0
         sync-mode              = "full"
-        is-timekeeper          = true
+        is-timekeeper          = false
       }
     ]
   }
