@@ -1119,3 +1119,47 @@ resource "cloudflare_dns_record" "staking_autonomys_xyz" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {}
 }
+
+resource "cloudflare_dns_record" "explorer_auto_evm_chronos" {
+  content  = "15.204.31.207"
+  name     = "explorer.auto-evm.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "stats_explorer_auto_evm_chronos" {
+  content  = "15.204.31.207"
+  name     = "stats.explorer.auto-evm.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "scv_explorer_auto_evm_chronos" {
+  content  = "15.204.31.207"
+  name     = "scv.explorer.auto-evm.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "grafana_explorer_auto_evm_chronos" {
+  content  = "15.204.31.207"
+  name     = "grafana.explorer.auto-evm.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
