@@ -37,3 +37,11 @@ resource "cloudflare_dns_record" "name_of_the_resource" {
 2. Update the resource(s) you wish to update
 3. Submit the changes as a PR to infra.
 4. Infra team will deploy the changes and merge the PR.
+
+## For infra team
+
+1. Once the PR is created, pull down the PR locally
+2. Download `proxied.json` file bitwarden and store it under `resources/terraform/dns`
+3. If the record to be added or updated is proxied, add the record value under `proxied.json`
+4. Do plan and apply the change through terraform
+5. upload back the `proxied.json` if the file is updated
