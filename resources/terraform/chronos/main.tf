@@ -90,4 +90,82 @@ module "chronos" {
       }
     ]
   }
+
+  domain-bootstrap-node-config = {
+    instance-type    = "c7a.2xlarge"
+    disk-volume-size = var.disk_volume_size
+    disk-volume-type = var.disk_volume_type
+    bootstrap-nodes = [
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+      },
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 1
+        sync-mode     = "full"
+      }
+    ]
+  }
+
+  domain-rpc-node-config = {
+    instance-type        = "c7a.4xlarge"
+    disk-volume-size     = var.disk_volume_size
+    disk-volume-type     = var.disk_volume_type
+    enable-reverse-proxy = true
+    enable-load-balancer = true
+    rpc-nodes = [
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+        eth-cache     = true
+      },
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 1
+        sync-mode     = "full"
+        eth-cache     = true
+      }
+    ]
+  }
+
+  domain-operator-node-config = {
+    instance-type    = "c7a.2xlarge"
+    disk-volume-size = var.disk_volume_size
+    disk-volume-type = var.disk_volume_type
+    operator-nodes = [
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 0
+        operator-id   = 0
+        sync-mode     = "full"
+      },
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "chronos"
+        reserved-only = false
+        index         = 1
+        operator-id   = 1
+        sync-mode     = "full"
+      }
+    ]
+  }
 }
