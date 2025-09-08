@@ -94,7 +94,8 @@ resource "null_resource" "start_consensus_rpc_nodes" {
           --external-ip-v6 ${aws_instance.consensus_rpc_nodes[count.index].ipv6_addresses[0]} \
           --node-prefix ${var.consensus-rpc-node-config.dns-prefix} \
           --enable-reverse-proxy ${var.consensus-rpc-node-config.enable-reverse-proxy} \
-		  --enable-load-balancer ${var.consensus-rpc-node-config.enable-load-balancer} \
+          --enable-load-balancer ${var.consensus-rpc-node-config.enable-load-balancer} \
+          --cloudflare-dns-api-token ${var.cloudflare_api_token} \
           --sync-mode ${var.consensus-rpc-node-config.rpc-nodes[count.index].sync-mode} \
           --is-reserved ${var.consensus-rpc-node-config.rpc-nodes[count.index].reserved-only}
 
