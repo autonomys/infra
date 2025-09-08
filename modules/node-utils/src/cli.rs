@@ -100,6 +100,8 @@ pub struct RpcParams {
     pub common: CommonParams,
     #[arg(long, required = true)]
     pub node_prefix: String,
+    #[arg(long, required = true)]
+    pub cloudflare_dns_api_token: String,
     #[arg(
         long,
         required = true,
@@ -136,6 +138,8 @@ pub struct DomainCommonParams {
 pub struct DomainRpcParams {
     #[clap(flatten)]
     pub common: DomainCommonParams,
+    #[arg(long, required = true)]
+    pub cloudflare_dns_api_token: String,
     #[arg(
         long,
         required = true,

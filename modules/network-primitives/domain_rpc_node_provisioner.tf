@@ -98,7 +98,8 @@ resource "null_resource" "start_domain_rpc_nodes" {
           --node-prefix ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name} \
           --domain-id ${var.domain-rpc-node-config.rpc-nodes[count.index].domain-id} \
           --enable-reverse-proxy ${var.domain-rpc-node-config.enable-reverse-proxy} \
-		  --enable-load-balancer ${var.domain-rpc-node-config.enable-load-balancer} \
+          --enable-load-balancer ${var.domain-rpc-node-config.enable-load-balancer} \
+          --cloudflare-dns-api-token ${var.cloudflare_api_token} \
           --sync-mode ${var.domain-rpc-node-config.rpc-nodes[count.index].sync-mode} \
           --eth-cache ${var.domain-rpc-node-config.rpc-nodes[count.index].eth-cache} \
           --is-reserved ${var.domain-rpc-node-config.rpc-nodes[count.index].reserved-only}

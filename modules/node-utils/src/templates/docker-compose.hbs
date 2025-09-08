@@ -63,10 +63,12 @@ services:
             - --providers.docker.exposedbydefault=false
             - --certificatesresolvers.le.acme.email=alerts@subspace.network
             - --certificatesresolvers.le.acme.storage=/acme.json
-            - --certificatesresolvers.le.acme.tlschallenge=true
-            - "traefik.docker.network=node"
+            - --certificatesresolvers.le.acme.dnschallenge=true
+            - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
         networks:
             - node
+        environment:
+            CF_DNS_API_TOKEN: "{{rpc_node.cloudflare_dns_api_token}}"
         ports:
             - 80:80
             - 443:443
@@ -182,7 +184,6 @@ services:
             - "traefik.http.routers.node.middlewares=redirect-https,rate-limit"
             - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
             - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
-            - "traefik.docker.network=node"
             - "traefik.http.middlewares.rate-limit.ratelimit.average=200"
             - "traefik.http.middlewares.rate-limit.ratelimit.burst=300"
             - "traefik.http.middlewares.rate-limit.ratelimit.period=1s"

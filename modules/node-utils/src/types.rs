@@ -65,6 +65,7 @@ pub struct RpcNode {
     pub is_domain: bool,
     pub enable_reverse_proxy: bool,
     pub enable_load_balancer: bool,
+    pub cloudflare_dns_api_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -231,6 +232,7 @@ impl ComposeTemplateData {
             is_domain: false,
             enable_reverse_proxy: node_params.enable_reverse_proxy,
             enable_load_balancer: node_params.enable_load_balancer,
+            cloudflare_dns_api_token: node_params.cloudflare_dns_api_token,
         });
         data
     }
@@ -302,6 +304,7 @@ impl ComposeTemplateData {
             is_domain: true,
             enable_reverse_proxy: node_params.enable_reverse_proxy,
             enable_load_balancer: node_params.enable_load_balancer,
+            cloudflare_dns_api_token: node_params.cloudflare_dns_api_token,
         });
         let mut domain_data = data.domain_node.take().unwrap();
         domain_data.eth_cache = node_params.eth_cache;
