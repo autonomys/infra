@@ -99,6 +99,9 @@ resource "null_resource" "start_consensus_farmer_nodes" {
 
       # start subspace
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
+
+      # delete config file
+      sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT
     ]
   }

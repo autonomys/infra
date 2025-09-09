@@ -6,7 +6,7 @@ resource "aws_instance" "consensus_bootstrap_nodes" {
   availability_zone           = var.availability_zone
   region                      = var.aws_region
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
@@ -44,7 +44,7 @@ resource "aws_instance" "consensus_rpc_nodes" {
   region                      = var.aws_region
   availability_zone           = var.availability_zone
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
@@ -79,7 +79,7 @@ resource "aws_instance" "consensus_farmer_nodes" {
   region                      = var.aws_region
   availability_zone           = var.availability_zone
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   tags = {
@@ -107,7 +107,7 @@ resource "aws_instance" "domain_bootstrap_nodes" {
   region                      = var.aws_region
   availability_zone           = var.availability_zone
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
@@ -143,7 +143,7 @@ resource "aws_instance" "domain_rpc_nodes" {
   region                      = var.aws_region
   availability_zone           = var.availability_zone
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
@@ -179,7 +179,7 @@ resource "aws_instance" "domain_operator_nodes" {
   region                      = var.aws_region
   availability_zone           = var.availability_zone
   ipv6_address_count          = 1
-  vpc_security_group_ids      = [aws_security_group.network_sg.id]
+  vpc_security_group_ids      = [aws_security_group.network_sg[0].id]
   key_name                    = var.aws_ssh_key_name
   associate_public_ip_address = true
   ebs_optimized               = true
