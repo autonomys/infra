@@ -1,19 +1,20 @@
 resource "aws_vpc" "network_vpc" {
+  count                            = var.vpc_id == null ? 0 : 1
   cidr_block                       = var.vpc_cidr_block
   enable_dns_support               = true
   enable_dns_hostnames             = true
   assign_generated_ipv6_cidr_block = true
 
   tags = {
-    name = "${var.network_name}-vpc"
+    name = var.vpc_id
   }
 }
 
 resource "aws_subnet" "public_subnets" {
   count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.network_vpc.id
+  vpc_id                  = aws_vpc.network_vpc[0].id
   cidr_block              = var.public_subnet_cidrs[count.index]
-  ipv6_cidr_block         = cidrsubnet(aws_vpc.network_vpc.ipv6_cidr_block, 8, count.index)
+  ipv6_cidr_block         = cidrsubnet(aws_vpc.network_vpc[0].ipv6_cidr_block, 8, count.index)
   availability_zone       = var.availability_zone
   map_public_ip_on_launch = true
 
@@ -24,7 +25,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_internet_gateway" "gw" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.network_vpc.id
+  vpc_id = aws_vpc.network_vpc[0].id
 
   tags = {
     Name = "${var.network_name}-igw-public-subnet-${count.index}"
@@ -37,7 +38,7 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_route_table" "public_route_table" {
   count  = length(var.public_subnet_cidrs)
-  vpc_id = aws_vpc.network_vpc.id
+  vpc_id = aws_vpc.network_vpc[0].id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -65,9 +66,10 @@ resource "aws_route_table_association" "public_route_table_subnets_association" 
 }
 
 resource "aws_security_group" "network_sg" {
+  count       = length(aws_vpc.network_vpc)
   name        = "${var.network_name}-network-sg"
   description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = aws_vpc.network_vpc.id
+  vpc_id      = aws_vpc.network_vpc[count.index].id
 
   ingress {
     description      = "HTTPS for VPC"

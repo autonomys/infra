@@ -78,6 +78,9 @@ resource "null_resource" "start_timekeeper_nodes" {
 
       # start subspace node
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
+
+      # delete config file
+      sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT
     ]
   }
