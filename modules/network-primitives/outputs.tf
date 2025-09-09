@@ -3,6 +3,10 @@ output "consensus_bootstrap_node_public_ip" {
   value = aws_instance.consensus_bootstrap_nodes.*.public_ip
 }
 
+output "bare_consensus_bootstrap_node_public_ip" {
+  value = var.bare-consensus-bootstrap-node-config == null ? null : var.bare-consensus-bootstrap-node-config.bootstrap-nodes.*.ipv4
+}
+
 output "consensus_rpc_node_public_ip" {
   value = aws_instance.consensus_rpc_nodes.*.public_ip
 }
@@ -34,6 +38,9 @@ output "timekeeper_node_public_ip" {
 output "dns-records" {
   value = concat(
     [for record in cloudflare_dns_record.consensus_bootstrap_ipv4 :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.bare_consensus_bootstrap_ipv4 :
       format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
     ],
     [for record in cloudflare_dns_record.consensus_rpc :

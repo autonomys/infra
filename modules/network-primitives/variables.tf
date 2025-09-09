@@ -2,12 +2,14 @@ variable "aws_secret_key" {
   description = "AWS secret key"
   type        = string
   sensitive   = true
+  default     = null
 }
 
 variable "aws_access_key" {
   description = "AWS access key"
   type        = string
   sensitive   = true
+  default     = null
 }
 
 # TODO: use this while generating config file
@@ -37,32 +39,38 @@ variable "cloudflare_api_token" {
 variable "vpc_id" {
   description = "AWS VPC name"
   type        = string
+  default     = null
 }
 
 variable "vpc_cidr_block" {
   description = "AWS VPC's CIDR"
   type        = string
+  default     = null
 }
 
 variable "aws_region" {
   description = "AWS region"
   type        = string
+  default     = null
 }
 
 variable "availability_zone" {
   description = "AWS availability Zone"
   type        = string
+  default     = null
 }
 
 // TODO: update this to single subnet cidr
 variable "public_subnet_cidrs" {
   description = "Public Subnet CIDR values"
   type        = list(string)
+  default     = []
 }
 
 variable "aws_ssh_key_name" {
   description = "AWS deployer's SSH key"
   type        = string
+  default     = null
 }
 
 variable "ssh_user" {
@@ -98,6 +106,21 @@ variable "consensus-bootstrap-node-config" {
     genesis-hash     = string
     disk-volume-size = number
     disk-volume-type = string
+  })
+  default = null
+}
+
+variable "bare-consensus-bootstrap-node-config" {
+  description = "Bare Consensus Bootstrap node deployment config"
+  type = object({
+    bootstrap-nodes = list(object({
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
+      ipv4          = string
+    }))
+    genesis-hash = string
   })
   default = null
 }

@@ -11,11 +11,24 @@ resource "cloudflare_dns_record" "consensus_bootstrap_ipv4" {
   depends_on = [aws_instance.consensus_bootstrap_nodes]
   count      = length(aws_instance.consensus_bootstrap_nodes)
   zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "bootstrap-${count.index}.${var.network_name}"
+  name       = "bootstrap-${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].index}.${var.network_name}"
   content    = aws_instance.consensus_bootstrap_nodes[count.index].public_ip
   type       = "A"
   ttl        = 3600
   proxied    = false
+}
+
+resource "cloudflare_dns_record" "bare_consensus_bootstrap_ipv4" {
+  lifecycle {
+    ignore_changes = [name]
+  }
+  count   = var.bare-consensus-bootstrap-node-config == null ? 0 : length(var.bare-consensus-bootstrap-node-config.bootstrap-nodes)
+  zone_id = data.cloudflare_zone.cloudflare_zone.zone_id
+  name    = "bootstrap-${var.bare-consensus-bootstrap-node-config.bootstrap-nodes[count.index].index}.${var.network_name}"
+  content = var.bare-consensus-bootstrap-node-config.bootstrap-nodes[count.index].ipv4
+  type    = "A"
+  ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_dns_record" "consensus_bootstrap_ipv6" {
@@ -25,7 +38,7 @@ resource "cloudflare_dns_record" "consensus_bootstrap_ipv6" {
   depends_on = [aws_instance.consensus_bootstrap_nodes]
   count      = length(aws_instance.consensus_bootstrap_nodes)
   zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "bootstrap-${count.index}.${var.network_name}"
+  name       = "bootstrap-${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].index}.${var.network_name}"
   content    = aws_instance.consensus_bootstrap_nodes[count.index].ipv6_addresses[0]
   type       = "AAAA"
   ttl        = 3600
@@ -39,7 +52,7 @@ resource "cloudflare_dns_record" "consensus_rpc" {
   depends_on = [aws_instance.consensus_rpc_nodes]
   count      = var.consensus-rpc-node-config == null ? 0 : var.consensus-rpc-node-config.enable-reverse-proxy ? length(aws_instance.consensus_rpc_nodes) : 0
   zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "${var.consensus-rpc-node-config.dns-prefix}-${count.index}.${var.network_name}"
+  name       = "${var.consensus-rpc-node-config.dns-prefix}-${var.consensus-rpc-node-config.rpc-nodes[count.index].index}.${var.network_name}"
   content    = aws_instance.consensus_rpc_nodes[count.index].public_ip
   type       = "A"
   ttl        = 1

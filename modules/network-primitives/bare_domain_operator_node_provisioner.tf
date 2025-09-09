@@ -87,6 +87,9 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
 
       # insert domain operator key
       sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.bare-domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$(cat /home/${var.ssh_user}/subspace/node.key)"
+
+      # delete config file
+      sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT
     ]
   }
