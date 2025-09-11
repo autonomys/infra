@@ -563,9 +563,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_7ac4bbb0e6d9b17a363
 }
 
 resource "cloudflare_dns_record" "bridge_chronos" {
-  content = local.proxied_data.autonomys_xyz.bridge_chronos
+  content = "safe-protofire-2104031092.us-east-1.elb.amazonaws.com"
   name    = "bridge.chronos.autonomys.xyz"
-  proxied = true
+  proxied = false
   tags    = []
   ttl     = 1
   type    = "CNAME"
