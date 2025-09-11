@@ -562,9 +562,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_7ac4bbb0e6d9b17a363
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_79b2a52ca96e5886c6040e39016878e9_84" {
-  content = local.proxied_data.autonomys_xyz.bridge_taurus
-  name    = "bridge.taurus.autonomys.xyz"
+resource "cloudflare_dns_record" "bridge_chronos" {
+  content = local.proxied_data.autonomys_xyz.bridge_chronos
+  name    = "bridge.chronos.autonomys.xyz"
   proxied = true
   tags    = []
   ttl     = 1
