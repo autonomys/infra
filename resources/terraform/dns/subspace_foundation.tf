@@ -1,27 +1,7 @@
-resource "cloudflare_dns_record" "subspace_foundation_mainnet_bootstrap_0" {
-  content  = "173.208.0.26"
-  name     = "bootstrap-0.mainnet.subspace.foundation"
-  proxied  = false
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "subspace_foundation_mainnet_rpc" {
   content  = local.proxied_data.subspace_foundation.rpc_mainnet
   name     = "rpc.mainnet.subspace.foundation"
   proxied  = true
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
-  settings = {}
-}
-
-resource "cloudflare_dns_record" "subspace_foundation_taurus_rpc" {
-  content  = "65.108.225.226"
-  name     = "rpc.taurus.subspace.foundation"
-  proxied  = false
   ttl      = 1
   type     = "A"
   zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
