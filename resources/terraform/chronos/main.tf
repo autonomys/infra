@@ -29,12 +29,6 @@ module "chronos" {
         index         = 0
         sync-mode     = "full"
       },
-      {
-        docker-tag    = "chronos"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
-      }
     ]
   }
 
@@ -52,30 +46,6 @@ module "chronos" {
         index         = 0
         sync-mode     = "full"
       },
-      {
-        docker-tag    = "chronos"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
-      }
-    ]
-  }
-
-  farmer-node-config = {
-    instance-type = "c6id.4xlarge"
-    farmer-nodes = [
-      {
-        docker-tag             = "chronos"
-        reserved-only          = false
-        plot-size              = "50G"
-        reward-address         = "sucqjUNjJBYALeKNnhhwLAkW6zuvTFVnAzhaTgjK6B1gqfNyo"
-        cache-percentage       = 50
-        force-block-production = false
-        faster-sector-plotting = false
-        index                  = 0
-        sync-mode              = "full"
-        is-timekeeper          = false
-      }
     ]
   }
 
@@ -104,14 +74,6 @@ module "chronos" {
         index         = 0
         sync-mode     = "full"
       },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "chronos"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
-      }
     ]
   }
 
@@ -131,15 +93,6 @@ module "chronos" {
         sync-mode     = "full"
         eth-cache     = true
       },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "chronos"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
-        eth-cache     = true
-      }
     ]
   }
 
