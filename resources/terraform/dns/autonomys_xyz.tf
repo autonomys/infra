@@ -539,9 +539,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_af92c753a5b0f165df6
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_38a751222f27d5870ffc1f9c7a30737c_81" {
-  content = "cname.vercel-dns.com"
+  content = "example.com"
   name    = "astral.autonomys.xyz"
-  proxied = false
+  proxied = true
   tags    = []
   ttl     = 60
   type    = "CNAME"
@@ -606,19 +606,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_9efb2992a3d5b367177
 resource "cloudflare_dns_record" "terraform_managed_resource_cfe0f7cbfa8e8f9cefc2879c66cb9c3c_87" {
   content = "autonomysdevdocs.netlify.app"
   name    = "develop.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 60
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
-}
-
-resource "cloudflare_dns_record" "terraform_managed_resource_bcce20282ee0ceb3385d0c9fd6fef7ad_88" {
-  content = "cname.vercel-dns.com"
-  name    = "dev-explorer.autonomys.xyz"
   proxied = false
   tags    = []
   ttl     = 60
@@ -695,9 +682,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_c935f1f7351156a4575
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_9191d14b877d18e8a7d3cd8890571c1b_94" {
-  content = "cname.vercel-dns.com"
+  content = "example.com"
   name    = "explorer.autonomys.xyz"
-  proxied = false
+  proxied = true
   tags    = []
   ttl     = 60
   type    = "CNAME"
