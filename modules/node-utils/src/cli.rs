@@ -14,6 +14,8 @@ pub enum Command {
     DomainBootstrap(DomainCommonParams),
     DomainRpc(DomainRpcParams),
     DomainOperator(DomainOperatorParams),
+    InfisicalStore(InfisicalStoreSecretsParams),
+    InfisicalFetch(InfisicalCommonParams),
 }
 
 /// Params to either sync or create new Config.
@@ -222,4 +224,31 @@ fn parse_key_value(s: &str) -> Result<(u32, u32), Box<dyn Error + Send + Sync + 
         .find('=')
         .ok_or_else(|| format!("invalid Key=Value: no `=` found in `{s}`"))?;
     Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
+/// Infisical fetch secrets params.
+#[derive(Debug, Parser)]
+pub struct InfisicalCommonParams {
+    /// Infisical client ID
+    #[arg(long, required = true)]
+    pub client_id: String,
+    /// Infisical client Secret
+    #[arg(long, required = true)]
+    pub client_secret: String,
+    /// Infisical project ID
+    #[arg(long, required = true)]
+    pub project_id: String,
+    /// Path under project
+    #[arg(long, required = true)]
+    pub path: String,
+}
+
+/// Infisical store secrets params.
+#[derive(Debug, Parser)]
+pub struct InfisicalStoreSecretsParams {
+    #[clap(flatten)]
+    pub common: InfisicalCommonParams,
+    /// Files to store
+    #[arg(long, required = true)]
+    pub file: Vec<String>,
 }
