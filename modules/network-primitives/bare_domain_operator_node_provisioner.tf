@@ -70,6 +70,9 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
 
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-operator \
+          --network ${var.network_name} \
+          --new-relic-api-key ${var.new_relic_api_key} \
+          --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.bare-domain-operator-node-config.operator-nodes[count.index].index} \
           --docker-tag ${var.bare-domain-operator-node-config.operator-nodes[count.index].docker-tag} \
           --external-ip-v4 ${var.bare-domain-operator-node-config.operator-nodes[count.index].ipv4} \
