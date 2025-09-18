@@ -1,6 +1,6 @@
 use crate::cli::{
-    CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams, FarmerNodeParams,
-    FarmerParams, RpcParams,
+    BootnodeParams, CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams,
+    FarmerNodeParams, FarmerParams, RpcParams,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -8,10 +8,6 @@ use std::collections::BTreeMap;
 /// Config for node utilities.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub network: String,
-    pub genesis_hash: String,
-    pub new_relic_api_key: String,
-    pub fqdn: String,
     pub bootstrap_node_keys: BTreeMap<String, NodeKey>,
     pub bootstrap_dsn_keys: BTreeMap<String, NodeKey>,
     pub domain_bootstrap_node_keys: BTreeMap<String, BTreeMap<String, NodeKey>>,
@@ -125,6 +121,9 @@ impl ComposeTemplateData {
         include_all_bootstrap_nodes: bool,
     ) -> ComposeTemplateData {
         let CommonParams {
+            network,
+            new_relic_api_key,
+            fqdn,
             node_id,
             docker_tag,
             external_ip_v4,
@@ -133,10 +132,10 @@ impl ComposeTemplateData {
             is_reserved,
         } = node_params;
         ComposeTemplateData {
-            network_name: config.network.clone(),
+            network_name: network.clone(),
             node_prefix: node_type,
             node_id: node_id.clone(),
-            new_relic_api_key: config.new_relic_api_key.clone(),
+            new_relic_api_key,
             docker_tag,
             external_ip_v4,
             external_ip_v6,
@@ -148,8 +147,8 @@ impl ComposeTemplateData {
                         None
                     } else {
                         Some(node_key.multiaddress(
-                            config.network.clone(),
-                            config.fqdn.clone(),
+                            network.clone(),
+                            fqdn.clone(),
                             idx.clone(),
                             "30333".to_string(),
                             None,
@@ -165,8 +164,8 @@ impl ComposeTemplateData {
                         None
                     } else {
                         Some(node_key.multiaddress(
-                            config.network.clone(),
-                            config.fqdn.clone(),
+                            network.clone(),
+                            fqdn.clone(),
                             idx.clone(),
                             "30533".to_string(),
                             None,
@@ -175,15 +174,18 @@ impl ComposeTemplateData {
                 })
                 .collect(),
             is_reserved,
-            fqdn: config.fqdn.clone(),
+            fqdn,
             sync_mode,
             ..Default::default()
         }
     }
 
-    pub fn new_boostrap(config: Config, node_params: CommonParams) -> ComposeTemplateData {
-        let node_id = node_params.node_id.clone();
-        let mut data = Self::new_base_common(&config, "bootstrap".to_string(), node_params, false);
+    pub fn new_boostrap(config: Config, node_params: BootnodeParams) -> ComposeTemplateData {
+        let node_id = node_params.common.node_id.clone();
+        let network = node_params.common.network.clone();
+        let fqdn = node_params.common.fqdn.clone();
+        let mut data =
+            Self::new_base_common(&config, "bootstrap".to_string(), node_params.common, false);
         data.node_key = config
             .bootstrap_node_keys
             .get(&node_id)
@@ -196,19 +198,13 @@ impl ComposeTemplateData {
                 .cloned()
                 .map(|node_key| node_key.key)
                 .expect("DSN Node key not found"),
-            genesis_hash: config.genesis_hash,
+            genesis_hash: node_params.genesis_hash,
             multi_address: config
                 .bootstrap_dsn_keys
                 .get(&node_id)
                 .cloned()
                 .map(|node_key| {
-                    node_key.multiaddress(
-                        config.network.clone(),
-                        config.fqdn.clone(),
-                        node_id.clone(),
-                        "30533".to_string(),
-                        None,
-                    )
+                    node_key.multiaddress(network, fqdn, node_id.clone(), "30533".to_string(), None)
                 })
                 .unwrap(),
         });
@@ -251,6 +247,8 @@ impl ComposeTemplateData {
         let domain_id = node_params.domain_id;
         let node_id = node_params.common.node_id.clone();
         let node_prefix = node_params.node_prefix;
+        let network = node_params.common.network.clone();
+        let fqdn = node_params.common.fqdn.clone();
         let mut data = Self::new_base_common(config, node_prefix.clone(), node_params.common, true);
         data.domain_node = Some(DomainNode {
             domain_id: domain_id.clone(),
@@ -265,8 +263,8 @@ impl ComposeTemplateData {
                         None
                     } else {
                         Some(node_key.multiaddress(
-                            config.network.clone(),
-                            config.fqdn.clone(),
+                            network.clone(),
+                            fqdn.clone(),
                             idx.clone(),
                             "30334".to_string(),
                             Some(node_prefix.clone()),
