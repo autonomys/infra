@@ -75,7 +75,7 @@ resource "null_resource" "start-bare-consensus-boostrap-nodes" {
             --network ${var.network_name} \
             --new-relic-api-key ${var.new_relic_api_key} \
             --fqdn ${var.cloudflare_domain_fqdn} \
-            --genesis-has ${var.bare-consensus-bootstrap-node-config.genesis-hash} \
+            --genesis-hash ${var.bare-consensus-bootstrap-node-config.genesis-hash} \
             --node-id ${var.bare-consensus-bootstrap-node-config.bootstrap-nodes[count.index].index} \
             --docker-tag ${var.bare-consensus-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} \
             --external-ip-v4 ${var.bare-consensus-bootstrap-node-config.bootstrap-nodes[count.index].ipv4} \
