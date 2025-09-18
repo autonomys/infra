@@ -2,6 +2,8 @@
 *.tfstate*
 *.tfplan
 *.tfvars
+config.toml
+proxied.json
 .DS_Store
 backend_config.hcl
 node_keys.txt
@@ -19,8 +21,3 @@ resources/mainnet/keystore/*
 /.idea
 /modules/node-utils/target
 /modules/node-utils/data
-/resources/terraform/devnet/config.toml
-/resources/terraform/mainnet-domains/config.toml
-/resources/terraform/dns/proxied.json
-/resources/terraform/chronos/config.toml
-/resources/terraform/mainnet-foundation/config.toml
