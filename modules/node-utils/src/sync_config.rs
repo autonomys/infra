@@ -1,3 +1,4 @@
+use crate::Error;
 use crate::cli::SyncConfigParams;
 use crate::types::{Config, NodeKey, OperatorKeypair};
 use bip39::Mnemonic;
@@ -9,7 +10,7 @@ use sp_core::sr25519::Pair;
 use std::collections::BTreeMap;
 use std::fs;
 
-pub(crate) fn sync_config(config_params: SyncConfigParams) {
+pub(crate) fn sync_config(config_params: SyncConfigParams) -> Result<(), Error> {
     let SyncConfigParams {
         bootstrap_node_count,
         domain_bootstrap_node_count,
@@ -64,7 +65,8 @@ pub(crate) fn sync_config(config_params: SyncConfigParams) {
                 .or_insert_with(generate_mnemonic);
         });
 
-    fs::write("data/config.toml", toml::to_string(&config).unwrap()).unwrap();
+    fs::write("data/config.toml", toml::to_string(&config)?)?;
+    Ok(())
 }
 
 pub(crate) fn load_config() -> Option<Config> {
