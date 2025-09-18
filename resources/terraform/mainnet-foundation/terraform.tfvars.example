@@ -1,4 +1,0 @@
-ssh_agent_identity   = ""
-cloudflare_api_token = ""
-cloudflare_account_id = ""
-new_relic_api_key    = ""
