@@ -72,6 +72,9 @@ resource "null_resource" "start_domain_operator_nodes" {
 
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-operator \
+          --network ${var.network_name} \
+          --new-relic-api-key ${var.new_relic_api_key} \
+          --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.domain-operator-node-config.operator-nodes[count.index].index} \
           --docker-tag ${var.domain-operator-node-config.operator-nodes[count.index].docker-tag} \
           --external-ip-v4 ${aws_instance.domain_operator_nodes[count.index].public_ip} \

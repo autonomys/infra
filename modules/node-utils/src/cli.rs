@@ -7,7 +7,7 @@ use std::error::Error;
 #[clap(about, version)]
 pub enum Command {
     SyncConfig(SyncConfigParams),
-    Bootstrap(CommonParams),
+    Bootstrap(BootnodeParams),
     Farmer(FarmerParams),
     Rpc(RpcParams),
     Timekeeper(CommonParams),
@@ -19,19 +19,6 @@ pub enum Command {
 /// Params to either sync or create new Config.
 #[derive(Debug, Parser)]
 pub struct SyncConfigParams {
-    /// Network name
-    /// Ex: mainnet, devnet etc..
-    #[arg(long, required = true)]
-    pub network: String,
-    /// Genesis hash of the network.
-    #[arg(long, required = true)]
-    pub genesis_hash: String,
-    /// New relic API Key
-    #[arg(long, required = true)]
-    pub new_relic_api_key: String,
-    /// Domain name.ex: subspace.network
-    #[arg(long, required = true)]
-    pub fqdn: String,
     /// Consensus bootstrap node count.
     #[arg(long, required = true)]
     pub bootstrap_node_count: u32,
@@ -48,6 +35,16 @@ pub struct SyncConfigParams {
 /// Common Params to create node docker compose
 #[derive(Debug, Parser)]
 pub struct CommonParams {
+    /// Network name
+    /// Ex: mainnet, devnet etc..
+    #[arg(long, required = true)]
+    pub network: String,
+    /// New relic API Key
+    #[arg(long, required = true)]
+    pub new_relic_api_key: String,
+    /// Domain name.ex: subspace.network
+    #[arg(long, required = true)]
+    pub fqdn: String,
     /// Node instance index
     #[arg(long, required = true)]
     pub node_id: String,
@@ -74,6 +71,15 @@ pub struct CommonParams {
         require_equals = false,
     )]
     pub is_reserved: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct BootnodeParams {
+    #[clap(flatten)]
+    pub common: CommonParams,
+    /// Genesis hash of the network.
+    #[arg(long, required = true)]
+    pub genesis_hash: String,
 }
 
 #[derive(Debug, Parser)]

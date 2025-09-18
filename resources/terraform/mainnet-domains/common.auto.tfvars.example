@@ -1,0 +1,6 @@
+cloudflare_account_id = ""
+new_relic_api_key     = ""
+bare_domain_operator_ipv4 = {
+  operator_2 = ""
+  operator_3 = ""
+}

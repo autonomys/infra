@@ -11,34 +11,17 @@ use std::fs;
 
 pub(crate) fn sync_config(config_params: SyncConfigParams) {
     let SyncConfigParams {
-        network,
-        genesis_hash,
-        new_relic_api_key,
-        fqdn,
         bootstrap_node_count,
         domain_bootstrap_node_count,
         domain_operators,
     } = config_params;
 
-    let mut config = match load_config() {
-        None => Config {
-            network,
-            genesis_hash,
-            new_relic_api_key,
-            fqdn,
-            bootstrap_node_keys: BTreeMap::new(),
-            bootstrap_dsn_keys: BTreeMap::new(),
-            domain_bootstrap_node_keys: BTreeMap::new(),
-            domain_operator_keys: BTreeMap::new(),
-        },
-        Some(mut config) => {
-            config.genesis_hash = genesis_hash;
-            config.network = network;
-            config.new_relic_api_key = new_relic_api_key;
-            config.fqdn = fqdn;
-            config
-        }
-    };
+    let mut config = load_config().unwrap_or_else(|| Config {
+        bootstrap_node_keys: BTreeMap::new(),
+        bootstrap_dsn_keys: BTreeMap::new(),
+        domain_bootstrap_node_keys: BTreeMap::new(),
+        domain_operator_keys: BTreeMap::new(),
+    });
 
     (0..bootstrap_node_count).for_each(|idx| {
         let idx = idx.to_string();

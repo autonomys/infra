@@ -1,6 +1,6 @@
 use crate::cli::{
-    CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams, FarmerParams,
-    RpcParams,
+    BootnodeParams, CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams,
+    FarmerParams, RpcParams,
 };
 use crate::sync_config::load_config;
 use crate::types::{ComposeTemplateData, PrometheusNodeData, PrometheusTemplateData};
@@ -11,10 +11,10 @@ use std::io::Write;
 const COMPOSE_TEMPLATE: &str = include_str!("templates/docker-compose.hbs");
 const PROMETHEUS_CONFIG_TEMPLATE: &str = include_str!("templates/prometheus.hbs");
 
-pub(crate) fn create_boostrap_node_docker_compose(node_params: CommonParams) {
+pub(crate) fn create_boostrap_node_docker_compose(node_params: BootnodeParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
-    let node_id = node_params.node_id.clone();
+    let network_name = node_params.common.network.clone();
+    let node_id = node_params.common.node_id.clone();
     let template_data = ComposeTemplateData::new_boostrap(config, node_params);
     create_compose_file(template_data);
     create_prometheus_config(PrometheusTemplateData {
@@ -39,7 +39,7 @@ pub(crate) fn create_boostrap_node_docker_compose(node_params: CommonParams) {
 
 pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
+    let network_name = rpc_params.common.network.clone();
     let node_id = rpc_params.common.node_id.clone();
     let template_data = ComposeTemplateData::new_rpc(config, rpc_params);
     create_compose_file(template_data);
@@ -54,7 +54,7 @@ pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) {
 
 pub(crate) fn create_timekeeper_node_docker_compose(params: CommonParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
+    let network_name = params.network.clone();
     let node_id = params.node_id.clone();
     let template_data = ComposeTemplateData::new_timekeeper(config, params);
     create_compose_file(template_data);
@@ -69,7 +69,7 @@ pub(crate) fn create_timekeeper_node_docker_compose(params: CommonParams) {
 
 pub(crate) fn create_farmer_node_docker_compose(farmer_params: FarmerParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
+    let network_name = farmer_params.common.network.clone();
     let node_id = farmer_params.common.node_id.clone();
     let template_data = ComposeTemplateData::new_farmer(config, farmer_params);
     create_compose_file(template_data);
@@ -95,7 +95,7 @@ pub(crate) fn create_farmer_node_docker_compose(farmer_params: FarmerParams) {
 
 pub(crate) fn create_domain_bootstrap_node_docker_compose(domain_params: DomainCommonParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
+    let network_name = domain_params.common.network.clone();
     let domain_id = domain_params.domain_id.clone();
     let node_id = domain_params.common.node_id.clone();
     let template_data = ComposeTemplateData::new_domain_bootstrap(config, domain_params);
@@ -111,7 +111,7 @@ pub(crate) fn create_domain_bootstrap_node_docker_compose(domain_params: DomainC
 
 pub(crate) fn create_domain_rpc_node_docker_compose(domain_params: DomainRpcParams) {
     let config = load_config().unwrap();
-    let network_name = config.network.clone();
+    let network_name = domain_params.common.common.network.clone();
     let domain_id = domain_params.common.domain_id.clone();
     let node_id = domain_params.common.common.node_id.clone();
     let template_data = ComposeTemplateData::new_domain_rpc(config, domain_params);
@@ -129,7 +129,7 @@ pub(crate) fn create_domain_operator_node_docker_compose(domain_params: DomainOp
     let config = load_config().unwrap();
     let domain_id = domain_params.common.domain_id.clone();
     let operator_id = domain_params.operator_id.clone();
-    let network_name = config.network.clone();
+    let network_name = domain_params.common.common.network.clone();
     let operator_suri = config
         .domain_operator_keys
         .get(&domain_id)

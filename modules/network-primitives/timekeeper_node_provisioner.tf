@@ -70,6 +70,9 @@ resource "null_resource" "start_timekeeper_nodes" {
 
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest timekeeper \
+          --network ${var.network_name} \
+          --new-relic-api-key ${var.new_relic_api_key} \
+          --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.timekeeper-node-config.timekeeper-nodes[count.index].index} \
           --docker-tag ${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag} \
           --external-ip-v4 ${var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4} \

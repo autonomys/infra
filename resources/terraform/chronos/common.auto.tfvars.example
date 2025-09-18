@@ -1,0 +1,5 @@
+cloudflare_account_id = ""
+new_relic_api_key     = ""
+timekeeper_node_ipv4 = {
+  timekeeper-0 : ""
+}
