@@ -91,7 +91,7 @@ fn generate_node_key() -> NodeKey {
 fn generate_dsn_node_key() -> NodeKey {
     let secret = {
         let mut secret = ed25519_dalek::SecretKey::default();
-        rand::rngs::OsRng.fill_bytes(&mut secret);
+        rand::rngs::ThreadRng::default().fill_bytes(&mut secret);
         secret
     };
     let signing_key = SigningKey::from_bytes(&secret);
