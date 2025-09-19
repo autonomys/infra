@@ -575,10 +575,11 @@ dependencies = [
 
 [[package]]
 name = "bounded-collections"
-version = "0.2.4"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64ad8a0bed7827f0b07a5d23cec2e58cc02038a99e4ca81616cb2bb2025f804d"
+checksum = "dee8eddd066a8825ec5570528e6880471210fd5d88cb6abbe1cfdd51ca249c33"
 dependencies = [
+ "jam-codec",
  "log",
  "parity-scale-codec",
  "scale-info",
@@ -1718,8 +1719,9 @@ dependencies = [
 
 [[package]]
 name = "infisical"
-version = "0.0.2"
-source = "git+https://github.com/jggc/rust-sdk.git?rev=30d820194d29491411bd14f6c2e18ec500bb0b14#30d820194d29491411bd14f6c2e18ec500bb0b14"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdf5b1e1089d886395e20cbe4f6ef6a8023c10313055581fce3bcc28598ec001"
 dependencies = [
  "base64",
  "reqwest",
@@ -1804,6 +1806,34 @@ name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
+
+[[package]]
+name = "jam-codec"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb948eace373d99de60501a02fb17125d30ac632570de20dccc74370cdd611b9"
+dependencies = [
+ "arrayvec",
+ "bitvec",
+ "byte-slice-cast",
+ "const_format",
+ "impl-trait-for-tuples",
+ "jam-codec-derive",
+ "rustversion",
+ "serde",
+]
+
+[[package]]
+name = "jam-codec-derive"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "319af585c4c8a6b5552a52b7787a1ab3e4d59df7614190b1f85b9b842488789d"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+]
 
 [[package]]
 name = "jiff"
@@ -2036,7 +2066,7 @@ dependencies = [
  "infisical",
  "libp2p-identity",
  "log",
- "rand 0.8.5",
+ "rand 0.9.2",
  "serde",
  "sp-core",
  "thiserror 2.0.16",
@@ -2322,24 +2352,24 @@ dependencies = [
 
 [[package]]
 name = "polkavm-common"
-version = "0.24.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d91ed9e5af472f729fcf3b3c1cf17508ddbb3505259dd6e2ee0fb5a29e105d22"
+checksum = "49a5794b695626ba70d29e66e3f4f4835767452a6723f3a0bc20884b07088fe8"
 
 [[package]]
 name = "polkavm-derive"
-version = "0.24.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "176144f8661117ea95fa7cf868c9a62d6b143e8a2ebcb7582464c3faade8669a"
+checksum = "95282a203ae1f6828a04ff334145c3f6dc718bba6d3959805d273358b45eab93"
 dependencies = [
  "polkavm-derive-impl-macro",
 ]
 
 [[package]]
 name = "polkavm-derive-impl"
-version = "0.24.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5a21844afdfcc10c92b9ef288ccb926211af27478d1730fcd55e4aec710179d"
+checksum = "6069dc7995cde6e612b868a02ce48b54397c6d2582bd1b97b63aabbe962cd779"
 dependencies = [
  "polkavm-common",
  "proc-macro2",
@@ -2349,9 +2379,9 @@ dependencies = [
 
 [[package]]
 name = "polkavm-derive-impl-macro"
-version = "0.24.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba0ef0f17ad81413ea1ca5b1b67553aedf5650c88269b673d3ba015c83bc2651"
+checksum = "581d34cafec741dc5ffafbb341933c205b6457f3d76257a9d99fb56687219c91"
 dependencies = [
  "polkavm-derive-impl",
  "syn 2.0.104",
@@ -2431,9 +2461,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.95"
+version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02b3e5e68a3a1a02aad3ec490a98007cbc13c37cbe84a3cd7b8e406d76e7f778"
+checksum = "89ae43fd86e4158d6db51ad8e2b80f313af9cc74f5c0e03ccb87de09998732de"
 dependencies = [
  "unicode-ident",
 ]
@@ -3057,9 +3087,9 @@ dependencies = [
 
 [[package]]
 name = "sp-core"
-version = "37.0.0"
+version = "38.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e1a46a6b2323401e4489184846a7fb7d89091b42602a2391cd3ef652ede2850"
+checksum = "9eb651e016aa5556f5401596d764566240fe44f7a989dc46ebdefa684e9aeaaa"
 dependencies = [
  "ark-vrf",
  "array-bytes",
@@ -3142,9 +3172,9 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface"
-version = "30.0.0"
+version = "31.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fcd9c219da8c85d45d5ae1ce80e73863a872ac27424880322903c6ac893c06e"
+checksum = "b4820882d8e6e764b98efaeed3a431aa9a0d1738c4adf935fbb4c50113288073"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -3162,9 +3192,9 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
-version = "19.0.0"
+version = "20.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca35431af10a450787ebfdcb6d7a91c23fa91eafe73a3f9d37db05c9ab36154b"
+checksum = "04178084ae654b3924934a56943ee73e3562db4d277e948393561b08c3b5b5fe"
 dependencies = [
  "Inflector",
  "expander",
@@ -3195,11 +3225,12 @@ dependencies = [
 
 [[package]]
 name = "sp-tracing"
-version = "17.1.0"
+version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6147a5b8c98b9ed4bf99dc033fab97a468b4645515460974c8784daeb7c35433"
+checksum = "b7fa3a9161173fa99b4455afc52811eb8251e90ca37a2cbebb8be9c47dc55c00"
 dependencies = [
  "parity-scale-codec",
+ "regex",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -3207,9 +3238,9 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
-version = "22.0.0"
+version = "23.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffdbc579c72fc03263894a0077383f543a093020d75741092511bb05a440ada6"
+checksum = "568979072b49384ef6bbaa5aa1306a91f0b983a4b22c8ef515b601748683b97c"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
