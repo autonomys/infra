@@ -92,11 +92,12 @@ function store_secrets() {
   local files="${VALID_PROJECTS[$PROJECT]}"
   echo "Storing secrets for project: $PROJECT"
   local file_args=()
-  for f in $(echo "$files" | tr ',' ' '); do
+  IFS=',' read -ra file_list <<< "$files"
+  for f in "${file_list[@]}"; do
     file_args+=(--file "$f")
   done
 
-  docker run --pull always --rm \
+  docker run -q --pull always --rm \
     -v "$RESOURCES_PATH/$PROJECT:/data" \
     ghcr.io/autonomys/infra/node-utils:latest \
     infisical-store \
@@ -104,21 +105,21 @@ function store_secrets() {
       --client-secret "$INFISICAL_CLIENT_SECRET" \
       --project-id "$INFISICAL_INFRA_PROJECT_ID" \
       --path "/$PROJECT" \
-      "${file_args[@]}" 2>&1 | grep -v -E '^(Status:|Digest:|Using default tag:|latest:)'
+      "${file_args[@]}"
 }
 
 # fetch secrets from infisical
 function fetch_secrets() {
   echo "Fetching secrets for project: $PROJECT"
 
-  docker run --pull always --rm \
+  docker run -q --pull always --rm \
     -v "$RESOURCES_PATH/$PROJECT:/data" \
     ghcr.io/autonomys/infra/node-utils:latest \
     infisical-fetch \
       --client-id "$INFISICAL_CLIENT_ID" \
       --client-secret "$INFISICAL_CLIENT_SECRET" \
       --project-id "$INFISICAL_INFRA_PROJECT_ID" \
-      --path "/$PROJECT" 2>&1 | grep -v -E '^(Status:|Digest:|Using default tag:|latest:)'
+      --path "/$PROJECT" 2>&1
 }
 
 if [ -z "$PROJECT" ] || [ -z "$ACTION" ]; then
