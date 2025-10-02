@@ -1150,3 +1150,14 @@ resource "cloudflare_dns_record" "grafana_explorer_auto_evm_chronos" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {}
 }
+
+resource "cloudflare_dns_record" "subql_staking_autonomys_xyz" {
+  content  = "18.220.135.20"
+  name     = "subql.staking.mainnet.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
