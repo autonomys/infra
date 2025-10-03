@@ -1,8 +1,0 @@
-# vars.yml
-
-# Uncomment and replace with your own values by adding your GitHub usernames to the list
-
-github_keys:
-#  - https://github.com/user1.keys
-#  - https://github.com/user2.keys
-#  - https://github.com/user3.keys
