@@ -1,3 +1,0 @@
-docker_compose_file: "docker-compose-bootstrap-domain.yml"
-deployment_dir: "{{ lookup('env', 'HOME') }}/subspace"
-env_file: ".env.bootstrap-domain"
