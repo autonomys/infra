@@ -11,7 +11,7 @@ terraform {
     # more here https://github.com/cloudflare/terraform-provider-cloudflare/issues/5676
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = ">=5.8.2"
+      version = "5.8.2"
     }
   }
 }
