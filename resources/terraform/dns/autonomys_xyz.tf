@@ -127,7 +127,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_92f127ef97f5b125060
   ttl      = 1
   type     = "CNAME"
   zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
+  settings = {
+    flatten_cname = false
+  }
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_aa9aaa1d72c4139dd87752dce4c94bed_30" {
