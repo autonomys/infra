@@ -120,12 +120,12 @@ resource "cloudflare_dns_record" "terraform_managed_resource_c965a1c24e4b34dbf3c
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_92f127ef97f5b12506012590be2b104a_29" {
-  content  = local.proxied_data.autonomys_xyz.gateway
+  content  = "public.auto-drive.autonomys.xyz"
   name     = "gateway.autonomys.xyz"
   proxied  = true
   tags     = []
   ttl      = 1
-  type     = "A"
+  type     = "CNAME"
   zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {}
 }
