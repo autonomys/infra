@@ -22,6 +22,7 @@ VALID_PROJECTS=(
   ["devnet"]="config.toml,common.auto.tfvars"
   ["mainnet-domains"]="config.toml,common.auto.tfvars"
   ["mainnet-foundation"]="config.toml,common.auto.tfvars"
+  ["mainnet-consensus"]="config.toml,common.auto.tfvars"
 )
 
 # Allowed actions

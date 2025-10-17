@@ -1,0 +1,24 @@
+module "mainnet_consensus" {
+  source                 = "../../../modules/network-primitives"
+  path_to_scripts        = "../../../templates/scripts"
+  network_name           = "mainnet"
+  ssh_user               = "ubuntu"
+  cloudflare_api_token   = var.cloudflare_api_token
+  cloudflare_account_id  = var.cloudflare_account_id
+  cloudflare_domain_fqdn = "autonomys.xyz"
+  new_relic_api_key      = var.new_relic_api_key
+  ssh_agent_identity     = var.ssh_agent_identity
+
+  bare-consensus-bootstrap-node-config = {
+    genesis-hash = "66455a580aabff303720aa83adbe6c44502922251c03ba73686d5245da9e21bd"
+    bootstrap-nodes = [
+      {
+        docker-tag    = "mainnet-2025-aug-20"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+        ipv4          = "65.108.232.59"
+      }
+    ]
+  }
+}
