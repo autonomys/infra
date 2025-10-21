@@ -21,4 +21,19 @@ module "mainnet_foundation" {
       }
     ]
   }
+
+  bare-consensus-rpc-node-config = {
+    dns-prefix           = "rpc"
+    enable-reverse-proxy = true
+    enable-load-balancer = true
+    rpc-nodes = [
+      {
+        docker-tag    = "mainnet-2025-aug-20"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+        ipv4          = var.consensus_rpc_ipv4.rpc-0
+      },
+    ]
+  }
 }

@@ -1,16 +1,54 @@
 locals {
-  consensus_load_balancer_count = var.consensus-rpc-node-config == null || length(cloudflare_dns_record.consensus_rpc) < 1 || !var.consensus-rpc-node-config.enable-load-balancer ? 0 : 1
+  consensus_rpc_all_nodes = flatten([
+    var.consensus-rpc-node-config != null && var.consensus-rpc-node-config.enable-load-balancer ? [
+      for dns in cloudflare_dns_record.consensus_rpc : {
+        name = trimsuffix(dns.name, ".${data.cloudflare_zone.cloudflare_zone.name}")
+        ipv4 = dns.content
+      }
+    ] : [],
+    var.bare-consensus-rpc-node-config != null && var.bare-consensus-rpc-node-config.enable-load-balancer ? [
+      for dns in cloudflare_dns_record.bare_consensus_rpc : {
+        name = trimsuffix(dns.name, ".${data.cloudflare_zone.cloudflare_zone.name}")
+        ipv4 = dns.content
+      }
+    ] : []
+  ])
+  consensus_load_balancer_count = length(local.consensus_rpc_all_nodes) > 0 ? 1 : 0
+}
+
+# check to enforce matching prefix values when both configs exist
+check "consensus_rpc_dns_prefix_consistency" {
+  assert {
+    condition = (
+      var.consensus-rpc-node-config == null ||
+      var.bare-consensus-rpc-node-config == null ||
+      var.consensus-rpc-node-config.dns-prefix == var.bare-consensus-rpc-node-config.dns-prefix
+    )
+    error_message = "Both consensus and bare configs are defined but dns-prefix values differ."
+  }
+}
+
+# Local to determine unified dns_prefix
+locals {
+  consensus_rpc_dns_prefix = (
+    var.consensus-rpc-node-config != null
+    ? var.consensus-rpc-node-config.dns-prefix
+    : (
+      var.bare-consensus-rpc-node-config != null
+      ? var.bare-consensus-rpc-node-config.dns-prefix
+      : ""
+    )
+  )
 }
 
 resource "cloudflare_dns_record" "consensus_rpc_lb" {
-  depends_on = [aws_instance.consensus_rpc_nodes]
-  count      = var.consensus-rpc-node-config == null || !var.consensus-rpc-node-config.enable-reverse-proxy || !var.consensus-rpc-node-config.enable-load-balancer ? 0 : length(aws_instance.consensus_rpc_nodes)
-  zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "${var.consensus-rpc-node-config.dns-prefix}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
-  content    = aws_instance.consensus_rpc_nodes[count.index].public_ip
-  type       = "A"
-  ttl        = 1
-  proxied    = true
+  count   = length(local.consensus_rpc_all_nodes)
+  zone_id = data.cloudflare_zone.cloudflare_zone.zone_id
+  name    = "${local.consensus_rpc_dns_prefix}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
+  content = local.consensus_rpc_all_nodes[count.index].ipv4
+  type    = "A"
+  ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_load_balancer_monitor" "consensus_rpc_health_check" {
@@ -40,7 +78,7 @@ resource "cloudflare_load_balancer_pool" "consensus_rpc_lb_pool" {
   name            = "${var.network_name}-consensus-rpc-lb-pool"
   description     = "${title(var.network_name)} Consensus RPC Load balancer Pool"
   enabled         = true
-  minimum_origins = length(cloudflare_dns_record.consensus_rpc)
+  minimum_origins = length(local.consensus_rpc_all_nodes)
   monitor         = cloudflare_load_balancer_monitor.consensus_rpc_health_check[0].id
 
   origin_steering = {
@@ -48,9 +86,9 @@ resource "cloudflare_load_balancer_pool" "consensus_rpc_lb_pool" {
   }
 
   origins = [
-    for dns_record in cloudflare_dns_record.consensus_rpc : {
-      name    = trimsuffix(dns_record.name, ".${data.cloudflare_zone.cloudflare_zone.name}")
-      address = dns_record.content
+    for dns_record in local.consensus_rpc_all_nodes : {
+      name    = dns_record.name
+      address = dns_record.ipv4
       enabled = true
     }
   ]
@@ -60,7 +98,7 @@ resource "cloudflare_load_balancer" "consensus_rpc_lb" {
   depends_on       = [cloudflare_load_balancer_pool.consensus_rpc_lb_pool]
   count            = local.consensus_load_balancer_count
   zone_id          = data.cloudflare_zone.cloudflare_zone.zone_id
-  name             = "${var.consensus-rpc-node-config.dns-prefix}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
+  name             = "${local.consensus_rpc_dns_prefix}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
   description      = "${title(var.network_name)} Consensus RPC load balancer"
   proxied          = true
   enabled          = true

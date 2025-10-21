@@ -11,6 +11,10 @@ output "consensus_rpc_node_public_ip" {
   value = aws_instance.consensus_rpc_nodes.*.public_ip
 }
 
+output "bare_consensus_rpc_node_public_ip" {
+  value = var.bare-consensus-rpc-node-config == null ? null : var.bare-consensus-rpc-node-config.rpc-nodes.*.ipv4
+}
+
 output "consensus_farmer_node_public_ip" {
   value = aws_instance.consensus_farmer_nodes.*.public_ip
 }
@@ -48,6 +52,9 @@ output "dns-records" {
       format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
     ],
     [for record in cloudflare_dns_record.consensus_rpc :
+      format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
+    ],
+    [for record in cloudflare_dns_record.bare_consensus_rpc :
       format("%s.%s", trimsuffix(record.name, ".${data.cloudflare_zone.cloudflare_zone.name}"), data.cloudflare_zone.cloudflare_zone.name)
     ],
     [for record in cloudflare_dns_record.consensus_rpc_lb :

@@ -143,6 +143,23 @@ variable "consensus-rpc-node-config" {
   default = null
 }
 
+variable "bare-consensus-rpc-node-config" {
+  description = "Consensus RPC node deployment config for bare servers"
+  type = object({
+    dns-prefix           = string
+    enable-reverse-proxy = bool
+    enable-load-balancer = bool
+    rpc-nodes = list(object({
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
+      ipv4          = string
+    }))
+  })
+  default = null
+}
+
 variable "farmer-node-config" {
   description = "Farmer and Node configuration. Requires an NVME instance storage and not EBS"
   type = object({

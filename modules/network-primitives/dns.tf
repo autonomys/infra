@@ -47,6 +47,16 @@ resource "cloudflare_dns_record" "consensus_rpc" {
   proxied    = true
 }
 
+resource "cloudflare_dns_record" "bare_consensus_rpc" {
+  count   = var.bare-consensus-rpc-node-config == null ? 0 : var.bare-consensus-rpc-node-config.enable-reverse-proxy ? length(var.bare-consensus-rpc-node-config.rpc-nodes) : 0
+  zone_id = data.cloudflare_zone.cloudflare_zone.zone_id
+  name    = "${var.bare-consensus-rpc-node-config.dns-prefix}-${var.bare-consensus-rpc-node-config.rpc-nodes[count.index].index}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
+  content = var.bare-consensus-rpc-node-config.rpc-nodes[count.index].ipv4
+  type    = "A"
+  ttl     = 1
+  proxied = true
+}
+
 resource "cloudflare_dns_record" "domain_bootstrap_ipv4" {
   depends_on = [aws_instance.domain_bootstrap_nodes]
   count      = length(aws_instance.domain_bootstrap_nodes)
