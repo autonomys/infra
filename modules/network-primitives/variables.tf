@@ -198,6 +198,22 @@ variable "domain-bootstrap-node-config" {
   default = null
 }
 
+variable "bare-domain-bootstrap-node-config" {
+  description = "Domain Bootstrap node deployment config for Bare servers"
+  type = object({
+    bootstrap-nodes = list(object({
+      domain-id     = number
+      domain-name   = string
+      docker-tag    = string
+      reserved-only = bool
+      index         = number
+      sync-mode     = string
+      ipv4          = string
+    }))
+  })
+  default = null
+}
+
 variable "domain-rpc-node-config" {
   description = "Domain RPC node deployment config"
   type = object({

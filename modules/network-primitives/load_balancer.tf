@@ -3,13 +3,10 @@ locals {
 }
 
 resource "cloudflare_dns_record" "consensus_rpc_lb" {
-  lifecycle {
-    ignore_changes = [name]
-  }
   depends_on = [aws_instance.consensus_rpc_nodes]
   count      = var.consensus-rpc-node-config == null || !var.consensus-rpc-node-config.enable-reverse-proxy || !var.consensus-rpc-node-config.enable-load-balancer ? 0 : length(aws_instance.consensus_rpc_nodes)
   zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "${var.consensus-rpc-node-config.dns-prefix}.${var.network_name}"
+  name       = "${var.consensus-rpc-node-config.dns-prefix}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
   content    = aws_instance.consensus_rpc_nodes[count.index].public_ip
   type       = "A"
   ttl        = 1
@@ -120,13 +117,10 @@ locals {
 }
 
 resource "cloudflare_dns_record" "domain_rpc_lb" {
-  lifecycle {
-    ignore_changes = [name]
-  }
   depends_on = [aws_instance.domain_rpc_nodes]
   count      = var.domain-rpc-node-config == null || !var.domain-rpc-node-config.enable-reverse-proxy || !var.domain-rpc-node-config.enable-load-balancer ? 0 : length(aws_instance.domain_rpc_nodes)
   zone_id    = data.cloudflare_zone.cloudflare_zone.zone_id
-  name       = "${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name}.${var.network_name}"
+  name       = "${var.domain-rpc-node-config.rpc-nodes[count.index].domain-name}.${var.network_name}.${data.cloudflare_zone.cloudflare_zone.name}"
   content    = aws_instance.domain_rpc_nodes[count.index].public_ip
   type       = "A"
   ttl        = 1
