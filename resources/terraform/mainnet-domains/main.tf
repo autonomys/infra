@@ -17,10 +17,7 @@ module "mainnet_domains" {
   aws_ssh_key_name       = var.aws_ssh_key_name
   ssh_agent_identity     = var.ssh_agent_identity
 
-  domain-bootstrap-node-config = {
-    instance-type    = "c7a.2xlarge"
-    disk-volume-size = 300
-    disk-volume-type = var.disk_volume_type
+  bare-domain-bootstrap-node-config = {
     bootstrap-nodes = [
       {
         domain-id     = 0
@@ -29,14 +26,7 @@ module "mainnet_domains" {
         reserved-only = false
         index         = 0
         sync-mode     = "full"
-      },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
+        ipv4          = "65.108.225.226"
       }
     ]
   }
@@ -54,15 +44,6 @@ module "mainnet_domains" {
         docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 0
-        sync-mode     = "full"
-        eth-cache     = true
-      },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
-        reserved-only = false
-        index         = 1
         sync-mode     = "full"
         eth-cache     = true
       }
