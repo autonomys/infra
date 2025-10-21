@@ -29,14 +29,6 @@ module "mainnet_domains" {
         reserved-only = false
         index         = 0
         sync-mode     = "full"
-      },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
-        reserved-only = false
-        index         = 1
-        sync-mode     = "full"
       }
     ]
   }
@@ -54,15 +46,6 @@ module "mainnet_domains" {
         docker-tag    = "mainnet-2025-aug-20"
         reserved-only = false
         index         = 0
-        sync-mode     = "full"
-        eth-cache     = true
-      },
-      {
-        domain-id     = 0
-        domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
-        reserved-only = false
-        index         = 1
         sync-mode     = "full"
         eth-cache     = true
       }

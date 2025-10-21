@@ -3,6 +3,12 @@ output "consensus-bootstrap-node-ipv4-addresses" {
   description = "Bootstrap node IPv4 Addresses"
 }
 
+
+output "bare-consensus-bootstrap-node-ipv4-addresses" {
+  value       = module.chronos.bare_consensus_bootstrap_node_public_ip
+  description = "Bare Bootstrap node IPv4 Addresses"
+}
+
 output "consensus-rpc-node-ipv4-addresses" {
   value       = module.chronos.consensus_rpc_node_public_ip
   description = "RPC node IPv4 Addresses"

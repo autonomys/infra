@@ -17,18 +17,16 @@ module "chronos" {
   aws_ssh_key_name       = var.aws_ssh_key_name
   ssh_agent_identity     = var.ssh_agent_identity
 
-  consensus-bootstrap-node-config = {
-    instance-type    = "c7a.2xlarge"
-    genesis-hash     = "91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
-    disk-volume-size = var.disk_volume_size
-    disk-volume-type = var.disk_volume_type
+  bare-consensus-bootstrap-node-config = {
+    genesis-hash = "91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
     bootstrap-nodes = [
       {
         docker-tag    = "chronos"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
-      },
+        ipv4          = "65.108.232.15"
+      }
     ]
   }
 
