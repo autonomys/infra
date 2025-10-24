@@ -39,6 +39,8 @@ locals {
       : ""
     )
   )
+
+  consensus_lp_pool_name = var.deployment_name != null ? "${var.network_name}-${var.deployment_name}-consensus-rpc-lb-pool" : "${var.network_name}-consensus-rpc-lb-pool"
 }
 
 resource "cloudflare_dns_record" "consensus_rpc_lb" {
@@ -75,7 +77,7 @@ resource "cloudflare_load_balancer_pool" "consensus_rpc_lb_pool" {
   depends_on      = [cloudflare_load_balancer_monitor.consensus_rpc_health_check]
   count           = local.consensus_load_balancer_count
   account_id      = var.cloudflare_account_id
-  name            = "${var.network_name}-consensus-rpc-lb-pool"
+  name            = local.consensus_lp_pool_name
   description     = "${title(var.network_name)} Consensus RPC Load balancer Pool"
   enabled         = true
   minimum_origins = length(local.consensus_rpc_all_nodes)
@@ -189,7 +191,7 @@ resource "cloudflare_load_balancer_pool" "domain_rpc_lb_pool" {
   for_each        = local.domain_name_map
   depends_on      = [cloudflare_load_balancer_monitor.domain_rpc_health_check]
   account_id      = var.cloudflare_account_id
-  name            = "${var.network_name}-domain-${each.key}-rpc-lb-pool"
+  name            = var.deployment_name != null ? "${var.network_name}-${var.deployment_name}-domain-${each.key}-rpc-lb-pool" : "${var.network_name}-domain-${each.key}-rpc-lb-pool"
   description     = "${title(var.network_name)} Domain ${each.key} RPC Load balancer Pool"
   enabled         = true
   minimum_origins = length(local.domain_ipv4_map[each.key])

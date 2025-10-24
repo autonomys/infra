@@ -8,6 +8,7 @@ module "mainnet_foundation" {
   cloudflare_domain_fqdn = "subspace.foundation"
   new_relic_api_key      = var.new_relic_api_key
   ssh_agent_identity     = var.ssh_agent_identity
+  deployment_name        = "foundation"
 
   bare-consensus-bootstrap-node-config = {
     genesis-hash = "66455a580aabff303720aa83adbe6c44502922251c03ba73686d5245da9e21bd"
