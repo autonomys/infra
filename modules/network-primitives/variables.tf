@@ -92,6 +92,12 @@ variable "path_to_scripts" {
   type        = string
 }
 
+variable "deployment_name" {
+  description = "Name of the deployment. Ex: labs, foundation etc..."
+  type        = string
+  default     = null
+}
+
 variable "consensus-bootstrap-node-config" {
   description = "Consensus Bootstrap node deployment config"
   type = object({
