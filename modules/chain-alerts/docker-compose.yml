@@ -1,0 +1,20 @@
+networks:
+  chain-alerter:
+
+services:
+  chain-alerter:
+    image: ghcr.io/autonomys/chain-alerter:${DOCKER_TAG}
+    container_name: chain-alerter
+    volumes:
+      - ${SLACK_SECRET_PATH}:/slack-secret
+    restart: unless-stopped
+    networks:
+      - chain-alerter
+    env_file:
+      - .env
+    command: [
+      "--node-rpc-url", $RPC_NODE_URL,
+      "--name", $ALERTER_NAME,
+      "--uptime-kuma-url", $UPTIMEKUMA_URL,
+      "--production",
+    ]
