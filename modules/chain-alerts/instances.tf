@@ -95,7 +95,7 @@ resource "null_resource" "start_chain_alert_node" {
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml down
 
       # set hostname
-      sudo hostnamectl set-hostname ${var.instance.network_name}-chain-alerts}
+      sudo hostnamectl set-hostname ${var.instance.network_name}-chain-alerts
 
       # create slack secret and set permission
 	  sudo echo "${var.instance.slack_secret}" > /home/${var.deployer.ssh_user}/subspace/slack-secret
