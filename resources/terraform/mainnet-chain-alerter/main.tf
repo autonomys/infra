@@ -20,7 +20,7 @@ module "mainnet_chain_alerter" {
 
   instance = {
     network_name   = "mainnet"
-    docker_tag     = "v0.2.1"
+    docker_tag     = "v0.2.2"
     instance_type  = "c3.xlarge"
     slack_secret   = var.slack_secret
     rpc_url        = "wss://rpc.mainnet.autonomys.xyz/ws"

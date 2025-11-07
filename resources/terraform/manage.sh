@@ -28,7 +28,7 @@ VALID_PROJECTS=(
 )
 
 # Allowed actions
-VALID_ACTIONS=("init" "upgrade" "plan" "apply" "destroy" "store-secrets" "fetch-secrets")
+VALID_ACTIONS=("init" "upgrade" "plan" "apply" "destroy" "store-secrets" "fetch-secrets" "output")
 
 function show_help() {
   echo "Usage: ${RESOURCES_PATH}/${SCRIPT_NAME} <project> <action>"
@@ -161,6 +161,9 @@ case "$ACTION" in
     echo "Destroying terraform deployment for project: $PROJECT"
     terraform -chdir="$RESOURCES_PATH/$PROJECT" destroy && \
     store_secrets
+    ;;
+  output)
+    terraform -chdir="$RESOURCES_PATH/$PROJECT" output
     ;;
   store-secrets)
     store_secrets
