@@ -19,11 +19,15 @@ module "chronos_chain_alerter" {
   }
 
   instance = {
-    network_name   = "chronos"
-    docker_tag     = "v0.2.2"
-    instance_type  = "c3.xlarge"
-    slack_secret   = var.slack_secret
-    rpc_url        = "wss://rpc.chronos.autonomys.xyz/ws"
-    uptimekuma_url = var.uptimekuma_url
+    network_name               = "chronos"
+    docker_tag                 = "v1.0.0"
+    instance_type              = "c3.xlarge"
+    rpc_url                    = "wss://rpc.chronos.autonomys.xyz/ws"
+    uptimekuma_url             = var.uptimekuma_url
+    slack_secret               = var.slack_secret
+    slack_bot_name             = "Chronos Chain Alerter"
+    slack_channel              = "chain-alerts"
+    non_block_import_threshold = "60s"
+    reorg_depth_threshold      = 6
   }
 }
