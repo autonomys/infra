@@ -104,10 +104,13 @@ resource "null_resource" "start_chain_alert_node" {
 
       # create .env file
       sudo echo "DOCKER_TAG=${var.instance.docker_tag}" > /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "RPC_URL=${var.instance.rpc_url}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "SLACK_SECRET_PATH=/home/${var.deployer.ssh_user}/subspace/slack-secret" >> /home/${var.deployer.ssh_user}/subspace/.env
-      sudo echo "RPC_NODE_URL=${var.instance.rpc_url}" >> /home/${var.deployer.ssh_user}/subspace/.env
-      sudo echo "ALERTER_NAME=${title(var.instance.network_name)}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "UPTIMEKUMA_URL=${var.instance.uptimekuma_url}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "NON_BLOCK_IMPORT_THRESHOLD=${var.instance.non_block_import_threshold}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "REORG_DEPTH_THRESHOLD=${var.instance.reorg_depth_threshold}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "SLACK_BOT_NAME=${var.instance.slack_bot_name}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "SLACK_CHANNEL_NAME=${var.instance.slack_channel}" >> /home/${var.deployer.ssh_user}/subspace/.env
 
       # start subspace node
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml up -d

@@ -26,12 +26,16 @@ variable "deployer" {
 variable "instance" {
   description = "Chain alerts specific details"
   type = object({
-    network_name   = string
-    docker_tag     = string
-    instance_type  = string
-    slack_secret   = string
-    rpc_url        = string
-    uptimekuma_url = string
+    network_name               = string
+    docker_tag                 = string
+    instance_type              = string
+    rpc_url                    = string
+    uptimekuma_url             = string
+    slack_secret               = string
+    slack_bot_name             = string
+    slack_channel              = string
+    non_block_import_threshold = string
+    reorg_depth_threshold      = number
   })
   sensitive = true
 }

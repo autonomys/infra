@@ -13,8 +13,10 @@ services:
     env_file:
       - .env
     command: [
-      "--node-rpc-url", $RPC_NODE_URL,
-      "--name", $ALERTER_NAME,
-      "--uptime-kuma-url", $UPTIMEKUMA_URL,
-      "--production",
+      "--rpc-url", $RPC_URL,
+      "--uptimekuma-url", $UPTIMEKUMA_URL,
+      "--non-block-import-threshold", $NON_BLOCK_IMPORT_THRESHOLD,
+      "--reorg-depth-threshold", $REORG_DEPTH_THRESHOLD,
+      "--slack-bot-name", $SLACK_BOT_NAME,
+      "--slack-channel-name", $SLACK_CHANNEL_NAME
     ]
