@@ -36,6 +36,8 @@ variable "instance" {
     slack_channel              = string
     non_block_import_threshold = string
     reorg_depth_threshold      = number
+    per_slot_threshold         = string
+    avg_slot_threshold         = string
   })
   sensitive = true
 }

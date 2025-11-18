@@ -20,14 +20,16 @@ module "mainnet_chain_alerter" {
 
   instance = {
     network_name               = "mainnet"
-    docker_tag                 = "v1.0.0"
+    docker_tag                 = "v1.1.0"
     instance_type              = "c3.xlarge"
     rpc_url                    = "wss://rpc.mainnet.autonomys.xyz/ws"
     uptimekuma_url             = var.uptimekuma_url
     slack_secret               = var.slack_secret
     slack_bot_name             = "Mainnet Chain Alerter"
-    slack_channel              = "chain-alerts"
+    slack_channel              = "mainnet-chain-alerts"
     non_block_import_threshold = "60s"
     reorg_depth_threshold      = 6
+    per_slot_threshold         = "1.1s"
+    avg_slot_threshold         = "1.1s"
   }
 }
