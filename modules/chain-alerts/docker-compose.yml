@@ -18,5 +18,7 @@ services:
       "--non-block-import-threshold", $NON_BLOCK_IMPORT_THRESHOLD,
       "--reorg-depth-threshold", $REORG_DEPTH_THRESHOLD,
       "--slack-bot-name", $SLACK_BOT_NAME,
-      "--slack-channel-name", $SLACK_CHANNEL_NAME
+      "--slack-channel-name", $SLACK_CHANNEL_NAME,
+      "--per-slot-threshold", $PER_SLOT_THRESHOLD,
+      "--avg-slot-threshold", $AVG_SLOT_THRESHOLD
     ]

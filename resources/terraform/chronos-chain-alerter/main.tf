@@ -20,14 +20,16 @@ module "chronos_chain_alerter" {
 
   instance = {
     network_name               = "chronos"
-    docker_tag                 = "v1.0.0"
+    docker_tag                 = "v1.1.0"
     instance_type              = "c3.xlarge"
     rpc_url                    = "wss://rpc.chronos.autonomys.xyz/ws"
     uptimekuma_url             = var.uptimekuma_url
     slack_secret               = var.slack_secret
     slack_bot_name             = "Chronos Chain Alerter"
-    slack_channel              = "chain-alerts"
-    non_block_import_threshold = "60s"
+    slack_channel              = "chronos-chain-alerts"
+    non_block_import_threshold = "90s"
     reorg_depth_threshold      = 6
+    per_slot_threshold         = "1.6s"
+    avg_slot_threshold         = "1.6s"
   }
 }

@@ -111,6 +111,8 @@ resource "null_resource" "start_chain_alert_node" {
       sudo echo "REORG_DEPTH_THRESHOLD=${var.instance.reorg_depth_threshold}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "SLACK_BOT_NAME=${var.instance.slack_bot_name}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "SLACK_CHANNEL_NAME=${var.instance.slack_channel}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "PER_SLOT_THRESHOLD=${var.instance.per_slot_threshold}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "AVG_SLOT_THRESHOLD=${var.instance.avg_slot_threshold}" >> /home/${var.deployer.ssh_user}/subspace/.env
 
       # start subspace node
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml up -d
