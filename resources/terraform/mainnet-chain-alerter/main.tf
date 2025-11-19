@@ -20,7 +20,7 @@ module "mainnet_chain_alerter" {
 
   instance = {
     network_name               = "mainnet"
-    docker_tag                 = "v1.1.0"
+    docker_tag                 = "v1.1.1"
     instance_type              = "c3.xlarge"
     rpc_url                    = "wss://rpc.mainnet.autonomys.xyz/ws"
     uptimekuma_url             = var.uptimekuma_url
