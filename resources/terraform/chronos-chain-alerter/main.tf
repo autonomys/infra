@@ -29,7 +29,7 @@ module "chronos_chain_alerter" {
     slack_channel              = "chronos-chain-alerts"
     non_block_import_threshold = "90s"
     reorg_depth_threshold      = 6
-    per_slot_threshold         = "1.6s"
-    avg_slot_threshold         = "1.6s"
+    per_slot_threshold         = "1.7s"
+    avg_slot_threshold         = "1.7s"
   }
 }
