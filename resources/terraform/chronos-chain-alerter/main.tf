@@ -20,7 +20,7 @@ module "chronos_chain_alerter" {
 
   instance = {
     network_name               = "chronos"
-    docker_tag                 = "v1.1.1"
+    docker_tag                 = "v1.1.2"
     instance_type              = "c3.xlarge"
     rpc_url                    = "wss://rpc.chronos.autonomys.xyz/ws"
     uptimekuma_url             = var.uptimekuma_url
