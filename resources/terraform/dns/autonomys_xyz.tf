@@ -419,6 +419,21 @@ resource "cloudflare_dns_record" "terraform_managed_resource_f9213b98d281f714d5c
   settings = {}
 }
 
+resource "cloudflare_dns_record" "staging_all_safe_caa_letsencrypt" {
+  name    = "*.staging.safe.autonomys.xyz"
+  proxied = false
+  tags    = []
+  ttl     = 1
+  type    = "CAA"
+  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
+  data = {
+    flags = 0
+    tag   = "issue"
+    value = "letsencrypt.org"
+  }
+  settings = {}
+}
+
 resource "cloudflare_dns_record" "terraform_managed_resource_1ff06a1876c74865366b1d80024539ed_72" {
   name    = "staging.safe.autonomys.xyz"
   proxied = false
@@ -430,6 +445,21 @@ resource "cloudflare_dns_record" "terraform_managed_resource_1ff06a1876c74865366
     flags = 0
     tag   = "issue"
     value = "amazon.com"
+  }
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "staging_safe_caa_letsencrypt" {
+  name    = "staging.safe.autonomys.xyz"
+  proxied = false
+  tags    = []
+  ttl     = 1
+  type    = "CAA"
+  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
+  data = {
+    flags = 0
+    tag   = "issue"
+    value = "letsencrypt.org"
   }
   settings = {}
 }
@@ -591,16 +621,14 @@ resource "cloudflare_dns_record" "terraform_managed_resource_a81077de846570742ac
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_9efb2992a3d5b36717753d972ff7c078_86" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "config.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
+  content  = local.proxied_data.autonomys_xyz.config_staging_safe
+  name     = "config.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_cfe0f7cbfa8e8f9cefc2879c66cb9c3c_87" {
@@ -669,16 +697,14 @@ resource "cloudflare_dns_record" "terraform_managed_resource_5dd5106fdaadac76bd8
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_c935f1f7351156a457532622093b8b5c_93" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "events.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
+  content  = local.proxied_data.autonomys_xyz.events_staging_safe
+  name     = "events.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_9191d14b877d18e8a7d3cd8890571c1b_94" {
@@ -708,16 +734,36 @@ resource "cloudflare_dns_record" "terraform_managed_resource_8a877b7d1fcdfc39385
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_b330bc71dca7982ddd03a804117fb10c_96" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "flower-transaction.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
+  content  = local.proxied_data.autonomys_xyz.flower_transaction_staging_safe
+  name     = "flower-transaction.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "transaction_staging_safe" {
+  content  = local.proxied_data.autonomys_xyz.transaction_staging_safe
+  name     = "transaction.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "transaction_testnet_staging_safe" {
+  content  = local.proxied_data.autonomys_xyz.transaction_testnet_staging_safe
+  name     = "transaction-testnet.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_1e5884885d67114dd8261b4c0bcfb468_97" {
@@ -734,16 +780,14 @@ resource "cloudflare_dns_record" "terraform_managed_resource_1e5884885d67114dd82
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_081c0f0e9329719de4c8ebdcb9800704_98" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "flower-transaction-testnet.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
+  content  = local.proxied_data.autonomys_xyz.flower_transaction_testnet_staging_safe
+  name     = "flower-transaction-testnet.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_de37f28cc4c83a8bff6c2b25adf161b1_99" {
@@ -773,16 +817,14 @@ resource "cloudflare_dns_record" "terraform_managed_resource_fd8ba77f2846cf294f6
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_717c35bf5013c5686ab7a5e937156fc1_101" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "gateway.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
+  content  = local.proxied_data.autonomys_xyz.gateway_staging_safe
+  name     = "gateway.staging.safe.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_60c94993c28154913741969735587024_102" {
@@ -878,19 +920,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_94b0a90d63d8882a725
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_acc9595d7710df297ac9ba284990eb83_115" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "transaction.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
-}
-
 resource "cloudflare_dns_record" "terraform_managed_resource_ccd372ab4b77ee2f7606a011235bd84b_116" {
   content = "safe-autonomys-1907842251.us-east-1.elb.amazonaws.com"
   name    = "transaction-testnet.safe.autonomys.xyz"
@@ -904,18 +933,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_ccd372ab4b77ee2f760
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_702f1499bccd742bdb6e603b628bbd9c_117" {
-  content = "safe-autonomys-1281125464.us-east-1.elb.amazonaws.com"
-  name    = "transaction-testnet.staging.safe.autonomys.xyz"
-  proxied = false
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {
-    flatten_cname = false
-  }
-}
 
 resource "cloudflare_dns_record" "terraform_managed_resource_55fcac1d820fb9064253f3dc23c1774c_118" {
   content = "proxy-ssl.webflow.com"
