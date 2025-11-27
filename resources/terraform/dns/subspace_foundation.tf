@@ -1,13 +1,3 @@
-resource "cloudflare_dns_record" "subspace_foundation_mainnet_rpc" {
-  content  = local.proxied_data.subspace_foundation.rpc_mainnet
-  name     = "rpc.mainnet.subspace.foundation"
-  proxied  = true
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "subspace_foundation" {
   content  = "198.202.211.1"
   name     = "subspace.foundation"
