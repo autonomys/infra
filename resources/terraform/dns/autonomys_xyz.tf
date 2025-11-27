@@ -623,7 +623,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_a81077de846570742ac
 resource "cloudflare_dns_record" "terraform_managed_resource_9efb2992a3d5b36717753d972ff7c078_86" {
   content  = local.proxied_data.autonomys_xyz.config_staging_safe
   name     = "config.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -699,7 +699,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_5dd5106fdaadac76bd8
 resource "cloudflare_dns_record" "terraform_managed_resource_c935f1f7351156a457532622093b8b5c_93" {
   content  = local.proxied_data.autonomys_xyz.events_staging_safe
   name     = "events.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -736,7 +736,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_8a877b7d1fcdfc39385
 resource "cloudflare_dns_record" "terraform_managed_resource_b330bc71dca7982ddd03a804117fb10c_96" {
   content  = local.proxied_data.autonomys_xyz.flower_transaction_staging_safe
   name     = "flower-transaction.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -747,7 +747,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_b330bc71dca7982ddd0
 resource "cloudflare_dns_record" "transaction_staging_safe" {
   content  = local.proxied_data.autonomys_xyz.transaction_staging_safe
   name     = "transaction.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -758,7 +758,7 @@ resource "cloudflare_dns_record" "transaction_staging_safe" {
 resource "cloudflare_dns_record" "transaction_testnet_staging_safe" {
   content  = local.proxied_data.autonomys_xyz.transaction_testnet_staging_safe
   name     = "transaction-testnet.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -782,7 +782,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_1e5884885d67114dd82
 resource "cloudflare_dns_record" "terraform_managed_resource_081c0f0e9329719de4c8ebdcb9800704_98" {
   content  = local.proxied_data.autonomys_xyz.flower_transaction_testnet_staging_safe
   name     = "flower-transaction-testnet.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -819,7 +819,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_fd8ba77f2846cf294f6
 resource "cloudflare_dns_record" "terraform_managed_resource_717c35bf5013c5686ab7a5e937156fc1_101" {
   content  = local.proxied_data.autonomys_xyz.gateway_staging_safe
   name     = "gateway.staging.safe.autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
