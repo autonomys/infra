@@ -29,7 +29,7 @@ module "mainnet_chain_alerter" {
     slack_channel              = "mainnet-chain-alerts"
     non_block_import_threshold = "60s"
     reorg_depth_threshold      = 6
-    per_slot_threshold         = "1.1s"
+    per_slot_threshold         = "1.2s"
     avg_slot_threshold         = "1.1s"
   }
 }
