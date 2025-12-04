@@ -129,3 +129,12 @@ resource "cloudflare_dns_record" "subspace_foundation_webflow_verification" {
   settings = {}
 }
 
+resource "cloudflare_dns_record" "subspace_foundation_github_pages_beneficiary" {
+  content  = "\"329f7b11df0e7f710435e3838ecaf7\""
+  name     = "_github-pages-challenge-subspace.beneficiary.subspace.foundation"
+  proxied  = false
+  ttl      = 1
+  type     = "TXT"
+  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
+  settings = {}
+}
