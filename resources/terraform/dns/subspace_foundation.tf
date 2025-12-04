@@ -138,3 +138,13 @@ resource "cloudflare_dns_record" "subspace_foundation_github_pages_beneficiary" 
   zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
   settings = {}
 }
+
+resource "cloudflare_dns_record" "subspace_foundation_beneficiary" {
+  content  = "subspace.github.io"
+  name     = "beneficiary.subspace.foundation"
+  proxied  = false
+  ttl      = 1
+  type     = "CNAME"
+  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
+  settings = {}
+}
