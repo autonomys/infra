@@ -1,7 +1,7 @@
 resource "cloudflare_dns_record" "terraform_managed_resource_db2ccd228b09227cfcbe56dad03865bf_10" {
   content  = local.proxied_data.autonomys_xyz.root_0
   name     = "autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
@@ -12,7 +12,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_db2ccd228b09227cfcb
 resource "cloudflare_dns_record" "terraform_managed_resource_75c9a47df80721404b46b87fce12fd58_11" {
   content  = local.proxied_data.autonomys_xyz.root_1
   name     = "autonomys.xyz"
-  proxied  = true
+  proxied  = false
   tags     = []
   ttl      = 1
   type     = "A"
