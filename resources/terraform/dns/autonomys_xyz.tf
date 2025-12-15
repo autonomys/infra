@@ -935,7 +935,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_ccd372ab4b77ee2f760
 
 
 resource "cloudflare_dns_record" "terraform_managed_resource_55fcac1d820fb9064253f3dc23c1774c_118" {
-  content = "proxy-ssl.webflow.com"
+  content = "cdn.webflow.com"
   name    = "www.autonomys.xyz"
   proxied = false
   tags    = []
