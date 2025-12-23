@@ -1,0 +1,34 @@
+networks:
+  reward-distributor:
+
+services:
+  init-perms:
+    image: alpine:3.20
+    command: [ '/bin/sh', '-lc', 'mkdir -p /data && chown -R 1001:1001 /data' ]
+    volumes:
+      - ${HOST_DATA_DIR}:/data
+    restart: 'no'
+    networks:
+      - reward-distributor
+  scheduler:
+    image: ghcr.io/subspace/operator-reward-distributor:${DOCKER_TAG}
+    container_name: reward_distributor_scheduler
+    command: [ 'sh', '-lc', 'node dist/index.js' ]
+    env_file:
+      - .env
+    environment:
+      SCHEDULER_HOST: 0.0.0.0
+      LOG_FILE_PATH: /data/logs/reward_distributor_scheduler.log
+    restart: unless-stopped
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ 'CMD', 'curl', '-sf', 'http://127.0.0.1:3000/' ]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    volumes:
+      - ${HOST_DATA_DIR}:/data
+    networks:
+      - reward-distributor
