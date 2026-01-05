@@ -26,6 +26,7 @@ VALID_PROJECTS=(
   ["chronos-chain-alerter"]="common.auto.tfvars"
   ["mainnet-chain-alerter"]="common.auto.tfvars"
   ["chronos-reward-distributor"]="common.auto.tfvars"
+  ["mainnet-reward-distributor"]="common.auto.tfvars"
 )
 
 # Allowed actions
