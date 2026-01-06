@@ -4,6 +4,7 @@ networks:
 services:
   init-perms:
     image: alpine:3.20
+    container_name: reward_distributor_init_perms
     command: [ '/bin/sh', '-lc', 'mkdir -p /data && chown -R 1001:1001 /data' ]
     volumes:
       - ${HOST_DATA_DIR}:/data
@@ -30,5 +31,46 @@ services:
       retries: 6
     volumes:
       - ${HOST_DATA_DIR}:/data
+    networks:
+      - reward-distributor
+
+  api:
+    image: ghcr.io/subspace/operator-reward-distributor:${DOCKER_TAG}
+    container_name: reward_distributor_api
+    command: [ 'sh', '-lc', 'node dist/server/app.js' ]
+    env_file:
+      - .env
+    environment:
+      SCHEDULER_HEALTH_URL: http://scheduler:3000/
+      SERVER_HOST: 0.0.0.0
+      LOG_FILE_PATH: /data/logs/reward_distributor_api.log
+    restart: unless-stopped
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+      scheduler:
+        condition: service_started
+    healthcheck:
+      test: [ 'CMD', 'curl', '-sf', 'http://127.0.0.1:3001/health' ]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    volumes:
+      - ${HOST_DATA_DIR}:/data
+    networks:
+      - reward-distributor
+
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: reward_distributor_api_proxy
+    depends_on:
+      - api
+    env_file:
+      - .env
+    volumes:
+      - $CONF_DIR/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "80:80"
+    restart: unless-stopped
     networks:
       - reward-distributor

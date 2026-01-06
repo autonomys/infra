@@ -20,6 +20,7 @@ variable "deployer" {
     ssh_agent_identity     = string
     path_to_scripts        = string
     path_to_docker_compose = string
+    path_to_nginx_conf     = string
   })
 }
 

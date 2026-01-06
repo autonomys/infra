@@ -87,6 +87,12 @@ resource "null_resource" "start_reward_distributor_node" {
     destination = "/home/${var.deployer.ssh_user}/subspace/docker-compose.yml"
   }
 
+  # copy nginx conf
+  provisioner "file" {
+    source      = var.deployer.path_to_nginx_conf
+    destination = "/home/${var.deployer.ssh_user}/subspace/nginx.conf"
+  }
+
   # start docker containers
   provisioner "remote-exec" {
     inline = [
@@ -110,6 +116,7 @@ resource "null_resource" "start_reward_distributor_node" {
       sudo echo "ACCOUNT_PRIVATE_KEY=${var.instance.account_private_key}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "DB_URL=sqlite:/data/ord.sqlite" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "HOST_DATA_DIR=/home/${var.deployer.ssh_user}/subspace/data" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "CONF_DIR=/home/${var.deployer.ssh_user}/subspace" >> /home/${var.deployer.ssh_user}/subspace/.env
 
       # start docker service
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml up -d
