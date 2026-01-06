@@ -16,6 +16,7 @@ module "chronos_reward_distributor" {
     ssh_agent_identity     = var.ssh_agent_identity
     path_to_scripts        = "../../../templates/scripts"
     path_to_docker_compose = "../../../modules/operator-reward-distributor/docker-compose.yml"
+    path_to_nginx_conf     = "../../../modules/operator-reward-distributor/nginx.conf"
   }
 
   instance = {
@@ -23,7 +24,7 @@ module "chronos_reward_distributor" {
     docker_tag          = "latest"
     instance_type       = "c3.large"
     rpc_url             = "wss://auto-evm.chronos.autonomys.xyz/ws"
-    interval_seconds    = 61
+    interval_seconds    = 60
     tip_ai3             = 0.01
     daily_ai3_cap       = 10
     max_retries         = 5

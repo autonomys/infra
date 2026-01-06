@@ -74,6 +74,15 @@ resource "aws_security_group" "network_sg" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
+  ingress {
+    description      = "80 for nginx"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
   egress {
     description      = "egress for VPC"
     from_port        = 0
