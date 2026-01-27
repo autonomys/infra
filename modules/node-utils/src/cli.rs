@@ -10,7 +10,7 @@ pub enum Command {
     Bootstrap(BootnodeParams),
     Farmer(FarmerParams),
     Rpc(RpcParams),
-    Timekeeper(CommonParams),
+    Timekeeper(TimekeeperParams),
     DomainBootstrap(DomainCommonParams),
     DomainRpc(DomainRpcParams),
     DomainOperator(DomainOperatorParams),
@@ -82,6 +82,14 @@ pub struct BootnodeParams {
     /// Genesis hash of the network.
     #[arg(long, required = true)]
     pub genesis_hash: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct TimekeeperParams {
+    #[clap(flatten)]
+    pub common: CommonParams,
+    #[arg(long)]
+    pub cpu_cores: Option<String>,
 }
 
 #[derive(Debug, Parser)]

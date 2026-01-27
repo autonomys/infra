@@ -1,7 +1,7 @@
 use crate::Error;
 use crate::cli::{
-    BootnodeParams, CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams,
-    FarmerParams, RpcParams,
+    BootnodeParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams, FarmerParams,
+    RpcParams, TimekeeperParams,
 };
 use crate::sync_config::load_config;
 use crate::types::{ComposeTemplateData, PrometheusNodeData, PrometheusTemplateData};
@@ -58,10 +58,10 @@ pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) -> Result<()
     Ok(())
 }
 
-pub(crate) fn create_timekeeper_node_docker_compose(params: CommonParams) -> Result<(), Error> {
+pub(crate) fn create_timekeeper_node_docker_compose(params: TimekeeperParams) -> Result<(), Error> {
     let config = load_config().ok_or(Error::Config)?;
-    let network_name = params.network.clone();
-    let node_id = params.node_id.clone();
+    let network_name = params.common.network.clone();
+    let node_id = params.common.node_id.clone();
     let template_data = ComposeTemplateData::new_timekeeper(config, params);
     create_compose_file(template_data)?;
     create_prometheus_config(PrometheusTemplateData {

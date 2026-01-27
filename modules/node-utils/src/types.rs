@@ -1,6 +1,6 @@
 use crate::cli::{
     BootnodeParams, CommonParams, DomainCommonParams, DomainOperatorParams, DomainRpcParams,
-    FarmerNodeParams, FarmerParams, RpcParams,
+    FarmerNodeParams, FarmerParams, RpcParams, TimekeeperParams,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -111,6 +111,7 @@ pub struct ComposeTemplateData {
     pub dsn_node: Option<DsnNode>,
     pub domain_node: Option<DomainNode>,
     pub is_timekeeper: bool,
+    pub timekeeper_cpu_cores: Option<String>,
 }
 
 impl ComposeTemplateData {
@@ -233,9 +234,11 @@ impl ComposeTemplateData {
         data
     }
 
-    pub fn new_timekeeper(config: Config, node_params: CommonParams) -> ComposeTemplateData {
-        let mut data = Self::new_base_common(&config, "timekeeper".to_string(), node_params, true);
+    pub fn new_timekeeper(config: Config, node_params: TimekeeperParams) -> ComposeTemplateData {
+        let mut data =
+            Self::new_base_common(&config, "timekeeper".to_string(), node_params.common, true);
         data.is_timekeeper = true;
+        data.timekeeper_cpu_cores = node_params.cpu_cores;
         data
     }
 

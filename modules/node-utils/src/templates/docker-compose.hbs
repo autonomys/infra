@@ -265,6 +265,9 @@ services:
         {{#if is_timekeeper}}
             "--timekeeper",
         {{/if}}
+        {{#if timekeeper_cpu_cores}}
+            "--timekeeper-cpu-cores","{{timekeeper_cpu_cores}}",
+        {{/if}}
         {{#if domain_node}}
             "--",
             "--domain-id", "{{domain_node.domain_id}}",
