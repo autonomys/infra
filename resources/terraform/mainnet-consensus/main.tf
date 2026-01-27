@@ -47,4 +47,17 @@ module "mainnet_consensus" {
       },
     ]
   }
+
+  timekeeper-node-config = {
+    timekeeper-nodes = [
+      {
+        docker-tag    = "mainnet-2026-jan-20"
+        reserved-only = false
+        index         = 0
+        sync-mode     = "full"
+        ipv4          = var.timekeeper_node_ipv4.timekeeper-0
+        cpu-cores     = "8-11"
+      }
+    ]
+  }
 }

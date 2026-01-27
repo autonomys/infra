@@ -37,3 +37,8 @@ variable "aws_ssh_key_name" {
   description = "AWS deployer's SSH key"
   type        = string
 }
+
+variable "timekeeper_node_ipv4" {
+  description = "Timekeeper node IPv4"
+  type        = map(string)
+}
