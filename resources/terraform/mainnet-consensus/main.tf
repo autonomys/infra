@@ -22,7 +22,7 @@ module "mainnet_consensus" {
     genesis-hash = "66455a580aabff303720aa83adbe6c44502922251c03ba73686d5245da9e21bd"
     bootstrap-nodes = [
       {
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -40,7 +40,7 @@ module "mainnet_consensus" {
     disk-volume-type     = "gp3"
     rpc-nodes = [
       {
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
