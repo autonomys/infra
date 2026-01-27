@@ -12,3 +12,8 @@ output "dns-records" {
   value       = module.mainnet_consensus.dns-records
   description = "DNS records"
 }
+
+output "timekeeper-node-ipv4-addresses" {
+  value       = module.mainnet_consensus.timekeeper_node_public_ip
+  description = "Timekeeper node IPv4 addresses"
+}

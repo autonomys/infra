@@ -77,6 +77,7 @@ resource "null_resource" "start_timekeeper_nodes" {
           --docker-tag ${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag} \
           --external-ip-v4 ${var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4} \
           --sync-mode ${var.timekeeper-node-config.timekeeper-nodes[count.index].sync-mode} \
+          --cpu-cores ${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores} \
           --is-reserved ${var.timekeeper-node-config.timekeeper-nodes[count.index].reserved-only}
 
       # start subspace node

@@ -198,6 +198,7 @@ variable "timekeeper-node-config" {
       index         = number
       sync-mode     = string
       ipv4          = string
+      cpu-cores     = string
     }))
   })
   default = null
