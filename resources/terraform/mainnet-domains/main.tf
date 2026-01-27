@@ -22,7 +22,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -41,7 +41,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -58,7 +58,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 0
         operator-id   = 0
@@ -67,7 +67,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 1
         operator-id   = 1
@@ -81,7 +81,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 2
         operator-id   = 2
@@ -91,7 +91,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2025-aug-20"
+        docker-tag    = "mainnet-2026-jan-20"
         reserved-only = false
         index         = 3
         operator-id   = 3
