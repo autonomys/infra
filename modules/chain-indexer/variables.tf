@@ -13,6 +13,11 @@ variable "aws" {
   sensitive = true
 }
 
+variable "cloudflare_api_token" {
+  description = "Cloudflare api token"
+  type        = string
+}
+
 variable "deployer" {
   description = "Deployer specific details"
   type = object({
@@ -27,6 +32,7 @@ variable "instance" {
   description = "Chain alerts specific details"
   type = object({
     network_name               = string
+    domain_fqdn                = string
     docker_tag                 = string
     instance_type              = string
     disk_volume_size           = number
@@ -36,5 +42,4 @@ variable "instance" {
     db_password                = string
     process_blocks_in_parallel = number
   })
-  sensitive = true
 }

@@ -95,6 +95,12 @@ resource "null_resource" "start_chain_indexer_node" {
     destination = "/home/${var.deployer.ssh_user}/subspace/docker-compose.yml"
   }
 
+  # copy LE script
+  provisioner "file" {
+    source      = "${var.deployer.path_to_scripts}/acme.sh"
+    destination = "/home/${var.deployer.ssh_user}/subspace/acme.sh"
+  }
+
   # start docker containers
   provisioner "remote-exec" {
     inline = [
@@ -105,12 +111,18 @@ resource "null_resource" "start_chain_indexer_node" {
       # set hostname
       sudo hostnamectl set-hostname ${var.instance.network_name}-chain-indexer
 
+      # install LE script
+      bash /home/${var.deployer.ssh_user}/subspace/acme.sh
+
       # create .env file
       sudo echo "DOCKER_TAG=${var.instance.docker_tag}" > /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "DB_PASSWORD=${var.instance.db_password}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "CONSENSUS_RPC_URL=${var.instance.consensus_rpc}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "AUTO_EVM_RPC_URL=${var.instance.auto_evm_rpc}" >> /home/${var.deployer.ssh_user}/subspace/.env
       sudo echo "PROCESS_BLOCKS_IN_PARALLEL=${var.instance.process_blocks_in_parallel}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "CF_DNS_API_TOKEN=${var.cloudflare_api_token}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "NETWORK_NAME=${var.instance.network_name}" >> /home/${var.deployer.ssh_user}/subspace/.env
+      sudo echo "DOMAIN=${var.instance.domain_fqdn}" >> /home/${var.deployer.ssh_user}/subspace/.env
 
       # start subspace node
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml up -d

@@ -20,7 +20,8 @@ module "chronos_chain_indexer" {
 
   instance = {
     network_name               = "chronos"
-    docker_tag                 = "sha-dfa9e28648df022762461c23ccffa30fa1bd062e"
+    domain_fqdn                = "autonomys.xyz"
+    docker_tag                 = "sha-8700ea7598b2d3c92bbdffdb5596c3c9c8757f01"
     instance_type              = "c3.xlarge"
     disk_volume_size           = 500
     disk_volume_type           = "gp3"
@@ -29,4 +30,6 @@ module "chronos_chain_indexer" {
     db_password                = var.db_password
     process_blocks_in_parallel = 400
   }
+
+  cloudflare_api_token = var.cloudflare_api_token
 }
