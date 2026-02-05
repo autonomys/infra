@@ -1,0 +1,34 @@
+networks:
+  chain-indexer:
+
+volumes:
+  indexer-db-data:
+
+services:
+  indexer-db:
+    image: postgres:17-alpine
+    container_name: indexer-db
+    environment:
+      POSTGRES_USER: indexer
+      POSTGRES_PASSWORD: $DB_PASSWORD
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    networks:
+      - chain-indexer
+    volumes:
+      - indexer-db-data:/var/lib/postgresql/data
+
+  chain-indexer:
+    image: ghcr.io/autonomys/chain-indexer:${DOCKER_TAG}
+    container_name: chain-indexer
+    restart: unless-stopped
+    networks:
+      - chain-indexer
+    environment:
+      - MIGRATIONS_PATH=/migrations
+      - CONSENSUS_RPC=$CONSENSUS_RPC_URL
+      - AUTO_EVM_RPC=$AUTO_EVM_RPC_URL
+      - DB_URI=postgres://indexer:$DB_PASSWORD@indexer-db:5432/indexer?sslmode=disable
+      - PROCESS_BLOCKS_IN_PARALLEL=$PROCESS_BLOCKS_IN_PARALLEL
+
