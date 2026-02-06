@@ -28,7 +28,7 @@ module "mainnet_chain_indexer" {
     consensus_rpc              = "wss://rpc.mainnet.autonomys.xyz/ws"
     auto_evm_rpc               = "wss://auto-evm.mainnet.autonomys.xyz/ws"
     db_password                = var.db_password
-    process_blocks_in_parallel = 400
+    process_blocks_in_parallel = 401
   }
 
   cloudflare_api_token = var.cloudflare_api_token
