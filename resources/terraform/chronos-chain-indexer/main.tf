@@ -21,14 +21,14 @@ module "chronos_chain_indexer" {
   instance = {
     network_name               = "chronos"
     domain_fqdn                = "autonomys.xyz"
-    docker_tag                 = "sha-8700ea7598b2d3c92bbdffdb5596c3c9c8757f01"
+    docker_tag                 = "sha-94336eb7dad4008de5d759bbfdbfa2f460e30b0c"
     instance_type              = "c3.xlarge"
     disk_volume_size           = 500
     disk_volume_type           = "gp3"
     consensus_rpc              = "wss://rpc.chronos.autonomys.xyz/ws"
     auto_evm_rpc               = "wss://auto-evm.chronos.autonomys.xyz/ws"
     db_password                = var.db_password
-    process_blocks_in_parallel = 401
+    process_blocks_in_parallel = 400
   }
 
   cloudflare_api_token = var.cloudflare_api_token
