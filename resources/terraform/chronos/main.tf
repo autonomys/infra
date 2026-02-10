@@ -1,6 +1,6 @@
 module "chronos" {
   source                 = "../../../modules/network-primitives"
-  path_to_scripts        = "../../../templates/scripts"
+  path_to_scripts        = "../../../scripts"
   network_name           = "chronos"
   vpc_id                 = "chronos-vpc"
   vpc_cidr_block         = "172.33.0.0/16"

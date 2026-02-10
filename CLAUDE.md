@@ -29,7 +29,7 @@ All project management goes through `resources/terraform/manage.sh` (requires Ba
 ### Repository Layout
 - `modules/` — Reusable Terraform modules
 - `resources/terraform/` — Individual Terraform projects
-- `templates/` — Shared script templates
+- `scripts/` — Shared provisioning scripts (installer.sh, acme.sh)
 
 ### Modules (in `modules/`)
 - **network-primitives** — Core module for blockchain node infrastructure (consensus nodes, domain nodes, farmer nodes, VPC, security groups, DNS, load balancers)

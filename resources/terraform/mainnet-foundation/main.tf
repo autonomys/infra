@@ -1,6 +1,6 @@
 module "mainnet_foundation" {
   source                 = "../../../modules/network-primitives"
-  path_to_scripts        = "../../../templates/scripts"
+  path_to_scripts        = "../../../scripts"
   network_name           = "mainnet"
   ssh_user               = "ubuntu"
   cloudflare_api_token   = var.cloudflare_api_token

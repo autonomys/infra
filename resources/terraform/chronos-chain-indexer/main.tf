@@ -14,7 +14,7 @@ module "chronos_chain_indexer" {
   deployer = {
     ssh_user               = "ubuntu"
     ssh_agent_identity     = var.ssh_agent_identity
-    path_to_scripts        = "../../../templates/scripts"
+    path_to_scripts        = "../../../scripts"
     path_to_docker_compose = "../../../modules/chain-indexer/docker-compose.yml"
   }
 
