@@ -21,8 +21,7 @@ All infrastructure — **projects**, **instances**, **volumes**, **DNS records**
 modules/                        # Reusable Terraform modules
 resources/terraform/            # Individual Terraform projects
 templates/                      # Shared script templates
-logging/                        # Logging configuration (Grafana Loki, Traefik, VictoriaMetrics)
-_docs/                          # Documentation
+logging/                        # Logging and monitoring (Grafana Loki, Traefik, VictoriaMetrics)
 ```
 
 ### Modules (`modules/`)
@@ -97,16 +96,6 @@ All project management goes through `resources/terraform/manage.sh`:
 ./manage.sh <project> store-secrets   # Store secrets to Infisical
 ```
 
-### 3. Direct Terraform commands (alternative)
-
-From `resources/terraform/`:
-
-```sh
-terraform -chdir=<project> init
-terraform -chdir=<project> plan -out=<project>.tfplan
-terraform -chdir=<project> apply <project>.tfplan
-```
-
 ## Secrets Management
 
 Secrets are managed through [Infisical](https://infisical.com/) via a Docker container (`ghcr.io/autonomys/infra/node-utils`).
@@ -118,7 +107,7 @@ Secrets are managed through [Infisical](https://infisical.com/) via a Docker con
 | Provider | Version | Purpose |
 |----------|---------|---------|
 | AWS | 6.17.0 | EC2, VPC, EBS, security groups, load balancers |
-| Cloudflare | 5.8.2 | DNS records across 8 domains |
+| Cloudflare | 5.8.2+ | DNS records across 8 domains (some modules use newer versions) |
 
 ## Backend
 
@@ -139,3 +128,24 @@ When creating a new workspace, change the execution mode from remote to local in
 - Docker containers on EC2 instances, provisioned via `null_resource` with `remote-exec`
 - Some nodes run on bare metal (Hetzner) with fixed IPs
 - Infrastructure-linked DNS is handled by the `network-primitives` module; standalone DNS records are managed in the `dns` project
+
+## Docker Images
+
+The network nodes use container images from the [Autonomys GitHub packages](https://github.com/orgs/autonomys/packages?repo_name=subspace):
+
+- **Node**: `ghcr.io/autonomys/node`
+- **Farmer**: `ghcr.io/autonomys/farmer`
+
+## Logging and Monitoring
+
+The `logging/` directory contains configuration for the observability stack:
+
+- **VictoriaMetrics** — Metrics collection and storage
+- **Grafana Loki** — Log aggregation
+- **Traefik** — Reverse proxy for monitoring services
+
+## Security Practices
+
+- Do not use root user on instances
+- SSH key authentication only — password auth disabled
+- `PermitRootLogin no` and `PasswordAuthentication no` in `/etc/ssh/sshd_config`

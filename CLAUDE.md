@@ -24,13 +24,6 @@ All project management goes through `resources/terraform/manage.sh` (requires Ba
 ./resources/terraform/manage.sh <project> store-secrets   # Store secrets to Infisical
 ```
 
-Direct terraform commands from `resources/terraform/`:
-```bash
-terraform -chdir=resources/terraform/<project> init
-terraform -chdir=resources/terraform/<project> plan -out=<project>.tfplan
-terraform -chdir=resources/terraform/<project> apply <project>.tfplan
-```
-
 ## Architecture
 
 ### Repository Layout
@@ -67,7 +60,7 @@ Each project follows this structure:
 
 ### Providers
 - **AWS** (6.17.0) — EC2, VPC, EBS, security groups, load balancers
-- **Cloudflare** (5.8.2) — DNS records across 8 domains (autonomys.xyz, autonomys.net, autonomys.network, subspace.network, subspace.net, subspace.foundation, continuum.co, ai3.storage)
+- **Cloudflare** (5.8.2+) — DNS records across 8 domains (autonomys.xyz, autonomys.net, autonomys.network, subspace.network, subspace.net, subspace.foundation, continuum.co, ai3.storage)
 
 ### Backend
 All projects use Terraform Cloud (org: `subspace-sre`) with local execution mode — state stored remotely, execution runs locally.
