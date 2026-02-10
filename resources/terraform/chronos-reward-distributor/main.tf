@@ -14,7 +14,7 @@ module "chronos_reward_distributor" {
   deployer = {
     ssh_user               = "ubuntu"
     ssh_agent_identity     = var.ssh_agent_identity
-    path_to_scripts        = "../../../templates/scripts"
+    path_to_scripts        = "../../../scripts"
     path_to_docker_compose = "../../../modules/operator-reward-distributor/docker-compose.yml"
     path_to_nginx_conf     = "../../../modules/operator-reward-distributor/nginx.conf"
   }

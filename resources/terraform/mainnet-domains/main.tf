@@ -1,6 +1,6 @@
 module "mainnet_domains" {
   source                 = "../../../modules/network-primitives"
-  path_to_scripts        = "../../../templates/scripts"
+  path_to_scripts        = "../../../scripts"
   network_name           = "mainnet"
   vpc_id                 = "mainnet-domains-vpc"
   vpc_cidr_block         = "172.32.0.0/16"

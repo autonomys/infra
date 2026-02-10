@@ -1,6 +1,6 @@
 module "devnet" {
   source                 = "../../../modules/network-primitives"
-  path_to_scripts        = "../../../templates/scripts"
+  path_to_scripts        = "../../../scripts"
   network_name           = "devnet"
   vpc_id                 = "devnet-vpc"
   vpc_cidr_block         = "172.31.0.0/16"

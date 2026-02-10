@@ -88,7 +88,7 @@ variable "cloudflare_api_token" {
 variable "path_to_scripts" {
   description = "Path to the scripts"
   type        = string
-  default     = "../../templates/scripts"
+  default     = "../../scripts"
 }
 
 variable "path_to_configs" {
