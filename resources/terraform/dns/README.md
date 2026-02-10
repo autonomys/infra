@@ -41,7 +41,7 @@ resource "cloudflare_dns_record" "name_of_the_resource" {
 ## For infra team
 
 1. Once the PR is created, pull down the PR locally
-2. Download `proxied.json` file bitwarden and store it under `resources/terraform/dns`
+2. Download `proxied.json` file from Infisical and store it under `resources/terraform/dns`
 3. If the record to be added or updated is proxied, add the record value under `proxied.json`
 4. Do plan and apply the change through terraform
 5. upload back the `proxied.json` if the file is updated
