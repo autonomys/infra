@@ -21,7 +21,7 @@ module "chronos_chain_indexer" {
   instance = {
     network_name               = "chronos"
     domain_fqdn                = "autonomys.xyz"
-    docker_tag                 = "sha-94336eb7dad4008de5d759bbfdbfa2f460e30b0c"
+    docker_tag                 = "sha-e11743aa09588695f993c23dcda91d8a0382d282"
     instance_type              = "c3.xlarge"
     disk_volume_size           = 500
     disk_volume_type           = "gp3"
