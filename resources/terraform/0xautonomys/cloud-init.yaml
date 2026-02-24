@@ -1,0 +1,91 @@
+#cloud-config
+
+hostname: 0xautonomys
+timezone: UTC
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - fail2ban
+  - ufw
+  - unattended-upgrades
+  - curl
+  - apt-transport-https
+  - ca-certificates
+  - jq
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PubkeyAuthentication yes
+      AuthorizedKeysFile .ssh/authorized_keys
+    permissions: "0644"
+
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      bantime = 1h
+      findtime = 10m
+      maxretry = 5
+    permissions: "0644"
+
+  - path: /etc/apt/apt.conf.d/50unattended-upgrades-local
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "false";
+    permissions: "0644"
+
+  - path: /etc/systemd/journald.conf.d/openclaw.conf
+    content: |
+      [Journal]
+      SystemMaxUse=500M
+      SystemKeepFree=1G
+      MaxRetentionSec=30day
+    permissions: "0644"
+
+runcmd:
+  - systemctl restart sshd
+
+  # UFW
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw --force enable
+
+  # fail2ban
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+  # Disable unnecessary services
+  - systemctl disable --now ModemManager 2>/dev/null || true
+  - systemctl disable --now multipathd 2>/dev/null || true
+  - systemctl disable --now fwupd 2>/dev/null || true
+  - systemctl disable --now packagekit 2>/dev/null || true
+
+  # Create autonomys service user
+  - useradd -m -s /bin/bash autonomys
+
+  # Sudoers: allow ubuntu to run commands as autonomys
+  - echo 'ubuntu ALL=(autonomys) NOPASSWD: ALL' > /etc/sudoers.d/ubuntu-to-autonomys
+  - chmod 0440 /etc/sudoers.d/ubuntu-to-autonomys
+
+  # Copy SSH authorized_keys so the same key can log in as autonomys
+  - mkdir -p /home/autonomys/.ssh
+  - cp /home/ubuntu/.ssh/authorized_keys /home/autonomys/.ssh/authorized_keys
+  - chown -R autonomys:autonomys /home/autonomys/.ssh
+  - chmod 700 /home/autonomys/.ssh
+  - chmod 600 /home/autonomys/.ssh/authorized_keys
+
+  # Enable linger for systemd user services without active login
+  - loginctl enable-linger autonomys
+
+  # System Node.js 22 via NodeSource (satisfies openclaw doctor requirement)
+  - curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  - apt-get install -y nodejs
+
+  # Apply journald config
+  - systemctl restart systemd-journald
