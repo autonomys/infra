@@ -19,12 +19,13 @@ variable "region" {
 variable "vpc_id" {
   description = "VPC ID for the instance and security group"
   type        = string
+  default     = "vpc-0d170f772f1c56391"
 }
 
 variable "subnet_id" {
   description = "Subnet ID for the instance (leave empty to use first available default subnet)"
   type        = string
-  default     = ""
+  default     = "subnet-0c87d91f0d324335d"
 }
 
 variable "instance_type" {
