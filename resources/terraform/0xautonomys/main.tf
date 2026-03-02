@@ -62,7 +62,7 @@ resource "aws_vpc_security_group_egress_rule" "all" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
-resource "aws_instance" "this" {
+resource "aws_instance" "zeroxautonomys" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
   key_name                    = var.key_name
@@ -95,7 +95,7 @@ resource "aws_instance" "this" {
 }
 
 resource "aws_eip" "this" {
-  instance = aws_instance.this.id
+  instance = aws_instance.zeroxautonomys.id
   domain   = "vpc"
 
   tags = {

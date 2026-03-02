@@ -1,6 +1,6 @@
 output "instance_id" {
   description = "EC2 instance ID"
-  value       = aws_instance.this.id
+  value       = aws_instance.zeroxautonomys.id
 }
 
 output "public_ip" {
@@ -10,7 +10,7 @@ output "public_ip" {
 
 output "private_ip" {
   description = "Private IP address"
-  value       = aws_instance.this.private_ip
+  value       = aws_instance.zeroxautonomys.private_ip
 }
 
 output "security_group_id" {
@@ -20,10 +20,10 @@ output "security_group_id" {
 
 output "instance_state" {
   description = "Current instance state"
-  value       = aws_instance.this.instance_state
+  value       = aws_instance.zeroxautonomys.instance_state
 }
 
 output "availability_zone" {
   description = "Availability zone of the instance"
-  value       = aws_instance.this.availability_zone
+  value       = aws_instance.zeroxautonomys.availability_zone
 }
