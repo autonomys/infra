@@ -573,7 +573,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_38a751222f27d5870ff
   name    = "astral.autonomys.xyz"
   proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
@@ -712,7 +712,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_9191d14b877d18e8a7d
   name    = "explorer.autonomys.xyz"
   proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
@@ -937,9 +937,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_ccd372ab4b77ee2f760
 resource "cloudflare_dns_record" "terraform_managed_resource_55fcac1d820fb9064253f3dc23c1774c_118" {
   content = "cdn.webflow.com"
   name    = "www.autonomys.xyz"
-  proxied = false
+  proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
