@@ -1124,6 +1124,17 @@ resource "cloudflare_dns_record" "staking_autonomys_xyz" {
   settings = {}
 }
 
+resource "cloudflare_dns_record" "staking_chronos_autonomys_xyz" {
+  content  = "7d1c8898fca10668.vercel-dns-016.com"
+  name     = "staking.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "CNAME"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
 resource "cloudflare_dns_record" "explorer_auto_evm_chronos" {
   content  = "15.204.31.207"
   name     = "explorer.auto-evm.chronos.autonomys.xyz"
