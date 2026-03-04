@@ -131,7 +131,7 @@ variable "rabbitmq_replication_username" {
 variable "rabbitmq_instance_type" {
   description = "Instance type for RabbitMQ broker instances."
   type        = string
-  default     = "mq.t3.micro"
+  default     = "mq.m7g.medium"
 }
 
 variable "rabbitmq_version" {
