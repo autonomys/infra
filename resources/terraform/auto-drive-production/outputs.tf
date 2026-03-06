@@ -29,6 +29,7 @@ output "rabbitmq_primary_endpoint" {
 output "rabbitmq_instance_type" {
   description = "Instance type for RabbitMQ broker instances"
   value       = module.auto_drive.rabbitmq_instance_type
+  sensitive   = true
 }
 
 ################################################################################
