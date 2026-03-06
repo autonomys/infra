@@ -18,7 +18,7 @@ module "auto_drive" {
   }
 
   rabbitmq = {
-    instance_type   = "mq.m7g.medium"
+    instance_type   = "mq.t3.micro"
     version         = "3.13"
     deployment_mode = "SINGLE_INSTANCE"
     username        = var.rabbitmq_username
