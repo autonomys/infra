@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu_amd64" {
 
 module "ec2_backend" {
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
   name                        = "${local.name}-backend"
   count                       = var.instances.backend_count
@@ -45,15 +45,12 @@ module "ec2_backend" {
   iam_role_policies = {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
-  root_block_device = [
-    {
-      device_name = "/dev/sdf"
-      encrypted   = true
-      volume_type = "gp3"
-      throughput  = 250
-      volume_size = var.instances.backend_volume_size
-    }
-  ]
+  root_block_device = {
+    encrypted  = true
+    type       = "gp3"
+    throughput = 250
+    size       = var.instances.backend_volume_size
+  }
   volume_tags = merge(
     { "Name" = "${local.name}-backend-root-volume-${count.index}" },
     var.tags
@@ -68,7 +65,7 @@ module "ec2_backend" {
 
 module "ec2_taurus" {
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
   name                        = "${local.name}-taurus-backend"
   count                       = var.instances.taurus_backend_count
@@ -88,15 +85,12 @@ module "ec2_taurus" {
   iam_role_policies = {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
-  root_block_device = [
-    {
-      device_name = "/dev/sdf"
-      encrypted   = true
-      volume_type = "gp3"
-      throughput  = 250
-      volume_size = var.instances.backend_volume_size
-    }
-  ]
+  root_block_device = {
+    encrypted  = true
+    type       = "gp3"
+    throughput = 250
+    size       = var.instances.backend_volume_size
+  }
   volume_tags = merge(
     { "Name" = "${local.name}-taurus-backend-root-volume-${count.index}" },
     var.tags
@@ -110,7 +104,7 @@ module "ec2_taurus" {
 
 module "ec2_gateway" {
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
   name                        = "${local.name}-gateway"
   count                       = var.instances.gateway_count
@@ -130,15 +124,12 @@ module "ec2_gateway" {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
 
-  root_block_device = [
-    {
-      device_name = "/dev/sdf"
-      encrypted   = true
-      volume_type = "gp3"
-      throughput  = 250
-      volume_size = var.instances.gateway_volume_size
-    }
-  ]
+  root_block_device = {
+    encrypted  = true
+    type       = "gp3"
+    throughput = 250
+    size       = var.instances.gateway_volume_size
+  }
   volume_tags = merge(
     { "Name" = "${local.name}-gateway-root-volume-${count.index}" },
     var.tags
@@ -152,7 +143,7 @@ module "ec2_gateway" {
 
 module "ec2_multi_gateway" {
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
   name                        = "${local.name}-multi-network-gateway"
   count                       = var.instances.multi_gateway_count
@@ -172,15 +163,12 @@ module "ec2_multi_gateway" {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
 
-  root_block_device = [
-    {
-      device_name = "/dev/sdf"
-      encrypted   = true
-      volume_type = "gp3"
-      throughput  = 250
-      volume_size = var.instances.gateway_volume_size
-    }
-  ]
+  root_block_device = {
+    encrypted  = true
+    type       = "gp3"
+    throughput = 250
+    size       = var.instances.gateway_volume_size
+  }
   volume_tags = merge(
     { "Name" = "${local.name}-multi-network-gateway-root-volume-${count.index}" },
     var.tags
