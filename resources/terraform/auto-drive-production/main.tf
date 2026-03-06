@@ -1,6 +1,11 @@
 module "auto_drive" {
   source = "../../../modules/auto-drive"
 
+  providers = {
+    aws         = aws
+    aws.region2 = aws.region2
+  }
+
   environment   = "prod"
   region        = var.region
   backup_region = "us-west-1"
@@ -17,5 +22,26 @@ module "auto_drive" {
     version         = "3.13"
     deployment_mode = "SINGLE_INSTANCE"
     username        = var.rabbitmq_username
+  }
+
+  instances = {
+    backend_count                = 2
+    backend_instance_type        = "m7a.large"
+    taurus_backend_count         = 1
+    taurus_backend_instance_type = "t3.medium"
+    gateway_count                = 1
+    gateway_instance_type        = "m7a.large"
+    multi_gateway_count          = 1
+    multi_gateway_instance_type  = "t3.medium"
+    backend_volume_size          = 500
+    gateway_volume_size          = 250
+  }
+
+  database = {
+    instance_class    = "db.t4g.2xlarge"
+    engine_version    = "17.4"
+    allocated_storage = 50
+    max_storage       = 500
+    multi_az          = true
   }
 }
