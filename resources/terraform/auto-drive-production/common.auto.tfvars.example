@@ -1,0 +1,2 @@
+# TODO: Review whether this project needs Infisical-managed secrets.
+# Currently no shared secrets are required -- rabbitmq_username has a default in variables.tf.

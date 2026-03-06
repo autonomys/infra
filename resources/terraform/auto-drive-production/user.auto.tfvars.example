@@ -1,0 +1,3 @@
+# AWS credentials are configured via the default credential chain
+# (aws configure, environment variables, or instance profile)
+# No user-specific variables are needed at this time. TODO
