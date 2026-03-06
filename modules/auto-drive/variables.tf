@@ -49,7 +49,6 @@ variable "instances" {
     backend_volume_size          = number
     gateway_volume_size          = number
   })
-  default = null
 }
 
 variable "database" {
@@ -61,7 +60,6 @@ variable "database" {
     max_storage       = number
     multi_az          = bool
   })
-  default = null
 }
 
 variable "tags" {

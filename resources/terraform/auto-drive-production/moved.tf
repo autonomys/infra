@@ -1,4 +1,3 @@
-TODO: This can be removed after the new structure has been applied.
 ################################################################################
 # State migration: VPC
 ################################################################################
@@ -67,4 +66,81 @@ moved {
 moved {
   from = aws_iam_role_policy_attachment.mq_cloudwatch_attach
   to   = module.auto_drive.aws_iam_role_policy_attachment.mq_cloudwatch_attach
+}
+
+################################################################################
+# State migration: EC2 Instances
+################################################################################
+
+moved {
+  from = module.ec2_auto_drive
+  to   = module.auto_drive.module.ec2_backend
+}
+
+moved {
+  from = module.ec2_auto_drive_taurus
+  to   = module.auto_drive.module.ec2_taurus
+}
+
+moved {
+  from = module.ec2_gateway
+  to   = module.auto_drive.module.ec2_gateway
+}
+
+moved {
+  from = module.ec2_multi_gateway
+  to   = module.auto_drive.module.ec2_multi_gateway
+}
+
+################################################################################
+# State migration: RDS
+################################################################################
+
+moved {
+  from = module.db
+  to   = module.auto_drive.module.db
+}
+
+moved {
+  from = aws_db_subnet_group.db_subnet_group
+  to   = module.auto_drive.aws_db_subnet_group.db_subnet_group
+}
+
+moved {
+  from = module.kms
+  to   = module.auto_drive.module.kms
+}
+
+moved {
+  from = module.db_automated_backups_replication
+  to   = module.auto_drive.module.db_automated_backups_replication
+}
+
+moved {
+  from = module.security_group
+  to   = module.auto_drive.module.db_security_group
+}
+
+################################################################################
+# State migration: Secrets Manager IAM
+################################################################################
+
+moved {
+  from = aws_iam_role.auto_secret_role
+  to   = module.auto_drive.aws_iam_role.auto_secret_role
+}
+
+moved {
+  from = aws_iam_policy.secrets_manager_policy
+  to   = module.auto_drive.aws_iam_policy.secrets_manager_policy
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.attach_policy
+  to   = module.auto_drive.aws_iam_role_policy_attachment.attach_policy
+}
+
+moved {
+  from = aws_iam_instance_profile.secrets_instance_profile
+  to   = module.auto_drive.aws_iam_instance_profile.secrets_instance_profile
 }

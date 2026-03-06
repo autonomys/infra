@@ -1,0 +1,189 @@
+data "aws_ami" "ubuntu_amd64" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  owners = ["099720109477"]
+}
+
+################################################################################
+# Auto-Drive Backend Instances
+################################################################################
+
+module "ec2_backend" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 5.0"
+
+  name                        = "${local.name}-backend"
+  count                       = var.instances.backend_count
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = var.instances.backend_instance_type
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
+  associate_public_ip_address = false
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.backend_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-backend-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "auto-drive" })
+}
+
+################################################################################
+# Taurus Backend Instances
+# TODO: Migrate to auto-drive-staging when that environment is built out
+################################################################################
+
+module "ec2_taurus" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 5.0"
+
+  name                        = "${local.name}-taurus-backend"
+  count                       = var.instances.taurus_backend_count
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = var.instances.taurus_backend_instance_type
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
+  associate_public_ip_address = false
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.backend_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-taurus-backend-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "auto-drive-taurus" })
+}
+
+################################################################################
+# Gateway Instances
+################################################################################
+
+module "ec2_gateway" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 5.0"
+
+  name                        = "${local.name}-gateway"
+  count                       = var.instances.gateway_count
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = var.instances.gateway_instance_type
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  associate_public_ip_address = false
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.gateway_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-gateway-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "gateway" })
+}
+
+################################################################################
+# Multi-Network Gateway Instances
+################################################################################
+
+module "ec2_multi_gateway" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 5.0"
+
+  name                        = "${local.name}-multi-network-gateway"
+  count                       = var.instances.multi_gateway_count
+  ami                         = data.aws_ami.ubuntu_amd64.id
+  instance_type               = var.instances.multi_gateway_instance_type
+  availability_zone           = element(module.vpc.azs, 0)
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
+  associate_public_ip_address = false
+  create_eip                  = true
+  disable_api_stop            = false
+
+  create_iam_instance_profile = true
+  ignore_ami_changes          = true
+  iam_role_description        = "IAM role for EC2 instance"
+  iam_role_policies = {
+    AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+
+  root_block_device = [
+    {
+      device_name = "/dev/sdf"
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.gateway_volume_size
+    }
+  ]
+  volume_tags = merge(
+    { "Name" = "${local.name}-multi-network-gateway-root-volume-${count.index}" },
+    var.tags
+  )
+  tags = merge(local.tags, { Role = "multi-network-gateway" })
+}
