@@ -46,6 +46,12 @@ module "ec2_backend" {
   iam_role_policies = {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
+
+  # TODO: Plan IMDSv2 migration (change to "required") after verifying app compatibility
+  metadata_options = {
+    http_tokens = "optional"
+  }
+
   root_block_device = {
     encrypted  = true
     type       = "gp3"
@@ -87,6 +93,11 @@ module "ec2_taurus" {
   iam_role_policies = {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
+
+  metadata_options = {
+    http_tokens = "optional"
+  }
+
   root_block_device = {
     encrypted  = true
     type       = "gp3"
@@ -127,6 +138,10 @@ module "ec2_gateway" {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
 
+  metadata_options = {
+    http_tokens = "optional"
+  }
+
   root_block_device = {
     encrypted  = true
     type       = "gp3"
@@ -165,6 +180,10 @@ module "ec2_multi_gateway" {
   iam_role_description        = "IAM role for EC2 instance"
   iam_role_policies = {
     AdministratorAccess = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+
+  metadata_options = {
+    http_tokens = "optional"
   }
 
   root_block_device = {
