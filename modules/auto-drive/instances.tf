@@ -52,12 +52,14 @@ module "ec2_backend" {
     http_tokens = "optional"
   }
 
-  root_block_device = {
-    encrypted  = true
-    type       = "gp3"
-    throughput = 250
-    size       = var.instances.backend_volume_size
-  }
+  root_block_device = [
+    {
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.backend_volume_size
+    }
+  ]
   volume_tags = merge(
     { "Name" = "${local.name}-backend-root-volume-${count.index}" },
     var.tags
@@ -96,12 +98,14 @@ module "ec2_gateway" {
     http_tokens = "optional"
   }
 
-  root_block_device = {
-    encrypted  = true
-    type       = "gp3"
-    throughput = 250
-    size       = var.instances.gateway_volume_size
-  }
+  root_block_device = [
+    {
+      encrypted   = true
+      volume_type = "gp3"
+      throughput  = 250
+      volume_size = var.instances.gateway_volume_size
+    }
+  ]
   volume_tags = merge(
     { "Name" = "${local.name}-gateway-root-volume-${count.index}" },
     var.tags

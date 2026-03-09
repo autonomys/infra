@@ -8,12 +8,6 @@ variable "region" {
   type        = string
 }
 
-variable "backup_region" {
-  description = "AWS region for RDS backup replication"
-  type        = string
-  default     = ""
-}
-
 variable "vpc" {
   description = "VPC configuration"
   type = object({
