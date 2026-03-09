@@ -34,7 +34,7 @@ module "auto_drive" {
     multi_gateway_count          = 1
     multi_gateway_instance_type  = "t3.medium"
     backend_volume_size          = 500
-    gateway_volume_size          = 250
+    gateway_volume_size          = 800
   }
 
   database = {
