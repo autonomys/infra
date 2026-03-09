@@ -35,7 +35,7 @@ module "ec2_backend" {
   subnet_id                   = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
   iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   create_eip                  = true
   disable_api_stop            = false
 
@@ -75,7 +75,7 @@ module "ec2_taurus" {
   subnet_id                   = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
   iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   create_eip                  = true
   disable_api_stop            = false
 
@@ -113,7 +113,7 @@ module "ec2_gateway" {
   availability_zone           = element(module.vpc.azs, 0)
   subnet_id                   = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   create_eip                  = true
   disable_api_stop            = false
 
@@ -152,7 +152,7 @@ module "ec2_multi_gateway" {
   availability_zone           = element(module.vpc.azs, 0)
   subnet_id                   = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   create_eip                  = true
   disable_api_stop            = false
 
