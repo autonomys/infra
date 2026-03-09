@@ -71,40 +71,6 @@ output "ec2_backend_availability_zones" {
 }
 
 ################################################################################
-# EC2 Taurus Outputs
-################################################################################
-
-output "ec2_taurus_ids" {
-  description = "The IDs of the taurus backend instances"
-  value       = module.ec2_taurus[*].id
-}
-
-output "ec2_taurus_arns" {
-  description = "The ARNs of the taurus backend instances"
-  value       = module.ec2_taurus[*].arn
-}
-
-output "ec2_taurus_instance_states" {
-  description = "The states of the taurus backend instances"
-  value       = module.ec2_taurus[*].instance_state
-}
-
-output "ec2_taurus_private_ips" {
-  description = "The private IPs of the taurus backend instances"
-  value       = module.ec2_taurus[*].private_ip
-}
-
-output "ec2_taurus_public_ips" {
-  description = "The public IPs of the taurus backend instances"
-  value       = module.ec2_taurus[*].public_ip
-}
-
-output "ec2_taurus_availability_zones" {
-  description = "The availability zones of the taurus backend instances"
-  value       = module.ec2_taurus[*].availability_zone
-}
-
-################################################################################
 # EC2 Gateway Outputs
 ################################################################################
 
@@ -136,40 +102,6 @@ output "ec2_gateway_public_ips" {
 output "ec2_gateway_availability_zones" {
   description = "The availability zones of the gateway instances"
   value       = module.ec2_gateway[*].availability_zone
-}
-
-################################################################################
-# EC2 Multi-Network Gateway Outputs
-################################################################################
-
-output "ec2_multi_gateway_ids" {
-  description = "The IDs of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].id
-}
-
-output "ec2_multi_gateway_arns" {
-  description = "The ARNs of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].arn
-}
-
-output "ec2_multi_gateway_instance_states" {
-  description = "The states of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].instance_state
-}
-
-output "ec2_multi_gateway_private_ips" {
-  description = "The private IPs of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].private_ip
-}
-
-output "ec2_multi_gateway_public_ips" {
-  description = "The public IPs of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].public_ip
-}
-
-output "ec2_multi_gateway_availability_zones" {
-  description = "The availability zones of the multi-network gateway instances"
-  value       = module.ec2_multi_gateway[*].availability_zone
 }
 
 ################################################################################

@@ -38,16 +38,12 @@ variable "rabbitmq" {
 variable "instances" {
   description = "EC2 instance configuration"
   type = object({
-    backend_count                = number
-    backend_instance_type        = string
-    taurus_backend_count         = number
-    taurus_backend_instance_type = string
-    gateway_count                = number
-    gateway_instance_type        = string
-    multi_gateway_count          = number
-    multi_gateway_instance_type  = string
-    backend_volume_size          = number
-    gateway_volume_size          = number
+    backend_count         = number
+    backend_instance_type = string
+    gateway_count         = number
+    gateway_instance_type = string
+    backend_volume_size   = number
+    gateway_volume_size   = number
   })
 }
 

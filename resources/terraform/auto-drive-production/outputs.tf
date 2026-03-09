@@ -67,40 +67,6 @@ output "ec2_auto_drive_availability_zones" {
 }
 
 ################################################################################
-# EC2 Taurus Outputs
-################################################################################
-
-output "ec2_auto_drive_taurus_ids" {
-  description = "The IDs of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_ids
-}
-
-output "ec2_auto_drive_taurus_arns" {
-  description = "The ARNs of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_arns
-}
-
-output "ec2_auto_drive_taurus_instance_states" {
-  description = "The states of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_instance_states
-}
-
-output "ec2_auto_drive_taurus_private_ips" {
-  description = "The private IPs of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_private_ips
-}
-
-output "ec2_auto_drive_taurus_public_ips" {
-  description = "The public IPs of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_public_ips
-}
-
-output "ec2_auto_drive_taurus_availability_zones" {
-  description = "The availability zones of the taurus instances"
-  value       = module.auto_drive.ec2_taurus_availability_zones
-}
-
-################################################################################
 # EC2 Gateway Outputs
 ################################################################################
 
@@ -142,40 +108,6 @@ output "auto_drive_eip" {
 output "gateway_eip" {
   description = "Elastic IPs for Gateway instances"
   value       = module.auto_drive.ec2_gateway_public_ips
-}
-
-################################################################################
-# EC2 Multi-Network Gateway Outputs
-################################################################################
-
-output "ec2_multi_gateway_ids" {
-  description = "The IDs of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_ids
-}
-
-output "ec2_multi_gateway_arns" {
-  description = "The ARNs of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_arns
-}
-
-output "ec2_multi_gateway_instance_states" {
-  description = "The states of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_instance_states
-}
-
-output "ec2_multi_gateway_private_ips" {
-  description = "The private IPs of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_private_ips
-}
-
-output "ec2_multi_gateway_public_ips" {
-  description = "The public IPs of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_public_ips
-}
-
-output "ec2_multi_gateway_availability_zones" {
-  description = "The availability zones of the multi-network gateway instances"
-  value       = module.auto_drive.ec2_multi_gateway_availability_zones
 }
 
 ################################################################################
