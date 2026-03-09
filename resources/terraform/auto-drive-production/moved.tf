@@ -78,18 +78,8 @@ moved {
 }
 
 moved {
-  from = module.ec2_auto_drive_taurus
-  to   = module.auto_drive.module.ec2_taurus
-}
-
-moved {
   from = module.ec2_gateway
   to   = module.auto_drive.module.ec2_gateway
-}
-
-moved {
-  from = module.ec2_multi_gateway
-  to   = module.auto_drive.module.ec2_multi_gateway
 }
 
 ################################################################################

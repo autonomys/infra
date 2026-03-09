@@ -25,16 +25,12 @@ module "auto_drive" {
   }
 
   instances = {
-    backend_count                = 2
-    backend_instance_type        = "m7a.large"
-    taurus_backend_count         = 1
-    taurus_backend_instance_type = "t3.medium"
-    gateway_count                = 1
-    gateway_instance_type        = "m7a.large"
-    multi_gateway_count          = 1
-    multi_gateway_instance_type  = "t3.medium"
-    backend_volume_size          = 500
-    gateway_volume_size          = 800
+    backend_count         = 2
+    backend_instance_type = "m7a.large"
+    gateway_count         = 1
+    gateway_instance_type = "m7a.large"
+    backend_volume_size   = 500
+    gateway_volume_size   = 800
   }
 
   database = {
