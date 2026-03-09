@@ -40,6 +40,7 @@ module "ec2_backend" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
   iam_role_policies = {
@@ -80,6 +81,7 @@ module "ec2_taurus" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
   iam_role_policies = {
@@ -118,6 +120,7 @@ module "ec2_gateway" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
   iam_role_policies = {
@@ -157,6 +160,7 @@ module "ec2_multi_gateway" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
   iam_role_policies = {
