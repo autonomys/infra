@@ -67,7 +67,9 @@ module "ec2_backend" {
 
 ################################################################################
 # Taurus Backend Instances
-# TODO: Migrate to auto-drive-staging when that environment is built out
+# TODO: Instance terminated — remove from config and clean up associated
+# resources (EIP, IAM role, instance profile) after confirming they are not
+# used elsewhere. Coordinate with auto-drive-staging plans.
 ################################################################################
 
 module "ec2_taurus" {
@@ -157,6 +159,9 @@ module "ec2_gateway" {
 
 ################################################################################
 # Multi-Network Gateway Instances
+# TODO: Instance terminated (replaced by single gateway) — remove from config
+# and clean up associated resources (EIP, IAM role, instance profile) after
+# confirming they are not used elsewhere.
 ################################################################################
 
 module "ec2_multi_gateway" {
