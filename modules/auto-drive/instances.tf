@@ -34,7 +34,6 @@ module "ec2_backend" {
   availability_zone           = element(module.vpc.azs, 0)
   subnet_id                   = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
-  iam_instance_profile        = aws_iam_instance_profile.secrets_instance_profile.name
   associate_public_ip_address = true
   create_eip                  = true
   disable_api_stop            = false
