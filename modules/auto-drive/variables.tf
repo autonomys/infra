@@ -3,11 +3,6 @@ variable "environment" {
   type        = string
 }
 
-variable "region" {
-  description = "AWS region for primary resources"
-  type        = string
-}
-
 variable "backup_region" {
   description = "AWS region for RDS backup replication"
   type        = string

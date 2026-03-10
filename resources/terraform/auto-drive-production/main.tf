@@ -7,7 +7,6 @@ module "auto_drive" {
   }
 
   environment   = "prod"
-  region        = var.region
   backup_region = var.backup_region
 
   vpc = {
