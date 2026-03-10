@@ -40,8 +40,10 @@ variable "instances" {
   type = object({
     backend_count         = number
     backend_instance_type = string
+    backend_names         = optional(list(string), [])
     gateway_count         = number
     gateway_instance_type = string
+    gateway_names         = optional(list(string), [])
     backend_volume_size   = number
     gateway_volume_size   = number
   })

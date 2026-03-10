@@ -27,8 +27,10 @@ module "auto_drive" {
   instances = {
     backend_count         = 2
     backend_instance_type = "m7a.large"
+    backend_names         = ["auto-drive-mainnet-private", "auto-drive-mainnet-public"]
     gateway_count         = 1
     gateway_instance_type = "m7a.large"
+    gateway_names         = ["auto-drive-files-gateway-mainnet"]
     backend_volume_size   = 500
     gateway_volume_size   = 800
   }

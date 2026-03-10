@@ -27,8 +27,8 @@ module "ec2_backend" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 6.0"
 
-  name                        = "${local.name}-backend"
   count                       = var.instances.backend_count
+  name                        = try(var.instances.backend_names[count.index], "${local.name}-backend-${count.index}")
   ami                         = data.aws_ami.ubuntu_amd64.id
   instance_type               = var.instances.backend_instance_type
   availability_zone           = element(module.vpc.azs, 0)
@@ -39,6 +39,7 @@ module "ec2_backend" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  iam_role_name               = "${local.name}-backend"
   create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
@@ -51,16 +52,17 @@ module "ec2_backend" {
     http_tokens = "optional"
   }
 
+  enable_volume_tags = false
   root_block_device = {
     encrypted  = true
     type       = "gp3"
     throughput = 250
     size       = var.instances.backend_volume_size
+    tags = merge(
+      { "Name" = "${local.name}-backend-root-volume-${count.index}" },
+      var.tags
+    )
   }
-  volume_tags = merge(
-    { "Name" = "${local.name}-backend-root-volume-${count.index}" },
-    var.tags
-  )
   tags = merge(local.tags, { Role = "auto-drive" })
 }
 
@@ -72,8 +74,8 @@ module "ec2_gateway" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 6.0"
 
-  name                        = "${local.name}-gateway"
   count                       = var.instances.gateway_count
+  name                        = try(var.instances.gateway_names[count.index], "${local.name}-gateway-${count.index}")
   ami                         = data.aws_ami.ubuntu_amd64.id
   instance_type               = var.instances.gateway_instance_type
   availability_zone           = element(module.vpc.azs, 0)
@@ -84,6 +86,7 @@ module "ec2_gateway" {
   disable_api_stop            = false
 
   create_iam_instance_profile = true
+  iam_role_name               = "${local.name}-gateway"
   create_security_group       = false
   ignore_ami_changes          = true
   iam_role_description        = "IAM role for EC2 instance"
@@ -95,16 +98,17 @@ module "ec2_gateway" {
     http_tokens = "optional"
   }
 
+  enable_volume_tags = false
   root_block_device = {
     encrypted  = true
     type       = "gp3"
     throughput = 250
     size       = var.instances.gateway_volume_size
+    tags = merge(
+      { "Name" = "${local.name}-gateway-root-volume-${count.index}" },
+      var.tags
+    )
   }
-  volume_tags = merge(
-    { "Name" = "${local.name}-gateway-root-volume-${count.index}" },
-    var.tags
-  )
   tags = merge(local.tags, { Role = "gateway" })
 }
 
