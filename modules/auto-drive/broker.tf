@@ -39,10 +39,7 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
     password = random_password.rabbitmq_password.result
   }
 
-  tags = {
-    Environment = "Production"
-    Application = "AutoDrive"
-  }
+  tags = merge(local.tags, { Application = "AutoDrive" })
 }
 
 resource "aws_security_group" "rabbitmq_broker_primary" {
