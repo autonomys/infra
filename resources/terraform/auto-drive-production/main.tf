@@ -8,7 +8,7 @@ module "auto_drive" {
 
   environment   = "prod"
   region        = var.region
-  backup_region = "us-west-1"
+  backup_region = var.backup_region
 
   vpc = {
     cidr            = "10.0.0.0/16"

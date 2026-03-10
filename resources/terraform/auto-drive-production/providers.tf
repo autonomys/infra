@@ -4,5 +4,5 @@ provider "aws" {
 
 provider "aws" {
   alias  = "region2"
-  region = "us-west-1"
+  region = var.backup_region
 }

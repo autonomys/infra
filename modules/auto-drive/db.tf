@@ -94,14 +94,14 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 module "kms" {
   source      = "terraform-aws-modules/kms/aws"
   version     = "~> 1.0"
-  description = "KMS key for cross region automated backups replication"
+  description = "KMS key for cross region automated backups replication to ${var.backup_region}"
 
   aliases                 = [local.name]
   aliases_use_name_prefix = true
 
   key_owners = [data.aws_caller_identity.current.arn]
 
-  tags = local.tags
+  tags = merge(local.tags, { BackupRegion = var.backup_region })
 
   providers = {
     aws = aws.region2
