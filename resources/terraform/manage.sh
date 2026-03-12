@@ -29,7 +29,6 @@ VALID_PROJECTS=(
   ["mainnet-reward-distributor"]="common.auto.tfvars"
   ["chronos-chain-indexer"]="common.auto.tfvars"
   ["mainnet-chain-indexer"]="common.auto.tfvars"
-  ["0xautonomys"]="common.auto.tfvars"
 )
 
 # Allowed actions

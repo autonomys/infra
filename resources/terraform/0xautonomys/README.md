@@ -46,7 +46,6 @@ These require interactive setup or contain secrets:
 - Terraform >= 1.5
 - AWS credentials with EC2/VPC/EIP permissions
 - Terraform Cloud access (org: `subspace-sre`)
-- Infisical credentials (for `manage.sh` workflow)
 - SSH key pair `0xautonomys` already registered in AWS (private key in password manager)
 
 ## Setup
@@ -57,23 +56,19 @@ Create a workspace named `0xautonomys` in the `subspace-sre` org. Set execution 
 
 ### 2. Configure Secrets
 
-```bash
-# Copy the example and fill in AWS credentials
-cp common.auto.tfvars.example common.auto.tfvars
-# Edit common.auto.tfvars with your AWS access key and secret key
-```
-
-Or use the manage.sh workflow:
+Create `user.auto.tfvars` with your AWS credentials:
 
 ```bash
-../../manage.sh 0xautonomys fetch-secrets
+cp user.auto.tfvars.example user.auto.tfvars
+# Edit user.auto.tfvars with your AWS access key, secret key, and subnet ID
 ```
 
 ### 3. Plan and Apply
 
 ```bash
-../../manage.sh 0xautonomys plan
-../../manage.sh 0xautonomys apply
+terraform init
+terraform plan
+terraform apply
 ```
 
 ## Post-Provision Manual Steps
