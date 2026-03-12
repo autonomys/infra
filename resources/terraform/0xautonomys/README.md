@@ -69,41 +69,11 @@ Or use the manage.sh workflow:
 ../../manage.sh 0xautonomys fetch-secrets
 ```
 
-### 3. Import Existing Resources
-
-The instance is already running. Import rather than create:
+### 3. Plan and Apply
 
 ```bash
-terraform init
-
-# Import the EC2 instance
-terraform import aws_instance.this <instance-id>
-
-# Import the security group
-terraform import aws_security_group.this <sg-id>
-
-# Import the SG rules (get rule IDs with:
-#   aws ec2 describe-security-group-rules \
-#     --filters Name=group-id,Values=<sg-id> --region us-east-2 --profile 0xautonomys)
-terraform import 'aws_vpc_security_group_ingress_rule.ssh["0.0.0.0/0"]' <ingress-sgr-id>
-terraform import aws_vpc_security_group_egress_rule.all <egress-sgr-id>
-
-# Import the Elastic IP
-terraform import aws_eip.this <eipalloc-id>
-```
-
-### 4. Check for Drift
-
-```bash
-terraform plan
-```
-
-If the plan shows **no changes**, the spec matches reality.
-
-### 5. Apply (when ready)
-
-```bash
-terraform apply
+../../manage.sh 0xautonomys plan
+../../manage.sh 0xautonomys apply
 ```
 
 ## Post-Provision Manual Steps
