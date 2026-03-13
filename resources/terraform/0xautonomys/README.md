@@ -66,9 +66,9 @@ cp user.auto.tfvars.example user.auto.tfvars
 ### 3. Plan and Apply
 
 ```bash
-terraform init
-terraform plan
-terraform apply
+./resources/terraform/manage.sh 0xautonomys init
+./resources/terraform/manage.sh 0xautonomys plan
+./resources/terraform/manage.sh 0xautonomys apply
 ```
 
 ## Post-Provision Manual Steps
