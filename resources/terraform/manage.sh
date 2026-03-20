@@ -30,6 +30,7 @@ VALID_PROJECTS=(
   ["chronos-chain-indexer"]="common.auto.tfvars"
   ["mainnet-chain-indexer"]="common.auto.tfvars"
   ["auto-drive-production"]="common.auto.tfvars"
+  ["0xautonomys"]=""
 )
 
 # Allowed actions
@@ -40,7 +41,7 @@ function show_help() {
   echo "Valid projects:"
   for proj in "${!VALID_PROJECTS[@]}"; do
     echo "  - $proj"
-  done
+  done | sort
   echo "Valid actions:"
   for act in "${VALID_ACTIONS[@]}"; do
     echo "  - $act"
@@ -98,6 +99,10 @@ function validate_action() {
 # store secrets to infisical
 function store_secrets() {
   local files="${VALID_PROJECTS[$PROJECT]}"
+  if [[ -z "$files" ]]; then
+    echo "No secrets to store for project: $PROJECT"
+    return 0
+  fi
   echo "Storing secrets for project: $PROJECT"
   local file_args=()
   IFS=',' read -ra file_list <<< "$files"
@@ -118,6 +123,11 @@ function store_secrets() {
 
 # fetch secrets from infisical
 function fetch_secrets() {
+  local files="${VALID_PROJECTS[$PROJECT]}"
+  if [[ -z "$files" ]]; then
+    echo "No secrets to fetch for project: $PROJECT"
+    return 0
+  fi
   echo "Fetching secrets for project: $PROJECT"
 
   docker run -q --pull always --rm \

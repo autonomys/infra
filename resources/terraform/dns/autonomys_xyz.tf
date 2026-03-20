@@ -98,7 +98,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_9df0a22995207a238a5
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_ed9af46ad8896073a743b2b2b77c67ef_27" {
-  content  = local.proxied_data.autonomys_xyz.explorer_evm_mainnet
+  content  = "15.204.77.126"
   name     = "explorer.auto-evm.mainnet.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -177,7 +177,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_73ffd7d2c0111d8e2a7
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_6b86f143b41569d5715ed357cf1ea944_34" {
-  content  = local.proxied_data.autonomys_xyz.grafana_evm_mainnet
+  content  = "15.204.77.126"
   name     = "grafana.explorer.auto-evm.mainnet.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -276,7 +276,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_2d7a0d0117c649edf3f
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_565610ef1e10ab365a52ac67d77ea115_53" {
-  content  = "15.204.73.119"
+  content  = "15.204.77.126"
   name     = "scv.explorer.auto-evm.mainnet.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -309,7 +309,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_b4647a2059431d6676c
 }
 
 resource "cloudflare_dns_record" "terraform_managed_resource_fe6a8dfc51847a21fa2d3a0fef0887dc_56" {
-  content  = "15.204.73.119"
+  content  = "15.204.77.126"
   name     = "stats.explorer.auto-evm.mainnet.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -573,7 +573,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_38a751222f27d5870ff
   name    = "astral.autonomys.xyz"
   proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
@@ -712,7 +712,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_9191d14b877d18e8a7d
   name    = "explorer.autonomys.xyz"
   proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
@@ -937,9 +937,9 @@ resource "cloudflare_dns_record" "terraform_managed_resource_ccd372ab4b77ee2f760
 resource "cloudflare_dns_record" "terraform_managed_resource_55fcac1d820fb9064253f3dc23c1774c_118" {
   content = "cdn.webflow.com"
   name    = "www.autonomys.xyz"
-  proxied = false
+  proxied = true
   tags    = []
-  ttl     = 60
+  ttl     = 1
   type    = "CNAME"
   zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {
@@ -1124,8 +1124,19 @@ resource "cloudflare_dns_record" "staking_autonomys_xyz" {
   settings = {}
 }
 
+resource "cloudflare_dns_record" "staking_chronos_autonomys_xyz" {
+  content  = "7d1c8898fca10668.vercel-dns-016.com"
+  name     = "staking.chronos.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "CNAME"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
 resource "cloudflare_dns_record" "explorer_auto_evm_chronos" {
-  content  = "15.204.31.207"
+  content  = "15.204.31.74"
   name     = "explorer.auto-evm.chronos.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -1136,7 +1147,7 @@ resource "cloudflare_dns_record" "explorer_auto_evm_chronos" {
 }
 
 resource "cloudflare_dns_record" "stats_explorer_auto_evm_chronos" {
-  content  = "15.204.31.207"
+  content  = "15.204.31.74"
   name     = "stats.explorer.auto-evm.chronos.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -1147,7 +1158,7 @@ resource "cloudflare_dns_record" "stats_explorer_auto_evm_chronos" {
 }
 
 resource "cloudflare_dns_record" "scv_explorer_auto_evm_chronos" {
-  content  = "15.204.31.207"
+  content  = "15.204.31.74"
   name     = "scv.explorer.auto-evm.chronos.autonomys.xyz"
   proxied  = false
   tags     = []
@@ -1158,7 +1169,7 @@ resource "cloudflare_dns_record" "scv_explorer_auto_evm_chronos" {
 }
 
 resource "cloudflare_dns_record" "grafana_explorer_auto_evm_chronos" {
-  content  = "15.204.31.207"
+  content  = "15.204.31.74"
   name     = "grafana.explorer.auto-evm.chronos.autonomys.xyz"
   proxied  = false
   tags     = []
