@@ -47,11 +47,12 @@ variable "instances" {
 variable "database" {
   description = "RDS PostgreSQL configuration"
   type = object({
-    instance_class    = string
-    engine_version    = string
-    allocated_storage = number
-    max_storage       = number
-    multi_az          = bool
+    instance_class          = string
+    engine_version          = string
+    allocated_storage       = number
+    max_storage             = number
+    multi_az                = bool
+    backup_retention_period = optional(number, 3)
   })
 }
 
