@@ -40,6 +40,13 @@ resource "aws_mq_broker" "rabbitmq_broker_primary" {
   }
 
   tags = merge(local.tags, { Application = "AutoDrive" })
+
+  # The user block password is write-only — AWS never returns it in API responses,
+  # so Terraform cannot confirm it matches config after any in-place broker update.
+  # This causes perpetual drift on the user block; ignore_changes suppresses it.
+  lifecycle {
+    ignore_changes = [user]
+  }
 }
 
 resource "aws_security_group" "rabbitmq_broker_primary" {
