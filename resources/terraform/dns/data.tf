@@ -16,6 +16,12 @@ data "cloudflare_zone" "autonomys_network" {
   }
 }
 
+data "cloudflare_zone" "autonomys_org" {
+  filter = {
+    name = "autonomys.org"
+  }
+}
+
 data "cloudflare_zone" "autonomys_xyz" {
   filter = {
     name = "autonomys.xyz"
