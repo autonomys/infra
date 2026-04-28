@@ -40,7 +40,7 @@ resource "cloudflare_dns_record" "autonomys_org_google_dkim" {
 }
 
 resource "cloudflare_dns_record" "autonomys_org_spf" {
-  content  = "v=spf1 include:_spf.google.com include:subspace.network include:49004947.spf07.hubspotemail.net -all"
+  content  = "v=spf1 include:_spf.google.com -all"
   name     = "autonomys.org"
   proxied  = false
   ttl      = 1
