@@ -29,6 +29,36 @@ resource "cloudflare_dns_record" "autonomys_org_www" {
   settings = {}
 }
 
+resource "cloudflare_dns_record" "autonomys_org_google_dkim" {
+  content  = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk21qDpKceJPhmfMG9q2kbMnObBlPacoMQD7dM7eWLCMmL9HAWKLleUT3Cy8ORraz11yn3bxACTh48baVsYTVIBbAJBzHhgCjOsgd/EyJ3U2NXc3BXiYdpbNFWSIc5/GQnTVu9+ao1/hZC+0JCv/KaRlIFyUP7O7K+7c9naosWoTj/SvctzWpcUGdGXeRSYzJNaQpJQld5ZwR3yeCaEA4jV6M+M30nnv7zm4Sjqeo6pAvU5OlEsdWdp1ZGt17yNijdpEJiljqrru52DdnrxjqglY12dK+5c3XIXQptMWs4jOTbJCfdpMh8NDE2IPS9PH3W10vQ95K0PeH8Bm8bmrcIwIDAQAB"
+  name     = "google-org._domainkey.autonomys.org"
+  proxied  = false
+  ttl      = 1
+  type     = "TXT"
+  zone_id  = data.cloudflare_zone.autonomys_org.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "autonomys_org_spf" {
+  content  = "v=spf1 include:_spf.google.com -all"
+  name     = "autonomys.org"
+  proxied  = false
+  ttl      = 1
+  type     = "TXT"
+  zone_id  = data.cloudflare_zone.autonomys_org.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "autonomys_org_dmarc" {
+  content  = "v=DMARC1; p=reject; pct=50; rua=mailto:admin@autonomys.org; ruf=mailto:admin@autonomys.org; aspf=r; adkim=r;"
+  name     = "_dmarc.autonomys.org"
+  proxied  = false
+  ttl      = 1
+  type     = "TXT"
+  zone_id  = data.cloudflare_zone.autonomys_org.zone_id
+  settings = {}
+}
+
 resource "cloudflare_ruleset" "autonomys_org_redirect_to_xyz" {
   zone_id     = data.cloudflare_zone.autonomys_org.zone_id
   name        = "Redirect autonomys.org to autonomys.xyz"
