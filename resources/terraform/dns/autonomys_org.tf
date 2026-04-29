@@ -40,7 +40,7 @@ resource "cloudflare_dns_record" "autonomys_org_google_dkim" {
 }
 
 resource "cloudflare_dns_record" "autonomys_org_spf" {
-  content  = "v=spf1 include:_spf.google.com -all"
+  content  = "v=spf1 include:_spf.google.com ~all"
   name     = "autonomys.org"
   proxied  = false
   ttl      = 1
@@ -50,7 +50,7 @@ resource "cloudflare_dns_record" "autonomys_org_spf" {
 }
 
 resource "cloudflare_dns_record" "autonomys_org_dmarc" {
-  content  = "v=DMARC1; p=reject; pct=50; rua=mailto:admin@autonomys.org; ruf=mailto:admin@autonomys.org; aspf=r; adkim=r;"
+  content  = "v=DMARC1; p=none; rua=mailto:admin@autonomys.org; ruf=mailto:admin@autonomys.org; aspf=r; adkim=r;"
   name     = "_dmarc.autonomys.org"
   proxied  = false
   ttl      = 1
