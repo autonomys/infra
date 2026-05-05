@@ -56,6 +56,14 @@ module "chronos" {
         sync-mode     = "full"
         ipv4          = var.timekeeper_node_ipv4.timekeeper-0
         cpu-cores     = "8-11"
+      },
+      {
+        docker-tag    = "chronos-2026-apr-30"
+        reserved-only = false
+        index         = 1
+        sync-mode     = "snap"
+        ipv4          = var.timekeeper_node_ipv4.timekeeper-1
+        cpu-cores     = "8-11"
       }
     ]
   }
