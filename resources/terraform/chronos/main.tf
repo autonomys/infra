@@ -120,7 +120,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 1
         operator-id   = 1
