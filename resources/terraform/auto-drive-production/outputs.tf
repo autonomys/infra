@@ -173,3 +173,27 @@ output "db_instance_port" {
   description = "The database port"
   value       = module.auto_drive.db_instance_port
 }
+
+################################################################################
+# Auth Lambda Outputs
+################################################################################
+
+output "auth_api_gateway_url" {
+  description = "Auth HTTP API Gateway invoke URL — set this as AUTH_SERVICE_URL after cutover"
+  value       = aws_apigatewayv2_stage.auth_default.invoke_url
+}
+
+output "auth_lambda_function_name" {
+  description = "Auth Lambda function name (pass to aws lambda update-function-code after each build)"
+  value       = aws_lambda_function.auth.function_name
+}
+
+output "auth_lambda_function_arn" {
+  description = "Auth Lambda function ARN"
+  value       = aws_lambda_function.auth.arn
+}
+
+output "auth_lambda_role_arn" {
+  description = "Auth Lambda IAM execution role ARN"
+  value       = aws_iam_role.auth_lambda.arn
+}

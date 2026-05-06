@@ -2,6 +2,7 @@
 *.tfstate*
 *.tfplan
 *.tfvars
+*.zip
 config.toml
 proxied.json
 .DS_Store
@@ -21,3 +22,4 @@ resources/mainnet/keystore/*
 /.idea
 /modules/node-utils/target
 /modules/node-utils/data
+.env
