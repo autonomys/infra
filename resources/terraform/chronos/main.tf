@@ -21,7 +21,7 @@ module "chronos" {
     genesis-hash = "91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
     bootstrap-nodes = [
       {
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -39,7 +39,7 @@ module "chronos" {
     enable-load-balancer = true
     rpc-nodes = [
       {
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -50,11 +50,19 @@ module "chronos" {
   timekeeper-node-config = {
     timekeeper-nodes = [
       {
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
         ipv4          = var.timekeeper_node_ipv4.timekeeper-0
+        cpu-cores     = "8-11"
+      },
+      {
+        docker-tag    = "chronos-2026-apr-30"
+        reserved-only = false
+        index         = 1
+        sync-mode     = "full"
+        ipv4          = var.timekeeper_node_ipv4.timekeeper-1
         cpu-cores     = "8-11"
       }
     ]
@@ -68,7 +76,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -86,7 +94,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
@@ -103,7 +111,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 0
         operator-id   = 0
@@ -112,7 +120,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "chronos-2026-apr-30"
         reserved-only = false
         index         = 1
         operator-id   = 1
