@@ -11,12 +11,21 @@
 #
 # Output: a single cpu number on stdout, or empty if detection fails. The
 # caller is expected to fall back to a static range when output is empty.
+#
+# Platform safety:
+#   - Linux only (uses /sys/devices/system/cpu/, /proc/cpuinfo).
+#   - Returns empty (graceful "no answer") on:
+#     * Hosts without cpufreq sysfs (some VMs, exotic kernels)
+#     * Hosts where /proc/cpuinfo doesn't expose "cpu MHz" (some ARM kernels)
+#     * Hosts without `taskset` (uncommon, but possible in minimal images)
+#   - Never `exit !=0` — we don't want to fail the terraform provisioner.
 set -u
 
 MAX_FREQ=0
 for f in /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq; do
   [ -r "$f" ] || continue
-  freq=$(cat "$f")
+  freq=$(cat "$f" 2>/dev/null) || continue
+  [ -z "$freq" ] && continue
   [ "$freq" -gt "$MAX_FREQ" ] && MAX_FREQ=$freq
 done
 [ "$MAX_FREQ" -eq 0 ] && exit 0
@@ -24,7 +33,8 @@ done
 CANDIDATES=()
 for f in /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq; do
   [ -r "$f" ] || continue
-  if [ "$(cat "$f")" -eq "$MAX_FREQ" ]; then
+  cur=$(cat "$f" 2>/dev/null) || continue
+  if [ "$cur" -eq "$MAX_FREQ" ]; then
     cpu_num=$(echo "$f" | sed -E 's:.*/cpu([0-9]+)/.*:\1:')
     CANDIDATES+=("$cpu_num")
   fi
@@ -36,9 +46,23 @@ if [ "${#CANDIDATES[@]}" -le 1 ]; then
   exit 0
 fi
 
+# Without `taskset` we can't pin the stress workload, so we can't measure
+# per-core peak. Fall back to the first candidate (deterministic).
+if ! command -v taskset >/dev/null 2>&1; then
+  printf '%s' "${CANDIDATES[0]}"
+  exit 0
+fi
+
 read_mhz() {
-  awk -v c="$1" '/^processor/{p=$3} p==c && /cpu MHz/ {printf "%.0f", $4; exit}' /proc/cpuinfo
+  awk -v c="$1" '/^processor/{p=$3} p==c && /cpu MHz/ {printf "%.0f", $4; exit}' /proc/cpuinfo 2>/dev/null
 }
+
+# If /proc/cpuinfo doesn't expose "cpu MHz" (some ARM kernels), there's no
+# differentiating signal — fall back to the first candidate.
+if [ -z "$(read_mhz "${CANDIDATES[0]}")" ]; then
+  printf '%s' "${CANDIDATES[0]}"
+  exit 0
+fi
 
 declare -A SCORE
 # Two rounds in opposite order — averaging cancels the thermal bias of the

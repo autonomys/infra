@@ -36,55 +36,21 @@ resource "null_resource" "setup_timekeeper_nodes" {
 
 }
 
-resource "null_resource" "tune_timekeeper_nodes" {
+resource "null_resource" "start_timekeeper_nodes" {
   count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
   depends_on = [null_resource.setup_timekeeper_nodes]
 
-  # Re-run when the unit changes OR the host identity changes (chassis
-  # replacement → new ipv4 → systemd unit must be re-deployed on the new box).
-  triggers = {
-    unit_hash = filemd5("${var.path_to_scripts}/cpu-tuning.service")
-    ipv4      = var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4
-  }
-
-  connection {
-    host           = var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4
-    user           = var.ssh_user
-    type           = "ssh"
-    agent          = true
-    agent_identity = var.ssh_agent_identity
-    timeout        = "300s"
-  }
-
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/cpu-tuning.service"
-    destination = "/tmp/cpu-tuning.service"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      <<-EOT
-      sudo mv /tmp/cpu-tuning.service /etc/systemd/system/cpu-tuning.service
-      sudo systemctl daemon-reload
-      sudo systemctl enable cpu-tuning.service
-      sudo systemctl restart cpu-tuning.service
-      EOT
-    ]
-  }
-}
-
-resource "null_resource" "start_timekeeper_nodes" {
-  count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
-  depends_on = [null_resource.setup_timekeeper_nodes, null_resource.tune_timekeeper_nodes]
-
-  # Trigger node deployment on node object change OR detector script change.
-  # `pin_strategy` is a manual escape hatch — bump the version if we ever need
-  # to force redeployment without touching the script content.
+  # Trigger node deployment on:
+  #   - any node config field change (image, ip, sync mode, etc.)
+  #   - detector script change (filemd5)
+  #   - cpu-tuning systemd unit change (filemd5)
+  #   - manual `pin_strategy` bump (escape hatch)
   triggers = merge(
     var.timekeeper-node-config.timekeeper-nodes[count.index],
     {
-      pin_strategy  = "auto-favoured-v2"
-      detector_hash = filemd5("${var.path_to_scripts}/detect-favoured-cpu.sh")
+      pin_strategy   = "auto-favoured-v2"
+      detector_hash  = filemd5("${var.path_to_scripts}/detect-favoured-cpu.sh")
+      cpu_tuning_hash = filemd5("${var.path_to_scripts}/cpu-tuning.service")
     }
   )
 
@@ -109,10 +75,27 @@ resource "null_resource" "start_timekeeper_nodes" {
     destination = "/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh"
   }
 
+  # copy cpu-tuning systemd unit
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/cpu-tuning.service"
+    destination = "/tmp/cpu-tuning.service"
+  }
+
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       <<-EOT
+      # Install/refresh the cpu-tuning systemd one-shot. The unit writes
+      # governor/EPP/HWP-boost sysfs values at every boot; each ExecStart is
+      # `-` prefixed and guarded with `[ -w PATH ]` inside, so it no-ops
+      # cleanly on AMD/non-intel_pstate hosts (governor=performance still
+      # applies via amd_pstate or whatever's available; HWP-specific writes
+      # silently skip). Idempotent — safe to redeploy on every start.
+      sudo mv /tmp/cpu-tuning.service /etc/systemd/system/cpu-tuning.service
+      sudo systemctl daemon-reload
+      sudo systemctl enable cpu-tuning.service
+      sudo systemctl restart cpu-tuning.service
+
       # stop any running service first so the stress-test below isn't fighting
       # the existing timekeeper for cycles
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
@@ -123,8 +106,10 @@ resource "null_resource" "start_timekeeper_nodes" {
       # 14900K — cores 8-11 all advertise 6000 MHz but only 1-2 actually
       # sustain it). The detector script stress-tests each candidate, samples
       # /proc/cpuinfo's live MSR-derived MHz, and returns the cpu that peaks
-      # highest. Falls back to the terraform-supplied range if detection
-      # fails or returns nothing.
+      # highest. On hardware without per-core differentiation (uniform Xeon,
+      # ARM, or platforms missing /sys/devices/system/cpu/.../cpuinfo_max_freq)
+      # the script returns empty and we fall back to the terraform-supplied
+      # range — never fails the provisioner.
       chmod +x /home/${var.ssh_user}/subspace/detect-favoured-cpu.sh
       FAVOURED_CPU=$(/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh)
       CPU_CORES=$${FAVOURED_CPU:-${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}}
