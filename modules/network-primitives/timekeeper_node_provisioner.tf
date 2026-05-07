@@ -43,14 +43,12 @@ resource "null_resource" "start_timekeeper_nodes" {
   # Trigger node deployment on:
   #   - any node config field change (image, ip, sync mode, etc.)
   #   - detector script change (filemd5)
-  #   - cpu-tuning systemd unit change (filemd5)
   #   - manual `pin_strategy` bump (escape hatch)
   triggers = merge(
     var.timekeeper-node-config.timekeeper-nodes[count.index],
     {
-      pin_strategy   = "auto-favoured-v2"
-      detector_hash  = filemd5("${var.path_to_scripts}/detect-favoured-cpu.sh")
-      cpu_tuning_hash = filemd5("${var.path_to_scripts}/cpu-tuning.service")
+      pin_strategy  = "auto-favoured-v2"
+      detector_hash = filemd5("${var.path_to_scripts}/detect-favoured-cpu.sh")
     }
   )
 
@@ -75,26 +73,33 @@ resource "null_resource" "start_timekeeper_nodes" {
     destination = "/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh"
   }
 
-  # copy cpu-tuning systemd unit
-  provisioner "file" {
-    source      = "${var.path_to_scripts}/cpu-tuning.service"
-    destination = "/tmp/cpu-tuning.service"
-  }
-
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      # Install/refresh the cpu-tuning systemd one-shot. The unit writes
-      # governor/EPP/HWP-boost sysfs values at every boot; each ExecStart is
-      # `-` prefixed and guarded with `[ -w PATH ]` inside, so it no-ops
-      # cleanly on AMD/non-intel_pstate hosts (governor=performance still
-      # applies via amd_pstate or whatever's available; HWP-specific writes
-      # silently skip). Idempotent — safe to redeploy on every start.
-      sudo mv /tmp/cpu-tuning.service /etc/systemd/system/cpu-tuning.service
-      sudo systemctl daemon-reload
-      sudo systemctl enable cpu-tuning.service
-      sudo systemctl restart cpu-tuning.service
+      # Apply CPU boost tuning inline. Each write is guarded so the block
+      # no-ops cleanly on AMD/non-intel_pstate hosts (governor=performance
+      # still applies via amd_pstate where present; HWP-specific writes
+      # silently skip on hosts without /sys/devices/system/cpu/intel_pstate).
+      # Note: these settings reset to defaults on host reboot — re-apply
+      # terraform after any reboot to restore boost behavior.
+      sudo bash -c '
+        for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+          [ -w "$f" ] && echo performance > "$f"
+        done
+        for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
+          [ -w "$f" ] && echo performance > "$f"
+        done
+        [ -w /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost ] && echo 1 > /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost
+      ' || true
+
+      # Clean up the legacy systemd cpu-tuning.service if a previous version
+      # of this module installed one. Idempotent — silent no-op on first run.
+      if [ -f /etc/systemd/system/cpu-tuning.service ]; then
+        sudo systemctl disable cpu-tuning.service 2>/dev/null || true
+        sudo rm -f /etc/systemd/system/cpu-tuning.service
+        sudo systemctl daemon-reload
+      fi
 
       # stop any running service first so the stress-test below isn't fighting
       # the existing timekeeper for cycles
