@@ -190,7 +190,7 @@ variable "farmer-node-config" {
 }
 
 variable "timekeeper-node-config" {
-  description = "Timekeeper node deployment config for Bare servers"
+  description = "Timekeeper node deployment config for Bare servers. The cpu to pin the timekeeper VDF thread to is auto-detected from the host's silicon-binned favoured core (see scripts/detect-favoured-cpu.sh)."
   type = object({
     timekeeper-nodes = list(object({
       docker-tag    = string
@@ -198,7 +198,6 @@ variable "timekeeper-node-config" {
       index         = number
       sync-mode     = string
       ipv4          = string
-      cpu-cores     = string
     }))
   })
   default = null

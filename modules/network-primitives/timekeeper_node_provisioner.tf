@@ -117,8 +117,12 @@ resource "null_resource" "start_timekeeper_nodes" {
       # range — never fails the provisioner.
       chmod +x /home/${var.ssh_user}/subspace/detect-favoured-cpu.sh
       FAVOURED_CPU=$(/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh)
-      CPU_CORES=$${FAVOURED_CPU:-${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}}
-      echo "Pinning timekeeper to cpu $CPU_CORES (favoured detected: '$FAVOURED_CPU', terraform fallback: '${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}')"
+      # Hardcoded fallback to cpu 0 only kicks in if detection somehow returns
+      # nothing (no cpufreq sysfs, no /proc/cpuinfo "cpu MHz", etc.). Every
+      # candidate-finding path in the script falls back to "first candidate"
+      # before this, so this last-resort default rarely triggers.
+      CPU_CORES=$${FAVOURED_CPU:-0}
+      echo "Pinning timekeeper to cpu $CPU_CORES (auto-detected favoured cpu: '$FAVOURED_CPU')"
 
       # set hostname
       sudo hostnamectl set-hostname ${var.network_name}-timekeeper-node-${var.timekeeper-node-config.timekeeper-nodes[count.index].index}
