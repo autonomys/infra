@@ -40,9 +40,11 @@ resource "null_resource" "tune_timekeeper_nodes" {
   count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
   depends_on = [null_resource.setup_timekeeper_nodes]
 
-  # re-run when the unit changes
+  # Re-run when the unit changes OR the host identity changes (chassis
+  # replacement → new ipv4 → systemd unit must be re-deployed on the new box).
   triggers = {
     unit_hash = filemd5("${var.path_to_scripts}/cpu-tuning.service")
+    ipv4      = var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4
   }
 
   connection {
@@ -75,12 +77,15 @@ resource "null_resource" "start_timekeeper_nodes" {
   count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
   depends_on = [null_resource.setup_timekeeper_nodes, null_resource.tune_timekeeper_nodes]
 
-  # Trigger node deployment on node object change. The synthetic `pin_strategy`
-  # key forces a one-time recreation when we switch the cpu-cores selection
-  # logic — bump the version when the strategy changes.
+  # Trigger node deployment on node object change OR detector script change.
+  # `pin_strategy` is a manual escape hatch — bump the version if we ever need
+  # to force redeployment without touching the script content.
   triggers = merge(
     var.timekeeper-node-config.timekeeper-nodes[count.index],
-    { pin_strategy = "auto-favoured-v1" }
+    {
+      pin_strategy  = "auto-favoured-v2"
+      detector_hash = filemd5("${var.path_to_scripts}/detect-favoured-cpu.sh")
+    }
   )
 
   connection {
@@ -98,26 +103,32 @@ resource "null_resource" "start_timekeeper_nodes" {
     destination = "/home/${var.ssh_user}/subspace/config.toml"
   }
 
+  # copy favoured-cpu detector
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/detect-favoured-cpu.sh"
+    destination = "/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh"
+  }
+
   # start docker containers
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      # Detect the favoured cpu — the one with the highest cpuinfo_max_freq.
-      # Intel TVB-eligible cores expose a higher ceiling than the rest of the
-      # P-cores; AMD CPPC preferred cores show similarly. On uniform-core
-      # silicon (server Xeon, Graviton) all values are equal and we pick the
-      # lowest-numbered core deterministically. Falls back to the terraform-
-      # supplied range if /sys is unreadable for any reason.
-      FAVOURED_CPU=$(
-        for f in /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq; do
-          [ -r "$f" ] && echo "$(cat "$f") $(echo "$f" | sed -E 's:.*/cpu([0-9]+)/.*:\1:')"
-        done 2>/dev/null | sort -n -r | head -1 | awk '{print $2}'
-      )
+      # stop any running service first so the stress-test below isn't fighting
+      # the existing timekeeper for cycles
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
+
+      # Detect the favoured cpu via brief empirical stress on each candidate.
+      # cpuinfo_max_freq alone can't differentiate cores that share the same
+      # firmware-reported max but vary in actual silicon quality (typical on
+      # 14900K — cores 8-11 all advertise 6000 MHz but only 1-2 actually
+      # sustain it). The detector script stress-tests each candidate, samples
+      # /proc/cpuinfo's live MSR-derived MHz, and returns the cpu that peaks
+      # highest. Falls back to the terraform-supplied range if detection
+      # fails or returns nothing.
+      chmod +x /home/${var.ssh_user}/subspace/detect-favoured-cpu.sh
+      FAVOURED_CPU=$(/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh)
       CPU_CORES=$${FAVOURED_CPU:-${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}}
       echo "Pinning timekeeper to cpu $CPU_CORES (favoured detected: '$FAVOURED_CPU', terraform fallback: '${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}')"
-
-      # stop any running service
-      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
 
       # set hostname
       sudo hostnamectl set-hostname ${var.network_name}-timekeeper-node-${var.timekeeper-node-config.timekeeper-nodes[count.index].index}
