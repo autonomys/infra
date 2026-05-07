@@ -36,9 +36,44 @@ resource "null_resource" "setup_timekeeper_nodes" {
 
 }
 
-resource "null_resource" "start_timekeeper_nodes" {
+resource "null_resource" "tune_timekeeper_nodes" {
   count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
   depends_on = [null_resource.setup_timekeeper_nodes]
+
+  # re-run when the unit changes
+  triggers = {
+    unit_hash = filemd5("${var.path_to_scripts}/cpu-tuning.service")
+  }
+
+  connection {
+    host           = var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = var.ssh_agent_identity
+    timeout        = "300s"
+  }
+
+  provisioner "file" {
+    source      = "${var.path_to_scripts}/cpu-tuning.service"
+    destination = "/tmp/cpu-tuning.service"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      <<-EOT
+      sudo mv /tmp/cpu-tuning.service /etc/systemd/system/cpu-tuning.service
+      sudo systemctl daemon-reload
+      sudo systemctl enable cpu-tuning.service
+      sudo systemctl restart cpu-tuning.service
+      EOT
+    ]
+  }
+}
+
+resource "null_resource" "start_timekeeper_nodes" {
+  count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
+  depends_on = [null_resource.setup_timekeeper_nodes, null_resource.tune_timekeeper_nodes]
 
   # trigger node deployment on node object change
   triggers = var.timekeeper-node-config.timekeeper-nodes[count.index]

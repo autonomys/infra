@@ -1,0 +1,13 @@
+[Unit]
+Description=Unlock TVB boost for timekeeper VDF (intel_pstate performance + HWP dynamic boost)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null'
+ExecStart=/bin/bash -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference > /dev/null'
+ExecStart=/bin/bash -c 'echo 1 | tee /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost > /dev/null'
+
+[Install]
+WantedBy=multi-user.target
