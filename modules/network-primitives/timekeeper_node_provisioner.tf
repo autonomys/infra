@@ -75,8 +75,13 @@ resource "null_resource" "start_timekeeper_nodes" {
   count      = var.timekeeper-node-config == null ? 0 : length(var.timekeeper-node-config.timekeeper-nodes)
   depends_on = [null_resource.setup_timekeeper_nodes, null_resource.tune_timekeeper_nodes]
 
-  # trigger node deployment on node object change
-  triggers = var.timekeeper-node-config.timekeeper-nodes[count.index]
+  # Trigger node deployment on node object change. The synthetic `pin_strategy`
+  # key forces a one-time recreation when we switch the cpu-cores selection
+  # logic — bump the version when the strategy changes.
+  triggers = merge(
+    var.timekeeper-node-config.timekeeper-nodes[count.index],
+    { pin_strategy = "auto-favoured-v1" }
+  )
 
   connection {
     host           = var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4
@@ -97,6 +102,20 @@ resource "null_resource" "start_timekeeper_nodes" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
+      # Detect the favoured cpu — the one with the highest cpuinfo_max_freq.
+      # Intel TVB-eligible cores expose a higher ceiling than the rest of the
+      # P-cores; AMD CPPC preferred cores show similarly. On uniform-core
+      # silicon (server Xeon, Graviton) all values are equal and we pick the
+      # lowest-numbered core deterministically. Falls back to the terraform-
+      # supplied range if /sys is unreadable for any reason.
+      FAVOURED_CPU=$(
+        for f in /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq; do
+          [ -r "$f" ] && echo "$(cat "$f") $(echo "$f" | sed -E 's:.*/cpu([0-9]+)/.*:\1:')"
+        done 2>/dev/null | sort -n -r | head -1 | awk '{print $2}'
+      )
+      CPU_CORES=$${FAVOURED_CPU:-${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}}
+      echo "Pinning timekeeper to cpu $CPU_CORES (favoured detected: '$FAVOURED_CPU', terraform fallback: '${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores}')"
+
       # stop any running service
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
 
@@ -112,7 +131,7 @@ resource "null_resource" "start_timekeeper_nodes" {
           --docker-tag ${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag} \
           --external-ip-v4 ${var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4} \
           --sync-mode ${var.timekeeper-node-config.timekeeper-nodes[count.index].sync-mode} \
-          --cpu-cores ${var.timekeeper-node-config.timekeeper-nodes[count.index].cpu-cores} \
+          --cpu-cores $CPU_CORES \
           --is-reserved ${var.timekeeper-node-config.timekeeper-nodes[count.index].reserved-only}
 
       # start subspace node
