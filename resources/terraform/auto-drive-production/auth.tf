@@ -18,10 +18,17 @@
 locals {
   auth_name = var.auth_function_name
   auth_tags = {
-    Name    = local.auth_name
-    Project = "auto-drive"
+    Name      = local.auth_name
+    Project   = "auto-drive"
     Component = "auth"
   }
+
+  # Non-sensitive operational config, hardcoded to keep Infisical lean.
+  # Only actual secrets and infrastructure identifiers go in auth.auto.tfvars.
+  auth_cors_allowed_origins                    = "*"
+  auth_jwt_secret_algorithm                    = "RS256"
+  auth_log_level                               = "info"
+  auth_revoke_token_emitted_before_in_seconds  = 1746187810
 }
 
 # Minimal placeholder used only on the first `terraform apply` to satisfy the
@@ -105,12 +112,12 @@ resource "aws_lambda_function" "auth" {
   environment {
     variables = {
       JWT_SECRET                             = var.auth_jwt_secret
-      JWT_SECRET_ALGORITHM                   = var.auth_jwt_secret_algorithm
+      JWT_SECRET_ALGORITHM                   = local.auth_jwt_secret_algorithm
       API_SECRET                             = var.auth_api_secret
-      CORS_ALLOWED_ORIGINS                   = var.auth_cors_allowed_origins
+      CORS_ALLOWED_ORIGINS                   = local.auth_cors_allowed_origins
       DSQL_CLUSTER_ENDPOINT                  = var.auth_dsql_cluster_endpoint
-      LOG_LEVEL                              = var.auth_log_level
-      REVOKE_TOKEN_EMITTED_BEFORE_IN_SECONDS = tostring(var.auth_revoke_token_emitted_before_in_seconds)
+      LOG_LEVEL                              = local.auth_log_level
+      REVOKE_TOKEN_EMITTED_BEFORE_IN_SECONDS = tostring(local.auth_revoke_token_emitted_before_in_seconds)
     }
   }
 
@@ -136,7 +143,7 @@ resource "aws_apigatewayv2_api" "auth" {
   description   = "Auto Drive Auth Service"
 
   cors_configuration {
-    allow_origins = split(",", var.auth_cors_allowed_origins)
+    allow_origins = split(",", local.auth_cors_allowed_origins)
     allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_headers = ["Authorization", "Content-Type", "X-Api-Key"]
     max_age       = 300

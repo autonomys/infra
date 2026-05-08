@@ -50,43 +50,22 @@ variable "auth_jwt_secret" {
   sensitive   = true
 }
 
-variable "auth_jwt_secret_algorithm" {
-  description = "JWT signing algorithm"
-  type        = string
-  default     = "RS256"
-}
-
 variable "auth_api_secret" {
   description = "Admin API authentication secret"
   type        = string
   sensitive   = true
 }
 
-variable "auth_cors_allowed_origins" {
-  description = "Comma-separated list of CORS-allowed origins"
-  type        = string
-}
-
 variable "auth_dsql_cluster_endpoint" {
   description = "Aurora DSQL cluster endpoint hostname"
   type        = string
+  sensitive   = true
 }
 
 variable "auth_dsql_cluster_arn" {
   description = "Aurora DSQL cluster ARN, used in the IAM policy granting the Lambda DbConnect access"
   type        = string
-}
-
-variable "auth_log_level" {
-  description = "Auth service log level"
-  type        = string
-  default     = "info"
-}
-
-variable "auth_revoke_token_emitted_before_in_seconds" {
-  description = "Revoke all tokens issued more than this many seconds ago (0 = disabled)"
-  type        = number
-  default     = 0
+  sensitive   = true
 }
 
 variable "rabbitmq_username" {

@@ -1,0 +1,4 @@
+auth_jwt_secret            = ""
+auth_api_secret            = ""
+auth_dsql_cluster_endpoint = ""
+auth_dsql_cluster_arn      = ""
