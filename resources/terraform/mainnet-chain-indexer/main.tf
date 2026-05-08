@@ -21,7 +21,7 @@ module "mainnet_chain_indexer" {
   instance = {
     network_name               = "mainnet"
     domain_fqdn                = "autonomys.xyz"
-    docker_tag                 = "v1.2.0"
+    docker_tag                 = "v1.2.1"
     instance_type              = "c3.xlarge"
     disk_volume_size           = 500
     disk_volume_type           = "gp3"
