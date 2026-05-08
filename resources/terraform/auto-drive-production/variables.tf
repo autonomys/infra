@@ -1,3 +1,15 @@
+variable "aws_access_key" {
+  description = "AWS access key"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_key" {
+  description = "AWS secret key"
+  type        = string
+  sensitive   = true
+}
+
 variable "region" {
   description = "AWS region where the resources will be created"
   type        = string

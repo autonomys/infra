@@ -1,13 +1,19 @@
 provider "aws" {
-  region = var.region
+  region     = var.region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
 
 provider "aws" {
-  alias  = "region2"
-  region = var.backup_region
+  alias      = "region2"
+  region     = var.backup_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
 
 provider "aws" {
-  alias  = "auth"
-  region = var.auth_region
+  alias      = "auth"
+  region     = var.auth_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
