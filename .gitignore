@@ -2,7 +2,6 @@
 *.tfstate*
 *.tfplan
 *.tfvars
-*.zip
 config.toml
 proxied.json
 .DS_Store
