@@ -25,10 +25,10 @@ locals {
 
   # Non-sensitive operational config, hardcoded to keep Infisical lean.
   # Only actual secrets and infrastructure identifiers go in auth.auto.tfvars.
-  auth_cors_allowed_origins                    = "*"
-  auth_jwt_secret_algorithm                    = "RS256"
-  auth_log_level                               = "info"
-  auth_revoke_token_emitted_before_in_seconds  = 1746187810
+  auth_cors_allowed_origins                   = "*"
+  auth_jwt_secret_algorithm                   = "RS256"
+  auth_log_level                              = "info"
+  auth_revoke_token_emitted_before_in_seconds = 1746187810
 }
 
 # Minimal placeholder used only on the first `terraform apply` to satisfy the
