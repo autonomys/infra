@@ -18,7 +18,7 @@ module "db" {
   engine                      = "postgres"
   engine_version              = var.database.engine_version
   engine_lifecycle_support    = "open-source-rds-extended-support-disabled"
-  allow_major_version_upgrade = true
+  allow_major_version_upgrade = false
   family               = local.db_family
   major_engine_version = local.db_major_version
   instance_class       = var.database.instance_class

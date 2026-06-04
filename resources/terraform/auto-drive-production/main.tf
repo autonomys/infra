@@ -36,7 +36,7 @@ module "auto_drive" {
 
   database = {
     instance_class          = "db.t4g.2xlarge"
-    engine_version          = "17.4"
+    engine_version          = "17.9"
     allocated_storage       = 50
     max_storage             = 500
     multi_az                = true
