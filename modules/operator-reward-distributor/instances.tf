@@ -69,8 +69,14 @@ resource "null_resource" "setup_reward_distributor_node" {
 resource "null_resource" "start_reward_distributor_node" {
   depends_on = [null_resource.setup_reward_distributor_node]
 
-  # trigger node re-deployment if anything changes in the node config
-  triggers = var.instance
+  # trigger node re-deployment if the node config or the deployed files change
+  triggers = merge(
+    var.instance,
+    {
+      compose_sha = filesha256(var.deployer.path_to_docker_compose)
+      nginx_sha   = filesha256(var.deployer.path_to_nginx_conf)
+    }
+  )
 
   connection {
     host           = aws_instance.reward_distributor_node.public_ip
