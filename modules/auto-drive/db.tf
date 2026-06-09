@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 locals {
   db_major_version = split(".", var.database.engine_version)[0]
   db_family        = "postgres${local.db_major_version}"
@@ -85,39 +83,6 @@ resource "aws_db_subnet_group" "db_subnet_group" {
   subnet_ids = module.vpc.private_subnets
 
   tags = local.tags
-}
-
-################################################################################
-# RDS Automated Backups Replication
-################################################################################
-
-module "kms" {
-  source      = "terraform-aws-modules/kms/aws"
-  version     = "~> 1.0"
-  description = "KMS key for cross region automated backups replication to ${var.backup_region}"
-
-  aliases                 = [local.name]
-  aliases_use_name_prefix = true
-
-  key_owners = [data.aws_caller_identity.current.arn]
-
-  tags = merge(local.tags, { BackupRegion = var.backup_region })
-
-  providers = {
-    aws = aws.region2
-  }
-}
-
-module "db_automated_backups_replication" {
-  source  = "terraform-aws-modules/rds/aws//modules/db_instance_automated_backups_replication"
-  version = "~> 6.0"
-
-  source_db_instance_arn = module.db.db_instance_arn
-  kms_key_arn            = module.kms.key_arn
-
-  providers = {
-    aws = aws.region2
-  }
 }
 
 ################################################################################
