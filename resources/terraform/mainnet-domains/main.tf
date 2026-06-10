@@ -58,7 +58,7 @@ module "mainnet_domains" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "mainnet-2026-jun-08"
         reserved-only = false
         index         = 0
         operator-id   = 0
