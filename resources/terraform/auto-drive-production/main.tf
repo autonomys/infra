@@ -6,8 +6,7 @@ module "auto_drive" {
     aws.region2 = aws.region2
   }
 
-  environment   = "prod"
-  backup_region = var.backup_region
+  environment = "prod"
 
   vpc = {
     cidr            = "10.0.0.0/16"

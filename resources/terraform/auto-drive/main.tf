@@ -7,9 +7,8 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name    = basename(path.cwd)
-  region  = var.region
-  region2 = "us-west-1"
+  name   = basename(path.cwd)
+  region = var.region
 
   vpc_cidr = var.vpc_cidr
   azs      = slice(data.aws_availability_zones.available.names, 0, var.az_count)

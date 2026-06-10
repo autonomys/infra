@@ -97,16 +97,6 @@ moved {
 }
 
 moved {
-  from = module.kms
-  to   = module.auto_drive.module.kms
-}
-
-moved {
-  from = module.db_automated_backups_replication
-  to   = module.auto_drive.module.db_automated_backups_replication
-}
-
-moved {
   from = module.security_group
   to   = module.auto_drive.module.db_security_group
 }

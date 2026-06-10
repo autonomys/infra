@@ -4,6 +4,10 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
+# Retained transiently to let Terraform destroy orphaned KMS + RDS
+# backup-replication resources in us-west-1. Once those are gone from
+# state, remove this alias, the backup_region variable, and the
+# aws.region2 passthrough in main.tf.
 provider "aws" {
   alias      = "region2"
   region     = var.backup_region
