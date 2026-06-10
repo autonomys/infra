@@ -35,20 +35,6 @@ resource "aws_security_group" "auto_drive_sg" {
     description = "Allow all outbound traffic"
   }
 
-  egress {
-    from_port   = 5671
-    to_port     = 5671
-    protocol    = "tcp"
-    cidr_blocks = var.vpc.private_subnets
-  }
-
-  egress {
-    from_port   = 5672
-    to_port     = 5672
-    protocol    = "tcp"
-    cidr_blocks = var.vpc.private_subnets
-  }
-
   tags = {
     Name = "auto-drive-sg"
   }
