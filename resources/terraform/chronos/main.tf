@@ -39,7 +39,7 @@ module "chronos" {
     enable-load-balancer = true
     rpc-nodes = [
       {
-        docker-tag    = "chronos-2026-apr-30"
+        docker-tag    = "chronos-2026-jun-01"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
