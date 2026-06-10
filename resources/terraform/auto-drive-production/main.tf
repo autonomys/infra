@@ -2,8 +2,7 @@ module "auto_drive" {
   source = "../../../modules/auto-drive"
 
   providers = {
-    aws         = aws
-    aws.region2 = aws.region2
+    aws = aws
   }
 
   environment = "prod"
