@@ -19,8 +19,12 @@ services:
       - .env
     environment:
       SCHEDULER_HOST: 0.0.0.0
-      LOG_FILE_PATH: /data/logs/reward_distributor_scheduler.log
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       init-perms:
         condition: service_completed_successfully
@@ -43,8 +47,12 @@ services:
     environment:
       SCHEDULER_HEALTH_URL: http://scheduler:3000/
       SERVER_HOST: 0.0.0.0
-      LOG_FILE_PATH: /data/logs/reward_distributor_api.log
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       init-perms:
         condition: service_completed_successfully
@@ -72,5 +80,10 @@ services:
     ports:
       - "80:80"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - reward-distributor
