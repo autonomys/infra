@@ -57,7 +57,7 @@ module "chronos" {
         ipv4          = var.timekeeper_node_ipv4.timekeeper-0
       },
       {
-        docker-tag    = "chronos-2026-apr-30"
+        docker-tag    = "chronos-2026-jun-01"
         reserved-only = false
         index         = 1
         sync-mode     = "full"
