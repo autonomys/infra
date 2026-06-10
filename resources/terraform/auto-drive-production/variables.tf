@@ -16,14 +16,6 @@ variable "region" {
   default     = "us-west-2"
 }
 
-# Retained transiently so the region2 provider alias resolves while
-# Terraform destroys orphaned cross-region backup-replication resources.
-variable "backup_region" {
-  description = "AWS region for orphaned RDS cross-region backup replication (transient; remove after destroy)"
-  type        = string
-  default     = "us-west-1"
-}
-
 ################################################################################
 # Auth Lambda
 ################################################################################
