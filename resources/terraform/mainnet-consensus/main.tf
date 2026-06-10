@@ -22,7 +22,7 @@ module "mainnet_consensus" {
     genesis-hash = "66455a580aabff303720aa83adbe6c44502922251c03ba73686d5245da9e21bd"
     bootstrap-nodes = [
       {
-        docker-tag    = "mainnet-2026-feb-28"
+        docker-tag    = "mainnet-2026-jun-08"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
