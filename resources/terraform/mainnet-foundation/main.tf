@@ -29,7 +29,7 @@ module "mainnet_foundation" {
     enable-load-balancer = true
     rpc-nodes = [
       {
-        docker-tag    = "mainnet-2026-jun-08"
+        docker-tag    = "mainnet-2026-jun-14"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
