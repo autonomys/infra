@@ -40,7 +40,7 @@ module "mainnet_consensus" {
     disk-volume-type     = "gp3"
     rpc-nodes = [
       {
-        docker-tag    = "mainnet-2026-jun-08"
+        docker-tag    = "mainnet-2026-jun-14"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
