@@ -92,7 +92,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "chronos-2026-jun-01"
+        docker-tag    = "chronos-2026-jun-14"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
