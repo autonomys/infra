@@ -21,7 +21,7 @@ module "chronos" {
     genesis-hash = "91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
     bootstrap-nodes = [
       {
-        docker-tag    = "chronos-2026-jun-01"
+        docker-tag    = "chronos-2026-jun-14"
         reserved-only = false
         index         = 0
         sync-mode     = "full"
