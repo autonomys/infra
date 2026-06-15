@@ -118,7 +118,7 @@ module "chronos" {
       {
         domain-id     = 0
         domain-name   = "auto-evm"
-        docker-tag    = "chronos-2026-jun-01"
+        docker-tag    = "chronos-2026-jun-14"
         reserved-only = false
         index         = 1
         operator-id   = 1
