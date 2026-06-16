@@ -62,6 +62,7 @@ resource "null_resource" "start_domain_rpc_nodes" {
     eth-cache            = var.domain-rpc-node-config.rpc-nodes[count.index].eth-cache
     enable-reverse-proxy = var.domain-rpc-node-config.enable-reverse-proxy
     enable-load-balancer = var.domain-rpc-node-config.enable-load-balancer
+    external-ip          = aws_instance.domain_rpc_nodes[count.index].public_ip
   }
 
   connection {

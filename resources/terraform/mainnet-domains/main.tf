@@ -32,7 +32,7 @@ module "mainnet_domains" {
   }
 
   domain-rpc-node-config = {
-    instance-type        = "c7a.4xlarge"
+    instance-type        = "c7a.2xlarge"
     disk-volume-size     = 500
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
@@ -51,7 +51,7 @@ module "mainnet_domains" {
   }
 
   domain-operator-node-config = {
-    instance-type    = "c7a.2xlarge"
+    instance-type    = "c7a.large"
     disk-volume-size = 300
     disk-volume-type = var.disk_volume_type
     operator-nodes = [

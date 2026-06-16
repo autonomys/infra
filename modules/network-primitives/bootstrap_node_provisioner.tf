@@ -44,8 +44,10 @@ resource "null_resource" "start-consensus-boostrap-nodes" {
   count      = length(aws_instance.consensus_bootstrap_nodes)
   depends_on = [null_resource.setup-consensus-bootstrap-nodes]
 
-  # trigger node re-deployment if anything changes in the node config
-  triggers = var.consensus-bootstrap-node-config.bootstrap-nodes[count.index]
+  # trigger node re-deployment if the node config or its external IP changes
+  triggers = merge(var.consensus-bootstrap-node-config.bootstrap-nodes[count.index], {
+    external-ip = aws_instance.consensus_bootstrap_nodes[count.index].public_ip
+  })
 
   connection {
     host           = aws_instance.consensus_bootstrap_nodes[count.index].public_ip
