@@ -31,7 +31,7 @@ module "chronos" {
   }
 
   consensus-rpc-node-config = {
-    instance-type        = "c7a.4xlarge"
+    instance-type        = "c7a.xlarge"
     dns-prefix           = "rpc"
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
@@ -67,7 +67,7 @@ module "chronos" {
   }
 
   domain-bootstrap-node-config = {
-    instance-type    = "c7a.2xlarge"
+    instance-type    = "c7a.large"
     disk-volume-size = var.disk_volume_size
     disk-volume-type = var.disk_volume_type
     bootstrap-nodes = [
@@ -83,7 +83,7 @@ module "chronos" {
   }
 
   domain-rpc-node-config = {
-    instance-type        = "c7a.4xlarge"
+    instance-type        = "c7a.2xlarge"
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
@@ -102,7 +102,7 @@ module "chronos" {
   }
 
   domain-operator-node-config = {
-    instance-type    = "c7a.2xlarge"
+    instance-type    = "c7a.large"
     disk-volume-size = var.disk_volume_size
     disk-volume-type = var.disk_volume_type
     operator-nodes = [
