@@ -102,7 +102,7 @@ module "chronos" {
   }
 
   domain-operator-node-config = {
-    instance-type    = "c7a.2xlarge"
+    instance-type    = "c7a.large"
     disk-volume-size = var.disk_volume_size
     disk-volume-type = var.disk_volume_type
     operator-nodes = [
