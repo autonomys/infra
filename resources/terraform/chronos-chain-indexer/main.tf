@@ -22,7 +22,7 @@ module "chronos_chain_indexer" {
     network_name               = "chronos"
     domain_fqdn                = "autonomys.xyz"
     docker_tag                 = "v1.2.1"
-    instance_type              = "c3.xlarge"
+    instance_type              = "c7a.large"
     disk_volume_size           = 500
     disk_volume_type           = "gp3"
     consensus_rpc              = "wss://rpc.chronos.autonomys.xyz/ws"
