@@ -28,15 +28,6 @@ resource "cloudflare_dns_record" "subspace_foundation_telemetry_ops" {
   settings = {}
 }
 
-resource "cloudflare_dns_record" "subspace_foundation_telemetry" {
-  content  = "44.244.168.0"
-  name     = "telemetry.subspace.foundation"
-  proxied  = false
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_foundation.zone_id
-  settings = {}
-}
 
 resource "cloudflare_dns_record" "subspace_foundation_ambassador" {
   content  = "external.notion.site"

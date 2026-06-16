@@ -76,16 +76,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_d3499a5d8eca7a37550
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_ba3088cfa6a2bd654c300bdb305d33d6_58" {
-  content  = "44.244.168.0"
-  name     = "telemetry.subspace.network"
-  proxied  = false
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_network.zone_id
-  settings = {}
-}
 
 resource "cloudflare_dns_record" "terraform_managed_resource_9153792f008c3810b59df7cd6bfa94c4_59" {
   content  = local.proxied_data.subspace_network.uptime
