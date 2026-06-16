@@ -22,7 +22,7 @@ module "chronos_reward_distributor" {
   instance = {
     network_name        = "chronos"
     docker_tag          = "latest"
-    instance_type       = "c3.large"
+    instance_type       = "t3.medium"
     rpc_url             = "wss://auto-evm.chronos.autonomys.xyz/ws"
     interval_seconds    = 60
     tip_ai3             = 0.01
