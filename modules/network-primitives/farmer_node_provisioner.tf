@@ -54,8 +54,10 @@ resource "null_resource" "start_consensus_farmer_nodes" {
   count      = length(aws_instance.consensus_farmer_nodes)
   depends_on = [null_resource.setup_consensus_farmer_nodes]
 
-  # trigger node deployment if node details change
-  triggers = var.farmer-node-config.farmer-nodes[count.index]
+  # trigger node re-deployment if the node config or its external IP changes
+  triggers = merge(var.farmer-node-config.farmer-nodes[count.index], {
+    external-ip = aws_instance.consensus_farmer_nodes[count.index].public_ip
+  })
 
   connection {
     host           = aws_instance.consensus_farmer_nodes[count.index].public_ip

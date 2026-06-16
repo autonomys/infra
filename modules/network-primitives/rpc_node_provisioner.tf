@@ -59,6 +59,7 @@ resource "null_resource" "start_consensus_rpc_nodes" {
     sync-mode            = var.consensus-rpc-node-config.rpc-nodes[count.index].sync-mode
     enable-reverse-proxy = var.consensus-rpc-node-config.enable-reverse-proxy
     enable-load-balancer = var.consensus-rpc-node-config.enable-load-balancer
+    external-ip          = aws_instance.consensus_rpc_nodes[count.index].public_ip
   }
 
   connection {

@@ -42,8 +42,10 @@ resource "null_resource" "start_domain_operator_nodes" {
   count      = length(aws_instance.domain_operator_nodes)
   depends_on = [null_resource.setup_domain_operator_nodes]
 
-  # trigger node deployment on node object change
-  triggers = var.domain-operator-node-config.operator-nodes[count.index]
+  # trigger node re-deployment if the node config or its external IP changes
+  triggers = merge(var.domain-operator-node-config.operator-nodes[count.index], {
+    external-ip = aws_instance.domain_operator_nodes[count.index].public_ip
+  })
 
   connection {
     host           = aws_instance.domain_operator_nodes[count.index].public_ip
