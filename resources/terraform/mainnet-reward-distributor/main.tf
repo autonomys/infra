@@ -22,7 +22,7 @@ module "mainnet_reward_distributor" {
   instance = {
     network_name        = "mainnet"
     docker_tag          = "latest"
-    instance_type       = "c3.large"
+    instance_type       = "t3.medium"
     rpc_url             = "wss://auto-evm.mainnet.autonomys.xyz/ws"
     interval_seconds    = 120
     tip_ai3             = 17.5
