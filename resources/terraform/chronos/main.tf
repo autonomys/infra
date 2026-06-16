@@ -83,7 +83,7 @@ module "chronos" {
   }
 
   domain-rpc-node-config = {
-    instance-type        = "c7a.4xlarge"
+    instance-type        = "c7a.2xlarge"
     disk-volume-size     = var.disk_volume_size
     disk-volume-type     = var.disk_volume_type
     enable-reverse-proxy = true
