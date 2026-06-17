@@ -1,11 +1,29 @@
-data "cloudflare_zone" "cloudflare_zone" {
-  name = "subspace.network"
+data "cloudflare_zone" "subspace_network" {
+  filter = {
+    name = "subspace.network"
+  }
 }
 
-resource "cloudflare_record" "telemetry_subspace_node" {
-  zone_id = data.cloudflare_zone.cloudflare_zone.id
-  name    = "${var.domain_prefix}-new"
-  value   = module.telemetry_subspace_node.public_ip
+data "cloudflare_zone" "subspace_foundation" {
+  filter = {
+    name = "subspace.foundation"
+  }
+}
+
+resource "cloudflare_dns_record" "telemetry_subspace_network" {
+  zone_id = data.cloudflare_zone.subspace_network.zone_id
+  name    = "telemetry.subspace.network"
+  content = aws_instance.telemetry.public_ip
   type    = "A"
-  ttl     = "3600"
+  ttl     = 1
+  proxied = false
+}
+
+resource "cloudflare_dns_record" "telemetry_subspace_foundation" {
+  zone_id = data.cloudflare_zone.subspace_foundation.zone_id
+  name    = "telemetry.subspace.foundation"
+  content = aws_instance.telemetry.public_ip
+  type    = "A"
+  ttl     = 1
+  proxied = false
 }

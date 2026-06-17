@@ -1,74 +1,64 @@
-module "telemetry_vpc" {
-  source = "../../../templates/terraform/aws/vpc"
-
-  cidr_block           = var.public_subnet_cidrs
+resource "aws_vpc" "telemetry" {
+  cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
-    name = "telemetry-vpc"
+    Name = "telemetry-vpc"
   }
 }
 
-
-resource "aws_subnet" "public_subnets" {
-  vpc_id                  = module.telemetry-vpc.id
-  cidr_block              = var.public_subnet_cidrs
-  availability_zone       = var.azs
-  map_public_ip_on_launch = "true"
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.telemetry.id
+  cidr_block              = var.public_subnet_cidr
+  availability_zone       = var.availability_zone
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "telemetry-public-subnet"
   }
 }
 
-resource "aws_internet_gateway" "gw" {
-  vpc_id = module.telemetry-vpc.id
+resource "aws_internet_gateway" "telemetry" {
+  vpc_id = aws_vpc.telemetry.id
 
   tags = {
     Name = "telemetry-igw-public-subnet"
   }
-
-  lifecycle {
-    prevent_destroy = false
-  }
 }
 
-resource "aws_route_table" "public_route_table" {
-  vpc_id = module.telemetry-vpc.id
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.telemetry.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
+    gateway_id = aws_internet_gateway.telemetry.id
   }
 
   route {
     ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.gw.id
+    gateway_id      = aws_internet_gateway.telemetry.id
   }
 
   tags = {
     Name = "telemetry-public-route-tbl"
   }
-
-  depends_on = [
-    aws_internet_gateway.gw
-  ]
 }
 
-resource "aws_route_table_association" "public_route_table_subnets_association" {
-  subnet_id      = aws_subnet.public_subnets.id
-  route_table_id = aws_route_table.public_route_table.id
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
 }
-resource "aws_security_group" "telemetry-subspace-sg" {
+
+resource "aws_security_group" "telemetry" {
   name        = "telemetry-subspace-sg"
   description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = module.telemetry-vpc.id
+  vpc_id      = aws_vpc.telemetry.id
 
   ingress {
-    description = "HTTPS for VPC"
-    from_port   = 443
-    to_port     = 443
+    description = "SSH for VPC"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -82,9 +72,17 @@ resource "aws_security_group" "telemetry-subspace-sg" {
   }
 
   ingress {
-    description = "SSH for VPC"
-    from_port   = 22
-    to_port     = 22
+    description = "HTTPS for VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Uptime Kuma"
+    from_port   = 3001
+    to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -100,8 +98,4 @@ resource "aws_security_group" "telemetry-subspace-sg" {
   tags = {
     Name = "telemetry-subspace-sg"
   }
-
-  depends_on = [
-    module.telemetry_vpc
-  ]
 }
