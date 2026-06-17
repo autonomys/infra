@@ -15,8 +15,11 @@ resource "null_resource" "deploy_uptime_kuma" {
     timeout = "120s"
   }
 
+  # on a fresh/replaced box: wait for cloud-init and install docker if missing (no-op on the existing box)
   provisioner "remote-exec" {
     inline = [
+      "cloud-init status --wait 2>/dev/null || true",
+      "command -v docker >/dev/null 2>&1 || { curl -fsSL https://get.docker.com | sudo sh; }",
       "mkdir -p /home/${var.ssh_user}/uptime-kuma/docker",
     ]
   }
