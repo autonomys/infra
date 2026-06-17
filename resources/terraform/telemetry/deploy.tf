@@ -8,17 +8,18 @@ resource "null_resource" "deploy_uptime_kuma" {
   }
 
   connection {
-    host    = aws_instance.telemetry.public_ip
-    user    = var.ssh_user
-    type    = "ssh"
-    agent   = true
-    timeout = "120s"
+    host           = aws_instance.telemetry.public_ip
+    user           = var.ssh_user
+    type           = "ssh"
+    agent          = true
+    agent_identity = trimspace(file(pathexpand(var.ssh_public_key_path)))
+    timeout        = "120s"
   }
 
   # on a fresh/replaced box: wait for cloud-init and install docker if missing (no-op on the existing box)
   provisioner "remote-exec" {
     inline = [
-      "cloud-init status --wait 2>/dev/null || true",
+      "cloud-init status --wait",
       "command -v docker >/dev/null 2>&1 || { curl -fsSL https://get.docker.com | sudo sh; }",
       "mkdir -p /home/${var.ssh_user}/uptime-kuma/docker",
     ]
