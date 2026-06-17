@@ -52,3 +52,13 @@ variable "cloudflare_api_token" {
   type      = string
   sensitive = true
 }
+
+variable "ssh_user" {
+  type    = string
+  default = "ubuntu"
+}
+
+variable "ssh_public_key_path" {
+  type    = string
+  default = "~/.ssh/id_ed25519_github_mini.pub"
+}
