@@ -33,7 +33,7 @@ module "auto_drive" {
   }
 
   database = {
-    instance_class          = "db.t4g.2xlarge"
+    instance_class          = "db.t4g.xlarge"
     engine_version          = "17.9"
     allocated_storage       = 50
     max_storage             = 500
