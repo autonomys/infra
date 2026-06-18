@@ -52,6 +52,12 @@ data "cloudflare_zone" "subspace_network" {
   }
 }
 
+data "cloudflare_zone" "subspace_tools" {
+  filter = {
+    name = "subspace.tools"
+  }
+}
+
 locals {
   proxied_data = jsondecode(file("${path.module}/proxied.json"))
 }
