@@ -264,6 +264,17 @@ resource "cloudflare_dns_record" "terraform_managed_resource_c537387f2cd9376569e
   settings = {}
 }
 
+resource "cloudflare_dns_record" "s3_auto_drive_autonomys_xyz" {
+  content  = local.proxied_data.autonomys_xyz.autodrive_public
+  name     = "s3.auto-drive.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
 resource "cloudflare_dns_record" "terraform_managed_resource_2d7a0d0117c649edf3f50cefc63d53cd_42" {
   content  = local.proxied_data.autonomys_xyz.autodrive_taurus_public
   name     = "public.taurus.auto-drive.autonomys.xyz"
