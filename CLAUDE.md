@@ -42,7 +42,7 @@ All project management goes through `resources/terraform/manage.sh` (requires Ba
 
 **Network projects**: `mainnet-consensus`, `mainnet-domains`, `mainnet-foundation`, `chronos`, `devnet`
 **Service projects**: `mainnet-chain-alerter`, `mainnet-chain-indexer`, `mainnet-reward-distributor`, `chronos-chain-alerter`, `chronos-chain-indexer`, `chronos-reward-distributor`
-**Other**: `dns`, `telemetry`, `packer`, `auto-drive`, `auto-kol-memory`
+**Other**: `dns`, `telemetry`, `packer`, `auto-drive-production`, `auto-kol-memory`
 
 Each project follows this structure:
 ```
