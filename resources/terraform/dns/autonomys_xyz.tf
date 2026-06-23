@@ -75,17 +75,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_7e1937606b6f23fb1ac
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_9997d854598a4a8076694b3e8eaf2c4c_25" {
-  content  = local.proxied_data.autonomys_xyz.download_taurus_autodrive
-  name     = "download.taurus.staging.auto-drive.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "terraform_managed_resource_9df0a22995207a238a5d29542f673c24_26" {
   content  = local.proxied_data.autonomys_xyz.explorer_evm_taurus_0
   name     = "evm.taurus.autonomys.xyz"
@@ -275,17 +264,6 @@ resource "cloudflare_dns_record" "s3_auto_drive_autonomys_xyz" {
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_2d7a0d0117c649edf3f50cefc63d53cd_42" {
-  content  = local.proxied_data.autonomys_xyz.autodrive_taurus_public
-  name     = "public.taurus.auto-drive.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "terraform_managed_resource_565610ef1e10ab365a52ac67d77ea115_53" {
   content  = "15.204.77.126"
   name     = "scv.explorer.auto-evm.mainnet.autonomys.xyz"
@@ -352,27 +330,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_1ec194881fa074ac7a6
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_095a86249dfb3454e80fc07e1a2f408b_59" {
-  content  = local.proxied_data.autonomys_xyz.autodrive_taurus
-  name     = "taurus.auto-drive.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
-resource "cloudflare_dns_record" "terraform_managed_resource_bbe3e3b3258956cc8bd7ca525b5c3cd9_60" {
-  content  = local.proxied_data.autonomys_xyz.staging_taurus_autodrive
-  name     = "taurus.staging.auto-drive.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
 
 resource "cloudflare_dns_record" "terraform_managed_resource_15fab5021f8bb0efe09d3d377860fcb7_61" {
   content  = local.proxied_data.autonomys_xyz.uptime
