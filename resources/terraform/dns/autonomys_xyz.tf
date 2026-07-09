@@ -1095,7 +1095,7 @@ resource "cloudflare_dns_record" "webflow_verification_agent" {
 resource "cloudflare_dns_record" "agent_autonomys_xyz" {
   content = "cdn.webflow.com"
   name    = "agent.autonomys.xyz"
-  proxied = true
+  proxied = false
   tags    = []
   ttl     = 1
   type    = "CNAME"
