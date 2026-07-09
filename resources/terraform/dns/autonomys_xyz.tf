@@ -1081,6 +1081,30 @@ resource "cloudflare_dns_record" "terraform_managed_resource_6125859f850be53926a
   settings = {}
 }
 
+resource "cloudflare_dns_record" "webflow_verification_agent" {
+  content  = "\"one-time-verification=88d45b18-be63-4f91-a09d-45a6a4451468\""
+  name     = "_webflow.agent.autonomys.xyz"
+  proxied  = false
+  tags     = []
+  ttl      = 1
+  type     = "TXT"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
+resource "cloudflare_dns_record" "agent_autonomys_xyz" {
+  content = "cdn.webflow.com"
+  name    = "agent.autonomys.xyz"
+  proxied = true
+  tags    = []
+  ttl     = 1
+  type    = "CNAME"
+  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {
+    flatten_cname = false
+  }
+}
+
 resource "cloudflare_dns_record" "staking_autonomys_xyz" {
   content  = "7d1c8898fca10668.vercel-dns-016.com"
   name     = "staking.autonomys.xyz"
