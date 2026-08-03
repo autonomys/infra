@@ -85,6 +85,9 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
       # start subspace node
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
 
+      # drop images left by previous deploys; the running one is protected
+      sudo docker image prune -af
+
       # wait until container is created
       sudo sh -c 'until docker ps -f "name=node" --format "{{.ID}}" | grep -q .; do sleep 1; done'
 

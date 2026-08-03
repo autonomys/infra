@@ -111,6 +111,9 @@ resource "null_resource" "start_domain_rpc_nodes" {
       # start subspace node
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
 
+      # drop images left by previous deploys; the running one is protected
+      sudo docker image prune -af
+
       # delete config file
       sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT

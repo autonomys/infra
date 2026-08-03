@@ -126,6 +126,9 @@ resource "null_resource" "start_chain_indexer_node" {
 
       # start subspace node
       sudo docker compose -f /home/${var.deployer.ssh_user}/subspace/docker-compose.yml up -d
+
+      # drop images left by previous deploys; the running one is protected
+      sudo docker image prune -af
       EOT
     ]
   }
