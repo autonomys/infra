@@ -27,43 +27,23 @@ All project management goes through `resources/terraform/manage.sh` (requires Ba
 ## Architecture
 
 ### Repository Layout
-- `modules/` — Reusable Terraform modules
-- `resources/terraform/` — Individual Terraform projects
-- `scripts/` — Shared provisioning scripts (installer.sh, acme.sh)
+- `modules/` - Reusable Terraform modules
+- `resources/terraform/` - Individual Terraform projects (one dir per workspace)
+- `scripts/` - Shared provisioning scripts (installer.sh, acme.sh)
 
 ### Modules (in `modules/`)
-- **network-primitives** — Core module for blockchain node infrastructure (consensus nodes, domain nodes, farmer nodes, VPC, security groups, DNS, load balancers)
-- **chain-indexer** — Blockchain indexing with PostgreSQL + Docker + Traefik
-- **chain-alerts** — Chain monitoring and alerting
-- **operator-reward-distributor** — Automated reward distribution
-- **node-utils** — Docker image with Rust CLI tools for secret management
-
-### Projects (in `resources/terraform/`)
-
-**Network projects**: `mainnet-consensus`, `mainnet-domains`, `mainnet-foundation`, `chronos`, `devnet`
-**Service projects**: `mainnet-chain-alerter`, `mainnet-chain-indexer`, `mainnet-reward-distributor`, `chronos-chain-alerter`, `chronos-chain-indexer`, `chronos-reward-distributor`
-**Other**: `dns`, `telemetry`, `packer`, `auto-drive-production`, `auto-kol-memory`
-
-Each project follows this structure:
-```
-<project>/
-├── main.tf                    # Module calls
-├── backend.tf                 # Terraform Cloud backend (org: subspace-sre)
-├── variables.tf               # Input variables
-├── outputs.tf                 # Outputs
-├── common.auto.tfvars         # Shared secrets (gitignored, stored in Infisical)
-├── common.auto.tfvars.example # Example tfvars
-├── user.auto.tfvars           # User-specific variables (gitignored, created locally)
-├── config.toml                # Node keys/secrets (gitignored, stored in Infisical)
-└── providers.tf               # Provider configuration
-```
+- **network-primitives** - Core module for blockchain node infrastructure (consensus nodes, domain nodes, farmer nodes, VPC, security groups, DNS, load balancers)
+- **chain-indexer** - Blockchain indexing with PostgreSQL + Docker + Traefik
+- **chain-alerts** - Chain monitoring and alerting
+- **operator-reward-distributor** - Automated reward distribution
+- **node-utils** - Docker image with Rust CLI tools for secret management
 
 ### Providers
-- **AWS** (6.17.0) — EC2, VPC, EBS, security groups, load balancers
-- **Cloudflare** (5.8.2+) — DNS records across 8 domains (autonomys.xyz, autonomys.net, autonomys.network, subspace.network, subspace.net, subspace.foundation, continuum.co, ai3.storage)
+- **AWS** - EC2, VPC, EBS, security groups, load balancers
+- **Cloudflare** - DNS records across 8 domains (autonomys.xyz, autonomys.net, autonomys.network, subspace.network, subspace.net, subspace.foundation, continuum.co, ai3.storage)
 
 ### Backend
-All projects use Terraform Cloud (org: `subspace-sre`) with local execution mode — state stored remotely, execution runs locally.
+All projects use Terraform Cloud (org: `subspace-sre`) with local execution mode - state stored remotely, execution runs locally.
 
 ## Key Conventions
 
