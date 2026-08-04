@@ -12,8 +12,14 @@ variable "aws_access_key" {
   default     = null
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
+variable "vmetrics_username" {
+  description = "Basic-auth username for the VictoriaMetrics remote-write endpoint"
+  type        = string
+  sensitive   = true
+}
+
+variable "vmetrics_password" {
+  description = "Basic-auth password for the VictoriaMetrics remote-write endpoint"
   type        = string
   sensitive   = true
 }

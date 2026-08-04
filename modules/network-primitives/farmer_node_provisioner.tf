@@ -87,7 +87,8 @@ resource "null_resource" "start_consensus_farmer_nodes" {
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest farmer \
           --network ${var.network_name} \
-          --new-relic-api-key ${var.new_relic_api_key} \
+          --vmetrics-username ${var.vmetrics_username} \
+          --vmetrics-password ${var.vmetrics_password} \
           --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.farmer-node-config.farmer-nodes[count.index].index} \
           --docker-tag ${var.farmer-node-config.farmer-nodes[count.index].docker-tag} \

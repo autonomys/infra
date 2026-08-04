@@ -77,7 +77,8 @@ resource "null_resource" "start-consensus-boostrap-nodes" {
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest bootstrap \
             --network ${var.network_name} \
-            --new-relic-api-key ${var.new_relic_api_key} \
+            --vmetrics-username ${var.vmetrics_username} \
+          --vmetrics-password ${var.vmetrics_password} \
             --fqdn ${var.cloudflare_domain_fqdn} \
             --genesis-hash ${var.consensus-bootstrap-node-config.genesis-hash} \
             --node-id ${var.consensus-bootstrap-node-config.bootstrap-nodes[count.index].index} \

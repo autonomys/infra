@@ -73,7 +73,8 @@ resource "null_resource" "start-bare-domain-bootstrap-nodes" {
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-bootstrap \
           --network ${var.network_name} \
-          --new-relic-api-key ${var.new_relic_api_key} \
+          --vmetrics-username ${var.vmetrics_username} \
+          --vmetrics-password ${var.vmetrics_password} \
           --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.bare-domain-bootstrap-node-config.bootstrap-nodes[count.index].index} \
           --docker-tag ${var.bare-domain-bootstrap-node-config.bootstrap-nodes[count.index].docker-tag} \

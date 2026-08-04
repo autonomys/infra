@@ -93,7 +93,8 @@ resource "null_resource" "start_domain_rpc_nodes" {
       # create docker compose
       sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest domain-rpc \
           --network ${var.network_name} \
-          --new-relic-api-key ${var.new_relic_api_key} \
+          --vmetrics-username ${var.vmetrics_username} \
+          --vmetrics-password ${var.vmetrics_password} \
           --fqdn ${var.cloudflare_domain_fqdn} \
           --node-id ${var.domain-rpc-node-config.rpc-nodes[count.index].index} \
           --docker-tag ${var.domain-rpc-node-config.rpc-nodes[count.index].docker-tag} \

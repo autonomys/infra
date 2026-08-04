@@ -1,5 +1,6 @@
 cloudflare_account_id = ""
-new_relic_api_key     = ""
+vmetrics_username     = ""
+vmetrics_password     = ""
 consensus_rpc_ipv4 = {
   rpc-0 : ""
 }

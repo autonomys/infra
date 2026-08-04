@@ -1,5 +1,6 @@
 cloudflare_account_id = ""
-new_relic_api_key     = ""
+vmetrics_username     = ""
+vmetrics_password     = ""
 timekeeper_node_ipv4 = {
   timekeeper-0 : ""
 }
