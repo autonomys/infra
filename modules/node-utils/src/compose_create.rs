@@ -37,6 +37,7 @@ pub(crate) fn create_boostrap_node_docker_compose(
                 port: "9616".to_string(),
             },
         ],
+        host_job_name: format!("{network_name}-bootstrap-{node_id}-host"),
     })?;
     Ok(())
 }
@@ -53,6 +54,7 @@ pub(crate) fn create_rpc_node_docker_compose(rpc_params: RpcParams) -> Result<()
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
+        host_job_name: format!("{network_name}-rpc-{node_id}-host"),
     })?;
 
     Ok(())
@@ -70,6 +72,7 @@ pub(crate) fn create_timekeeper_node_docker_compose(params: TimekeeperParams) ->
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
+        host_job_name: format!("{network_name}-timekeeper-{node_id}-host"),
     })?;
     Ok(())
 }
@@ -97,6 +100,7 @@ pub(crate) fn create_farmer_node_docker_compose(farmer_params: FarmerParams) -> 
                 port: "9616".to_string(),
             },
         ],
+        host_job_name: format!("{network_name}-farmer-{node_id}-host"),
     })?;
 
     Ok(())
@@ -117,6 +121,7 @@ pub(crate) fn create_domain_bootstrap_node_docker_compose(
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
+        host_job_name: format!("{network_name}-domain-{domain_id}-bootstrap-{node_id}-host"),
     })?;
     Ok(())
 }
@@ -136,6 +141,7 @@ pub(crate) fn create_domain_rpc_node_docker_compose(
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
+        host_job_name: format!("{network_name}-domain-{domain_id}-rpc-{node_id}-host"),
     })?;
     Ok(())
 }
@@ -165,6 +171,7 @@ pub(crate) fn create_domain_operator_node_docker_compose(
             node: "node".to_string(),
             port: "9615".to_string(),
         }],
+        host_job_name: format!("{network_name}-domain-{domain_id}-operator-{operator_id}-host"),
     })?;
     Ok(())
 }

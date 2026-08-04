@@ -6,3 +6,7 @@ scrape_configs:
         - targets: ['{{this.node}}:{{this.port}}']
 
 {{/each}}
+    - job_name: '{{host_job_name}}'
+      scrape_interval: 15s
+      static_configs:
+        - targets: ['node-exporter:9100']
