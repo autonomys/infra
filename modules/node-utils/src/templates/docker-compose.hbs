@@ -25,22 +25,21 @@ services:
         command:
             - "--httpListenAddr=0.0.0.0:8429"
             - "--promscrape.config=/etc/prometheus/prometheus.yml"
-            - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
+            - "--remoteWrite.url=https://vmetrics.subspace.network/api/v1/write"
+            - "--remoteWrite.basicAuth.username={{vmetrics_username}}"
+            - "--remoteWrite.basicAuth.password={{vmetrics_password}}"
+        restart: unless-stopped
 
-    newrelic:
-        container_name: newrelic
-        image: newrelic/infrastructure:latest
-        cap_add:
-            - SYS_PTRACE
-        network_mode: bridge
+    node-exporter:
+        container_name: node-exporter
+        image: prom/node-exporter:v1.8.2
         pid: host
-        privileged: true
+        networks:
+            - node
         volumes:
-            - "/:/host:ro"
-            - "/var/run/docker.sock:/var/run/docker.sock"
-        environment:
-            NRIA_LICENSE_KEY: "{{new_relic_api_key}}"
-            NRIA_DISPLAY_NAME: "{{network_name}}-{{node_prefix}}-node-{{node_id}}"
+            - "/:/host:ro,rslave"
+        command:
+            - "--path.rootfs=/host"
         restart: unless-stopped
 
 {{#if rpc_node}}

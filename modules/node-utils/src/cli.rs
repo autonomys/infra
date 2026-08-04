@@ -41,9 +41,12 @@ pub struct CommonParams {
     /// Ex: mainnet, devnet etc..
     #[arg(long, required = true)]
     pub network: String,
-    /// New relic API Key
+    /// Basic-auth username for the VictoriaMetrics remote-write endpoint
     #[arg(long, required = true)]
-    pub new_relic_api_key: String,
+    pub vmetrics_username: String,
+    /// Basic-auth password for the VictoriaMetrics remote-write endpoint
+    #[arg(long, required = true)]
+    pub vmetrics_password: String,
     /// Domain name.ex: subspace.network
     #[arg(long, required = true)]
     pub fqdn: String,
