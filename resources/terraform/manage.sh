@@ -25,10 +25,10 @@ VALID_PROJECTS=(
   ["mainnet-consensus"]="config.toml,common.auto.tfvars"
   ["chronos-chain-alerter"]="common.auto.tfvars"
   ["mainnet-chain-alerter"]="common.auto.tfvars"
-  ["chronos-reward-distributor"]="common.auto.tfvars"
   ["mainnet-reward-distributor"]="common.auto.tfvars"
   ["chronos-chain-indexer"]="common.auto.tfvars"
   ["mainnet-chain-indexer"]="common.auto.tfvars"
+  ["telemetry"]="common.auto.tfvars"
   ["auto-drive-production"]="auth.auto.tfvars"
   ["0xautonomys"]=""
 )
