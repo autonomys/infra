@@ -105,6 +105,11 @@ output "auto_drive_eip" {
   value       = module.auto_drive.ec2_backend_public_ips
 }
 
+output "auto_drive_secondary_eips" {
+  description = "Secondary Elastic IPs for Auto-Drive instances, keyed by instance name"
+  value       = module.auto_drive.ec2_backend_secondary_eips
+}
+
 output "gateway_eip" {
   description = "Elastic IPs for Gateway instances"
   value       = module.auto_drive.ec2_gateway_public_ips

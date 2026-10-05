@@ -23,12 +23,19 @@ data "aws_ami" "ubuntu_amd64" {
 # Auto-Drive Backend Instances
 ################################################################################
 
+locals {
+  backend_names = [
+    for i in range(var.instances.backend_count) :
+    try(var.instances.backend_names[i], "${local.name}-backend-${i}")
+  ]
+}
+
 module "ec2_backend" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 6.0"
 
   count                       = var.instances.backend_count
-  name                        = try(var.instances.backend_names[count.index], "${local.name}-backend-${count.index}")
+  name                        = local.backend_names[count.index]
   ami                         = data.aws_ami.ubuntu_amd64.id
   instance_type               = var.instances.backend_instance_type
   availability_zone           = element(module.vpc.azs, 0)
@@ -36,6 +43,7 @@ module "ec2_backend" {
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
   associate_public_ip_address = true
   create_eip                  = true
+  secondary_private_ips       = try([var.instances.backend_secondary_eips[local.backend_names[count.index]]], null)
   disable_api_stop            = false
 
   create_iam_instance_profile = true
@@ -64,6 +72,16 @@ module "ec2_backend" {
     )
   }
   tags = merge(local.tags, { Role = "auto-drive" })
+}
+
+resource "aws_eip" "backend_secondary" {
+  for_each = var.instances.backend_secondary_eips
+
+  domain                    = "vpc"
+  network_interface         = module.ec2_backend[index(local.backend_names, each.key)].primary_network_interface_id
+  associate_with_private_ip = each.value
+
+  tags = merge(local.tags, { Name = "${each.key}-secondary", Role = "auto-drive" })
 }
 
 ################################################################################

@@ -35,6 +35,9 @@ variable "instances" {
     gateway_names         = optional(list(string), [])
     backend_volume_size   = number
     gateway_volume_size   = number
+
+    # backend name => secondary private IP on its primary ENI, fronted by its own EIP
+    backend_secondary_eips = optional(map(string), {})
   })
 }
 

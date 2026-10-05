@@ -30,6 +30,12 @@ module "auto_drive" {
     gateway_names         = ["auto-drive-files-gateway-mainnet"]
     backend_volume_size   = 500
     gateway_volume_size   = 800
+
+    # s3.auto-drive gets its own public address so it can leave the Cloudflare
+    # proxy without exposing the EIP behind public.auto-drive and gateway
+    backend_secondary_eips = {
+      "auto-drive-mainnet-public" = "10.0.101.250"
+    }
   }
 
   database = {
