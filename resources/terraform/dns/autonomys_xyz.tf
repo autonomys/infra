@@ -1181,3 +1181,25 @@ resource "cloudflare_dns_record" "subql_staking_autonomys_xyz" {
   zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
   settings = {}
 }
+
+# A zone has one entrypoint ruleset per phase, so other Auto Drive hostnames
+# must be added to this resource rather than to a second http_config_settings ruleset.
+resource "cloudflare_ruleset" "autonomys_xyz_auto_drive_no_body_rewriting" {
+  zone_id     = data.cloudflare_zone.autonomys_xyz.zone_id
+  name        = "Auto Drive S3 endpoint only: no response body rewriting"
+  description = "Auto Drive serves user files; Cloudflare must not modify their bytes. Covers s3.auto-drive.autonomys.xyz only"
+  kind        = "zone"
+  phase       = "http_config_settings"
+
+  rules = [
+    {
+      description = "S3 endpoint only: disable Email Obfuscation and Automatic HTTPS Rewrites on s3.auto-drive.autonomys.xyz"
+      expression  = "(http.host eq \"s3.auto-drive.autonomys.xyz\")"
+      action      = "set_config"
+      action_parameters = {
+        email_obfuscation        = false
+        automatic_https_rewrites = false
+      }
+    }
+  ]
+}
