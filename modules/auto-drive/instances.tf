@@ -43,7 +43,7 @@ module "ec2_backend" {
   vpc_security_group_ids      = [aws_security_group.auto_drive_sg.id]
   associate_public_ip_address = true
   create_eip                  = true
-  secondary_private_ips       = try([var.instances.backend_secondary_eips[local.backend_names[count.index]]], null)
+  secondary_private_ips       = try([var.instances.backend_secondary_eips[local.backend_names[count.index]]], [])
   disable_api_stop            = false
 
   create_iam_instance_profile = true
