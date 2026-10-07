@@ -70,6 +70,16 @@ output "ec2_backend_availability_zones" {
   value       = module.ec2_backend[*].availability_zone
 }
 
+output "ec2_backend_secondary_eips" {
+  description = "Secondary EIPs on the auto-drive backend instances, keyed by backend name"
+  value = { for name, eip in aws_eip.backend_secondary : name => {
+    public_ip      = eip.public_ip
+    private_ip     = eip.private_ip
+    allocation_id  = eip.allocation_id
+    association_id = eip.association_id
+  } }
+}
+
 ################################################################################
 # EC2 Gateway Outputs
 ################################################################################
