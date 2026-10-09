@@ -254,7 +254,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_c537387f2cd9376569e
 }
 
 resource "cloudflare_dns_record" "s3_auto_drive_autonomys_xyz" {
-  content  = local.proxied_data.autonomys_xyz.autodrive_public
+  content  = local.proxied_data.autonomys_xyz.autodrive_s3
   name     = "s3.auto-drive.autonomys.xyz"
   proxied  = true
   tags     = []
