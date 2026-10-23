@@ -12,12 +12,6 @@ variable "aws_access_key" {
   default     = null
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "cloudflare_domain_fqdn" {
   description = "Domain FQDN for DNS records"
   type        = string

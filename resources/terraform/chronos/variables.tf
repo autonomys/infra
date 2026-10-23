@@ -44,12 +44,6 @@ variable "ssh_agent_identity" {
   type        = string
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "timekeeper_node_ipv4" {
   description = "Timekeeper node IPv4"
   type        = map(string)

@@ -11,7 +11,6 @@ module "devnet" {
   cloudflare_api_token   = var.cloudflare_api_token
   cloudflare_account_id  = var.cloudflare_account_id
   cloudflare_domain_fqdn = "autonomys.xyz"
-  new_relic_api_key      = var.new_relic_api_key
   aws_access_key         = var.aws_access_key
   aws_secret_key         = var.aws_secret_key
   aws_ssh_key_name       = var.aws_ssh_key_name

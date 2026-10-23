@@ -96,7 +96,6 @@ pub struct ComposeTemplateData {
     pub network_name: String,
     pub node_prefix: String,
     pub node_id: String,
-    pub new_relic_api_key: String,
     pub docker_tag: String,
     pub external_ip_v4: String,
     pub external_ip_v6: Option<String>,
@@ -123,7 +122,6 @@ impl ComposeTemplateData {
     ) -> ComposeTemplateData {
         let CommonParams {
             network,
-            new_relic_api_key,
             fqdn,
             node_id,
             docker_tag,
@@ -136,7 +134,6 @@ impl ComposeTemplateData {
             network_name: network.clone(),
             node_prefix: node_type,
             node_id: node_id.clone(),
-            new_relic_api_key,
             docker_tag,
             external_ip_v4,
             external_ip_v6,

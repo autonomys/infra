@@ -22,26 +22,15 @@ services:
         volumes:
             - vmagentdata:/vmagentdata
             - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
         command:
             - "--httpListenAddr=0.0.0.0:8429"
             - "--promscrape.config=/etc/prometheus/prometheus.yml"
             - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
-
-    newrelic:
-        container_name: newrelic
-        image: newrelic/infrastructure:latest
-        cap_add:
-            - SYS_PTRACE
-        network_mode: bridge
-        pid: host
-        privileged: true
-        volumes:
-            - "/:/host:ro"
-            - "/var/run/docker.sock:/var/run/docker.sock"
-        environment:
-            NRIA_LICENSE_KEY: "{{new_relic_api_key}}"
-            NRIA_DISPLAY_NAME: "{{network_name}}-{{node_prefix}}-node-{{node_id}}"
-        restart: unless-stopped
 
 {{#if rpc_node}}
     # traefik reverse proxy with automatic tls management using let encrypt
@@ -83,6 +72,8 @@ services:
             driver: loki
             options:
                 loki-url: "https://logging.subspace.network/loki/api/v1/push"
+                max-size: "10m"
+                max-file: "3"
 {{/if}}
 
 {{#if dsn_node}}
@@ -101,6 +92,8 @@ services:
             driver: loki
             options:
                 loki-url: "https://logging.subspace.network/loki/api/v1/push"
+                max-size: "10m"
+                max-file: "3"
         command: [
             "start",
             "--prometheus-listen-on", "0.0.0.0:9616",
@@ -143,6 +136,8 @@ services:
             driver: loki
             options:
                 loki-url: "https://logging.subspace.network/loki/api/v1/push"
+                max-size: "10m"
+                max-file: "3"
         command: [
             "farm", "path=/var/subspace,size={{farmer_node.plot_size}}",
             "--node-rpc-url", "ws://node:9944",
@@ -173,6 +168,11 @@ services:
         restart: unless-stopped
         networks:
             - node
+    {{#if is_timekeeper}}
+        # lets the PoT thread reach nice -20 while running as nobody, which cap_add SYS_NICE cannot do
+        ulimits:
+            nice: 40
+    {{/if}}
     {{#if rpc_node}}
         labels:
             - "traefik.enable=true"
@@ -199,6 +199,8 @@ services:
             driver: loki
             options:
                 loki-url: "https://logging.subspace.network/loki/api/v1/push"
+                max-size: "10m"
+                max-file: "3"
         command: [
             "run",
             "--chain", "{{network_name}}",
