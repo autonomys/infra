@@ -77,6 +77,10 @@ resource "null_resource" "start_timekeeper_nodes" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
+      set -e
+      trap 'sudo rm -f /home/${var.ssh_user}/subspace/config.toml' EXIT
+      trap 'exit 1' HUP INT TERM
+
       # Apply CPU boost tuning inline. Each write is guarded so the block
       # no-ops cleanly on AMD/non-intel_pstate hosts (governor=performance
       # still applies via amd_pstate where present; HWP-specific writes
@@ -101,9 +105,18 @@ resource "null_resource" "start_timekeeper_nodes" {
         sudo systemctl daemon-reload
       fi
 
+      # set hostname
+      sudo hostnamectl set-hostname ${var.network_name}-timekeeper-node-${var.timekeeper-node-config.timekeeper-nodes[count.index].index}
+
+      # pull the node image and node-utils before the stop below, so a failed pull leaves the running timekeeper untouched
+      sudo docker pull ghcr.io/autonomys/node:${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag}
+      sudo docker pull ghcr.io/autonomys/infra/node-utils:latest
+
       # stop any running service first so the stress-test below isn't fighting
       # the existing timekeeper for cycles
-      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
+      if [ -f /home/${var.ssh_user}/subspace/docker-compose.yml ]; then
+        sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
+      fi
 
       # Detect the favoured cpu via brief empirical stress on each candidate.
       # cpuinfo_max_freq alone can't differentiate cores that share the same
@@ -116,7 +129,7 @@ resource "null_resource" "start_timekeeper_nodes" {
       # the script returns empty and we fall back to the terraform-supplied
       # range — never fails the provisioner.
       chmod +x /home/${var.ssh_user}/subspace/detect-favoured-cpu.sh
-      FAVOURED_CPU=$(/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh)
+      FAVOURED_CPU=$(/home/${var.ssh_user}/subspace/detect-favoured-cpu.sh || true)
       # Hardcoded fallback to cpu 0 only kicks in if detection somehow returns
       # nothing (no cpufreq sysfs, no /proc/cpuinfo "cpu MHz", etc.). Every
       # candidate-finding path in the script falls back to "first candidate"
@@ -124,11 +137,8 @@ resource "null_resource" "start_timekeeper_nodes" {
       CPU_CORES=$${FAVOURED_CPU:-0}
       echo "Pinning timekeeper to cpu $CPU_CORES (auto-detected favoured cpu: '$FAVOURED_CPU')"
 
-      # set hostname
-      sudo hostnamectl set-hostname ${var.network_name}-timekeeper-node-${var.timekeeper-node-config.timekeeper-nodes[count.index].index}
-
       # create docker compose
-      sudo docker run --rm --pull always -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest timekeeper \
+      sudo docker run --rm --pull never -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest timekeeper \
           --network ${var.network_name} \
           --new-relic-api-key ${var.new_relic_api_key} \
           --fqdn ${var.cloudflare_domain_fqdn} \
@@ -140,13 +150,23 @@ resource "null_resource" "start_timekeeper_nodes" {
           --is-reserved ${var.timekeeper-node-config.timekeeper-nodes[count.index].reserved-only}
 
       # start subspace node
-      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d --remove-orphans
+
+      # a node that is not running, or restarts within 30s, fails the apply before old images are pruned
+      i=0
+      until [ "$(sudo docker inspect --type container -f '{{.State.Status}}' node 2>/dev/null)" = running ]; do
+        i=$((i+1))
+        if [ "$i" -ge 300 ]; then echo "node container not running after 300s" >&2; exit 1; fi
+        sleep 1
+      done
+      restarts=$(sudo docker inspect --type container -f '{{.RestartCount}}' node)
+      sleep 30
+      if [ "$(sudo docker inspect --type container -f '{{.State.Status}} {{.RestartCount}}' node)" != "running $restarts" ]; then
+        echo "node container restarted or stopped within 30s of starting" >&2; exit 1
+      fi
 
       # drop images left by previous deploys; the running one is protected
       sudo docker image prune -af
-
-      # delete config file
-      sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT
     ]
   }

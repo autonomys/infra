@@ -66,8 +66,9 @@ resource "null_resource" "start_domain_operator_nodes" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      # stop any running service
-      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
+      set -e
+      trap 'sudo rm -f /home/${var.ssh_user}/subspace/config.toml' EXIT
+      trap 'exit 1' HUP INT TERM
 
       # set hostname
       sudo hostnamectl set-hostname ${var.network_name}-domain-${var.domain-operator-node-config.operator-nodes[count.index].domain-id}-operator-node-${var.domain-operator-node-config.operator-nodes[count.index].index}
@@ -87,20 +88,34 @@ resource "null_resource" "start_domain_operator_nodes" {
           --sync-mode ${var.domain-operator-node-config.operator-nodes[count.index].sync-mode} \
           --is-reserved ${var.domain-operator-node-config.operator-nodes[count.index].reserved-only}
 
+      # an empty suri would insert the public dev key
+      KEY=$(cat /home/${var.ssh_user}/subspace/node.key)
+      if [ -z "$KEY" ]; then echo "node.key is empty" >&2; exit 1; fi
+
+      # pull before anything stops, so a failed pull leaves the running node untouched
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml pull node
+
       # start subspace node
-      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d --remove-orphans
+
+      # a node that is not running, or restarts within 30s, fails the apply before old images are pruned
+      i=0
+      until [ "$(sudo docker inspect --type container -f '{{.State.Status}}' node 2>/dev/null)" = running ]; do
+        i=$((i+1))
+        if [ "$i" -ge 300 ]; then echo "node container not running after 300s" >&2; exit 1; fi
+        sleep 1
+      done
+      restarts=$(sudo docker inspect --type container -f '{{.RestartCount}}' node)
+      sleep 30
+      if [ "$(sudo docker inspect --type container -f '{{.State.Status}} {{.RestartCount}}' node)" != "running $restarts" ]; then
+        echo "node container restarted or stopped within 30s of starting" >&2; exit 1
+      fi
+
+      # insert domain operator key
+      sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$KEY"
 
       # drop images left by previous deploys; the running one is protected
       sudo docker image prune -af
-
-      # wait until container is created
-      sudo sh -c 'until docker ps -f "name=node" --format "{{.ID}}" | grep -q .; do sleep 1; done'
-
-      # insert domain operator key
-      sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$(cat /home/${var.ssh_user}/subspace/node.key)"
-
-      # delete config file
-      sudo rm -rf /home/${var.ssh_user}/subspace/config.toml
       EOT
     ]
   }
