@@ -15,12 +15,6 @@ variable "ssh_agent_identity" {
   type        = string
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "consensus_rpc_ipv4" {
   description = "Consensus RPC IPv4"
   type        = map(string)
