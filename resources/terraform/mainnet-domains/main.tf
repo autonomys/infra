@@ -50,7 +50,7 @@ module "mainnet_domains" {
   }
 
   domain-operator-node-config = {
-    instance-type    = "c7a.large"
+    instance-type    = "r7a.large"
     disk-volume-size = 300
     disk-volume-type = var.disk_volume_type
     operator-nodes = [
