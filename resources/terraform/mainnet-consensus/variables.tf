@@ -15,12 +15,6 @@ variable "ssh_agent_identity" {
   type        = string
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "aws_secret_key" {
   description = "AWS secret key"
   type        = string

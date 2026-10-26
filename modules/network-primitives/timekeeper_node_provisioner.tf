@@ -112,11 +112,21 @@ resource "null_resource" "start_timekeeper_nodes" {
       sudo docker pull ghcr.io/autonomys/node:${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag}
       sudo docker pull ghcr.io/autonomys/infra/node-utils:latest
 
+      RENDER_COMPOSE="sudo docker run --rm --pull never -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest timekeeper \
+          --network ${var.network_name} \
+          --fqdn ${var.cloudflare_domain_fqdn} \
+          --node-id ${var.timekeeper-node-config.timekeeper-nodes[count.index].index} \
+          --docker-tag ${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag} \
+          --external-ip-v4 ${var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4} \
+          --sync-mode ${var.timekeeper-node-config.timekeeper-nodes[count.index].sync-mode} \
+          --is-reserved ${var.timekeeper-node-config.timekeeper-nodes[count.index].reserved-only}"
+
+      # render once before the stop, so a bad config or node-utils flag fails the apply with the timekeeper still running
+      $RENDER_COMPOSE --cpu-cores 0
+
       # stop any running service first so the stress-test below isn't fighting
       # the existing timekeeper for cycles
-      if [ -f /home/${var.ssh_user}/subspace/docker-compose.yml ]; then
-        sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down
-      fi
+      sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml down --remove-orphans
 
       # Detect the favoured cpu via brief empirical stress on each candidate.
       # cpuinfo_max_freq alone can't differentiate cores that share the same
@@ -138,16 +148,7 @@ resource "null_resource" "start_timekeeper_nodes" {
       echo "Pinning timekeeper to cpu $CPU_CORES (auto-detected favoured cpu: '$FAVOURED_CPU')"
 
       # create docker compose
-      sudo docker run --rm --pull never -v /home/${var.ssh_user}/subspace:/data ghcr.io/autonomys/infra/node-utils:latest timekeeper \
-          --network ${var.network_name} \
-          --new-relic-api-key ${var.new_relic_api_key} \
-          --fqdn ${var.cloudflare_domain_fqdn} \
-          --node-id ${var.timekeeper-node-config.timekeeper-nodes[count.index].index} \
-          --docker-tag ${var.timekeeper-node-config.timekeeper-nodes[count.index].docker-tag} \
-          --external-ip-v4 ${var.timekeeper-node-config.timekeeper-nodes[count.index].ipv4} \
-          --sync-mode ${var.timekeeper-node-config.timekeeper-nodes[count.index].sync-mode} \
-          --cpu-cores $CPU_CORES \
-          --is-reserved ${var.timekeeper-node-config.timekeeper-nodes[count.index].reserved-only}
+      $RENDER_COMPOSE --cpu-cores $CPU_CORES
 
       # start subspace node
       sudo docker compose -f /home/${var.ssh_user}/subspace/docker-compose.yml up -d --remove-orphans

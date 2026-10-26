@@ -6,7 +6,6 @@ module "mainnet_foundation" {
   cloudflare_api_token   = var.cloudflare_api_token
   cloudflare_account_id  = var.cloudflare_account_id
   cloudflare_domain_fqdn = "subspace.foundation"
-  new_relic_api_key      = var.new_relic_api_key
   ssh_agent_identity     = var.ssh_agent_identity
   deployment_name        = "foundation"
 

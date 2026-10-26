@@ -38,12 +38,6 @@ variable "ssh_agent_identity" {
   type        = string
 }
 
-variable "new_relic_api_key" {
-  description = "New relic API Key"
-  type        = string
-  sensitive   = true
-}
-
 variable "bare_domain_operator_ipv4" {
   description = "List of Bare metal IPs for domain operators"
   type        = map(string)

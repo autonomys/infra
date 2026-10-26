@@ -41,9 +41,6 @@ pub struct CommonParams {
     /// Ex: mainnet, devnet etc..
     #[arg(long, required = true)]
     pub network: String,
-    /// New relic API Key
-    #[arg(long, required = true)]
-    pub new_relic_api_key: String,
     /// Domain name.ex: subspace.network
     #[arg(long, required = true)]
     pub fqdn: String,
