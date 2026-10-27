@@ -906,3 +906,38 @@ resource "cloudflare_dns_record" "terraform_managed_resource_6aa9914d5ed8da851e9
   settings = {}
 }
 
+# A zone has one entrypoint ruleset per phase, so the ASN blocks made in the
+# dashboard are adopted here rather than managed as a second ruleset.
+resource "cloudflare_ruleset" "subspace_network_firewall_custom" {
+  zone_id = data.cloudflare_zone.subspace_network.zone_id
+  name    = "default"
+  kind    = "zone"
+  phase   = "http_request_firewall_custom"
+
+  rules = [
+    {
+      ref         = "96bd4112ac6a44bb9967f9ed3f1b6809"
+      description = "block ASN 4134"
+      expression  = "(ip.geoip.asnum eq 4134)"
+      action      = "block"
+    },
+    {
+      ref         = "25e0fd969b8b46f2a8447e11c27c1c51"
+      description = "block ASN 6697"
+      expression  = "(ip.geoip.asnum eq 6697)"
+      action      = "block"
+    },
+    {
+      ref         = "64f979e5c9f04810bf5b37e14af25606"
+      description = "block ASN 38136"
+      expression  = "(ip.geoip.asnum eq 38136)"
+      action      = "block"
+    },
+    {
+      description = "Loki: only allow log pushes and the readiness probe"
+      expression  = "(http.host eq \"logging.subspace.network\" and not ((http.request.method eq \"POST\" and http.request.uri.path eq \"/loki/api/v1/push\") or (http.request.method eq \"GET\" and http.request.uri.path eq \"/ready\")))"
+      action      = "block"
+    },
+  ]
+}
+
