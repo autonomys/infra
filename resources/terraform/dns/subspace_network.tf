@@ -908,11 +908,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_6aa9914d5ed8da851e9
 
 # A zone has one entrypoint ruleset per phase, so the ASN blocks made in the
 # dashboard are adopted here rather than managed as a second ruleset.
-import {
-  to = cloudflare_ruleset.subspace_network_firewall_custom
-  id = "zones/930fc4b762ef75b24d1d1ac2b38c0521/4e30026216624928a593fa3e6dd0e05a"
-}
-
 resource "cloudflare_ruleset" "subspace_network_firewall_custom" {
   zone_id = data.cloudflare_zone.subspace_network.zone_id
   name    = "default"
