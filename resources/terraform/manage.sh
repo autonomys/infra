@@ -30,6 +30,7 @@ VALID_PROJECTS=(
   ["mainnet-chain-indexer"]="common.auto.tfvars"
   ["telemetry"]="common.auto.tfvars"
   ["auto-drive-production"]="auth.auto.tfvars"
+  ["auto-drive-staging"]="common.auto.tfvars"
   ["0xautonomys"]=""
 )
 

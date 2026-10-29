@@ -1,0 +1,3 @@
+staging_host_ipv4   = ""
+letsencrypt_email   = ""
+auto_drive_repo_ref = "main"
