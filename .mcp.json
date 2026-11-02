@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hetzner": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "hetzner-mcp@0.7.0"],
+      "env": {
+        "HETZNER_ROBOT_USER": "${ROBOT_USER}",
+        "HETZNER_ROBOT_PASSWORD": "${ROBOT_PASSWORD}"
+      }
+    }
+  }
+}
