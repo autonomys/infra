@@ -106,7 +106,11 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
       fi
 
       # insert domain operator key
+      %{if var.bare-domain-operator-node-config.operator-nodes[count.index].insert-key~}
       sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.bare-domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$KEY"
+      %{else~}
+      echo "insert-key is false; skipping domain key insert"
+      %{endif~}
 
       # drop images left by previous deploys; the running one is protected
       sudo docker image prune -af

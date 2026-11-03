@@ -283,6 +283,7 @@ variable "bare-domain-operator-node-config" {
       index         = number
       sync-mode     = string
       ipv4          = string
+      insert-key    = optional(bool, true)
     }))
   })
   default = null
