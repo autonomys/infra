@@ -75,6 +75,8 @@ module "mainnet_domains" {
     ]
   }
 
+  bare-domain-operator-keyless-ids = [0, 1]
+
   bare-domain-operator-node-config = {
     operator-nodes = [
       {
@@ -106,7 +108,6 @@ module "mainnet_domains" {
         operator-id   = 0
         sync-mode     = "full"
         ipv4          = var.bare_domain_operator_ipv4.operator_0
-        insert-key    = false
       },
       {
         domain-id     = 0
@@ -117,7 +118,6 @@ module "mainnet_domains" {
         operator-id   = 1
         sync-mode     = "full"
         ipv4          = var.bare_domain_operator_ipv4.operator_1
-        insert-key    = false
       }
     ]
   }

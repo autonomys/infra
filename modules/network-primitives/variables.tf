@@ -283,8 +283,13 @@ variable "bare-domain-operator-node-config" {
       index         = number
       sync-mode     = string
       ipv4          = string
-      insert-key    = optional(bool, true)
     }))
   })
   default = null
+}
+
+variable "bare-domain-operator-keyless-ids" {
+  description = "Operator ids whose bare node starts without inserting its domain key"
+  type        = list(number)
+  default     = []
 }
