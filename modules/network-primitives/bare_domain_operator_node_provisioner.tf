@@ -107,7 +107,8 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
 
       # insert domain operator key
       %{if contains(var.bare-domain-operator-keyless-ids, var.bare-domain-operator-node-config.operator-nodes[count.index].operator-id)~}
-      echo "skipped domain key insert (keyless sync)"
+      sudo rm -f /home/${var.ssh_user}/subspace/node.key
+      echo "skipped domain key insert and removed node.key (keyless sync)"
       %{else~}
       sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.bare-domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$KEY"
       %{endif~}
