@@ -96,6 +96,28 @@ module "mainnet_domains" {
         operator-id   = 3
         sync-mode     = "full"
         ipv4          = var.bare_domain_operator_ipv4.operator_3
+      },
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "mainnet-2026-oct-22"
+        reserved-only = false
+        index         = 0
+        operator-id   = 0
+        sync-mode     = "full"
+        ipv4          = var.bare_domain_operator_ipv4.operator_0
+        insert-key    = false
+      },
+      {
+        domain-id     = 0
+        domain-name   = "auto-evm"
+        docker-tag    = "mainnet-2026-oct-22"
+        reserved-only = false
+        index         = 1
+        operator-id   = 1
+        sync-mode     = "full"
+        ipv4          = var.bare_domain_operator_ipv4.operator_1
+        insert-key    = false
       }
     ]
   }

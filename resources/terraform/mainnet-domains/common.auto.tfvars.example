@@ -2,4 +2,6 @@ cloudflare_account_id = ""
 bare_domain_operator_ipv4 = {
   operator_2 = ""
   operator_3 = ""
+  operator_0 = ""
+  operator_1 = ""
 }
