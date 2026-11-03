@@ -63,7 +63,7 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
     inline = [
       <<-EOT
       set -e
-      trap 'sudo rm -f /home/${var.ssh_user}/subspace/config.toml' EXIT
+      trap 'sudo rm -f /home/${var.ssh_user}/subspace/config.toml%{if contains(var.bare-domain-operator-keyless-ids, var.bare-domain-operator-node-config.operator-nodes[count.index].operator-id)} /home/${var.ssh_user}/subspace/node.key%{endif}' EXIT
       trap 'exit 1' HUP INT TERM
 
       # set hostname
@@ -107,8 +107,7 @@ resource "null_resource" "start_bare_domain_operator_nodes" {
 
       # insert domain operator key
       %{if contains(var.bare-domain-operator-keyless-ids, var.bare-domain-operator-node-config.operator-nodes[count.index].operator-id)~}
-      sudo rm -f /home/${var.ssh_user}/subspace/node.key
-      echo "skipped domain key insert and removed node.key (keyless sync)"
+      echo "skipped domain key insert (keyless sync); node.key removed on exit"
       %{else~}
       sudo docker exec node /subspace-node domain key insert --base-path=/var/subspace --domain-id ${var.bare-domain-operator-node-config.operator-nodes[count.index].domain-id} --keystore-suri "$KEY"
       %{endif~}
