@@ -934,8 +934,8 @@ resource "cloudflare_ruleset" "subspace_network_firewall_custom" {
       action      = "block"
     },
     {
-      description = "Loki: only allow log pushes and the readiness probe"
-      expression  = "(http.host eq \"logging.subspace.network\" and not ((http.request.method eq \"POST\" and http.request.uri.path eq \"/loki/api/v1/push\") or (http.request.method eq \"GET\" and http.request.uri.path eq \"/ready\")))"
+      description = "Loki: only allow log pushes, the readiness probe and Let's Encrypt HTTP-01 challenges"
+      expression  = "(http.host eq \"logging.subspace.network\" and not ((http.request.method eq \"POST\" and http.request.uri.path eq \"/loki/api/v1/push\") or (http.request.method eq \"GET\" and http.request.uri.path eq \"/ready\") or (http.request.method eq \"GET\" and starts_with(http.request.uri.path, \"/.well-known/acme-challenge/\"))))"
       action      = "block"
     },
   ]
