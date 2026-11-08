@@ -67,7 +67,7 @@ check "GRUB updates target both disks" \
   "[ -d /sys/firmware/efi ] && echo uefi || { dpkg-query -W -f='\${Status}' grub-pc 2>/dev/null | grep -q 'install ok installed' || { echo 'grub-pc not installed'; exit 0; }; n=\$(sudo debconf-show grub-pc 2>/dev/null | sed -n 's/^\\* grub-pc\\/install_devices: //p' | tr ',' '\n' | grep -c .); [ \$n -ge 2 ] && echo both || echo \"\$n install_devices\"; }" \
   "both"
 check "SMART healthy on every disk" \
-  "for d in \$(lsblk -dnp -o NAME,TYPE | awk '\$2 == \"disk\" {print \$1}'); do sudo smartctl -H \$d | grep -qE 'PASSED|OK' || echo \"\$d:unhealthy\"; done | grep . || echo healthy" \
+  "for d in \$(lsblk -dnp -o NAME,TYPE | awk '\$2 == \"disk\" {print \$1}'); do sudo smartctl -H \$d | grep -qE 'PASSED|OK' || echo \"\$d:failing\"; done | grep . || echo healthy" \
   "healthy"
 
 # --- SSH hardening ---
@@ -94,14 +94,16 @@ check "80/443 not open to anywhere" \
 # ports Docker publishes bypass UFW, so only Traefik (host network) and sshd may
 # listen beyond loopback
 check "Only 22, 80 and 443 listen beyond loopback" \
-  "sudo ss -ltnH | awk '{print \$4}' | grep -vE '^(127\\.[0-9.]+(%[a-z0-9]+)?|\\[::1\\]|\\[::ffff:127\\.[0-9.]+\\]):' | sed -E 's/.*:([0-9]+)\$/\\1/' | sort -un | tr '\n' ' '" \
-  "22 80 443 "
+  "p=\$(sudo ss -ltnH | awk '{print \$4}' | grep -vE '^(127\\.[0-9.]+(%[a-z0-9]+)?|\\[::1\\]|\\[::ffff:127\\.[0-9.]+\\]):' | sed -E 's/.*:([0-9]+)\$/\\1/' | sort -un | tr '\n' ' '); [ \"\$p\" = '22 80 443 ' ] && echo only-expected-ports || echo \"listening: \$p\"" \
+  "only-expected-ports"
 
 # --- Services ---
 echo ""
 echo "[Services]"
-check "fail2ban running" "systemctl is-active fail2ban" "active"
-check "unattended-upgrades active" "systemctl is-active unattended-upgrades" "active"
+# is-active prints "inactive" for a stopped unit, which contains "active"
+for unit in fail2ban unattended-upgrades; do
+  check "$unit running" "[ \"\$(systemctl is-active $unit)\" = active ] && echo running || echo stopped" "running"
+done
 check "fail2ban sshd jail" "sudo cat /etc/fail2ban/jail.local" "maxretry = 5"
 check "Auto-reboot disabled" \
   "cat /etc/apt/apt.conf.d/50unattended-upgrades-local" 'Automatic-Reboot "false"'
