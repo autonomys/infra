@@ -1,9 +1,10 @@
 # Fleet monitoring host
 
 Terraform for `monitoring-loki`, the bare-metal box that receives the fleet's logs
-at `logging.subspace.network`, serves Grafana at `grafana.subspace.network`, keeps
-metrics, and sends alerts to Slack #alerts. The project creates no cloud resources. It provisions an existing box over SSH
-through `modules/monitoring-host`.
+at `logging.subspace.network`, serves Grafana at `grafana.subspace.network`, takes
+metric writes at `vmetrics.subspace.network`, keeps metrics, and sends alerts to
+Slack #alerts. The project creates no cloud resources. It provisions an existing
+box over SSH through `modules/monitoring-host`.
 
 ## Stack
 
@@ -18,6 +19,7 @@ through `modules/monitoring-host`.
 | smartctl_exporter | `prometheuscommunity/smartctl-exporter:v0.15.0` | `127.0.0.1:9633` (host network) | SMART data for every disk |
 | vmalert | `victoriametrics/vmalert:v1.155.0` | `127.0.0.1:8880` | Evaluates the alert rules |
 | Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to the relay |
+| vmauth | `victoriametrics/vmauth:v1.155.0` | `127.0.0.1:8427` | Checks the metrics write credential and passes `/write` to VictoriaMetrics |
 | Watchdog relay | `python:3.13.18-alpine3.24` | compose network only | Turns each Watchdog notification into the GET that Uptime Kuma 1.x's push route needs |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
@@ -31,11 +33,16 @@ compose network.
 | `POST https://logging.subspace.network/loki/api/v1/push` | Loki | None |
 | `GET https://logging.subspace.network/ready` | Loki | None |
 | `https://grafana.subspace.network/*` except `/metrics` | Grafana | Grafana login |
-| `GET http://<either host>/.well-known/acme-challenge/*` | Traefik | None |
+| `POST https://vmetrics.subspace.network/write` | VictoriaMetrics, through vmauth | Basic auth, one credential shared by every sender |
+| `GET http://<any of the three hosts>/.well-known/acme-challenge/*` | Traefik | None |
 
 Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
-404 from Traefik. Loki can only be queried from the box itself, which is how
-Grafana reads it.
+404 from Traefik, and any other request to `vmetrics.subspace.network` a 404 from
+Traefik. Loki and VictoriaMetrics can only be queried from the box itself, which
+is how Grafana reads them.
+
+Writes to `/write` use the InfluxDB line protocol. VictoriaMetrics stores each
+field as a series named `<measurement>_<field>`, with the tags as labels.
 
 ### Exposure
 
@@ -55,12 +62,17 @@ Grafana reads it.
   on the API, snapshots and public dashboards are off, and its health endpoint
   doesn't show the version without a login. Traefik doesn't route its `/metrics`
   page, which Grafana serves without a login.
-- Metrics and alerting have no public route. Their ports are on `127.0.0.1` only,
-  and Grafana reads them on the box.
+- Metric writes need the write credential, which vmauth checks before passing
+  the request on. vmauth maps only `/write`, so a credential can't read metrics
+  or reach any other VictoriaMetrics path, and it doesn't log rejected
+  credentials.
+- Metric reads and alerting have no public route. Their ports are on `127.0.0.1`
+  only, and Grafana reads them on the box.
 - smartctl_exporter runs privileged so it can read every disk, including one added
   later. It listens on `127.0.0.1` only.
-- Alertmanager reads the Slack webhook, and the relay the Uptime Kuma push URL, from
-  files in `secrets/`, so neither appears in a config file or API.
+- Alertmanager reads the Slack webhook, the relay the Uptime Kuma push URL, and
+  vmauth the write credential from files in `secrets/`, so none appears in a
+  config file or API.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.
@@ -75,6 +87,7 @@ Grafana reads it.
 | `modules/monitoring-host/vmagent/` | What the box scrapes |
 | `modules/monitoring-host/vmalert/` | Alert rules (`rules/`) and their unit tests (`tests/`) |
 | `modules/monitoring-host/alertmanager/` | Alert routing |
+| `modules/monitoring-host/vmauth/` | Template for vmauth's credentials file |
 | `modules/monitoring-host/watchdog-relay/` | The Watchdog relay to Uptime Kuma |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
@@ -84,7 +97,7 @@ On the box:
 | Path | Contents |
 |---|---|
 | `/home/ubuntu/monitoring/` | `docker-compose.yml`, `.env`, and the config directories above |
-| `/home/ubuntu/monitoring/secrets/` | Grafana admin login, Slack webhook, Uptime Kuma push URL (directory mode 0700) |
+| `/home/ubuntu/monitoring/secrets/` | Grafana admin login, Slack webhook, Uptime Kuma push URL, vmauth's credentials file (directory mode 0700) |
 | `/srv/monitoring/loki/` | Loki's chunks, index and WAL |
 | `/srv/monitoring/grafana/` | Grafana's database: users, preferences, dashboards made in the UI |
 | `/srv/monitoring/victoriametrics/` | Metrics |
@@ -110,9 +123,9 @@ upgrades Docker if a newer release is out, which restarts every container.
 
 | Setting | Where |
 |---|---|
-| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
+| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url`, `vmetrics_username`, `vmetrics_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
 | `ssh_agent_identity` | Your local `user.auto.tfvars`, not stored in Infisical |
-| Hostname, Loki and Grafana domains, expected disk count | `main.tf` |
+| Hostname, Loki, Grafana and vmetrics domains, expected disk count | `main.tf` |
 | Image versions | `modules/monitoring-host/docker-compose.yml` |
 | Retention, ingestion limits | `modules/monitoring-host/loki/config.yml` |
 | Routed paths, TLS options | `modules/monitoring-host/traefik/dynamic.yml.tftpl` |
@@ -123,6 +136,7 @@ upgrades Docker if a newer release is out, which restarts every container.
 | What the box scrapes | `modules/monitoring-host/vmagent/scrape.yml` |
 | Alert rules | `modules/monitoring-host/vmalert/rules/` |
 | Alert routing, grouping and repeats | `modules/monitoring-host/alertmanager/alertmanager.yml` |
+| Paths the write credential may reach | `modules/monitoring-host/vmauth/auth.yml.tftpl` |
 
 ## Deploying a change
 
@@ -264,6 +278,19 @@ match. To move to a new revision, update both:
 curl -fsSL https://grafana.com/api/dashboards/<id>/revisions/<revision>/download | shasum -a 256
 ```
 
+### Metrics write credential
+
+Every sender uses one credential, `vmetrics_username` and `vmetrics_password`,
+as basic auth. Auto Drive's services read it from `VICTORIA_USERNAME` and
+`VICTORIA_PASSWORD`.
+
+To rotate it, change both in `common.auto.tfvars`, then plan and apply. vmauth
+reloads its file within 30 seconds without a restart, and the old credential
+stops working at that point, so update every sender at the same time. To give a
+sender its own credential, add a user to `vmauth/auth.yml.tftpl`.
+`vmauth_user_requests_total{username="metrics-writer"}` in VictoriaMetrics counts
+the requests.
+
 ### Picking up new Cloudflare ranges
 
 The bootstrap fetches Cloudflare's ranges each time it runs. To re-run it:
@@ -293,7 +320,7 @@ sync. If a server's number of disks changes, update `disks` in `main.tf`.
 `logging`, `grafana` and `vmetrics` (`.subspace.network`) are
 proxied A records in the `dns` project, with the address from `proxied.json`. The
 Loki rule is in `cloudflare_ruleset.subspace_network_firewall_custom` in the same
-project.
+project. `vmetrics` has no Cloudflare rule; Traefik and vmauth restrict it.
 
 ## Rules for this host
 

@@ -10,8 +10,14 @@ locals {
   loki_config = file("${path.module}/loki/config.yml")
 
   traefik_dynamic = templatefile("${path.module}/traefik/dynamic.yml.tftpl", {
-    loki_domain    = var.instance.loki_domain
-    grafana_domain = var.instance.grafana_domain
+    loki_domain     = var.instance.loki_domain
+    grafana_domain  = var.instance.grafana_domain
+    vmetrics_domain = var.instance.vmetrics_domain
+  })
+
+  vmauth_config = templatefile("${path.module}/vmauth/auth.yml.tftpl", {
+    username = var.vmetrics_writer.username
+    password = var.vmetrics_writer.password
   })
 
   # Directories copied to the box as they are, then synced into place
@@ -122,6 +128,7 @@ resource "null_resource" "deploy_monitoring_stack" {
     dashboards_hash    = sha256(jsonencode(local.grafana_com_dashboards))
     grafana_admin_hash = sha256(jsonencode(var.grafana_admin))
     alerting_hash      = sha256(jsonencode(var.alerting))
+    vmauth_hash        = sha256(local.vmauth_config)
     env_hash           = md5(local.compose_env)
   })
 
@@ -212,6 +219,11 @@ resource "null_resource" "deploy_monitoring_stack" {
   }
 
   provisioner "file" {
+    content     = local.vmauth_config
+    destination = "${local.stack_dir}/secrets/vmauth_auth.yml"
+  }
+
+  provisioner "file" {
     content     = local.compose_env
     destination = "${local.stack_dir}/.env"
   }
@@ -271,6 +283,7 @@ resource "null_resource" "deploy_monitoring_stack" {
       wait_ready victoriametrics http://127.0.0.1:8428/health
       wait_ready vmalert http://127.0.0.1:8880/health
       wait_ready alertmanager http://127.0.0.1:9093/-/ready
+      wait_ready vmauth http://127.0.0.1:8427/health
 
       # grafana cli prints Grafana's whole startup log along with the result
       if ! out="$(sudo docker compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin < secrets/grafana_admin_password 2>&1)"; then

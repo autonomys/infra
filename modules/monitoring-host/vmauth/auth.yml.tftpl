@@ -1,0 +1,11 @@
+# Rendered by Terraform with the metrics write credential and installed as a secret.
+# Values are JSON-quoted, which YAML reads as double-quoted strings.
+
+users:
+  # Labels vmauth's own metrics, so the username stays out of them
+  - name: "metrics-writer"
+    username: ${jsonencode(username)}
+    password: ${jsonencode(password)}
+    url_map:
+      - src_paths: ["/write"]
+        url_prefix: "http://victoriametrics:8428"

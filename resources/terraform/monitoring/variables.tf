@@ -37,3 +37,15 @@ variable "watchdog_push_url" {
   type        = string
   sensitive   = true
 }
+
+variable "vmetrics_username" {
+  description = "Basic auth username for metric writes through vmetrics.subspace.network"
+  type        = string
+  sensitive   = true
+}
+
+variable "vmetrics_password" {
+  description = "Basic auth password for metric writes through vmetrics.subspace.network"
+  type        = string
+  sensitive   = true
+}

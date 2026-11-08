@@ -10,10 +10,11 @@ variable "deployer" {
 variable "instance" {
   description = "Monitoring host details"
   type = object({
-    ipv4           = string
-    hostname       = string
-    loki_domain    = string
-    grafana_domain = string
+    ipv4            = string
+    hostname        = string
+    loki_domain     = string
+    grafana_domain  = string
+    vmetrics_domain = string
     # how many disks smartctl should see; fewer fires DiskMissing
     disks = number
   })
@@ -38,6 +39,15 @@ variable "alerting" {
   type = object({
     slack_webhook_url = string
     watchdog_push_url = string
+  })
+  sensitive = true
+}
+
+variable "vmetrics_writer" {
+  description = "Basic auth credential for metric writes through vmetrics.subspace.network"
+  type = object({
+    username = string
+    password = string
   })
   sensitive = true
 }

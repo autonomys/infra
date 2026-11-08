@@ -19,6 +19,15 @@ http:
       tls:
         certResolver: le
 
+    # Writes only; reads stay on the box, where Grafana queries VictoriaMetrics
+    vmetrics:
+      rule: "Host(`${vmetrics_domain}`) && Method(`POST`) && Path(`/write`)"
+      entryPoints:
+        - websecure
+      service: vmauth
+      tls:
+        certResolver: le
+
   services:
     loki:
       loadBalancer:
@@ -29,6 +38,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://127.0.0.1:3000"
+
+    vmauth:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8427"
 
 tls:
   options:

@@ -8,11 +8,12 @@ module "monitoring" {
   }
 
   instance = {
-    ipv4           = var.host_ipv4
-    hostname       = "monitoring-loki"
-    loki_domain    = "logging.subspace.network"
-    grafana_domain = "grafana.subspace.network"
-    disks          = 2
+    ipv4            = var.host_ipv4
+    hostname        = "monitoring-loki"
+    loki_domain     = "logging.subspace.network"
+    grafana_domain  = "grafana.subspace.network"
+    vmetrics_domain = "vmetrics.subspace.network"
+    disks           = 2
   }
 
   letsencrypt_email = var.letsencrypt_email
@@ -25,5 +26,10 @@ module "monitoring" {
   alerting = {
     slack_webhook_url = var.alertmanager_slack_webhook_url
     watchdog_push_url = var.watchdog_push_url
+  }
+
+  vmetrics_writer = {
+    username = var.vmetrics_username
+    password = var.vmetrics_password
   }
 }

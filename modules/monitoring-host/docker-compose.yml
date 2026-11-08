@@ -197,6 +197,23 @@ services:
       - alertmanager_slack_webhook_url
     logging: *local-logging
 
+  # Checks the metrics write credential and passes only /write on to
+  # VictoriaMetrics. Traefik routes POST /write on vmetrics.subspace.network here.
+  vmauth:
+    image: victoriametrics/vmauth:v1.155.0
+    container_name: vmauth
+    restart: unless-stopped
+    command:
+      - -httpListenAddr=:8427
+      - -auth.config=/run/secrets/vmauth_auth
+      # Picks up changed credentials without a restart
+      - -configCheckInterval=30s
+    ports:
+      - "127.0.0.1:8427:8427"
+    secrets:
+      - vmauth_auth
+    logging: *local-logging
+
   watchdog-relay:
     image: python:3.13.18-alpine3.24
     container_name: watchdog-relay
@@ -220,3 +237,5 @@ secrets:
     file: ./secrets/alertmanager_slack_webhook_url
   watchdog_push_url:
     file: ./secrets/watchdog_push_url
+  vmauth_auth:
+    file: ./secrets/vmauth_auth.yml
