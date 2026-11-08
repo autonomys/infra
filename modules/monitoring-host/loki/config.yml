@@ -8,6 +8,12 @@ server:
   grpc_listen_port: 9095
   log_level: info
 
+# Pushes need no credentials, and by default Loki decompresses up to 5 GB of a
+# push before rejecting it. The fleet's log drivers send batches of about 1 MB.
+distributor:
+  max_recv_msg_size: 16777216
+  max_decompressed_size: 16777216
+
 common:
   instance_addr: 127.0.0.1
   path_prefix: /loki

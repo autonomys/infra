@@ -37,6 +37,8 @@ Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
   (`sniStrict`).
 - SSH allows only key login. Root login is off, `ubuntu` is the only login user,
   and fail2ban watches `sshd`.
+- Loki takes pushes without credentials, so it rejects any push larger than
+  16 MB, compressed or decompressed.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.

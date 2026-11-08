@@ -127,6 +127,8 @@ check "Traefik running" \
 check "Loki running" \
   "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "loki:running"
 check "Loki ready on loopback" "curl -fsS http://127.0.0.1:3100/ready" "ready"
+check "Loki caps decompressed push size" \
+  "curl -fsS http://127.0.0.1:3100/config | grep -E '^  max_decompressed_size:'" "16777216"
 
 # --- TLS ---
 echo ""
