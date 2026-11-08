@@ -15,7 +15,7 @@ locals {
   })
 
   # Directories copied to the box as they are, then synced into place
-  config_dirs = ["grafana", "vmagent", "vmalert", "alertmanager"]
+  config_dirs = ["grafana", "vmagent", "vmalert", "alertmanager", "watchdog-relay"]
   config_files = {
     for d in local.config_dirs : d => {
       for f in fileset("${path.module}/${d}", "**") : f => filesha256("${path.module}/${d}/${f}")
@@ -47,6 +47,7 @@ locals {
     VMAGENT_CONFIG_SHA=${local.config_sha["vmagent"]}
     VMALERT_RULES_SHA=${local.config_sha["vmalert"]}
     ALERTMANAGER_CONFIG_SHA=${local.config_sha["alertmanager"]}
+    WATCHDOG_RELAY_SHA=${local.config_sha["watchdog-relay"]}
   EOT
 }
 
@@ -117,6 +118,7 @@ resource "null_resource" "deploy_monitoring_stack" {
     vmagent_hash       = local.config_sha["vmagent"]
     vmalert_hash       = local.config_sha["vmalert"]
     alertmanager_hash  = local.config_sha["alertmanager"]
+    relay_hash         = local.config_sha["watchdog-relay"]
     dashboards_hash    = sha256(jsonencode(local.grafana_com_dashboards))
     grafana_admin_hash = sha256(jsonencode(var.grafana_admin))
     alerting_hash      = sha256(jsonencode(var.alerting))
@@ -182,6 +184,11 @@ resource "null_resource" "deploy_monitoring_stack" {
   provisioner "file" {
     source      = "${path.module}/alertmanager/"
     destination = "${local.stack_dir}/.upload/alertmanager"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/watchdog-relay/"
+    destination = "${local.stack_dir}/.upload/watchdog-relay"
   }
 
   provisioner "file" {

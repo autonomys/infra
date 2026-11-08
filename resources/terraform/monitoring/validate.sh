@@ -151,7 +151,7 @@ vm_expect() {
 }
 echo ""
 echo "[Metrics and alerting]"
-for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager; do
+for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager watchdog-relay; do
   check "$svc running" \
     "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "$svc:running"
 done

@@ -1,5 +1,4 @@
-# The Slack webhook and the Uptime Kuma push URL are secrets, read from files
-# that Terraform writes on the box.
+# The Slack webhook is a secret, read from a file that Terraform writes on the box.
 
 route:
   receiver: slack
@@ -43,7 +42,9 @@ receivers:
           {{ .Annotations.summary }}
           {{ end }}
 
+  # Uptime Kuma 1.x only accepts GET on its push route, so the relay turns
+  # Alertmanager's POST into one
   - name: watchdog
     webhook_configs:
-      - url_file: /run/secrets/watchdog_push_url
+      - url: http://watchdog-relay:8080/
         send_resolved: false

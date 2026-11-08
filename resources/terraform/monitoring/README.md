@@ -17,7 +17,8 @@ through `modules/monitoring-host`.
 | node_exporter | `prom/node-exporter:v1.12.1` | `127.0.0.1:9100` (host network) | Host, RAID and filesystem metrics |
 | smartctl_exporter | `prometheuscommunity/smartctl-exporter:v0.15.0` | `127.0.0.1:9633` (host network) | SMART data for every disk |
 | vmalert | `victoriametrics/vmalert:v1.155.0` | `127.0.0.1:8880` | Evaluates the alert rules |
-| Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to Uptime Kuma |
+| Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to the relay |
+| Watchdog relay | `python:3.13.18-alpine3.24` | compose network only | Turns each Watchdog notification into the GET that Uptime Kuma 1.x's push route needs |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
 only), then Traefik. Grafana reads Loki, VictoriaMetrics and Alertmanager on the
@@ -58,8 +59,8 @@ Grafana reads it.
   and Grafana reads them on the box.
 - smartctl_exporter runs privileged so it can read every disk, including one added
   later. It listens on `127.0.0.1` only.
-- Alertmanager reads the Slack webhook and the Uptime Kuma push URL from files in
-  `secrets/`, so neither appears in its config or API.
+- Alertmanager reads the Slack webhook, and the relay the Uptime Kuma push URL, from
+  files in `secrets/`, so neither appears in a config file or API.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.
@@ -74,6 +75,7 @@ Grafana reads it.
 | `modules/monitoring-host/vmagent/` | What the box scrapes |
 | `modules/monitoring-host/vmalert/` | Alert rules (`rules/`) and their unit tests (`tests/`) |
 | `modules/monitoring-host/alertmanager/` | Alert routing |
+| `modules/monitoring-host/watchdog-relay/` | The Watchdog relay to Uptime Kuma |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
 
@@ -226,9 +228,9 @@ repeated every 4 hours and warnings daily until they resolve. To see or silence
 alerts, open Alerting > Silences or Alert groups in Grafana and pick the
 Alertmanager datasource.
 
-The Watchdog alert always fires, and Alertmanager forwards it to an Uptime Kuma
-push monitor every minute (heartbeat interval 180 s, 1 retry). Uptime Kuma runs
-elsewhere, so it reports when this box or its alerting stops.
+The Watchdog alert always fires. Alertmanager sends it every minute to the relay,
+which pushes to an Uptime Kuma push monitor (heartbeat interval 180 s, 1 retry).
+Uptime Kuma runs elsewhere, so it reports when this box or its alerting stops.
 
 To send a test alert, which resolves itself after 5 minutes, run this on the box:
 

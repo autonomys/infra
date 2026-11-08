@@ -195,6 +195,19 @@ services:
       - ${DATA_DIR}/alertmanager:/alertmanager
     secrets:
       - alertmanager_slack_webhook_url
+    logging: *local-logging
+
+  watchdog-relay:
+    image: python:3.13.18-alpine3.24
+    container_name: watchdog-relay
+    restart: unless-stopped
+    user: nobody
+    labels:
+      monitoring.config-sha: ${WATCHDOG_RELAY_SHA}
+    command: ["python", "-u", "/relay/relay.py"]
+    volumes:
+      - ./watchdog-relay:/relay:ro
+    secrets:
       - watchdog_push_url
     logging: *local-logging
 
