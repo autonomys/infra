@@ -7,6 +7,12 @@ server:
   http_listen_port: 3100
   grpc_listen_port: 9095
   log_level: info
+  # Query results reach the query frontend over gRPC, and the 4 MB default is
+  # smaller than 1000 lines of the Auto Drive backends' logs. A larger result
+  # isn't rejected; the query hangs until Grafana times out. 100 MB matches the
+  # gRPC clients' own default.
+  grpc_server_max_recv_msg_size: 104857600
+  grpc_server_max_send_msg_size: 104857600
 
 # Pushes need no credentials, and by default Loki decompresses up to 5 GB of a
 # push before rejecting it. The fleet's log drivers send batches of about 1 MB.
