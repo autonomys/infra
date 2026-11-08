@@ -219,7 +219,7 @@ Then run `validate.sh`.
 
 ## DNS
 
-`logging`, `grafana`, `grafana.vmetrics` and `vmetrics` (`.subspace.network`) are
+`logging`, `grafana` and `vmetrics` (`.subspace.network`) are
 proxied A records in the `dns` project, with the address from `proxied.json`. The
 Loki rule is in `cloudflare_ruleset.subspace_network_firewall_custom` in the same
 project.

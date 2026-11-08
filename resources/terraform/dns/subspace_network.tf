@@ -32,17 +32,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_449eb8c2974ef1a907c
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_000bcfcfb0fa47d7871f9edd39e388fc_41" {
-  content  = local.proxied_data.subspace_network.vmetrics_grafana
-  name     = "grafana.vmetrics.subspace.network"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.subspace_network.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "terraform_managed_resource_54ba6b98fe500b904254de740edca8bc_42" {
   content  = local.proxied_data.subspace_network.logging
   name     = "logging.subspace.network"
