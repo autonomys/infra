@@ -1,8 +1,8 @@
 # Fleet monitoring host
 
 Terraform for `monitoring-loki`, the bare-metal box that receives the fleet's logs
-at `logging.subspace.network` and serves Grafana at `grafana.subspace.network`.
-The project creates no cloud resources. It provisions an existing box over SSH
+at `logging.subspace.network`, serves Grafana at `grafana.subspace.network`, keeps
+metrics, and sends alerts to Slack #alerts. The project creates no cloud resources. It provisions an existing box over SSH
 through `modules/monitoring-host`.
 
 ## Stack
@@ -11,10 +11,17 @@ through `modules/monitoring-host`.
 |---|---|---|---|
 | Traefik | `traefik:v3.7.17` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
 | Loki | `grafana/loki:3.6.20` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
-| Grafana | `grafana/grafana:13.2.5` | `127.0.0.1:3000` | Dashboards over Loki |
+| Grafana | `grafana/grafana:13.2.5` | `127.0.0.1:3000` | Dashboards over logs and metrics; alert silences |
+| VictoriaMetrics | `victoriametrics/victoria-metrics:v1.155.0` | `127.0.0.1:8428` | Metrics, kept 90 days |
+| vmagent | `victoriametrics/vmagent:v1.155.0` | `127.0.0.1:8429` (host network) | Scrapes the box's own metrics into VictoriaMetrics |
+| node_exporter | `prom/node-exporter:v1.12.1` | `127.0.0.1:9100` (host network) | Host, RAID and filesystem metrics |
+| smartctl_exporter | `prometheuscommunity/smartctl-exporter:v0.15.0` | `127.0.0.1:9633` (host network) | SMART data for every disk |
+| vmalert | `victoriametrics/vmalert:v1.155.0` | `127.0.0.1:8880` | Evaluates the alert rules |
+| Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to Uptime Kuma |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
-only), then Traefik. Grafana reads Loki directly on the compose network.
+only), then Traefik. Grafana reads Loki, VictoriaMetrics and Alertmanager on the
+compose network.
 
 ### Endpoints
 
@@ -47,6 +54,12 @@ Grafana reads it.
   on the API, snapshots and public dashboards are off, and its health endpoint
   doesn't show the version without a login. Traefik doesn't route its `/metrics`
   page, which Grafana serves without a login.
+- Metrics and alerting have no public route. Their ports are on `127.0.0.1` only,
+  and Grafana reads them on the box.
+- smartctl_exporter runs privileged so it can read every disk, including one added
+  later. It listens on `127.0.0.1` only.
+- Alertmanager reads the Slack webhook and the Uptime Kuma push URL from files in
+  `secrets/`, so neither appears in its config or API.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.
@@ -57,7 +70,10 @@ Grafana reads it.
 |---|---|
 | `resources/terraform/monitoring/` | This project, `installimage.conf`, `first-boot.sh`, `validate.sh` |
 | `modules/monitoring-host/` | Compose file, Loki config, Traefik routes, provisioning resources |
-| `modules/monitoring-host/grafana/` | Grafana's datasource, dashboard providers and dashboards |
+| `modules/monitoring-host/grafana/` | Grafana's datasources, dashboard providers and dashboards |
+| `modules/monitoring-host/vmagent/` | What the box scrapes |
+| `modules/monitoring-host/vmalert/` | Alert rules (`rules/`) and their unit tests (`tests/`) |
+| `modules/monitoring-host/alertmanager/` | Alert routing |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
 
@@ -65,10 +81,14 @@ On the box:
 
 | Path | Contents |
 |---|---|
-| `/home/ubuntu/monitoring/` | `docker-compose.yml`, `.env`, `loki/config.yml`, `traefik/dynamic.yml`, `grafana/` |
-| `/home/ubuntu/monitoring/secrets/` | Grafana admin username and password (directory mode 0700) |
+| `/home/ubuntu/monitoring/` | `docker-compose.yml`, `.env`, and the config directories above |
+| `/home/ubuntu/monitoring/secrets/` | Grafana admin login, Slack webhook, Uptime Kuma push URL (directory mode 0700) |
 | `/srv/monitoring/loki/` | Loki's chunks, index and WAL |
 | `/srv/monitoring/grafana/` | Grafana's database: users, preferences, dashboards made in the UI |
+| `/srv/monitoring/victoriametrics/` | Metrics |
+| `/srv/monitoring/vmagent/` | vmagent's buffer while VictoriaMetrics is unreachable, capped at 1 GB |
+| `/srv/monitoring/alertmanager/` | Silences and the notification log |
+| `/var/lib/node_exporter/textfile/disks.prom` | The expected disk count, for the DiskMissing rule |
 | `/srv/monitoring/traefik/acme.json` | Let's Encrypt account and certificate, re-issued if lost |
 
 Swap, `/boot`, `/` and `/srv` are each RAID 1 across both disks. Data lives on
@@ -79,7 +99,7 @@ Swap, `/boot`, `/` and `/srv` are each RAID 1 across both disks. Data lives on
 | Resource | Does | Re-runs when |
 |---|---|---|
 | `null_resource.setup_monitoring_host` | Runs `installer.sh`, then `monitoring-host-bootstrap.sh` | Either script or the host address changes |
-| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs, Grafana files, admin secrets and `.env`, sets the hostname, starts the stack, waits for Loki and Grafana, resets the Grafana admin password | Any of those files, the admin credentials or the instance settings change |
+| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs, secrets and `.env`, fetches the third-party dashboards, sets the hostname and expected disk count, starts the stack, waits for each service, resets the Grafana admin password | Any of those files, the dashboard pins, the secrets or the instance settings change |
 
 Both steps are safe to re-run over a live host. A re-run of the setup step
 upgrades Docker if a newer release is out, which restarts every container.
@@ -88,14 +108,19 @@ upgrades Docker if a newer release is out, which restarts every container.
 
 | Setting | Where |
 |---|---|
-| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
+| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
 | `ssh_agent_identity` | Your local `user.auto.tfvars`, not stored in Infisical |
-| Hostname, Loki and Grafana domains | `main.tf` |
+| Hostname, Loki and Grafana domains, expected disk count | `main.tf` |
 | Image versions | `modules/monitoring-host/docker-compose.yml` |
 | Retention, ingestion limits | `modules/monitoring-host/loki/config.yml` |
 | Routed paths, TLS options | `modules/monitoring-host/traefik/dynamic.yml.tftpl` |
 | Grafana settings | `environment` of the `grafana` service in `docker-compose.yml` |
-| Grafana datasource and dashboards | `modules/monitoring-host/grafana/` |
+| Grafana datasources and dashboards | `modules/monitoring-host/grafana/` |
+| Third-party dashboards (grafana.com ID, revision, SHA-256) | `grafana_com_dashboards` in `modules/monitoring-host/main.tf` |
+| Metrics retention, insert size cap | `victoriametrics` command in `docker-compose.yml` |
+| What the box scrapes | `modules/monitoring-host/vmagent/scrape.yml` |
+| Alert rules | `modules/monitoring-host/vmalert/rules/` |
+| Alert routing, grouping and repeats | `modules/monitoring-host/alertmanager/alertmanager.yml` |
 
 ## Deploying a change
 
@@ -164,9 +189,9 @@ Prerequisites:
 ### Checking the box
 
 `validate.sh [ssh-host]` checks the disks, RAID and boot code, SSH and firewall
-settings, the stack, the certificate and Traefik's routing. From your machine it
-checks that the origin's 443 and 3100 are unreachable and that Cloudflare passes
-only the allowed requests. It changes nothing. `ssh-host` defaults to
+settings, the stack, scraping, alert rules and notifications, the certificate and
+Traefik's routing. From your machine it checks that the origin's service ports are
+unreachable and that Cloudflare passes only the allowed requests. It changes nothing. `ssh-host` defaults to
 `monitoring-loki` from your SSH config.
 
 ### Adding an SSH user
@@ -194,6 +219,49 @@ provisioned dashboard. Edit it in the UI, export it as JSON, replace the file in
 the repo, and apply. Grafana picks up dashboard changes without a
 restart. Dashboards created in the UI stay in Grafana's database.
 
+### Alerts
+
+Alertmanager posts to #alerts, one message per server, with critical alerts
+repeated every 4 hours and warnings daily until they resolve. To see or silence
+alerts, open Alerting > Silences or Alert groups in Grafana and pick the
+Alertmanager datasource.
+
+The Watchdog alert always fires, and Alertmanager forwards it to an Uptime Kuma
+push monitor every minute (heartbeat interval 180 s, 1 retry). Uptime Kuma runs
+elsewhere, so it reports when this box or its alerting stops.
+
+To send a test alert, which resolves itself after 5 minutes, run this on the box:
+
+```bash
+sudo docker exec alertmanager amtool alert add TestAlert severity=warning host=monitoring-loki \
+  --annotation='summary="Test alert, please ignore"' --alertmanager.url=http://localhost:9093
+```
+
+### Changing alert rules
+
+Edit or add a file in `modules/monitoring-host/vmalert/rules/`, cover it in
+`vmalert/tests/`, and run the tests before applying:
+
+```bash
+for f in modules/monitoring-host/vmalert/tests/*.yml; do
+  docker run --rm -v "$PWD/modules/monitoring-host/vmalert":/vmalert:ro -w /vmalert/tests \
+    victoriametrics/vmalert-tool:v1.155.0 unittest --files="/vmalert/tests/$(basename "$f")"
+done
+```
+
+The apply restarts vmalert with the new rules. Every series carries `host`, so a
+rule can group by server.
+
+### Updating a third-party dashboard
+
+The Metrics folder's dashboards come from grafana.com at the revision pinned in
+`grafana_com_dashboards`, and the deploy refuses a download whose SHA-256 doesn't
+match. To move to a new revision, update both:
+
+```bash
+curl -fsSL https://grafana.com/api/dashboards/<id>/revisions/<revision>/download | shasum -a 256
+```
+
 ### Picking up new Cloudflare ranges
 
 The bootstrap fetches Cloudflare's ranges each time it runs. To re-run it:
@@ -215,7 +283,8 @@ sudo grub-install --target=i386-pc /dev/sdX
 sudo dpkg-reconfigure grub-pc    # keep both disks selected
 ```
 
-Then run `validate.sh`.
+Then run `validate.sh`. RaidDegraded and DiskMissing clear once the arrays are in
+sync. If a server's number of disks changes, update `disks` in `main.tf`.
 
 ## DNS
 

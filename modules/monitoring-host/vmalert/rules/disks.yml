@@ -1,0 +1,94 @@
+# Disk and RAID health for every server that ships metrics here. Each series
+# carries host=<server>, added by the vmagent that collected it.
+# node_disks_expected comes from a textfile the deploy writes for each server.
+
+groups:
+  - name: disks
+    rules:
+      - alert: RaidDegraded
+        expr: node_md_disks_required - ignoring(state) node_md_disks{state="active"} > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} is running with {{ $value }} member(s) missing"
+
+      - alert: RaidMemberFailed
+        expr: node_md_disks{state="failed"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} has {{ $value }} failed member(s)"
+
+      - alert: DiskMissing
+        expr: smartctl_devices < on(host) node_disks_expected
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "smartctl sees {{ $value }} disk(s), fewer than this server should have"
+
+      # On these Samsung NVMe disks the firmware also sets critical warning 0x04
+      # once wear passes 100%, so this fires for worn-out disks too
+      - alert: SmartFailed
+        expr: smartctl_device_smart_status == 0 or smartctl_device_critical_warning > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} fails its SMART health check"
+
+      # NVMe reports wear used; SATA SSDs report life remaining as an attribute
+      - alert: DiskWearHigh
+        expr: >-
+          smartctl_device_percentage_used >= 90
+          or smartctl_device_attribute{attribute_name=~"Percent_Lifetime_Remain|Wear_Leveling_Count|Media_Wearout_Indicator", attribute_value_type="value"} <= 10
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} is near the end of its rated life"
+
+      - alert: SpareBlocksUsed
+        expr: smartctl_device_available_spare < 100
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} has started using spare blocks ({{ $value }}% left)"
+
+      # An increase, not a level: some disks carry old errors from before their
+      # last install, and a level rule would fire forever
+      - alert: MediaErrorsRising
+        expr: >-
+          increase(smartctl_device_media_errors[24h]) > 0
+          or increase(smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"}[24h]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} logged new media or uncorrectable errors in the last 24 hours"
+
+      - alert: FilesystemNearlyFull
+        expr: node_filesystem_avail_bytes{fstype=~"ext[234]|xfs|btrfs|zfs"} / node_filesystem_size_bytes < 0.10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free"
+
+      - alert: FilesystemNearlyFull
+        expr: node_filesystem_avail_bytes{fstype=~"ext[234]|xfs|btrfs|zfs"} / node_filesystem_size_bytes < 0.03
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free"
+
+      # lag() is the time since the server's last scrape result within the window
+      - alert: ServerSilent
+        expr: max by (host) (lag(up[24h])) > 900
+        labels:
+          severity: warning
+        annotations:
+          summary: "No metrics from {{ $labels.host }} for {{ $value | humanizeDuration }}"

@@ -32,6 +32,9 @@ services:
       - --certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}
       - --certificatesresolvers.le.acme.storage=/data/acme.json
       - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --entrypoints.metrics.address=127.0.0.1:8082
+      - --metrics.prometheus=true
+      - --metrics.prometheus.entryPoint=metrics
     volumes:
       - ./traefik:/etc/traefik/dynamic:ro
       - ${DATA_DIR}/traefik:/data
@@ -90,8 +93,117 @@ services:
       - grafana_admin_password
     logging: *local-logging
 
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.155.0
+    container_name: victoriametrics
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=90d
+      - -httpListenAddr=:8428
+      - -maxInsertRequestSize=16MB
+    ports:
+      - "127.0.0.1:8428:8428"
+    volumes:
+      - ${DATA_DIR}/victoriametrics:/storage
+    logging: *local-logging
+
+  # vmagent and the exporters use the host network: node_exporter for the host's
+  # own view, and vmagent to reach every service's metrics on 127.0.0.1.
+  vmagent:
+    image: victoriametrics/vmagent:v1.155.0
+    container_name: vmagent
+    restart: unless-stopped
+    network_mode: host
+    labels:
+      monitoring.config-sha: ${VMAGENT_CONFIG_SHA}
+    command:
+      - -httpListenAddr=127.0.0.1:8429
+      - -promscrape.config=/etc/vmagent/scrape.yml
+      - -remoteWrite.url=http://127.0.0.1:8428/api/v1/write
+      - -remoteWrite.tmpDataPath=/vmagentdata
+      - -remoteWrite.maxDiskUsagePerURL=1GB
+      - -remoteWrite.label=host=${MONITORING_HOSTNAME}
+    volumes:
+      - ./vmagent:/etc/vmagent:ro
+      - ${DATA_DIR}/vmagent:/vmagentdata
+    logging: *local-logging
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=127.0.0.1:9100
+      - --collector.textfile.directory=/host/var/lib/node_exporter/textfile
+    volumes:
+      - /:/host:ro,rslave
+    logging: *local-logging
+
+  smartctl-exporter:
+    image: prometheuscommunity/smartctl-exporter:v0.15.0
+    container_name: smartctl-exporter
+    restart: unless-stopped
+    network_mode: host
+    # smartctl needs raw access to every disk, including ones added later
+    privileged: true
+    user: root
+    command:
+      - --web.listen-address=127.0.0.1:9633
+    logging: *local-logging
+
+  vmalert:
+    image: victoriametrics/vmalert:v1.155.0
+    container_name: vmalert
+    restart: unless-stopped
+    labels:
+      monitoring.config-sha: ${VMALERT_RULES_SHA}
+    command:
+      - -httpListenAddr=:8880
+      - -rule=/etc/vmalert/rules/*.yml
+      - -evaluationInterval=30s
+      - -datasource.url=http://victoriametrics:8428
+      # Alert state is written to and restored from VictoriaMetrics, so a
+      # restart doesn't reset how long an alert has been pending
+      - -remoteWrite.url=http://victoriametrics:8428
+      - -remoteRead.url=http://victoriametrics:8428
+      - -notifier.url=http://alertmanager:9093
+    ports:
+      - "127.0.0.1:8880:8880"
+    volumes:
+      - ./vmalert/rules:/etc/vmalert/rules:ro
+    logging: *local-logging
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.2
+    container_name: alertmanager
+    restart: unless-stopped
+    labels:
+      monitoring.config-sha: ${ALERTMANAGER_CONFIG_SHA}
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.listen-address=:9093
+      - --cluster.listen-address=
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - ${DATA_DIR}/alertmanager:/alertmanager
+    secrets:
+      - alertmanager_slack_webhook_url
+      - watchdog_push_url
+    logging: *local-logging
+
 secrets:
   grafana_admin_user:
     file: ./secrets/grafana_admin_user
   grafana_admin_password:
     file: ./secrets/grafana_admin_password
+  alertmanager_slack_webhook_url:
+    file: ./secrets/alertmanager_slack_webhook_url
+  watchdog_push_url:
+    file: ./secrets/watchdog_push_url

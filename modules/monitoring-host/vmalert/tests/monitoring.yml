@@ -1,0 +1,49 @@
+rule_files:
+  - ../rules/monitoring.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: the watchdog always fires
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 1m
+        groupname: monitoring
+        alertname: Watchdog
+        exp_alerts:
+          - exp_labels: {severity: none}
+            exp_annotations:
+              summary: "Heartbeat for Uptime Kuma"
+
+  - name: a scrape target stops answering
+    interval: 1m
+    input_series:
+      - series: 'up{host="h1", job="loki"}'
+        values: "1x5 0x10"
+    alert_rule_test:
+      - eval_time: 12m
+        groupname: monitoring
+        alertname: ScrapeTargetDown
+        exp_alerts:
+          - exp_labels: {host: h1, job: loki, severity: warning}
+            exp_annotations:
+              summary: "loki isn't answering metric scrapes"
+
+  - name: Loki stops receiving lines
+    interval: 1m
+    input_series:
+      - series: 'loki_distributor_lines_received_total{host="h1", tenant="fake"}'
+        values: "0+100x10 1000x40"
+    alert_rule_test:
+      - eval_time: 20m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts: []
+      - eval_time: 45m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "Loki has received no log lines for 15 minutes"

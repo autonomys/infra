@@ -14,6 +14,8 @@ variable "instance" {
     hostname       = string
     loki_domain    = string
     grafana_domain = string
+    # how many disks smartctl should see; fewer fires DiskMissing
+    disks = number
   })
 }
 
@@ -27,6 +29,15 @@ variable "grafana_admin" {
   type = object({
     user     = string
     password = string
+  })
+  sensitive = true
+}
+
+variable "alerting" {
+  description = "Alertmanager's Slack incoming webhook for #alerts, and the Uptime Kuma push URL that receives the Watchdog heartbeat"
+  type = object({
+    slack_webhook_url = string
+    watchdog_push_url = string
   })
   sensitive = true
 }

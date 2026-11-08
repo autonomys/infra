@@ -25,3 +25,15 @@ variable "grafana_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "alertmanager_slack_webhook_url" {
+  description = "Slack incoming webhook that Alertmanager posts to (#alerts)"
+  type        = string
+  sensitive   = true
+}
+
+variable "watchdog_push_url" {
+  description = "Uptime Kuma push monitor URL that receives the always-firing Watchdog alert"
+  type        = string
+  sensitive   = true
+}

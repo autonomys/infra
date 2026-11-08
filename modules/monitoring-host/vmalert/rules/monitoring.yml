@@ -1,0 +1,37 @@
+# The monitoring stack watching itself.
+
+groups:
+  - name: monitoring
+    rules:
+      # Always firing. Alertmanager forwards it to an Uptime Kuma push monitor,
+      # which alerts from outside this box when the heartbeat stops.
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Heartbeat for Uptime Kuma"
+
+      - alert: ScrapeTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} isn't answering metric scrapes"
+
+      - alert: CertificateExpiringSoon
+        expr: (max by (host, cn) (traefik_tls_certs_not_after) - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "The certificate for {{ $labels.cn }} expires in {{ $value | humanize }} days; Let's Encrypt renewals may be failing"
+
+      - alert: LokiNotReceivingLogs
+        expr: sum by (host) (rate(loki_distributor_lines_received_total[15m])) == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Loki has received no log lines for 15 minutes"

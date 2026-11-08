@@ -3,8 +3,9 @@ locals {
   stack_dir = "${local.home}/monitoring"
   data_dir  = "/srv/monitoring"
 
-  # the uid the grafana/grafana image runs as
-  grafana_uid = 472
+  # the uids the grafana/grafana and prom/alertmanager images run as
+  grafana_uid      = 472
+  alertmanager_uid = 65534
 
   loki_config = file("${path.module}/loki/config.yml")
 
@@ -13,13 +14,25 @@ locals {
     grafana_domain = var.instance.grafana_domain
   })
 
-  grafana_dir = "${path.module}/grafana"
-  grafana_files = {
-    for f in fileset(local.grafana_dir, "**") : f => filesha256("${local.grafana_dir}/${f}")
+  # Directories copied to the box as they are, then synced into place
+  config_dirs = ["grafana", "vmagent", "vmalert", "alertmanager"]
+  config_files = {
+    for d in local.config_dirs : d => {
+      for f in fileset("${path.module}/${d}", "**") : f => filesha256("${path.module}/${d}/${f}")
+    }
   }
+  config_sha = { for d, files in local.config_files : d => sha256(jsonencode(files)) }
+
   grafana_provisioning_sha = sha256(jsonencode({
-    for f, sha in local.grafana_files : f => sha if startswith(f, "provisioning/")
+    for f, sha in local.config_files["grafana"] : f => sha if startswith(f, "provisioning/")
   }))
+
+  # Third-party dashboards, fetched from grafana.com at pinned revisions rather
+  # than copied into this public repo
+  grafana_com_dashboards = [
+    { file = "node-exporter-full.json", id = 1860, revision = 46, sha256 = "e58ddc5dc535d4c901f94da9648bc3e3d5ae7b6f78e98e185bce8b289961cea3" },
+    { file = "victoriametrics.json", id = 10229, revision = 61, sha256 = "93f445b4ba1305eb8b84f9def54a4f050addf5af4f839d59e644b3fac9a7c31a" },
+  ]
 
   # Compose recreates a container when its labels change but not when a mounted
   # file does, so config hashes ride along as labels. Grafana reloads dashboards
@@ -27,9 +40,13 @@ locals {
   compose_env = <<-EOT
     LETSENCRYPT_EMAIL=${var.letsencrypt_email}
     DATA_DIR=${local.data_dir}
+    MONITORING_HOSTNAME=${var.instance.hostname}
     LOKI_CONFIG_SHA=${sha256(local.loki_config)}
     GRAFANA_DOMAIN=${var.instance.grafana_domain}
     GRAFANA_CONFIG_SHA=${local.grafana_provisioning_sha}
+    VMAGENT_CONFIG_SHA=${local.config_sha["vmagent"]}
+    VMALERT_RULES_SHA=${local.config_sha["vmalert"]}
+    ALERTMANAGER_CONFIG_SHA=${local.config_sha["alertmanager"]}
   EOT
 }
 
@@ -96,8 +113,13 @@ resource "null_resource" "deploy_monitoring_stack" {
     compose_hash       = filemd5("${path.module}/docker-compose.yml")
     loki_hash          = md5(local.loki_config)
     traefik_hash       = md5(local.traefik_dynamic)
-    grafana_hash       = sha256(jsonencode(local.grafana_files))
+    grafana_hash       = local.config_sha["grafana"]
+    vmagent_hash       = local.config_sha["vmagent"]
+    vmalert_hash       = local.config_sha["vmalert"]
+    alertmanager_hash  = local.config_sha["alertmanager"]
+    dashboards_hash    = sha256(jsonencode(local.grafana_com_dashboards))
     grafana_admin_hash = sha256(jsonencode(var.grafana_admin))
+    alerting_hash      = sha256(jsonencode(var.alerting))
     env_hash           = md5(local.compose_env)
   })
 
@@ -110,18 +132,19 @@ resource "null_resource" "deploy_monitoring_stack" {
     timeout        = "300s"
   }
 
-  # Grafana's files go to a staging directory and are synced into place below.
-  # Its directories are bind-mounted, so they are updated in place rather than
+  # The config directories go to a staging directory and are synced into place
+  # below. They are bind-mounted, so they are updated in place rather than
   # replaced.
   provisioner "remote-exec" {
     inline = [
       <<-EOT
       set -e
       install -d -m 0755 ${local.stack_dir} ${local.stack_dir}/loki ${local.stack_dir}/traefik
-      install -d -m 0755 ${local.stack_dir}/grafana/provisioning/datasources ${local.stack_dir}/grafana/provisioning/dashboards ${local.stack_dir}/grafana/dashboards
       install -d -m 0700 ${local.stack_dir}/secrets
       rm -rf ${local.stack_dir}/.upload
-      install -d -m 0755 ${local.stack_dir}/.upload/grafana
+      %{for d in local.config_dirs~}
+      install -d -m 0755 ${local.stack_dir}/${d} ${local.stack_dir}/.upload/${d}
+      %{endfor~}
       EOT
     ]
   }
@@ -142,8 +165,23 @@ resource "null_resource" "deploy_monitoring_stack" {
   }
 
   provisioner "file" {
-    source      = "${local.grafana_dir}/"
+    source      = "${path.module}/grafana/"
     destination = "${local.stack_dir}/.upload/grafana"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/vmagent/"
+    destination = "${local.stack_dir}/.upload/vmagent"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/vmalert/"
+    destination = "${local.stack_dir}/.upload/vmalert"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/alertmanager/"
+    destination = "${local.stack_dir}/.upload/alertmanager"
   }
 
   provisioner "file" {
@@ -154,6 +192,16 @@ resource "null_resource" "deploy_monitoring_stack" {
   provisioner "file" {
     content     = var.grafana_admin.password
     destination = "${local.stack_dir}/secrets/grafana_admin_password"
+  }
+
+  provisioner "file" {
+    content     = var.alerting.slack_webhook_url
+    destination = "${local.stack_dir}/secrets/alertmanager_slack_webhook_url"
+  }
+
+  provisioner "file" {
+    content     = var.alerting.watchdog_push_url
+    destination = "${local.stack_dir}/secrets/watchdog_push_url"
   }
 
   provisioner "file" {
@@ -169,12 +217,31 @@ resource "null_resource" "deploy_monitoring_stack" {
 
       sudo hostnamectl set-hostname ${var.instance.hostname}
 
-      cp -R .upload/grafana/. grafana/
-      (cd grafana && find . -type f) | while read -r f; do
-        [ -e ".upload/grafana/$f" ] || rm -f "grafana/$f"
+      install -d -m 0755 .upload/grafana/dashboards/metrics
+      fetch_dashboard() {
+        curl -fsSL --retry 3 -o ".upload/grafana/dashboards/metrics/$1" "https://grafana.com/api/dashboards/$2/revisions/$3/download"
+        echo "$4  .upload/grafana/dashboards/metrics/$1" | sha256sum --check --quiet
+      }
+      %{for d in local.grafana_com_dashboards~}
+      fetch_dashboard ${d.file} ${d.id} ${d.revision} ${d.sha256}
+      %{endfor~}
+
+      for d in ${join(" ", local.config_dirs)}; do
+        cp -R ".upload/$d/." "$d/"
+        (cd "$d" && find . -type f) | while read -r f; do
+          [ -e ".upload/$d/$f" ] || rm -f "$d/$f"
+        done
       done
       rm -rf .upload
+
       sudo install -d -o ${local.grafana_uid} -g ${local.grafana_uid} -m 0750 ${local.data_dir}/grafana
+      sudo install -d -o ${local.alertmanager_uid} -g ${local.alertmanager_uid} -m 0750 ${local.data_dir}/alertmanager
+      sudo install -d -m 0750 ${local.data_dir}/victoriametrics ${local.data_dir}/vmagent
+
+      # Read by node_exporter's textfile collector for the DiskMissing rule
+      sudo install -d -m 0755 /var/lib/node_exporter/textfile
+      printf 'node_disks_expected %d\n' ${var.instance.disks} | sudo tee /var/lib/node_exporter/textfile/disks.prom.tmp > /dev/null
+      sudo mv /var/lib/node_exporter/textfile/disks.prom.tmp /var/lib/node_exporter/textfile/disks.prom
 
       sudo docker compose config --quiet
       sudo docker compose pull --quiet
@@ -194,6 +261,9 @@ resource "null_resource" "deploy_monitoring_stack" {
       }
       wait_ready loki http://127.0.0.1:3100/ready
       wait_ready grafana http://127.0.0.1:3000/api/health
+      wait_ready victoriametrics http://127.0.0.1:8428/health
+      wait_ready vmalert http://127.0.0.1:8880/health
+      wait_ready alertmanager http://127.0.0.1:9093/-/ready
 
       # grafana cli prints Grafana's whole startup log along with the result
       if ! out="$(sudo docker compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin < secrets/grafana_admin_password 2>&1)"; then

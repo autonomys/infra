@@ -140,6 +140,36 @@ check "Containers reach the internet over IPv4" \
   "sudo docker exec grafana nc -z -w 5 1.1.1.1 443 && echo connected || echo timed-out" "connected"
 check "Grafana admin secrets readable by ubuntu only" "stat -c %a $STACK_DIR/secrets" "700"
 
+# --- Metrics and alerting ---
+# Runs a MetricsQL query on the box and prints <ok> only when the first value
+# satisfies <test> (a Python expression on v), so a failure can't pass as a substring
+vm_expect() {
+  local query="$1" test="$2" ok="$3"
+  printf "curl -s http://127.0.0.1:8428/api/v1/query --data-urlencode %q | python3 -c %q" \
+    "query=$query" \
+    "import json,sys; r=json.load(sys.stdin)['data']['result']; v=float(r[0]['value'][1]) if r else None; print('$ok' if v is not None and ($test) else 'got %s' % v)"
+}
+echo ""
+echo "[Metrics and alerting]"
+for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager; do
+  check "$svc running" \
+    "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "$svc:running"
+done
+check "VictoriaMetrics healthy" "curl -fsS http://127.0.0.1:8428/health" "OK"
+check "vmalert healthy" "curl -fsS http://127.0.0.1:8880/health" "OK"
+check "Alertmanager ready" "curl -fsS http://127.0.0.1:9093/-/ready" "OK"
+check "All 9 scrape targets present" "$(vm_expect 'count(up)' 'v == 9' nine-targets)" "nine-targets"
+check "Every scrape target up" "$(vm_expect 'count(up == 0) or vector(0)' 'v == 0' all-up)" "all-up"
+check "SMART data for both disks" "$(vm_expect 'smartctl_devices' 'v == 2' two-disks)" "two-disks"
+check "Expected disk count published" "$(vm_expect 'node_disks_expected' 'v == 2' expected-two)" "expected-two"
+check "Alert rules loaded without errors" \
+  "curl -fsS http://127.0.0.1:8880/api/v1/rules | python3 -c \"import json,sys; g=json.load(sys.stdin)['data']['groups']; e=[r['name'] for x in g for r in x['rules'] if r.get('lastError')]; print('rules-ok' if len(g) >= 2 and not e else 'groups=%d errors=%s' % (len(g), e))\"" \
+  "rules-ok"
+check "Watchdog heartbeats reaching Uptime Kuma" \
+  "$(vm_expect 'sum(increase(alertmanager_notifications_total{integration="webhook"}[10m]))' 'v > 0' delivering)" "delivering"
+check "No failed alert notifications in the last 15 minutes" \
+  "$(vm_expect 'sum(increase(alertmanager_notifications_failed_total[15m])) or vector(0)' 'v == 0' none-failed)" "none-failed"
+
 # --- TLS ---
 echo ""
 echo "[TLS]"
@@ -185,7 +215,7 @@ ORIGIN="$(ssh -G "$HOST" | awk '$1 == "hostname" {print $2}')"
 check_local "443 unreachable directly" \
   "curl -sk --connect-timeout 5 -o /dev/null https://$ORIGIN/; rc=\$?; case \$rc in 7|28) echo blocked;; *) echo \"answered, curl rc=\$rc\";; esac" \
   "blocked"
-for port in 3100 3000; do
+for port in 3100 3000 8428 8880 9093; do
   check_local "$port unreachable directly" \
     "curl -s --connect-timeout 5 -o /dev/null http://$ORIGIN:$port/; rc=\$?; case \$rc in 7|28) echo blocked;; *) echo \"answered, curl rc=\$rc\";; esac" \
     "blocked"

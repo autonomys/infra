@@ -11,3 +11,13 @@ providers:
     updateIntervalSeconds: 30
     options:
       path: /etc/grafana/dashboards/logs
+
+  # Filled at deploy time from grafana.com at pinned revisions (see main.tf)
+  - name: metrics
+    folder: Metrics
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards/metrics

@@ -1,0 +1,49 @@
+# The Slack webhook and the Uptime Kuma push URL are secrets, read from files
+# that Terraform writes on the box.
+
+route:
+  receiver: slack
+  # One message per server, so a failed disk that trips several rules arrives once
+  group_by: [host]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 24h
+  routes:
+    # Always firing. If Uptime Kuma stops hearing it, alerting itself is down.
+    - receiver: watchdog
+      matchers: ['alertname="Watchdog"']
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 1m
+    - receiver: slack
+      matchers: ['severity="critical"']
+      repeat_interval: 4h
+
+inhibit_rules:
+  - source_matchers: ['alertname="SmartFailed"']
+    target_matchers: ['alertname="DiskWearHigh"']
+    equal: [host, device]
+  - source_matchers: ['alertname="RaidMemberFailed"']
+    target_matchers: ['alertname="RaidDegraded"']
+    equal: [host, device]
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: [alertname, host, mountpoint]
+
+receivers:
+  - name: slack
+    slack_configs:
+      - api_url_file: /run/secrets/alertmanager_slack_webhook_url
+        send_resolved: true
+        title: >-
+          {{ if eq .Status "firing" }}:red_circle:{{ else }}:large_green_circle:{{ end }}
+          {{ .CommonLabels.host }}: {{ range .Alerts }}{{ .Labels.alertname }} {{ end }}
+        text: >-
+          {{ range .Alerts }}*{{ .Labels.alertname }}* ({{ .Labels.severity }}{{ if eq .Status "resolved" }}, resolved{{ end }})
+          {{ .Annotations.summary }}
+          {{ end }}
+
+  - name: watchdog
+    webhook_configs:
+      - url_file: /run/secrets/watchdog_push_url
+        send_resolved: false

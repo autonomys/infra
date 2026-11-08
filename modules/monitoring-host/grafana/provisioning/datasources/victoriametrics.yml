@@ -1,0 +1,24 @@
+apiVersion: 1
+
+datasources:
+  - name: VictoriaMetrics
+    uid: victoriametrics
+    type: prometheus
+    access: proxy
+    url: http://victoriametrics:8428
+    editable: false
+    jsonData:
+      prometheusType: Prometheus
+      timeInterval: 15s
+
+  # Shows the alerts vmalert sends and lets Grafana users silence them, so no
+  # Alertmanager UI needs to be reachable
+  - name: Alertmanager
+    uid: alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: false
+    jsonData:
+      implementation: prometheus
+      handleGrafanaManagedAlerts: false
