@@ -1,0 +1,52 @@
+# Installed on the host as ~/monitoring/docker-compose.yml by
+# null_resource.deploy_monitoring_stack. Values in ${...} come from the .env
+# Terraform writes next to it.
+
+x-logging: &local-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  traefik:
+    image: traefik:v3.7.15
+    container_name: traefik
+    restart: unless-stopped
+    # Host networking puts 80 and 443 behind UFW's Cloudflare-only rules. Ports
+    # Docker publishes bypass UFW, so nothing else here publishes beyond 127.0.0.1.
+    network_mode: host
+    command:
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      - --log.level=INFO
+      - --accesslog=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      # HTTP-01 through the Cloudflare proxy, so the box holds no DNS API token.
+      # The challenge router outranks the redirect to websecure.
+      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/data/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    volumes:
+      - ./traefik:/etc/traefik/dynamic:ro
+      - ${DATA_DIR}/traefik:/data
+    logging: *local-logging
+
+  loki:
+    image: grafana/loki:3.6.19
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config.yml
+    labels:
+      monitoring.config-sha: ${LOKI_CONFIG_SHA}
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - ${DATA_DIR}/loki:/loki
+    logging: *local-logging

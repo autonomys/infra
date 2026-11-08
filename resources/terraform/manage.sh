@@ -29,6 +29,7 @@ VALID_PROJECTS=(
   ["chronos-chain-indexer"]="common.auto.tfvars"
   ["mainnet-chain-indexer"]="common.auto.tfvars"
   ["telemetry"]="common.auto.tfvars"
+  ["monitoring"]="common.auto.tfvars"
   ["auto-drive-production"]="auth.auto.tfvars"
   ["auto-drive-staging"]="common.auto.tfvars,services.auto.tfvars"
   ["0xautonomys"]=""

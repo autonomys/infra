@@ -1,0 +1,25 @@
+http:
+  routers:
+    # Same paths the Cloudflare rule in front lets through, so Loki stays
+    # unreadable for anyone who reaches the origin directly
+    loki:
+      rule: "Host(`${loki_domain}`) && ((Method(`POST`) && Path(`/loki/api/v1/push`)) || (Method(`GET`) && Path(`/ready`)))"
+      entryPoints:
+        - websecure
+      service: loki
+      tls:
+        certResolver: le
+
+  services:
+    loki:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3100"
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      # Refuse handshakes for any other name, so scanning the origin's IP doesn't
+      # reveal which hostnames it serves
+      sniStrict: true
