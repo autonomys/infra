@@ -8,8 +8,8 @@ provisions an existing box over SSH through `modules/monitoring-host`.
 
 | Component | Image | Listens on | Role |
 |---|---|---|---|
-| Traefik | `traefik:v3.7.15` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
-| Loki | `grafana/loki:3.6.19` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
+| Traefik | `traefik:v3.7.17` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
+| Loki | `grafana/loki:3.6.20` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
 
 Requests reach Loki through the Cloudflare proxy and its WAF rule, then UFW
 (Cloudflare ranges only), then Traefik.
