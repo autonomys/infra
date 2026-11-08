@@ -173,6 +173,8 @@ check "Grafana served" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $GRAFANA_DOMAIN:443:127.0.0.1 https://$GRAFANA_DOMAIN/api/health" "200"
 check "Grafana API refuses anonymous requests" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $GRAFANA_DOMAIN:443:127.0.0.1 https://$GRAFANA_DOMAIN/api/search" "401"
+check "Grafana metrics page not routed" \
+  "curl -s -o /dev/null -w '%{http_code}' --resolve $GRAFANA_DOMAIN:443:127.0.0.1 https://$GRAFANA_DOMAIN/metrics" "404"
 
 # --- From outside ---
 # curl exits 7 on a refused connection and 28 on a timeout; anything else means
@@ -196,6 +198,8 @@ check_local "Grafana login page through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/login" "200"
 check_local "Grafana API refuses anonymous requests through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/api/search" "401"
+check_local "Grafana metrics page not reachable through Cloudflare" \
+  "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/metrics" "404"
 check_local "Grafana health endpoint hides its version" \
   "b=\$(curl -s https://$GRAFANA_DOMAIN/api/health); case \"\$b\" in *'\"version\"'*) echo shown;; *'\"database\"'*) echo hidden;; *) echo no-answer;; esac" "hidden"
 # Traefik's challenge handler answers 404 for an unknown token; a 403 would mean

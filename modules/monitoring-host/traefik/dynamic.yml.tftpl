@@ -10,8 +10,9 @@ http:
       tls:
         certResolver: le
 
+    # Grafana serves /metrics without a login, and it names the exact version
     grafana:
-      rule: "Host(`${grafana_domain}`)"
+      rule: "Host(`${grafana_domain}`) && !PathPrefix(`/metrics`)"
       entryPoints:
         - websecure
       service: grafana

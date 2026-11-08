@@ -22,7 +22,7 @@ only), then Traefik. Grafana reads Loki directly on the compose network.
 |---|---|---|
 | `POST https://logging.subspace.network/loki/api/v1/push` | Loki | None |
 | `GET https://logging.subspace.network/ready` | Loki | None |
-| `https://grafana.subspace.network/*` | Grafana | Grafana login |
+| `https://grafana.subspace.network/*` except `/metrics` | Grafana | Grafana login |
 | `GET http://<either host>/.well-known/acme-challenge/*` | Traefik | None |
 
 Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
@@ -45,7 +45,8 @@ Grafana reads it.
   16 MB, compressed or decompressed.
 - Grafana requires a login for everything. Anonymous access, sign-up, basic auth
   on the API, snapshots and public dashboards are off, and its health endpoint
-  doesn't show the version without a login.
+  doesn't show the version without a login. Traefik doesn't route its `/metrics`
+  page, which Grafana serves without a login.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.
