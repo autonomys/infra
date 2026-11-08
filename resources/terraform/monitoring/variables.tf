@@ -13,3 +13,15 @@ variable "letsencrypt_email" {
   description = "Contact address registered with the Let's Encrypt account"
   type        = string
 }
+
+variable "grafana_admin_user" {
+  description = "Grafana admin username. Only takes effect when Grafana creates its database."
+  type        = string
+  sensitive   = true
+}
+
+variable "grafana_admin_password" {
+  description = "Grafana admin password. The deploy resets the admin password to this on every run."
+  type        = string
+  sensitive   = true
+}

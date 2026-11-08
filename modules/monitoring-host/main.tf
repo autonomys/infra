@@ -3,18 +3,33 @@ locals {
   stack_dir = "${local.home}/monitoring"
   data_dir  = "/srv/monitoring"
 
+  # the uid the grafana/grafana image runs as
+  grafana_uid = 472
+
   loki_config = file("${path.module}/loki/config.yml")
 
   traefik_dynamic = templatefile("${path.module}/traefik/dynamic.yml.tftpl", {
-    loki_domain = var.instance.loki_domain
+    loki_domain    = var.instance.loki_domain
+    grafana_domain = var.instance.grafana_domain
   })
 
+  grafana_dir = "${path.module}/grafana"
+  grafana_files = {
+    for f in fileset(local.grafana_dir, "**") : f => filesha256("${local.grafana_dir}/${f}")
+  }
+  grafana_provisioning_sha = sha256(jsonencode({
+    for f, sha in local.grafana_files : f => sha if startswith(f, "provisioning/")
+  }))
+
   # Compose recreates a container when its labels change but not when a mounted
-  # file does, so the Loki config's hash rides along as a label
+  # file does, so config hashes ride along as labels. Grafana reloads dashboards
+  # by itself, so only its provisioning config is hashed.
   compose_env = <<-EOT
     LETSENCRYPT_EMAIL=${var.letsencrypt_email}
     DATA_DIR=${local.data_dir}
     LOKI_CONFIG_SHA=${sha256(local.loki_config)}
+    GRAFANA_DOMAIN=${var.instance.grafana_domain}
+    GRAFANA_CONFIG_SHA=${local.grafana_provisioning_sha}
   EOT
 }
 
@@ -78,10 +93,12 @@ resource "null_resource" "deploy_monitoring_stack" {
   depends_on = [null_resource.setup_monitoring_host]
 
   triggers = merge(var.instance, {
-    compose_hash = filemd5("${path.module}/docker-compose.yml")
-    loki_hash    = md5(local.loki_config)
-    traefik_hash = md5(local.traefik_dynamic)
-    env_hash     = md5(local.compose_env)
+    compose_hash       = filemd5("${path.module}/docker-compose.yml")
+    loki_hash          = md5(local.loki_config)
+    traefik_hash       = md5(local.traefik_dynamic)
+    grafana_hash       = sha256(jsonencode(local.grafana_files))
+    grafana_admin_hash = sha256(jsonencode(var.grafana_admin))
+    env_hash           = md5(local.compose_env)
   })
 
   connection {
@@ -93,9 +110,19 @@ resource "null_resource" "deploy_monitoring_stack" {
     timeout        = "300s"
   }
 
+  # Grafana's files go to a staging directory and are synced into place below.
+  # Its directories are bind-mounted, so they are updated in place rather than
+  # replaced.
   provisioner "remote-exec" {
     inline = [
-      "install -d -m 0755 ${local.stack_dir} ${local.stack_dir}/loki ${local.stack_dir}/traefik",
+      <<-EOT
+      set -e
+      install -d -m 0755 ${local.stack_dir} ${local.stack_dir}/loki ${local.stack_dir}/traefik
+      install -d -m 0755 ${local.stack_dir}/grafana/provisioning/datasources ${local.stack_dir}/grafana/provisioning/dashboards ${local.stack_dir}/grafana/dashboards
+      install -d -m 0700 ${local.stack_dir}/secrets
+      rm -rf ${local.stack_dir}/.upload
+      install -d -m 0755 ${local.stack_dir}/.upload/grafana
+      EOT
     ]
   }
 
@@ -115,6 +142,21 @@ resource "null_resource" "deploy_monitoring_stack" {
   }
 
   provisioner "file" {
+    source      = "${local.grafana_dir}/"
+    destination = "${local.stack_dir}/.upload/grafana"
+  }
+
+  provisioner "file" {
+    content     = var.grafana_admin.user
+    destination = "${local.stack_dir}/secrets/grafana_admin_user"
+  }
+
+  provisioner "file" {
+    content     = var.grafana_admin.password
+    destination = "${local.stack_dir}/secrets/grafana_admin_password"
+  }
+
+  provisioner "file" {
     content     = local.compose_env
     destination = "${local.stack_dir}/.env"
   }
@@ -127,20 +169,38 @@ resource "null_resource" "deploy_monitoring_stack" {
 
       sudo hostnamectl set-hostname ${var.instance.hostname}
 
+      cp -R .upload/grafana/. grafana/
+      (cd grafana && find . -type f) | while read -r f; do
+        [ -e ".upload/grafana/$f" ] || rm -f "grafana/$f"
+      done
+      rm -rf .upload
+      sudo install -d -o ${local.grafana_uid} -g ${local.grafana_uid} -m 0750 ${local.data_dir}/grafana
+
       sudo docker compose config --quiet
       sudo docker compose pull --quiet
       sudo docker compose up -d --remove-orphans
 
-      for i in $(seq 1 60); do
-        if curl -fsS -o /dev/null http://127.0.0.1:3100/ready; then
-          echo "==> Loki ready"
-          exit 0
-        fi
-        sleep 2
-      done
-      echo "Loki not ready after 120s" >&2
-      sudo docker compose logs --tail 50 loki >&2
-      exit 1
+      wait_ready() {
+        for i in $(seq 1 60); do
+          if curl -fsS -o /dev/null "$2"; then
+            echo "==> $1 ready"
+            return 0
+          fi
+          sleep 2
+        done
+        echo "$1 not ready after 120s" >&2
+        sudo docker compose logs --tail 50 "$1" >&2
+        return 1
+      }
+      wait_ready loki http://127.0.0.1:3100/ready
+      wait_ready grafana http://127.0.0.1:3000/api/health
+
+      # grafana cli prints Grafana's whole startup log along with the result
+      if ! out="$(sudo docker compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin < secrets/grafana_admin_password 2>&1)"; then
+        echo "$out" | grep -v 'level=info' >&2
+        exit 1
+      fi
+      echo "==> Grafana admin password set"
       EOT
     ]
   }

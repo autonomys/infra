@@ -1,0 +1,332 @@
+{
+  "uid": "k948fdac-k75z-465f-8431-7518fjU0gVxM",
+  "title": "Auto Drive logs",
+  "tags": [
+    "auto-drive",
+    "logs"
+  ],
+  "timezone": "utc",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "",
+  "schemaVersion": 41,
+  "links": [
+    {
+      "title": "Log dashboards",
+      "type": "dashboards",
+      "tags": [
+        "logs"
+      ],
+      "asDropdown": true,
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "query",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\"}, host)",
+        "query": "label_values({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\"}, host)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service!=\"agent\"}, compose_service)",
+        "query": "label_values({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service!=\"agent\"}, compose_service)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "search",
+        "label": "Search (regex, any case)",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Log lines by service",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (compose_service) (count_over_time({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service=~\"$service\", compose_service!=\"agent\"} |~ `(?i)$search` [$__auto]))",
+          "queryType": "range",
+          "legendFormat": "{{compose_service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Errors by service",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (compose_service) (count_over_time({compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service=~\"$service\", compose_service!=\"agent\"} |~ `\"level\":\\s*\"(?i:error|fatal|critical)\"|\\sERROR\\s|^\\w*Error:|panicked at` |~ `(?i)$search` [$__auto]))",
+          "queryType": "range",
+          "legendFormat": "{{compose_service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "logs",
+      "title": "Errors",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service=~\"$service\", compose_service!=\"agent\"} |~ `\"level\":\\s*\"(?i:error|fatal|critical)\"|\\sERROR\\s|^\\w*Error:|panicked at` |~ `(?i)$search` | line_format \"[{{.compose_service}}] {{__line__}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 4,
+      "type": "logs",
+      "title": "All selected services",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service=~\"$service\", compose_service!=\"agent\"} |~ `(?i)$search` | line_format \"[{{.compose_service}}] {{__line__}}\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 5,
+      "type": "row",
+      "title": "By service",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 6,
+      "type": "logs",
+      "title": "$service",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{compose_project=~\"auto-drive|file-retriever\", host=~\"auto-drive|auto-drive-gateway|ip-10-0-10[1-3]-[0-9]+\", host=~\"$host\", compose_service=\"$service\"} |~ `(?i)$search`",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "repeat": "service",
+      "repeatDirection": "v"
+    }
+  ]
+}

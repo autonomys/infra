@@ -1,2 +1,4 @@
-host_ipv4         = ""
-letsencrypt_email = ""
+host_ipv4              = ""
+letsencrypt_email      = ""
+grafana_admin_user     = ""
+grafana_admin_password = ""

@@ -10,11 +10,24 @@ http:
       tls:
         certResolver: le
 
+    grafana:
+      rule: "Host(`${grafana_domain}`)"
+      entryPoints:
+        - websecure
+      service: grafana
+      tls:
+        certResolver: le
+
   services:
     loki:
       loadBalancer:
         servers:
           - url: "http://127.0.0.1:3100"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3000"
 
 tls:
   options:

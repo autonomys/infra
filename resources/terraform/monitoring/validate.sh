@@ -8,6 +8,7 @@ set -euo pipefail
 HOST="${1:-monitoring-loki}"
 SITE="monitoring-loki"
 LOKI_DOMAIN="logging.subspace.network"
+GRAFANA_DOMAIN="grafana.subspace.network"
 STACK_DIR="/home/ubuntu/monitoring"
 ERRORS=0
 PASS=0
@@ -129,13 +130,24 @@ check "Loki running" \
 check "Loki ready on loopback" "curl -fsS http://127.0.0.1:3100/ready" "ready"
 check "Loki caps decompressed push size" \
   "curl -fsS http://127.0.0.1:3100/config | grep -E '^  max_decompressed_size:'" "16777216"
+check "Grafana running" \
+  "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "grafana:running"
+check "Grafana healthy on loopback" "curl -fsS http://127.0.0.1:3000/api/health" '"database": "ok"'
+check "Grafana reaches Loki" "sudo docker exec grafana wget -qO- http://loki:3100/ready" "ready"
+# Containers have no IPv6, so they depend on replies to outbound IPv4 getting
+# back through any firewall in front of the box
+check "Containers reach the internet over IPv4" \
+  "sudo docker exec grafana nc -z -w 5 1.1.1.1 443 && echo connected || echo timed-out" "connected"
+check "Grafana admin secrets readable by ubuntu only" "stat -c %a $STACK_DIR/secrets" "700"
 
 # --- TLS ---
 echo ""
 echo "[TLS]"
-check "Let's Encrypt certificate served for $LOKI_DOMAIN" \
-  "echo | openssl s_client -connect 127.0.0.1:443 -servername $LOKI_DOMAIN 2>/dev/null | openssl x509 -noout -issuer" \
-  "Let's Encrypt"
+for domain in "$LOKI_DOMAIN" "$GRAFANA_DOMAIN"; do
+  check "Let's Encrypt certificate served for $domain" \
+    "echo | openssl s_client -connect 127.0.0.1:443 -servername $domain 2>/dev/null | openssl x509 -noout -issuer" \
+    "Let's Encrypt"
+done
 check "Bare-IP handshake refused" \
   "curl -sk -o /dev/null https://127.0.0.1/; rc=\$?; [ \$rc -eq 35 ] && echo rejected || echo \"curl rc=\$rc\"" \
   "rejected"
@@ -157,6 +169,10 @@ check "Queries not routed" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $LOKI_DOMAIN:443:127.0.0.1 'https://$LOKI_DOMAIN/loki/api/v1/query_range?query=%7Bjob%3D%22x%22%7D'" "404"
 check "GET on the push path not routed" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $LOKI_DOMAIN:443:127.0.0.1 https://$LOKI_DOMAIN/loki/api/v1/push" "404"
+check "Grafana served" \
+  "curl -s -o /dev/null -w '%{http_code}' --resolve $GRAFANA_DOMAIN:443:127.0.0.1 https://$GRAFANA_DOMAIN/api/health" "200"
+check "Grafana API refuses anonymous requests" \
+  "curl -s -o /dev/null -w '%{http_code}' --resolve $GRAFANA_DOMAIN:443:127.0.0.1 https://$GRAFANA_DOMAIN/api/search" "401"
 
 # --- From outside ---
 # curl exits 7 on a refused connection and 28 on a timeout; anything else means
@@ -167,17 +183,27 @@ ORIGIN="$(ssh -G "$HOST" | awk '$1 == "hostname" {print $2}')"
 check_local "443 unreachable directly" \
   "curl -sk --connect-timeout 5 -o /dev/null https://$ORIGIN/; rc=\$?; case \$rc in 7|28) echo blocked;; *) echo \"answered, curl rc=\$rc\";; esac" \
   "blocked"
-check_local "3100 unreachable directly" \
-  "curl -s --connect-timeout 5 -o /dev/null http://$ORIGIN:3100/ready; rc=\$?; case \$rc in 7|28) echo blocked;; *) echo \"answered, curl rc=\$rc\";; esac" \
-  "blocked"
+for port in 3100 3000; do
+  check_local "$port unreachable directly" \
+    "curl -s --connect-timeout 5 -o /dev/null http://$ORIGIN:$port/; rc=\$?; case \$rc in 7|28) echo blocked;; *) echo \"answered, curl rc=\$rc\";; esac" \
+    "blocked"
+done
 check_local "Readiness probe through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' https://$LOKI_DOMAIN/ready" "200"
 check_local "Reads blocked at Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' https://$LOKI_DOMAIN/loki/api/v1/labels" "403"
+check_local "Grafana login page through Cloudflare" \
+  "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/login" "200"
+check_local "Grafana API refuses anonymous requests through Cloudflare" \
+  "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/api/search" "401"
+check_local "Grafana health endpoint hides its version" \
+  "b=\$(curl -s https://$GRAFANA_DOMAIN/api/health); case \"\$b\" in *'\"version\"'*) echo shown;; *'\"database\"'*) echo hidden;; *) echo no-answer;; esac" "hidden"
 # Traefik's challenge handler answers 404 for an unknown token; a 403 would mean
-# the Cloudflare rule is blocking Let's Encrypt's renewals
-check_local "HTTP-01 challenge path reaches the box through Cloudflare" \
-  "curl -s -o /dev/null -w '%{http_code}' http://$LOKI_DOMAIN/.well-known/acme-challenge/validate-probe" "404"
+# a Cloudflare rule is blocking Let's Encrypt's renewals
+for domain in "$LOKI_DOMAIN" "$GRAFANA_DOMAIN"; do
+  check_local "HTTP-01 challenge path reaches the box through Cloudflare for $domain" \
+    "curl -s -o /dev/null -w '%{http_code}' http://$domain/.well-known/acme-challenge/validate-probe" "404"
+done
 
 echo ""
 if [[ $ERRORS -eq 0 ]]; then

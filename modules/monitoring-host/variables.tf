@@ -10,13 +10,23 @@ variable "deployer" {
 variable "instance" {
   description = "Monitoring host details"
   type = object({
-    ipv4        = string
-    hostname    = string
-    loki_domain = string
+    ipv4           = string
+    hostname       = string
+    loki_domain    = string
+    grafana_domain = string
   })
 }
 
 variable "letsencrypt_email" {
   description = "Contact address registered with the Let's Encrypt account"
   type        = string
+}
+
+variable "grafana_admin" {
+  description = "Grafana admin login. The deploy resets the admin password to this on every run."
+  type = object({
+    user     = string
+    password = string
+  })
+  sensitive = true
 }

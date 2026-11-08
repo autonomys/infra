@@ -3,6 +3,11 @@ output "loki_domain" {
   description = "Hostname the fleet pushes logs to"
 }
 
+output "grafana_domain" {
+  value       = module.monitoring.grafana_domain
+  description = "Hostname Grafana is served on"
+}
+
 output "stack_dir" {
   value       = module.monitoring.stack_dir
   description = "Directory on the host holding the compose stack"

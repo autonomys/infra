@@ -1,8 +1,9 @@
 # Fleet monitoring host
 
 Terraform for `monitoring-loki`, the bare-metal box that receives the fleet's logs
-at `logging.subspace.network`. The project creates no cloud resources. It
-provisions an existing box over SSH through `modules/monitoring-host`.
+at `logging.subspace.network` and serves Grafana at `grafana.subspace.network`.
+The project creates no cloud resources. It provisions an existing box over SSH
+through `modules/monitoring-host`.
 
 ## Stack
 
@@ -10,9 +11,10 @@ provisions an existing box over SSH through `modules/monitoring-host`.
 |---|---|---|---|
 | Traefik | `traefik:v3.7.17` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
 | Loki | `grafana/loki:3.6.20` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
+| Grafana | `grafana/grafana:13.2.5` | `127.0.0.1:3000` | Dashboards over Loki |
 
-Requests reach Loki through the Cloudflare proxy and its WAF rule, then UFW
-(Cloudflare ranges only), then Traefik.
+Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
+only), then Traefik. Grafana reads Loki directly on the compose network.
 
 ### Endpoints
 
@@ -20,10 +22,12 @@ Requests reach Loki through the Cloudflare proxy and its WAF rule, then UFW
 |---|---|---|
 | `POST https://logging.subspace.network/loki/api/v1/push` | Loki | None |
 | `GET https://logging.subspace.network/ready` | Loki | None |
-| `GET http://logging.subspace.network/.well-known/acme-challenge/*` | Traefik | None |
+| `https://grafana.subspace.network/*` | Grafana | Grafana login |
+| `GET http://<either host>/.well-known/acme-challenge/*` | Traefik | None |
 
 Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
-404 from Traefik. Loki can only be queried from the box itself.
+404 from Traefik. Loki can only be queried from the box itself, which is how
+Grafana reads it.
 
 ### Exposure
 
@@ -39,6 +43,9 @@ Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
   and fail2ban watches `sshd`.
 - Loki takes pushes without credentials, so it rejects any push larger than
   16 MB, compressed or decompressed.
+- Grafana requires a login for everything. Anonymous access, sign-up, basic auth
+  on the API, snapshots and public dashboards are off, and its health endpoint
+  doesn't show the version without a login.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
   allowing the challenge path.
@@ -49,6 +56,7 @@ Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
 |---|---|
 | `resources/terraform/monitoring/` | This project, `installimage.conf`, `first-boot.sh`, `validate.sh` |
 | `modules/monitoring-host/` | Compose file, Loki config, Traefik routes, provisioning resources |
+| `modules/monitoring-host/grafana/` | Grafana's datasource, dashboard providers and dashboards |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
 
@@ -56,8 +64,10 @@ On the box:
 
 | Path | Contents |
 |---|---|
-| `/home/ubuntu/monitoring/` | `docker-compose.yml`, `.env`, `loki/config.yml`, `traefik/dynamic.yml` |
+| `/home/ubuntu/monitoring/` | `docker-compose.yml`, `.env`, `loki/config.yml`, `traefik/dynamic.yml`, `grafana/` |
+| `/home/ubuntu/monitoring/secrets/` | Grafana admin username and password (directory mode 0700) |
 | `/srv/monitoring/loki/` | Loki's chunks, index and WAL |
+| `/srv/monitoring/grafana/` | Grafana's database: users, preferences, dashboards made in the UI |
 | `/srv/monitoring/traefik/acme.json` | Let's Encrypt account and certificate, re-issued if lost |
 
 Swap, `/boot`, `/` and `/srv` are each RAID 1 across both disks. Data lives on
@@ -68,20 +78,23 @@ Swap, `/boot`, `/` and `/srv` are each RAID 1 across both disks. Data lives on
 | Resource | Does | Re-runs when |
 |---|---|---|
 | `null_resource.setup_monitoring_host` | Runs `installer.sh`, then `monitoring-host-bootstrap.sh` | Either script or the host address changes |
-| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs and `.env`, sets the hostname, starts the stack, waits for Loki | The compose file, a config, `.env` or the instance settings change |
+| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs, Grafana files, admin secrets and `.env`, sets the hostname, starts the stack, waits for Loki and Grafana, resets the Grafana admin password | Any of those files, the admin credentials or the instance settings change |
 
-Both steps are safe to re-run over a live host.
+Both steps are safe to re-run over a live host. A re-run of the setup step
+upgrades Docker if a newer release is out, which restarts every container.
 
 ## Configuration
 
 | Setting | Where |
 |---|---|
-| `host_ipv4`, `letsencrypt_email` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
+| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
 | `ssh_agent_identity` | Your local `user.auto.tfvars`, not stored in Infisical |
-| Hostname, Loki domain | `main.tf` |
+| Hostname, Loki and Grafana domains | `main.tf` |
 | Image versions | `modules/monitoring-host/docker-compose.yml` |
 | Retention, ingestion limits | `modules/monitoring-host/loki/config.yml` |
 | Routed paths, TLS options | `modules/monitoring-host/traefik/dynamic.yml.tftpl` |
+| Grafana settings | `environment` of the `grafana` service in `docker-compose.yml` |
+| Grafana datasource and dashboards | `modules/monitoring-host/grafana/` |
 
 ## Deploying a change
 
@@ -158,6 +171,27 @@ only the allowed requests. It changes nothing. `ssh-host` defaults to
 ### Adding an SSH user
 
 Append their public key to `/home/ubuntu/.ssh/authorized_keys`.
+
+### Grafana users
+
+The admin adds users under Administration > Users and access. Users live in
+Grafana's database on `/srv`, not in the repo.
+
+### Grafana admin password
+
+Change `grafana_admin_password` in `common.auto.tfvars`, then plan and apply. The
+deploy resets the admin password to it, which also undoes any change made in the
+UI. `grafana_admin_user` only takes effect when Grafana creates its database, so
+rename the admin in the UI as well if it changes.
+
+### Dashboards
+
+Dashboards in `modules/monitoring-host/grafana/dashboards/<folder>/` are
+provisioned into the matching Grafana folder, and each folder needs a provider in
+`grafana/provisioning/dashboards/repo.yml`. Grafana won't save UI edits over a
+provisioned dashboard. Edit it in the UI, export it as JSON, replace the file in
+the repo, and apply. Grafana picks up dashboard changes without a
+restart. Dashboards created in the UI stay in Grafana's database.
 
 ### Picking up new Cloudflare ranges
 
