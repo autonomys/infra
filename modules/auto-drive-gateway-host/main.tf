@@ -1,5 +1,5 @@
 locals {
-  staging_dir = "/home/${var.deployer.ssh_user}/subspace"
+  staging_dir = module.host.staging_dir
   # the gateway repo's deploy playbook uses the same paths
   deploy_dir = "/home/${var.deployer.ssh_user}/deploy"
 
@@ -14,6 +14,16 @@ locals {
     BLOCK_NUMBER_TO_START_FROM        = var.object_mapping_start_block
   })
   gateway_env_file = join("", [for k in sort(keys(local.gateway_env)) : "${k}=${local.gateway_env[k]}\n"])
+
+  # Upstream gives these services the loki driver with only loki-url, and the
+  # driver's local copy for `docker logs` then grows without limit. Same cap as
+  # the rest of the fleet. Every gateway service is listed so one started as a
+  # dependency is capped too.
+  log_cap_override = yamlencode({
+    services = { for s in ["subspace-node", "subspace-rpc-gateway", "file-retriever", "object-mapping-app"] : s => {
+      logging = { options = { "max-size" = "10m", "max-file" = "3" } }
+    } }
+  })
 }
 
 module "host" {
@@ -29,6 +39,7 @@ resource "null_resource" "deploy" {
   triggers = {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
+    ssh_user         = var.deployer.ssh_user
     gateway_repo     = var.gateway_repo
     gateway_repo_ref = var.gateway_repo_ref
     env_hash         = md5(local.gateway_env_file)
@@ -37,6 +48,7 @@ resource "null_resource" "deploy" {
     compose_project  = var.compose_project
     compose_profiles = join(" ", var.compose_profiles)
     public_tcp_ports = join(" ", var.public_tcp_ports)
+    log_cap_hash     = md5(local.log_cap_override)
     deploy_hash      = filemd5("${path.module}/deploy.sh")
   }
 
@@ -55,6 +67,11 @@ resource "null_resource" "deploy" {
   }
 
   provisioner "file" {
+    content     = local.log_cap_override
+    destination = "${local.staging_dir}/auto-files-gateway.override.yml"
+  }
+
+  provisioner "file" {
     source      = "${path.module}/deploy.sh"
     destination = "${local.staging_dir}/auto-drive-gateway-deploy.sh"
   }
@@ -67,6 +84,7 @@ resource "null_resource" "deploy" {
         GATEWAY_REPO=${var.gateway_repo} \
         GATEWAY_REPO_REF=${var.gateway_repo_ref} \
         GATEWAY_ENV_SRC=${local.staging_dir}/auto-files-gateway.env \
+        GATEWAY_OVERRIDE_SRC=${local.staging_dir}/auto-files-gateway.override.yml \
         COMPOSE_PROJECT=${var.compose_project} \
         COMPOSE_FILES='${join(" ", var.compose_files)}' \
         COMPOSE_PROFILES='${join(" ", var.compose_profiles)}' \

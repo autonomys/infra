@@ -7,6 +7,7 @@
 set -euo pipefail
 
 HOST="${1:-auto-drive-files-gateway-chronos}"
+# copied from main.tf and the gateway module's defaults: change them together
 HOSTNAME_WANT="auto-drive-files-gateway-chronos"
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
@@ -115,7 +116,7 @@ check "UFW SSH rule" "sudo ufw status | grep -cE '^22/tcp +ALLOW +Anywhere +# ss
 check "UFW node P2P rules" \
   "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
 check "80/443 closed" \
-  "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
+  "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
 
 echo ""
 echo "[Services]"
