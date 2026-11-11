@@ -11,9 +11,11 @@ locals {
 
 resource "null_resource" "mesh" {
   triggers = {
-    ipv4        = var.host_ipv4
-    config_hash = md5(local.config)
-    mesh_hash   = filemd5("${path.module}/mesh.sh")
+    bootstrap_id   = var.bootstrap_id
+    ipv4           = var.host_ipv4
+    config_hash    = md5(local.config)
+    peer_endpoints = join(" ", sort(var.mesh.peers[*].endpoint))
+    mesh_hash      = filemd5("${path.module}/mesh.sh")
   }
 
   connection {
@@ -40,6 +42,8 @@ resource "null_resource" "mesh" {
       <<-EOT
       sudo MESH_CONFIG_SRC=${local.staging_dir}/wg0.conf \
         MESH_ADDRESS=${var.mesh.address} \
+        MESH_PORT=${var.mesh.port} \
+        MESH_PEER_ENDPOINTS='${join(" ", var.mesh.peers[*].endpoint)}' \
         bash ${local.staging_dir}/wireguard-mesh.sh
       EOT
     ]

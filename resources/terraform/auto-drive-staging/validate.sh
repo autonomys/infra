@@ -187,7 +187,7 @@ for peer in $PEER_ADDRESSES; do
     "ping -c 3 -W 2 -I wg0 $peer >/dev/null && echo reachable" "reachable"
 done
 check "UFW opens $MESH_PORT/udp to each peer only" \
-  "sudo ufw status | grep -cE '^$MESH_PORT/udp +ALLOW +[0-9.]+ +# role-peer' || true" "$PEER_COUNT"
+  "sudo ufw status | grep -cE '^$MESH_PORT/udp +ALLOW +[0-9.]+ +# mesh-peer' || true" "$PEER_COUNT"
 check "UFW does not open $MESH_PORT/udp to anywhere" \
   "sudo ufw status | grep -cE '^$MESH_PORT/udp.* Anywhere' || true" "0"
 check "Docker wants wg0" \

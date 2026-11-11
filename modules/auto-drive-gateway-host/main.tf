@@ -14,10 +14,6 @@ locals {
     BLOCK_NUMBER_TO_START_FROM        = var.object_mapping_start_block
   })
   gateway_env_file = join("", [for k in sort(keys(local.gateway_env)) : "${k}=${local.gateway_env[k]}\n"])
-
-  mesh_peer_rules = var.mesh == null ? [] : [
-    for p in var.mesh.peers : { port = var.mesh.port, protocol = "udp", from = p.endpoint }
-  ]
 }
 
 module "host" {
@@ -26,18 +22,17 @@ module "host" {
   deployer         = var.deployer
   host             = var.host
   public_tcp_ports = var.public_tcp_ports
-  peer_rules       = concat(var.peer_rules, local.mesh_peer_rules)
+  peer_rules       = var.peer_rules
 }
 
 module "mesh" {
   source = "../wireguard-mesh"
   count  = var.mesh == null ? 0 : 1
 
-  deployer  = var.deployer
-  host_ipv4 = var.host.ipv4
-  mesh      = var.mesh
-
-  depends_on = [module.host]
+  deployer     = var.deployer
+  bootstrap_id = module.host.bootstrap_id
+  host_ipv4    = var.host.ipv4
+  mesh         = var.mesh
 }
 
 resource "null_resource" "deploy" {
