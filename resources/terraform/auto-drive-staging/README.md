@@ -9,6 +9,8 @@ The project provisions boxes that already exist; it creates no cloud resources.
 Each host is configured by a role module that takes an IP and an SSH user and is
 independent of where the machine comes from. The files gateway host,
 `auto-drive-files-gateway-chronos`, uses `modules/auto-drive-gateway-host`.
+The hosts reach each other over a private WireGuard mesh,
+`modules/wireguard-mesh`.
 
 Every role builds on `modules/host-bootstrap`: hostname, SSH hardening, UFW,
 fail2ban, unattended upgrades, the Infisical CLI, and Docker with the loki log
@@ -50,6 +52,68 @@ Defined in the gateway repo but not started by this pass:
   here
 - node Prometheus metrics on 127.0.0.1:9615: upstream's node command does not
   pass `--prometheus-listen-on` and its compose file does not publish 9615
+
+## The private mesh
+
+The staging hosts talk to each other over WireGuard rather than a provider's
+private network, so the mesh moves with them to any supplier. Every host peers
+directly with every other; nothing is routed through a third host.
+
+| Member          | Host                               | Mesh address |
+| --------------- | ---------------------------------- | ------------ |
+| `files-gateway` | `auto-drive-files-gateway-chronos` | 10.77.0.20   |
+
+The subnet is `10.77.0.0/24`, with a block of ten addresses per role, and the
+port is 51820/udp. Members and their addresses are in `local.mesh_hosts` in
+`main.tf`. Each member's public endpoint is its host address variable, and its
+public key is in `mesh_public_keys`, both in this project's
+`common.auto.tfvars` in Infisical.
+
+What each host gets, from `modules/wireguard-mesh`:
+
+- `wg0`, run by `wg-quick@wg0`. Its private key is generated on the host on the
+  first apply, in `/etc/wireguard/wg0.key` (root, 0600), and never leaves it.
+  Terraform writes `/etc/wireguard/wg0.conf` without it, so the key appears in
+  neither Terraform variables nor state.
+- UDP 51820 open in UFW to the other members' endpoints only, through
+  `host-bootstrap`'s `peer_rules`.
+- Docker ordered after `wg-quick@wg0` at boot, so containers that publish on the
+  mesh address find it there.
+- A `DOCKER-USER` rule, added while `wg0` is up, that drops connections to the
+  host's mesh address arriving on any interface but `wg0`. Docker-published
+  ports bypass UFW, and without it a machine on the same provider network could
+  reach them by routing to the mesh address.
+
+Services meant for other members publish on the host's mesh address, never on
+`0.0.0.0`. A container reaching a service on its own host uses the Compose
+network, not the mesh address.
+
+Peer changes are applied in place without dropping traffic. Changing a host's
+own mesh address or the port restarts its `wg0`, which interrupts the mesh for a
+few seconds while the other members handshake again.
+
+### Adding a host to the mesh
+
+1. Build the host and add its role module to `main.tf` with a `mesh` input,
+   its entry in `local.mesh_hosts`, and its address variable in
+   `common.auto.tfvars`.
+2. Apply. The new host generates its key and brings up `wg0` with the other
+   members as peers, and the others open the mesh port to it. The apply output
+   ends with the new host's public key:
+
+   ```
+   ==> This host's mesh public key: <KEY>
+   ```
+
+   It can also be read later with `ssh ubuntu@<HOST_IPv4> sudo wg show wg0 public-key`.
+3. Add the key to `mesh_public_keys` in `common.auto.tfvars`, run
+   `manage.sh auto-drive-staging store-secrets`, then plan and apply again. Every
+   other member adds the new host as a peer.
+4. Add the member and its address to `validate.sh`, and run it on each host.
+
+A rebuilt host has a new key, so after rebuilding one, repeat step 3 with its new
+key. Moving a host to another provider is the same: update its address variable,
+apply, then update its key.
 
 ## Building the gateway host from scratch
 
@@ -117,8 +181,8 @@ Prerequisites:
 - Terraform Cloud workspace `auto-drive-staging` in the `subspace-sre` org, with
   execution mode set to **local**
 - Infisical path `/auto-drive-staging` holding this project's
-  `common.auto.tfvars` with `gateway_host_ipv4`. The address lives there rather
-  than in the repo, which is public.
+  `common.auto.tfvars` with `gateway_host_ipv4` and `mesh_public_keys`. The
+  address lives there rather than in the repo, which is public.
 - A local `user.auto.tfvars` with your `ssh_agent_identity`
 - The deploy key loaded in your SSH agent (`ssh-add -l`)
 
@@ -128,22 +192,31 @@ Prerequisites:
 ./resources/terraform/manage.sh auto-drive-staging apply
 ```
 
-The apply bootstraps the host, then starts the node and fails if it is not
-running, or restarts, within 30 seconds of starting.
+The apply bootstraps the host, brings up its mesh interface, then starts the
+node and fails if it is not running, or restarts, within 30 seconds of starting.
+After the first apply on a rebuilt host, record its new mesh public key (see
+"Adding a host to the mesh").
 
 ## Verifying
 
 ```bash
-./resources/terraform/auto-drive-staging/validate.sh                      # SSH host "auto-drive-files-gateway-chronos"
-./resources/terraform/auto-drive-staging/validate.sh ubuntu@<HOST_IPv4>
+./resources/terraform/auto-drive-staging/validate.sh files-gateway                      # SSH host "auto-drive-files-gateway-chronos"
+./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
 ```
 
-Every check only reads. It covers what `terraform plan` cannot see: RAID 1 on
-`/`, swap and `/boot` with both members active and in sync, GRUB boot code on
-both disks, SSH hardening, the firewall, that nothing but SSH and node P2P
-listens beyond loopback, the host agent's ports left free, and the node's image,
-flags, health, peers and log driver. It ends by sampling the node's sync state a
-minute apart to show whether it is importing blocks.
+Every check only reads, and none reads a key. It covers what `terraform plan`
+cannot see: RAID 1 on `/`, swap and `/boot` with both members active and in
+sync, GRUB boot code on both disks, SSH hardening, the firewall, that nothing
+but the role's ports listens beyond loopback, the host agent's ports left free,
+and the mesh: `wg0`'s address and port, the key file's permissions, that the
+peers are exactly the other members and each answers a ping over the mesh, that
+UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and the
+`DOCKER-USER` rule. On the gateway it then checks the node's image, flags,
+health, peers and log driver, and samples its sync state a minute apart to show
+whether it is importing blocks.
+
+It also reports whether `wg0` came up before Docker on the current boot. That
+only holds once the host has rebooted since it joined the mesh.
 
 The array resyncs for a while after install; until it finishes the sync checks
 fail, which is expected. `cat /proc/mdstat` on the host shows progress.
@@ -187,10 +260,12 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 - Treat them as production.
 - Keep their addresses out of this repo, PR descriptions and commit messages.
-- Bind every container port to `127.0.0.1` unless it must be public. The gateway
-  role's deploy enforces this.
+- Bind every container port to `127.0.0.1`, or to the host's mesh address if
+  other members need it, unless it must be public. The gateway role's deploy
+  enforces the loopback rule.
 
 ## Recovery from total host loss
 
-Repeat "Building the gateway host from scratch", then `validate.sh`. The node
+Repeat "Building the gateway host from scratch", record the host's new mesh
+public key (see "Adding a host to the mesh"), then run `validate.sh`. The node
 resyncs from genesis.

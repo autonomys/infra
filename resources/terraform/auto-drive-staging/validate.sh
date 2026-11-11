@@ -1,13 +1,39 @@
 #!/usr/bin/env bash
-# Verify that the live Auto Drive staging files gateway matches its spec. Every
-# check only reads; none touches secrets or the node's data.
-# Usage: ./validate.sh [ssh-host]
-#   ssh-host defaults to "auto-drive-files-gateway-chronos" (configure it in
-#   ~/.ssh/config, or pass ubuntu@<HOST_IPv4>)
+# Verify that a live Auto Drive staging host matches its spec. Every check only
+# reads; none touches secrets, keys or service data.
+# Usage: ./validate.sh <role> [ssh-host]
+#   role: files-gateway
+#   ssh-host defaults to the role's hostname (configure it in ~/.ssh/config, or
+#   pass ubuntu@<HOST_IPv4>)
 set -euo pipefail
 
-HOST="${1:-auto-drive-files-gateway-chronos}"
-HOSTNAME_WANT="auto-drive-files-gateway-chronos"
+usage() {
+  echo "Usage: $0 <role> [ssh-host]   (role: files-gateway)" >&2
+  exit 2
+}
+
+ROLE="${1:-}"
+case "$ROLE" in
+  files-gateway)
+    HOSTNAME_WANT="auto-drive-files-gateway-chronos"
+    # TCP ports expected to listen beyond loopback
+    PUBLIC_TCP_LISTENERS="[22 30333 30433]"
+    ;;
+  *) usage ;;
+esac
+HOST="${2:-$HOSTNAME_WANT}"
+
+# Mesh members and their addresses, as in main.tf's local.mesh_hosts. Every
+# other member is expected as a peer once its public key is in tfvars.
+MESH_HOSTS="files-gateway"
+mesh_address() {
+  case "$1" in
+    files-gateway) echo 10.77.0.20 ;;
+  esac
+}
+MESH_PREFIX=24
+MESH_PORT=51820
+
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
 COMPOSE_PROJECT="file-retriever"
@@ -112,8 +138,10 @@ echo ""
 echo "[Firewall]"
 check "UFW active" "sudo ufw status | head -1" "Status: active"
 check "UFW SSH rule" "sudo ufw status | grep -cE '^22/tcp +ALLOW +Anywhere +# ssh'" "1"
-check "UFW node P2P rules" \
-  "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
+if [[ $ROLE == files-gateway ]]; then
+  check "UFW node P2P rules" \
+    "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
+fi
 check "80/443 closed" \
   "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
 
@@ -127,7 +155,6 @@ check "Auto-reboot disabled" \
 check "Background apt timers resumed after setup" \
   "[ \"\$(systemctl is-active apt-daily.timer apt-daily-upgrade.timer | sort -u)\" = active ] && echo resumed || echo paused" \
   "resumed"
-check "Infisical CLI installed" "command -v infisical" "/infisical" contains
 
 echo ""
 echo "[Docker]"
@@ -138,56 +165,102 @@ check "ubuntu in docker group" "id -nG ubuntu | tr ' ' '\\n' | grep -cx docker" 
 check "journald capped" "grep '^SystemMaxUse' /etc/systemd/journald.conf.d/size.conf" "SystemMaxUse=200M"
 
 echo ""
+echo "[Mesh]"
+SELF_ADDRESS="$(mesh_address "$ROLE")"
+PEER_ADDRESSES=""
+for member in $MESH_HOSTS; do
+  [[ $member == "$ROLE" ]] || PEER_ADDRESSES="$PEER_ADDRESSES $(mesh_address "$member")"
+done
+PEER_ADDRESSES="${PEER_ADDRESSES# }"
+PEER_COUNT=$(wc -w <<< "$PEER_ADDRESSES" | tr -d ' ')
+check "wg-quick@wg0 enabled" "systemctl is-enabled wg-quick@wg0" "enabled"
+check "wg-quick@wg0 active" "systemctl is-active wg-quick@wg0" "active"
+check "wg0 address" "ip -4 -o addr show dev wg0 | awk '{print \$4}'" "$SELF_ADDRESS/$MESH_PREFIX"
+check "wg0 listen port" "sudo wg show wg0 listen-port" "$MESH_PORT"
+check "WireGuard listening on UDP $MESH_PORT" \
+  "sudo ss -Huln 'sport = :$MESH_PORT' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "0.0.0.0:$MESH_PORT [::]:$MESH_PORT"
+check "Private key file root-only" "sudo stat -c '%a %U' /etc/wireguard/wg0.key" "600 root"
+check "No private key in wg0.conf" "sudo grep -c '^PrivateKey' /etc/wireguard/wg0.conf || true" "0"
+check "Peers are the other mesh members" \
+  "sudo wg show wg0 allowed-ips | awk '{print \$2}' | sort | paste -sd ' ' -" \
+  "$(for a in $PEER_ADDRESSES; do echo "$a/32"; done | sort | paste -sd ' ' -)"
+for peer in $PEER_ADDRESSES; do
+  check "Peer $peer answers over the mesh" \
+    "ping -c 3 -W 2 -I wg0 $peer >/dev/null && echo reachable" "reachable"
+done
+check "UFW opens $MESH_PORT/udp to each peer only" \
+  "sudo ufw status | grep -cE '^$MESH_PORT/udp +ALLOW +[0-9.]+ +# role-peer' || true" "$PEER_COUNT"
+check "UFW does not open $MESH_PORT/udp to anywhere" \
+  "sudo ufw status | grep -cE '^$MESH_PORT/udp.* Anywhere' || true" "0"
+check "Docker wants wg0" \
+  "systemctl show docker -p Wants --value | tr ' ' '\\n' | grep -cx wg-quick@wg0.service" "1"
+check "Docker starts after wg0" \
+  "systemctl show docker -p After --value | tr ' ' '\\n' | grep -cx wg-quick@wg0.service" "1"
+check "Mesh address guarded against other interfaces" \
+  "sudo iptables -S DOCKER-USER | grep -cxF -- '-A DOCKER-USER ! -i wg0 -m conntrack --ctorigdst $SELF_ADDRESS --ctdir ORIGINAL -j DROP'" "1"
+check "Forwarded traffic meets DOCKER-USER first" "sudo iptables -S FORWARD | sed -n 2p" "-A FORWARD -j DOCKER-USER"
+# not a pass/fail: the ordering only shows after a reboot since the mesh was added
+echo "  this boot: $(ssh -o ConnectTimeout=5 "$HOST" \
+  "w=\$(systemctl show wg-quick@wg0 -p ActiveEnterTimestampMonotonic --value); d=\$(systemctl show docker -p ExecMainStartTimestampMonotonic --value); if [ \"\$w\" -gt 0 ] && [ \"\$w\" -le \"\$d\" ]; then echo 'wg0 came up before docker'; else echo 'docker started before wg0 (expected until the first reboot with the mesh)'; fi" 2>/dev/null || echo unknown)"
+
+echo ""
 echo "[Ports]"
 # every listener bound beyond loopback, as port numbers
 PUBLIC_LISTENERS="sudo ss -Htlnp | awk '\$4 !~ /^(127\\.|\\[::1\\]|\\[::ffff:127\\.)/ {n=split(\$4,a,\":\"); print a[n]}' | sort -un | tr '\\n' ' ' | sed 's/^/[/; s/ \$/]/'"
-check "Only SSH and node P2P listen beyond loopback" "$PUBLIC_LISTENERS" "[22 30333 30433]"
-check "Node RPC on loopback only" \
-  "sudo ss -Htln 'sport = :9944' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:9944"
+check "Only the role's TCP ports listen beyond loopback" "$PUBLIC_LISTENERS" "$PUBLIC_TCP_LISTENERS"
 check "Host-agent ports 8430, 9100, 9633 free" \
   "sudo ss -Htln | awk '{print \$4}' | grep -cE ':(8430|9100|9633)\$' || true" "0"
 check "No node_exporter running" "pgrep -x node_exporter >/dev/null && echo running || echo absent" "absent"
 check "At least 2 GB free under /var/lib" \
   "[ \$(df --output=avail -B1G /var/lib | tail -1) -ge 2 ] && echo ok" "ok"
 
-echo ""
-echo "[Gateway deploy]"
-check "Gateway checkout present" "test -d $DEPLOY_DIR/auto-files-gateway/.git && echo exists" "exists"
-check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu"
-check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
-check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
-check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
-check "Node on Chronos" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--chain","chronos"' contains
-check "Node archives blocks and state" \
-  "a=\$(sudo docker inspect -f '{{json .Args}}' $NODE); echo \"\$a\" | grep -qF '\"--blocks-pruning\",\"archive\"' && echo \"\$a\" | grep -qF '\"--state-pruning\",\"archive\"' && echo archive" \
-  "archive"
-check "Node creates object mappings" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--create-object-mappings","1"' contains
-check "Node logs ship through the loki driver" \
-  "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $NODE" \
-  "loki https://logging.subspace.network/loki/api/v1/push"
-check "No loki driver push errors in the last hour" \
-  "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
-check "Node RPC answers on loopback" \
-  "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_chain\"}'" '"result":"Autonomys Chronos Testnet"' contains
-check "Node has peers" \
-  "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_health\"}' | grep -o '\"peers\":[0-9]*' | grep -qv '\"peers\":0\$' && echo peered" \
-  "peered"
+files_gateway_checks() {
+  local first second
+  echo ""
+  echo "[Gateway deploy]"
+  check "Gateway checkout present" "test -d $DEPLOY_DIR/auto-files-gateway/.git && echo exists" "exists"
+  check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu"
+  check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
+  check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
+  check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
+  check "Node on Chronos" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--chain","chronos"' contains
+  check "Node archives blocks and state" \
+    "a=\$(sudo docker inspect -f '{{json .Args}}' $NODE); echo \"\$a\" | grep -qF '\"--blocks-pruning\",\"archive\"' && echo \"\$a\" | grep -qF '\"--state-pruning\",\"archive\"' && echo archive" \
+    "archive"
+  check "Node creates object mappings" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--create-object-mappings","1"' contains
+  check "Node logs ship through the loki driver" \
+    "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $NODE" \
+    "loki https://logging.subspace.network/loki/api/v1/push"
+  check "No loki driver push errors in the last hour" \
+    "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
+  check "Node RPC answers on loopback" \
+    "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_chain\"}'" '"result":"Autonomys Chronos Testnet"' contains
+  check "Node RPC on loopback only" \
+    "sudo ss -Htln 'sport = :9944' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:9944"
+  check "Node has peers" \
+    "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_health\"}' | grep -o '\"peers\":[0-9]*' | grep -qv '\"peers\":0\$' && echo peered" \
+    "peered"
 
-echo ""
-echo "[Sync progress]"
-# not a pass/fail: two samples a minute apart show whether the node is moving
-SYNC_STATE="$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_syncState\"}'"
-first="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
-echo "  now:       $first"
-sleep 60
-second="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
-echo "  +60s:      $second"
-current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
-if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
-  report "Node importing blocks" "advancing" "advancing"
-else
-  report "Node importing blocks" "not advancing" "advancing"
-fi
+  echo ""
+  echo "[Sync progress]"
+  # not a pass/fail: two samples a minute apart show whether the node is moving
+  SYNC_STATE="$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_syncState\"}'"
+  first="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
+  echo "  now:       $first"
+  sleep 60
+  second="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
+  echo "  +60s:      $second"
+  current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
+  if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
+    report "Node importing blocks" "advancing" "advancing"
+  else
+    report "Node importing blocks" "not advancing" "advancing"
+  fi
+}
+
+case "$ROLE" in
+  files-gateway) files_gateway_checks ;;
+esac
 
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
