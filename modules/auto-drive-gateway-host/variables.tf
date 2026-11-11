@@ -106,3 +106,19 @@ variable "peer_rules" {
   }))
   default = []
 }
+
+variable "mesh" {
+  description = "The host's place in the private WireGuard mesh, passed to modules/wireguard-mesh, or null to leave it out."
+  type = object({
+    address = string
+    subnet  = string
+    port    = number
+    peers = list(object({
+      name       = string
+      endpoint   = string
+      address    = string
+      public_key = string
+    }))
+  })
+  default = null
+}

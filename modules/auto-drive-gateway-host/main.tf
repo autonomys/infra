@@ -35,6 +35,16 @@ module "host" {
   peer_rules       = var.peer_rules
 }
 
+module "mesh" {
+  source = "../wireguard-mesh"
+  count  = var.mesh == null ? 0 : 1
+
+  deployer     = var.deployer
+  bootstrap_id = module.host.bootstrap_id
+  host_ipv4    = var.host.ipv4
+  mesh         = var.mesh
+}
+
 resource "null_resource" "deploy" {
   triggers = {
     bootstrap_id     = module.host.bootstrap_id
@@ -94,4 +104,6 @@ resource "null_resource" "deploy" {
       EOT
     ]
   }
+
+  depends_on = [module.mesh]
 }

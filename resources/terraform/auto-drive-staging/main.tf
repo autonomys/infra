@@ -1,3 +1,29 @@
+# The private mesh between the staging hosts. Mesh addresses are private and
+# fixed per role; endpoints and public keys come from tfvars.
+locals {
+  mesh_port   = 51820
+  mesh_subnet = "10.77.0.0/24"
+  mesh_hosts = {
+    files-gateway = { endpoint = var.gateway_host_ipv4, address = "10.77.0.20" }
+  }
+
+  mesh = {
+    for name, host in local.mesh_hosts : name => {
+      address = host.address
+      subnet  = local.mesh_subnet
+      port    = local.mesh_port
+      peers = [
+        for peer, p in local.mesh_hosts : {
+          name       = peer
+          endpoint   = p.endpoint
+          address    = p.address
+          public_key = lookup(var.mesh_public_keys, peer, "")
+        } if peer != name
+      ]
+    }
+  }
+}
+
 module "files_gateway" {
   source = "../../../modules/auto-drive-gateway-host"
 
@@ -27,4 +53,6 @@ module "files_gateway" {
   }
 
   services = ["subspace-node"]
+
+  mesh = local.mesh["files-gateway"]
 }
