@@ -73,8 +73,10 @@ What each host gets, from `modules/wireguard-mesh`:
 
 - `wg0`, run by `wg-quick@wg0`. Its private key is generated on the host on the
   first apply, in `/etc/wireguard/wg0.key` (root, 0600), and never leaves it.
-  Terraform writes `/etc/wireguard/wg0.conf` without it, so the key appears in
-  neither Terraform variables nor state.
+  Terraform renders `wg0.conf` without it and the host adds it when installing
+  `/etc/wireguard/wg0.conf` (root, 0600), so the key appears in neither
+  Terraform variables nor state, and `wg-quick`'s own commands, including
+  `systemctl reload wg-quick@wg0`, keep it.
 - UDP 51820 open in UFW to the other members' endpoints only, through
   `host-bootstrap`'s `peer_rules`.
 - Docker ordered after `wg-quick@wg0` at boot, so containers that publish on the
@@ -204,16 +206,17 @@ After the first apply on a rebuilt host, record its new mesh public key (see
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
 ```
 
-Every check only reads, and none reads a key. It covers what `terraform plan`
-cannot see: RAID 1 on `/`, swap and `/boot` with both members active and in
-sync, GRUB boot code on both disks, SSH hardening, the firewall, that nothing
-but the role's ports listens beyond loopback, the host agent's ports left free,
-and the mesh: `wg0`'s address and port, the key file's permissions, that the
-peers are exactly the other members and each answers a ping over the mesh, that
-UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and the
-`DOCKER-USER` rule. On the gateway it then checks the node's image, flags,
-health, peers and log driver, and samples its sync state a minute apart to show
-whether it is importing blocks.
+Every check only reads, and none reads a private key. It covers what
+`terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both members
+active and in sync, GRUB boot code on both disks, SSH hardening, the firewall,
+that nothing but the role's ports listens beyond loopback, the host agent's
+ports left free, and the mesh: `wg0`'s address and port, that it has its key
+loaded, the key and config files' permissions, that the peers are exactly the
+other members and each answers a ping over the mesh, that UFW opens the mesh
+port to peers only, Docker's ordering after `wg0`, and the `DOCKER-USER` rule.
+On the gateway it then checks the node's image, flags, health, peers and log
+driver, and samples its sync state a minute apart to show whether it is
+importing blocks.
 
 It also reports whether `wg0` came up before Docker on the current boot. That
 only holds once the host has rebooted since it joined the mesh.

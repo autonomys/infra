@@ -35,14 +35,9 @@ resource "null_resource" "mesh" {
     destination = "${local.staging_dir}/wireguard-mesh.sh"
   }
 
-  # same apt timer pause as host-bootstrap, for the first run's package install
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer
-      trap 'sudo systemctl start apt-daily.timer apt-daily-upgrade.timer' EXIT
-      trap 'exit 1' HUP INT TERM
-      sudo systemd-run --quiet --property=After=apt-daily.service --property=After=apt-daily-upgrade.service --wait /bin/true
       sudo MESH_CONFIG_SRC=${local.staging_dir}/wg0.conf \
         MESH_ADDRESS=${var.mesh.address} \
         bash ${local.staging_dir}/wireguard-mesh.sh

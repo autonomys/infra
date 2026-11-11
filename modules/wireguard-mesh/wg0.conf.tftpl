@@ -1,9 +1,9 @@
-# Written by Terraform from modules/wireguard-mesh. The private key never
-# leaves this host: it stays in /etc/wireguard/wg0.key and is loaded on PostUp.
+# Rendered by Terraform from modules/wireguard-mesh without a private key. The
+# host adds its own from /etc/wireguard/wg0.key when it installs this file, so
+# the key never leaves the host.
 [Interface]
 Address = ${address}/${prefix}
 ListenPort = ${port}
-PostUp = wg set %i private-key /etc/wireguard/%i.key
 # Ports Docker publishes on the mesh address bypass UFW, and nothing else stops
 # a packet addressed to it arriving on another interface. Drop those.
 PostUp = iptables -N DOCKER-USER 2>/dev/null || true

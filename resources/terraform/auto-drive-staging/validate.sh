@@ -23,16 +23,9 @@ case "$ROLE" in
 esac
 HOST="${2:-$HOSTNAME_WANT}"
 
-# Mesh members and their addresses, as in main.tf's local.mesh_hosts. Every
-# other member is expected as a peer once its public key is in tfvars.
-MESH_HOSTS="files-gateway"
-mesh_address() {
-  case "$1" in
-    files-gateway) echo 10.77.0.20 ;;
-  esac
-}
-MESH_PREFIX=24
 MESH_PORT=51820
+MESH_SUBNET=10.77.0.0/24
+MESH_HOSTS="files-gateway=10.77.0.20"
 
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
@@ -166,21 +159,26 @@ check "journald capped" "grep '^SystemMaxUse' /etc/systemd/journald.conf.d/size.
 
 echo ""
 echo "[Mesh]"
-SELF_ADDRESS="$(mesh_address "$ROLE")"
+SELF_ADDRESS=""
 PEER_ADDRESSES=""
 for member in $MESH_HOSTS; do
-  [[ $member == "$ROLE" ]] || PEER_ADDRESSES="$PEER_ADDRESSES $(mesh_address "$member")"
+  if [[ ${member%%=*} == "$ROLE" ]]; then
+    SELF_ADDRESS="${member#*=}"
+  else
+    PEER_ADDRESSES="$PEER_ADDRESSES ${member#*=}"
+  fi
 done
 PEER_ADDRESSES="${PEER_ADDRESSES# }"
 PEER_COUNT=$(wc -w <<< "$PEER_ADDRESSES" | tr -d ' ')
 check "wg-quick@wg0 enabled" "systemctl is-enabled wg-quick@wg0" "enabled"
 check "wg-quick@wg0 active" "systemctl is-active wg-quick@wg0" "active"
-check "wg0 address" "ip -4 -o addr show dev wg0 | awk '{print \$4}'" "$SELF_ADDRESS/$MESH_PREFIX"
+check "wg0 address" "ip -4 -o addr show dev wg0 | awk '{print \$4}'" "$SELF_ADDRESS/${MESH_SUBNET#*/}"
 check "wg0 listen port" "sudo wg show wg0 listen-port" "$MESH_PORT"
 check "WireGuard listening on UDP $MESH_PORT" \
   "sudo ss -Huln 'sport = :$MESH_PORT' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "0.0.0.0:$MESH_PORT [::]:$MESH_PORT"
+check "wg0 has its key loaded" "sudo wg show wg0 public-key | grep -cvx '(none)' || true" "1"
 check "Private key file root-only" "sudo stat -c '%a %U' /etc/wireguard/wg0.key" "600 root"
-check "No private key in wg0.conf" "sudo grep -c '^PrivateKey' /etc/wireguard/wg0.conf || true" "0"
+check "wg0.conf root-only" "sudo stat -c '%a %U' /etc/wireguard/wg0.conf" "600 root"
 check "Peers are the other mesh members" \
   "sudo wg show wg0 allowed-ips | awk '{print \$2}' | sort | paste -sd ' ' -" \
   "$(for a in $PEER_ADDRESSES; do echo "$a/32"; done | sort | paste -sd ' ' -)"
@@ -199,9 +197,24 @@ check "Docker starts after wg0" \
 check "Mesh address guarded against other interfaces" \
   "sudo iptables -S DOCKER-USER | grep -cxF -- '-A DOCKER-USER ! -i wg0 -m conntrack --ctorigdst $SELF_ADDRESS --ctdir ORIGINAL -j DROP'" "1"
 check "Forwarded traffic meets DOCKER-USER first" "sudo iptables -S FORWARD | sed -n 2p" "-A FORWARD -j DOCKER-USER"
-# not a pass/fail: the ordering only shows after a reboot since the mesh was added
-echo "  this boot: $(ssh -o ConnectTimeout=5 "$HOST" \
-  "w=\$(systemctl show wg-quick@wg0 -p ActiveEnterTimestampMonotonic --value); d=\$(systemctl show docker -p ExecMainStartTimestampMonotonic --value); if [ \"\$w\" -gt 0 ] && [ \"\$w\" -le \"\$d\" ]; then echo 'wg0 came up before docker'; else echo 'docker started before wg0 (expected until the first reboot with the mesh)'; fi" 2>/dev/null || echo unknown)"
+# Not a pass/fail, and it only holds after a reboot since the host joined the
+# mesh. It reads each unit's first start this boot from the journal (systemd's
+# unit-started message), which restarting wg0 or docker in place doesn't change.
+boot_order() {
+  ssh -o ConnectTimeout=5 "$HOST" bash -s 2>/dev/null <<'EOF' || echo unknown
+first="$(sudo journalctl -b -q -o short-monotonic | head -1 | tr -d '[' | awk '{print int($1)}')"
+if [ "${first:-999}" -gt 5 ]; then
+  echo "unknown, the start of this boot has left the journal"
+  exit 0
+fi
+case "$(sudo journalctl -b -q -o cat --output-fields=UNIT MESSAGE_ID=39f53479d3a045ac8e11786248231fbf UNIT=wg-quick@wg0.service UNIT=docker.service | head -1)" in
+  wg-quick@wg0.service) echo "wg0 came up before docker" ;;
+  docker.service) echo "docker started before wg0 (expected until the first reboot after joining the mesh)" ;;
+  *) echo "unknown" ;;
+esac
+EOF
+}
+echo "  this boot: $(boot_order)"
 
 echo ""
 echo "[Ports]"
