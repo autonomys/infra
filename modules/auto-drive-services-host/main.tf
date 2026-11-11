@@ -1,6 +1,6 @@
 locals {
   staging_dir     = "/home/${var.deployer.ssh_user}/subspace"
-  staged_prefix   = "${local.staging_dir}/auto-drive-services"
+  staged_dir      = "${local.staging_dir}/auto-drive-services"
   deploy_dir      = "/home/${var.deployer.ssh_user}/deploy/auto-drive-services"
   compose_project = "auto-drive-services"
 
@@ -65,29 +65,16 @@ resource "null_resource" "deploy" {
     timeout        = "300s"
   }
 
-  provisioner "file" {
-    content     = local.compose_file
-    destination = "${local.staged_prefix}.compose.yml"
-  }
-
-  provisioner "file" {
-    content     = local.rabbitmq_conf
-    destination = "${local.staged_prefix}.rabbitmq.conf"
-  }
-
-  provisioner "file" {
-    content     = local.postgres_env
-    destination = "${local.staged_prefix}.postgres.env"
-  }
-
-  provisioner "file" {
-    content     = local.rabbitmq_env
-    destination = "${local.staged_prefix}.rabbitmq.env"
+  # A directory only the deploy user can read, since provisioners can't set a
+  # file's mode; deploy.sh empties it however it ends. The credentials go last,
+  # so an upload that fails early leaves none behind.
+  provisioner "remote-exec" {
+    inline = ["install -d -m 0700 ${local.staged_dir}"]
   }
 
   provisioner "file" {
     source      = "${path.module}/deploy.sh"
-    destination = "${local.staged_prefix}-deploy.sh"
+    destination = "${local.staging_dir}/auto-drive-services-deploy.sh"
   }
 
   provisioner "file" {
@@ -95,17 +82,37 @@ resource "null_resource" "deploy" {
     destination = "${local.staging_dir}/compose-port-guard.py"
   }
 
+  provisioner "file" {
+    content     = local.compose_file
+    destination = "${local.staged_dir}/compose.yml"
+  }
+
+  provisioner "file" {
+    content     = local.rabbitmq_conf
+    destination = "${local.staged_dir}/rabbitmq.conf"
+  }
+
+  provisioner "file" {
+    content     = local.postgres_env
+    destination = "${local.staged_dir}/postgres.env"
+  }
+
+  provisioner "file" {
+    content     = local.rabbitmq_env
+    destination = "${local.staged_dir}/rabbitmq.env"
+  }
+
   provisioner "remote-exec" {
     inline = [
       <<-EOT
       sudo DEPLOY_USER=${var.deployer.ssh_user} \
         DEPLOY_DIR=${local.deploy_dir} \
-        STAGED_PREFIX=${local.staged_prefix} \
+        STAGED_DIR=${local.staged_dir} \
         COMPOSE_PROJECT=${local.compose_project} \
         MESH_ADDRESS=${var.mesh.address} \
         POSTGRES_DATABASES='${join(" ", var.postgres.databases)}' \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \
-        bash ${local.staged_prefix}-deploy.sh
+        bash ${local.staging_dir}/auto-drive-services-deploy.sh
       EOT
     ]
   }

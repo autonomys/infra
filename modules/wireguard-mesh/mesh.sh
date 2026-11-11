@@ -14,6 +14,7 @@ CONF=/etc/wireguard/wg0.conf
 KEY=/etc/wireguard/wg0.key
 UNIT=wg-quick@wg0
 DOCKER_DROPIN=/etc/systemd/system/docker.service.d/10-wireguard-mesh.conf
+SYSCTL_CONF=/etc/sysctl.d/90-wireguard-mesh.conf
 APT_TIMERS=(apt-daily.timer apt-daily-upgrade.timer)
 
 export DEBIAN_FRONTEND=noninteractive
@@ -77,8 +78,19 @@ fi
 mv "$new_conf" "$CONF"
 new_conf=""
 
-# Containers that publish on the mesh address fail to start if wg0 isn't up
-# yet. Takes effect from the next boot; Docker is not restarted here.
+# A container that publishes on the mesh address fails to start if wg0 isn't up,
+# losing its loopback ports too, and Docker never retries it. Letting binds to
+# an address the host doesn't have yet succeed means it starts regardless and
+# answers on the mesh once wg0 is up; the address only accepts traffic while it
+# is on wg0, where the DOCKER-USER rule guards it. Docker is also ordered after
+# wg0, from the next boot; it is not restarted here.
+echo "==> Allowing binds to the mesh address before wg0 is up"
+cat > "$SYSCTL_CONF" <<EOF
+net.ipv4.ip_nonlocal_bind = 1
+EOF
+chmod 0644 "$SYSCTL_CONF"
+echo 1 > /proc/sys/net/ipv4/ip_nonlocal_bind
+
 echo "==> Ordering docker after $UNIT"
 install -d -m 0755 "$(dirname "$DOCKER_DROPIN")"
 cat > "$DOCKER_DROPIN" <<EOF

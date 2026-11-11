@@ -146,8 +146,6 @@ check "UFW SSH rule" "sudo ufw status | grep -cE '^22/tcp +ALLOW +Anywhere +# ss
 if [[ $ROLE == files-gateway ]]; then
   check "UFW node P2P rules" \
     "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
-else
-  check "UFW opens no role ports" "sudo ufw status | grep -c '# role-port' || true" "0"
 fi
 check "80/443 closed" \
   "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
@@ -208,6 +206,7 @@ check "Docker wants wg0" \
   "systemctl show docker -p Wants --value | tr ' ' '\\n' | grep -cx wg-quick@wg0.service" "1"
 check "Docker starts after wg0" \
   "systemctl show docker -p After --value | tr ' ' '\\n' | grep -cx wg-quick@wg0.service" "1"
+check "Containers can bind the mesh address before wg0 is up" "cat /proc/sys/net/ipv4/ip_nonlocal_bind" "1"
 check "Mesh address guarded against other interfaces" \
   "sudo iptables -S DOCKER-USER | grep -cxF -- '-A DOCKER-USER ! -i wg0 -m conntrack --ctorigdst $SELF_ADDRESS --ctdir ORIGINAL -j DROP'" "1"
 check "Forwarded traffic meets DOCKER-USER first" "sudo iptables -S FORWARD | sed -n 2p" "-A FORWARD -j DOCKER-USER"

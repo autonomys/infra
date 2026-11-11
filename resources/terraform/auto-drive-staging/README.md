@@ -142,6 +142,10 @@ What each host gets, from `modules/wireguard-mesh`:
   `host-bootstrap`'s `peer_rules`.
 - Docker ordered after `wg-quick@wg0` at boot, so containers that publish on the
   mesh address find it there.
+- `net.ipv4.ip_nonlocal_bind = 1`, so if `wg0` is not up those containers still
+  start, on loopback at once and on the mesh as soon as `wg0` is. Without it they
+  fail to start, loopback ports included, and Docker never retries them. The
+  mesh address only accepts traffic while it is on `wg0`.
 - A `DOCKER-USER` rule, added while `wg0` is up, that drops connections to the
   host's mesh address arriving on any interface but `wg0`. Docker-published
   ports bypass UFW, and without it a machine on the same provider network could

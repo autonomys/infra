@@ -9,12 +9,17 @@ set -euo pipefail
 
 : "${DEPLOY_USER:?DEPLOY_USER is required}"
 : "${DEPLOY_DIR:?DEPLOY_DIR is required}"
-: "${STAGED_PREFIX:?STAGED_PREFIX is required}"
+: "${STAGED_DIR:?STAGED_DIR is required}"
 : "${COMPOSE_PROJECT:?COMPOSE_PROJECT is required}"
 : "${MESH_ADDRESS:?MESH_ADDRESS is required}"
 : "${PORT_GUARD:?PORT_GUARD is required}"
 POSTGRES_DATABASES="${POSTGRES_DATABASES:-}"
 SERVICES=(postgres rabbitmq)
+STAGED=("$STAGED_DIR/compose.yml" "$STAGED_DIR/rabbitmq.conf" "$STAGED_DIR/postgres.env" "$STAGED_DIR/rabbitmq.env")
+
+# the staged env files hold the credentials, so they go however this ends
+trap 'rm -f "${STAGED[@]}"' EXIT
+trap 'exit 1' HUP INT TERM
 
 for db in $POSTGRES_DATABASES; do
   if [[ ! "$db" =~ ^[a-z][a-z0-9_]*$ ]]; then
@@ -25,21 +30,22 @@ done
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$DEPLOY_DIR")"
 install -d -m 0750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"
-install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_PREFIX.compose.yml" "$DEPLOY_DIR/docker-compose.yml"
-install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_PREFIX.rabbitmq.conf" "$DEPLOY_DIR/rabbitmq.conf"
+install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/compose.yml" "$DEPLOY_DIR/docker-compose.yml"
+install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/rabbitmq.conf" "$DEPLOY_DIR/rabbitmq.conf"
 for name in postgres rabbitmq; do
-  install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_PREFIX.$name.env" "$DEPLOY_DIR/$name.env"
+  install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/$name.env" "$DEPLOY_DIR/$name.env"
 done
-rm -f "$STAGED_PREFIX.compose.yml" "$STAGED_PREFIX.rabbitmq.conf" "$STAGED_PREFIX.postgres.env" "$STAGED_PREFIX.rabbitmq.env"
+rm -f "${STAGED[@]}"
 
 compose=(docker compose --project-name "$COMPOSE_PROJECT" -f "$DEPLOY_DIR/docker-compose.yml")
 
+# --no-env-resolution keeps the env files' credentials out of the model
 echo "==> Checking published ports"
-config="$("${compose[@]}" config --format json)"
-PRIVATE_ADDRESSES="$MESH_ADDRESS" python3 "$PORT_GUARD" <<< "$config"
+"${compose[@]}" config --format json --no-env-resolution \
+  | PRIVATE_ADDRESSES="$MESH_ADDRESS" python3 "$PORT_GUARD"
 
 if ! ip -4 -o addr show | awk '{print $4}' | cut -d/ -f1 | grep -qxF "$MESH_ADDRESS"; then
-  echo "$MESH_ADDRESS is not on this host, so nothing can publish on it: bring wg0 up first" >&2
+  echo "$MESH_ADDRESS is not on this host, so the other mesh members can't reach these services: bring wg0 up first" >&2
   exit 1
 fi
 

@@ -50,10 +50,11 @@ compose+=(--env-file "$SETTINGS_ENV")
 for file in $COMPOSE_FILES; do compose+=(-f "$CHECKOUT/$file"); done
 read -r -a services <<< "$SERVICES"
 
+# piped rather than kept, and without env files resolved, since the model can
+# hold secrets the compose files read
 echo "==> Checking published ports"
-config="$("${compose[@]}" config --format json "${services[@]}")"
-PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" \
-  python3 "$PORT_GUARD" <<< "$config"
+"${compose[@]}" config --format json --no-env-resolution "${services[@]}" \
+  | PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" python3 "$PORT_GUARD"
 
 # pull before anything stops, so a failed pull leaves the running services untouched
 echo "==> Pulling ${services[*]}"
