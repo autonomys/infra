@@ -6,6 +6,7 @@ locals {
 resource "null_resource" "bootstrap" {
   triggers = {
     ipv4             = var.host.ipv4
+    ssh_user         = var.deployer.ssh_user
     hostname         = var.host.hostname
     public_tcp_ports = join(" ", var.public_tcp_ports)
     peer_rules       = local.peer_rules

@@ -138,8 +138,9 @@ What each host gets, from `modules/wireguard-mesh`:
   `/etc/wireguard/wg0.conf` (root, 0600), so the key appears in neither
   Terraform variables nor state, and `wg-quick`'s own commands, including
   `systemctl reload wg-quick@wg0`, keep it.
-- UDP 51820 open in UFW to the other members' endpoints only, through
-  `host-bootstrap`'s `peer_rules`.
+- UDP 51820 open in UFW to the other members' endpoints only, as `mesh-peer`
+  rules the mesh keeps itself, so a member joining, leaving or moving changes
+  only the mesh, not every host's bootstrap.
 - Docker ordered after `wg-quick@wg0` at boot, so containers that publish on the
   mesh address find it there.
 - `net.ipv4.ip_nonlocal_bind = 1`, so if `wg0` is not up those containers still
@@ -181,6 +182,25 @@ few seconds while the other members handshake again.
 A rebuilt host has a new key, so after rebuilding one, repeat step 3 with its new
 key. Moving a host to another provider is the same: update its address variable,
 apply, then update its key.
+
+### Taking a host out of the mesh
+
+1. Remove its entry from `local.mesh_hosts` and `mesh_public_keys` and its
+   role's `mesh` input (the gateway role takes `mesh = null`), then plan and
+   apply. The other members drop it as a peer and close the mesh port to it.
+2. Terraform does nothing on the departing host itself, so tidy it by hand.
+   Stopping `wg0` also removes its `DOCKER-USER` rule:
+
+   ```bash
+   sudo systemctl disable --now wg-quick@wg0
+   sudo rm -f /etc/wireguard/wg0.conf /etc/wireguard/wg0.key /etc/systemd/system/docker.service.d/10-wireguard-mesh.conf /etc/sysctl.d/90-wireguard-mesh.conf
+   sudo systemctl daemon-reload
+   sudo sysctl -w net.ipv4.ip_nonlocal_bind=0
+   sudo ufw status | grep '# mesh-peer'
+   ```
+
+   Then delete each `mesh-peer` rule listed with
+   `sudo ufw delete allow proto udp from <PEER_IPv4> to any port 51820`.
 
 ## Building a host from scratch
 
@@ -343,6 +363,7 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   restart whatever uses it after updating its settings.
 - To re-run a bootstrap without a change, plan with
   `-replace=module.<files_gateway or services>.module.host.null_resource.bootstrap`.
+  The host's mesh and deploy re-run with it.
 
 ## Rules for these hosts
 
@@ -354,23 +375,21 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 ## Recovery from total host loss
 
-Repeat "Building a host from scratch" up to the apply. A rebuilt host at the same
+Repeat "Building a host from scratch" up to the apply. A host rebuilt at the same
 address changes none of Terraform's triggers, so a plain plan finds nothing to
-do. Plan its first apply with its bootstrap and mesh replaced instead; its
-deploy follows the bootstrap. For the services host:
+do. Plan its first apply with its bootstrap replaced instead; its mesh and
+deploy follow the bootstrap. For the services host:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -replace=module.services.module.host.null_resource.bootstrap \
-  -replace=module.services.module.mesh.null_resource.mesh
+  -replace=module.services.module.host.null_resource.bootstrap
 ```
 
 For the gateway:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -replace=module.files_gateway.module.host.null_resource.bootstrap \
-  '-replace=module.files_gateway.module.mesh[0].null_resource.mesh'
+  -replace=module.files_gateway.module.host.null_resource.bootstrap
 ```
 
 Then `manage.sh auto-drive-staging apply`, record the host's new mesh public key

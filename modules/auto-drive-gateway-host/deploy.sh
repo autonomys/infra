@@ -11,6 +11,7 @@ set -euo pipefail
 : "${GATEWAY_REPO:?GATEWAY_REPO is required}"
 : "${GATEWAY_REPO_REF:?GATEWAY_REPO_REF is required}"
 : "${GATEWAY_ENV_SRC:?GATEWAY_ENV_SRC is required}"
+: "${GATEWAY_OVERRIDE_SRC:?GATEWAY_OVERRIDE_SRC is required}"
 : "${COMPOSE_PROJECT:?COMPOSE_PROJECT is required}"
 : "${COMPOSE_FILES:?COMPOSE_FILES is required}"
 : "${COMPOSE_PROFILES:?COMPOSE_PROFILES is required}"
@@ -21,6 +22,7 @@ PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
 
 CHECKOUT="$DEPLOY_DIR/auto-files-gateway"
 SETTINGS_ENV="$DEPLOY_DIR/auto-files-gateway.env"
+OVERRIDE="$DEPLOY_DIR/auto-files-gateway.override.yml"
 # secrets for the services that need them, kept out of the settings file;
 # optional until such a service is started
 SECRETS_ENV="$DEPLOY_DIR/.env"
@@ -40,7 +42,8 @@ sudo -u "$DEPLOY_USER" git -C "$CHECKOUT" fetch -q --depth 1 origin "$GATEWAY_RE
 sudo -u "$DEPLOY_USER" git -C "$CHECKOUT" checkout -q --force FETCH_HEAD
 
 install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$GATEWAY_ENV_SRC" "$SETTINGS_ENV"
-rm -f "$GATEWAY_ENV_SRC"
+install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$GATEWAY_OVERRIDE_SRC" "$OVERRIDE"
+rm -f "$GATEWAY_ENV_SRC" "$GATEWAY_OVERRIDE_SRC"
 
 compose=(docker compose --project-name "$COMPOSE_PROJECT")
 for profile in $COMPOSE_PROFILES; do compose+=(--profile "$profile"); done
@@ -48,6 +51,8 @@ if [ -f "$SECRETS_ENV" ]; then compose+=(--env-file "$SECRETS_ENV"); fi
 # last, so the settings Terraform manages win over anything in the secrets file
 compose+=(--env-file "$SETTINGS_ENV")
 for file in $COMPOSE_FILES; do compose+=(-f "$CHECKOUT/$file"); done
+# the role's own override goes last, on top of upstream's files
+compose+=(-f "$OVERRIDE")
 read -r -a services <<< "$SERVICES"
 
 # piped rather than kept, and without env files resolved, since the model can

@@ -7,6 +7,11 @@ variable "deployer" {
   })
 }
 
+variable "bootstrap_id" {
+  description = "host-bootstrap's bootstrap_id. It changes whenever the bootstrap re-runs, as on a rebuilt host, and the mesh is set up again with it."
+  type        = string
+}
+
 variable "host_ipv4" {
   description = "Public IPv4 of the host, which Terraform connects to over SSH. The host must already have been through host-bootstrap."
   type        = string
@@ -41,8 +46,9 @@ variable "mesh" {
       can(cidrhost("${a}/${split("/", var.mesh.subnet)[1]}", 0))
       && try(cidrhost("${a}/${split("/", var.mesh.subnet)[1]}", 0) == cidrhost(var.mesh.subnet, 0), false)
       && a != cidrhost(var.mesh.subnet, 0)
+      && a != cidrhost(var.mesh.subnet, -1)
     ]) && length(distinct(concat([var.mesh.address], var.mesh.peers[*].address))) == length(var.mesh.peers) + 1
-    error_message = "mesh.address and every peer address must be distinct host addresses inside mesh.subnet."
+    error_message = "mesh.address and every peer address must be distinct host addresses inside mesh.subnet, neither its network nor its broadcast address."
   }
 
   validation {

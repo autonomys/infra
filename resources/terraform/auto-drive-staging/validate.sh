@@ -12,6 +12,7 @@ usage() {
   exit 2
 }
 
+# copied from main.tf and the role modules' defaults: change them together
 ROLE="${1:-}"
 case "$ROLE" in
   files-gateway)
@@ -148,7 +149,7 @@ if [[ $ROLE == files-gateway ]]; then
     "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
 fi
 check "80/443 closed" \
-  "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
+  "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
 
 echo ""
 echo "[Services]"
@@ -199,7 +200,7 @@ for peer in $PEER_ADDRESSES; do
     "ping -c 3 -W 2 -I wg0 $peer >/dev/null && echo reachable" "reachable"
 done
 check "UFW opens $MESH_PORT/udp to each peer only" \
-  "sudo ufw status | grep -cE '^$MESH_PORT/udp +ALLOW +[0-9.]+ +# role-peer' || true" "$PEER_COUNT"
+  "sudo ufw status | grep -cE '^$MESH_PORT/udp +ALLOW +[0-9.]+ +# mesh-peer' || true" "$PEER_COUNT"
 check "UFW does not open $MESH_PORT/udp to anywhere" \
   "sudo ufw status | grep -cE '^$MESH_PORT/udp.* Anywhere' || true" "0"
 check "Docker wants wg0" \

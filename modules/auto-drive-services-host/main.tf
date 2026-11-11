@@ -1,5 +1,5 @@
 locals {
-  staging_dir     = "/home/${var.deployer.ssh_user}/subspace"
+  staging_dir     = module.host.staging_dir
   staged_dir      = "${local.staging_dir}/auto-drive-services"
   deploy_dir      = "/home/${var.deployer.ssh_user}/deploy/auto-drive-services"
   compose_project = "auto-drive-services"
@@ -18,10 +18,6 @@ locals {
 
   postgres_env = "POSTGRES_PASSWORD=${var.postgres_password}\n"
   rabbitmq_env = "RABBITMQ_DEFAULT_USER=${var.rabbitmq_username}\nRABBITMQ_DEFAULT_PASS=${var.rabbitmq_password}\n"
-
-  mesh_peer_rules = [
-    for p in var.mesh.peers : { port = var.mesh.port, protocol = "udp", from = p.endpoint }
-  ]
 }
 
 module "host" {
@@ -29,17 +25,16 @@ module "host" {
 
   deployer   = var.deployer
   host       = var.host
-  peer_rules = concat(var.peer_rules, local.mesh_peer_rules)
+  peer_rules = var.peer_rules
 }
 
 module "mesh" {
   source = "../wireguard-mesh"
 
-  deployer  = var.deployer
-  host_ipv4 = var.host.ipv4
-  mesh      = var.mesh
-
-  depends_on = [module.host]
+  deployer     = var.deployer
+  bootstrap_id = module.host.bootstrap_id
+  host_ipv4    = var.host.ipv4
+  mesh         = var.mesh
 }
 
 resource "null_resource" "deploy" {
@@ -47,6 +42,7 @@ resource "null_resource" "deploy" {
   triggers = {
     bootstrap_id       = module.host.bootstrap_id
     ipv4               = var.host.ipv4
+    ssh_user           = var.deployer.ssh_user
     compose_hash       = md5(local.compose_file)
     rabbitmq_conf_hash = md5(local.rabbitmq_conf)
     postgres_env_hash  = nonsensitive(sha256(local.postgres_env))

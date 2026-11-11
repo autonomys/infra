@@ -1,5 +1,5 @@
 locals {
-  staging_dir = "/home/${var.deployer.ssh_user}/subspace"
+  staging_dir = module.host.staging_dir
   # the gateway repo's deploy playbook uses the same paths
   deploy_dir = "/home/${var.deployer.ssh_user}/deploy"
 
@@ -15,9 +15,15 @@ locals {
   })
   gateway_env_file = join("", [for k in sort(keys(local.gateway_env)) : "${k}=${local.gateway_env[k]}\n"])
 
-  mesh_peer_rules = var.mesh == null ? [] : [
-    for p in var.mesh.peers : { port = var.mesh.port, protocol = "udp", from = p.endpoint }
-  ]
+  # Upstream gives these services the loki driver with only loki-url, and the
+  # driver's local copy for `docker logs` then grows without limit. Same cap as
+  # the rest of the fleet. Every gateway service is listed so one started as a
+  # dependency is capped too.
+  log_cap_override = yamlencode({
+    services = { for s in ["subspace-node", "subspace-rpc-gateway", "file-retriever", "object-mapping-app"] : s => {
+      logging = { options = { "max-size" = "10m", "max-file" = "3" } }
+    } }
+  })
 }
 
 module "host" {
@@ -26,24 +32,24 @@ module "host" {
   deployer         = var.deployer
   host             = var.host
   public_tcp_ports = var.public_tcp_ports
-  peer_rules       = concat(var.peer_rules, local.mesh_peer_rules)
+  peer_rules       = var.peer_rules
 }
 
 module "mesh" {
   source = "../wireguard-mesh"
   count  = var.mesh == null ? 0 : 1
 
-  deployer  = var.deployer
-  host_ipv4 = var.host.ipv4
-  mesh      = var.mesh
-
-  depends_on = [module.host]
+  deployer     = var.deployer
+  bootstrap_id = module.host.bootstrap_id
+  host_ipv4    = var.host.ipv4
+  mesh         = var.mesh
 }
 
 resource "null_resource" "deploy" {
   triggers = {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
+    ssh_user         = var.deployer.ssh_user
     gateway_repo     = var.gateway_repo
     gateway_repo_ref = var.gateway_repo_ref
     env_hash         = md5(local.gateway_env_file)
@@ -53,6 +59,7 @@ resource "null_resource" "deploy" {
     compose_profiles = join(" ", var.compose_profiles)
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
+    log_cap_hash     = md5(local.log_cap_override)
     deploy_hash      = filemd5("${path.module}/deploy.sh")
     port_guard_hash  = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
   }
@@ -69,6 +76,11 @@ resource "null_resource" "deploy" {
   provisioner "file" {
     content     = local.gateway_env_file
     destination = "${local.staging_dir}/auto-files-gateway.env"
+  }
+
+  provisioner "file" {
+    content     = local.log_cap_override
+    destination = "${local.staging_dir}/auto-files-gateway.override.yml"
   }
 
   provisioner "file" {
@@ -89,6 +101,7 @@ resource "null_resource" "deploy" {
         GATEWAY_REPO=${var.gateway_repo} \
         GATEWAY_REPO_REF=${var.gateway_repo_ref} \
         GATEWAY_ENV_SRC=${local.staging_dir}/auto-files-gateway.env \
+        GATEWAY_OVERRIDE_SRC=${local.staging_dir}/auto-files-gateway.override.yml \
         COMPOSE_PROJECT=${var.compose_project} \
         COMPOSE_FILES='${join(" ", var.compose_files)}' \
         COMPOSE_PROFILES='${join(" ", var.compose_profiles)}' \

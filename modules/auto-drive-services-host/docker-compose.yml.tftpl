@@ -7,6 +7,9 @@ x-logging: &logging
     # a slow or unreachable Loki must never block the services' own writes
     mode: non-blocking
     max-buffer-size: 4m
+    # the driver's local copy for `docker logs`, capped as on the rest of the fleet
+    max-size: 10m
+    max-file: "3"
 
 services:
   postgres:

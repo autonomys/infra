@@ -9,6 +9,9 @@ set -euo pipefail
 
 : "${MESH_CONFIG_SRC:?MESH_CONFIG_SRC is required}"
 : "${MESH_ADDRESS:?MESH_ADDRESS is required}"
+: "${MESH_PORT:?MESH_PORT is required}"
+# space-separated IPv4 endpoints of the other members; empty for a lone member
+MESH_PEER_ENDPOINTS="${MESH_PEER_ENDPOINTS:-}"
 
 CONF=/etc/wireguard/wg0.conf
 KEY=/etc/wireguard/wg0.key
@@ -18,6 +21,17 @@ SYSCTL_CONF=/etc/sysctl.d/90-wireguard-mesh.conf
 APT_TIMERS=(apt-daily.timer apt-daily-upgrade.timer)
 
 export DEBIAN_FRONTEND=noninteractive
+
+if [[ ! "$MESH_PORT" =~ ^[0-9]+$ ]]; then
+  echo "Invalid MESH_PORT: $MESH_PORT" >&2
+  exit 1
+fi
+for endpoint in $MESH_PEER_ENDPOINTS; do
+  if [[ ! "$endpoint" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+    echo "Invalid endpoint in MESH_PEER_ENDPOINTS: $endpoint" >&2
+    exit 1
+  fi
+done
 
 apt_paused=""
 new_conf=""
@@ -66,10 +80,11 @@ new_conf="$(mktemp /etc/wireguard/.wg0.conf.XXXXXX)"
 unset key
 rm -f "$MESH_CONFIG_SRC"
 
-# Peers can change in place without dropping traffic; anything above the first
-# [Peer] needs the interface brought down and up again. Down comes before the
-# new config is installed, so the old config's PreDown is the one that runs.
-interface_section() { sed '/^\[Peer\]/,$d' "$1" 2>/dev/null || true; }
+# Peers can change in place without dropping traffic; a setting above the first
+# [Peer] needs the interface brought down and up again, but a comment or blank
+# line does not. Down comes before the new config is installed, so the old
+# config's PreDown is the one that runs.
+interface_section() { sed -e '/^\[Peer\]/,$d' -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' "$1" 2>/dev/null || true; }
 if [ "$(interface_section "$CONF")" != "$(interface_section "$new_conf")" ] \
   && systemctl is-active --quiet "$UNIT"; then
   echo "==> Stopping wg0 to change its interface settings"
@@ -100,6 +115,21 @@ After=$UNIT.service
 EOF
 chmod 0644 "$DOCKER_DROPIN"
 systemctl daemon-reload
+
+# The mesh port is open to the other members' endpoints only, under a comment of
+# the mesh's own: host-bootstrap's firewall pass leaves these rules alone, so a
+# member joining, leaving or moving touches only the mesh.
+echo "==> Opening $MESH_PORT/udp to the other members"
+open_rules="$(ufw status | sed -nE 's|^([0-9]+)/udp +ALLOW +([0-9.]+) +# mesh-peer$|\1 \2|p')"
+while read -r port source; do
+  [ -n "$port" ] || continue
+  if [ "$port" != "$MESH_PORT" ] || [[ " $MESH_PEER_ENDPOINTS " != *" $source "* ]]; then
+    ufw delete allow proto udp from "$source" to any port "$port" >/dev/null
+  fi
+done <<< "$open_rules"
+for endpoint in $MESH_PEER_ENDPOINTS; do
+  ufw allow proto udp from "$endpoint" to any port "$MESH_PORT" comment 'mesh-peer' >/dev/null
+done
 
 systemctl enable "$UNIT" >/dev/null 2>&1
 if ! systemctl is-active --quiet "$UNIT"; then

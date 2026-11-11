@@ -108,7 +108,7 @@ variable "peer_rules" {
 }
 
 variable "mesh" {
-  description = "The host's place in the private WireGuard mesh, passed to modules/wireguard-mesh, or null to leave it out. The mesh port is opened to each peer's endpoint."
+  description = "The host's place in the private WireGuard mesh, passed to modules/wireguard-mesh, or null to leave it out."
   type = object({
     address = string
     subnet  = string
