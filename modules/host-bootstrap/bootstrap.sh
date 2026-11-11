@@ -18,6 +18,15 @@ INSTALLER_MARKER=/var/lib/host-bootstrap/installer.md5
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Before the installer: the loki plugin it starts has its own hostname namespace
+# and labels logs with the name it started under. A host renamed after its
+# plugin started keeps the old label until docker restarts.
+echo "==> Setting hostname to $BOOTSTRAP_HOSTNAME"
+hostnamectl set-hostname "$BOOTSTRAP_HOSTNAME"
+if ! grep -qE "^[^#]*[[:space:]]$BOOTSTRAP_HOSTNAME([[:space:]]|$)" /etc/hosts; then
+  echo "127.0.1.1 $BOOTSTRAP_HOSTNAME" >> /etc/hosts
+fi
+
 # installer.sh upgrades docker-ce whenever a newer package exists, which
 # restarts dockerd and every container on the host. Run it only when docker is
 # incomplete or installer.sh has changed since this host last ran it. A host
@@ -33,7 +42,7 @@ installer_hash="$(md5sum "$INSTALLER" | cut -d' ' -f1)"
 if ! docker_ready \
   || { [ -f "$INSTALLER_MARKER" ] && [ "$(cat "$INSTALLER_MARKER")" != "$installer_hash" ]; }; then
   echo "==> Running $INSTALLER"
-  bash "$INSTALLER"
+  bash -e "$INSTALLER"
 else
   echo "==> Docker already set up by this installer version, not re-running it"
 fi
@@ -50,12 +59,6 @@ apt-get install -y \
   python3 \
   ufw \
   unattended-upgrades
-
-echo "==> Setting hostname to $BOOTSTRAP_HOSTNAME"
-hostnamectl set-hostname "$BOOTSTRAP_HOSTNAME"
-if ! grep -qE "^[^#]*[[:space:]]$BOOTSTRAP_HOSTNAME([[:space:]]|$)" /etc/hosts; then
-  echo "127.0.1.1 $BOOTSTRAP_HOSTNAME" >> /etc/hosts
-fi
 
 echo "==> Setting timezone to UTC"
 timedatectl set-timezone UTC
@@ -90,16 +93,20 @@ ufw --force enable
 
 # safe only because Terraform has already authenticated as the deploy user by key
 echo "==> Hardening SSH"
-cat > /etc/ssh/sshd_config.d/99-hardening.conf <<'SSHD'
+# sshd keeps the first value it reads for each directive and loads drop-ins in
+# name order, so this one has to sort first, ahead of files such as cloud-init's
+# 50-cloud-init.conf. Bootstraps before that wrote it as 99-hardening.conf.
+rm -f /etc/ssh/sshd_config.d/99-hardening.conf
+cat > /etc/ssh/sshd_config.d/00-hardening.conf <<'SSHD'
 PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 SSHD
-chmod 0644 /etc/ssh/sshd_config.d/99-hardening.conf
+chmod 0644 /etc/ssh/sshd_config.d/00-hardening.conf
 
-# sshd ignores the drop-in unless sshd_config includes it, and takes the first
-# occurrence of each directive, so the Include has to come first
+# sshd ignores the drop-ins unless sshd_config includes them, and the Include
+# has to come before any directive sshd_config sets itself
 if ! grep -qE '^\s*Include\s+/etc/ssh/sshd_config\.d/\*\.conf' /etc/ssh/sshd_config; then
   echo "==> Adding missing sshd_config.d Include directive"
   sed -i '1i Include /etc/ssh/sshd_config.d/*.conf' /etc/ssh/sshd_config
@@ -108,7 +115,7 @@ fi
 sshd -t
 systemctl restart ssh 2>/dev/null || systemctl restart sshd
 
-for setting in permitrootlogin:no passwordauthentication:no; do
+for setting in permitrootlogin:no passwordauthentication:no kbdinteractiveauthentication:no pubkeyauthentication:yes; do
   key="${setting%%:*}"
   want="${setting##*:}"
   got="$(sshd -T | awk -v k="$key" '$1 == k {print $2}')"

@@ -12,6 +12,7 @@ usage() {
   exit 2
 }
 
+# copied from main.tf and the role modules' defaults: change them together
 ROLE="${1:-}"
 case "$ROLE" in
   files-gateway)
@@ -136,7 +137,7 @@ if [[ $ROLE == files-gateway ]]; then
     "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
 fi
 check "80/443 closed" \
-  "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
+  "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
 
 echo ""
 echo "[Services]"
