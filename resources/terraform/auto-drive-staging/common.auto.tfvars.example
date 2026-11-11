@@ -1,2 +1,3 @@
-gateway_host_ipv4 = ""
-mesh_public_keys  = {}
+gateway_host_ipv4  = ""
+services_host_ipv4 = ""
+mesh_public_keys   = {}

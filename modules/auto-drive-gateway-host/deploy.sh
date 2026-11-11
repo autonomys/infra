@@ -15,12 +15,14 @@ set -euo pipefail
 : "${COMPOSE_FILES:?COMPOSE_FILES is required}"
 : "${COMPOSE_PROFILES:?COMPOSE_PROFILES is required}"
 : "${SERVICES:?SERVICES is required}"
+: "${PORT_GUARD:?PORT_GUARD is required}"
 PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
+PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
 
 CHECKOUT="$DEPLOY_DIR/auto-files-gateway"
 SETTINGS_ENV="$DEPLOY_DIR/auto-files-gateway.env"
-# written by the app's own secret fetch, not by Terraform; optional until a
-# service that needs secrets is started
+# secrets for the services that need them, kept out of the settings file;
+# optional until such a service is started
 SECRETS_ENV="$DEPLOY_DIR/.env"
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"
@@ -48,28 +50,10 @@ compose+=(--env-file "$SETTINGS_ENV")
 for file in $COMPOSE_FILES; do compose+=(-f "$CHECKOUT/$file"); done
 read -r -a services <<< "$SERVICES"
 
-# Docker-published ports bypass the firewall: refuse to start anything that
-# would publish a port beyond loopback unless the role declares it public.
 echo "==> Checking published ports"
 config="$("${compose[@]}" config --format json "${services[@]}")"
-PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" python3 -c '
-import json, os, sys
-allowed = set(os.environ["PUBLIC_TCP_PORTS"].split())
-bad = []
-for name, svc in json.load(sys.stdin)["services"].items():
-    for port in svc.get("ports", []):
-        host_ip = port.get("host_ip") or "0.0.0.0"
-        published = str(port.get("published"))
-        protocol = port.get("protocol", "tcp")
-        if host_ip in ("127.0.0.1", "::1"):
-            continue
-        if published in allowed and protocol == "tcp":
-            continue
-        bad.append("%s: %s:%s/%s" % (name, host_ip, published, protocol))
-if bad:
-    print("Refusing to deploy, these ports would be published beyond loopback:", *bad, sep="\n  ", file=sys.stderr)
-    sys.exit(1)
-' <<< "$config"
+PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" \
+  python3 "$PORT_GUARD" <<< "$config"
 
 # pull before anything stops, so a failed pull leaves the running services untouched
 echo "==> Pulling ${services[*]}"

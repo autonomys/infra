@@ -2,13 +2,13 @@
 # Verify that a live Auto Drive staging host matches its spec. Every check only
 # reads; none touches secrets, keys or service data.
 # Usage: ./validate.sh <role> [ssh-host]
-#   role: files-gateway
+#   role: files-gateway or services
 #   ssh-host defaults to the role's hostname (configure it in ~/.ssh/config, or
 #   pass ubuntu@<HOST_IPv4>)
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <role> [ssh-host]   (role: files-gateway)" >&2
+  echo "Usage: $0 <role> [ssh-host]   (role: files-gateway or services)" >&2
   exit 2
 }
 
@@ -16,8 +16,12 @@ ROLE="${1:-}"
 case "$ROLE" in
   files-gateway)
     HOSTNAME_WANT="auto-drive-files-gateway-chronos"
-    # TCP ports expected to listen beyond loopback
+    # TCP ports expected to listen beyond loopback and the mesh address
     PUBLIC_TCP_LISTENERS="[22 30333 30433]"
+    ;;
+  services)
+    HOSTNAME_WANT="auto-drive-staging-services"
+    PUBLIC_TCP_LISTENERS="[22]"
     ;;
   *) usage ;;
 esac
@@ -25,11 +29,16 @@ HOST="${2:-$HOSTNAME_WANT}"
 
 MESH_PORT=51820
 MESH_SUBNET=10.77.0.0/24
-MESH_HOSTS="files-gateway=10.77.0.20"
+MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20"
 
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
 COMPOSE_PROJECT="file-retriever"
+SERVICES_DIR="$DEPLOY_DIR/auto-drive-services"
+SERVICES_PROJECT="auto-drive-services"
+POSTGRES_IMAGE="postgres:17.9-bookworm"
+RABBITMQ_IMAGE="rabbitmq:3.13.7-management"
+LOKI_URL="https://logging.subspace.network/loki/api/v1/push"
 ERRORS=0
 PASS=0
 
@@ -75,6 +84,9 @@ check() {
 
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
 RPC="curl -s -H 'Content-Type: application/json' http://127.0.0.1:9944"
+PG="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=postgres)"
+RMQ="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=rabbitmq)"
+PSQL="sudo docker exec $PG psql -X -At -U postgres -d postgres -c"
 
 echo "=== Validating $HOST ==="
 echo ""
@@ -134,6 +146,8 @@ check "UFW SSH rule" "sudo ufw status | grep -cE '^22/tcp +ALLOW +Anywhere +# ss
 if [[ $ROLE == files-gateway ]]; then
   check "UFW node P2P rules" \
     "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
+else
+  check "UFW opens no role ports" "sudo ufw status | grep -c '# role-port' || true" "0"
 fi
 check "80/443 closed" \
   "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
@@ -218,9 +232,10 @@ echo "  this boot: $(boot_order)"
 
 echo ""
 echo "[Ports]"
-# every listener bound beyond loopback, as port numbers
-PUBLIC_LISTENERS="sudo ss -Htlnp | awk '\$4 !~ /^(127\\.|\\[::1\\]|\\[::ffff:127\\.)/ {n=split(\$4,a,\":\"); print a[n]}' | sort -un | tr '\\n' ' ' | sed 's/^/[/; s/ \$/]/'"
-check "Only the role's TCP ports listen beyond loopback" "$PUBLIC_LISTENERS" "$PUBLIC_TCP_LISTENERS"
+# every listener bound beyond loopback and the mesh address, as port numbers
+SELF_ADDRESS_RE="${SELF_ADDRESS//./\\.}"
+PUBLIC_LISTENERS="sudo ss -Htlnp | awk '\$4 !~ /^(127\\.|\\[::1\\]|\\[::ffff:127\\.|$SELF_ADDRESS_RE:)/ {n=split(\$4,a,\":\"); print a[n]}' | sort -un | tr '\\n' ' ' | sed 's/^/[/; s/ \$/]/'"
+check "Only the role's TCP ports listen beyond loopback and the mesh" "$PUBLIC_LISTENERS" "$PUBLIC_TCP_LISTENERS"
 check "Host-agent ports 8430, 9100, 9633 free" \
   "sudo ss -Htln | awk '{print \$4}' | grep -cE ':(8430|9100|9633)\$' || true" "0"
 check "No node_exporter running" "pgrep -x node_exporter >/dev/null && echo running || echo absent" "absent"
@@ -271,8 +286,57 @@ files_gateway_checks() {
   fi
 }
 
+services_checks() {
+  echo ""
+  echo "[Services deploy]"
+  check "Credential files owner-only" \
+    "stat -c '%a %U' $SERVICES_DIR/postgres.env $SERVICES_DIR/rabbitmq.env | sort -u" "600 ubuntu"
+  check "Postgres healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $PG" "healthy"
+  check "Postgres image" "sudo docker inspect -f '{{.Config.Image}}' $PG" "$POSTGRES_IMAGE"
+  check "Postgres restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $PG" "unless-stopped"
+  check "Postgres memory limit 32 GiB, shm 2 GiB" \
+    "sudo docker inspect -f '{{.HostConfig.Memory}} {{.HostConfig.ShmSize}}' $PG" "34359738368 2147483648"
+  check "Postgres data in its named volume" \
+    "sudo docker inspect -f '{{range .Mounts}}{{if eq .Destination \"/var/lib/postgresql/data\"}}{{.Type}} {{.Name}}{{end}}{{end}}' $PG" \
+    "volume ${SERVICES_PROJECT}_postgres-data"
+  check "Postgres logs ship through the loki driver" \
+    "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $PG" \
+    "loki $LOKI_URL"
+  check "Postgres on loopback and the mesh only" \
+    "sudo ss -Htln 'sport = :5432' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$SELF_ADDRESS:5432 127.0.0.1:5432"
+  check "Postgres version" "$PSQL 'SHOW server_version'" "17.9" contains
+  check "Databases present" \
+    "$PSQL \"SELECT string_agg(datname, ' ' ORDER BY datname) FROM pg_database WHERE datname IN ('gateway', 'postgres')\"" \
+    "gateway postgres"
+  check "Postgres tuning applied" \
+    "$PSQL \"SELECT current_setting('shared_buffers') || ' ' || current_setting('effective_cache_size') || ' ' || current_setting('max_connections')\"" \
+    "8GB 24GB 300"
+
+  check "RabbitMQ healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $RMQ" "healthy"
+  check "RabbitMQ image" "sudo docker inspect -f '{{.Config.Image}}' $RMQ" "$RABBITMQ_IMAGE"
+  check "RabbitMQ restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $RMQ" "unless-stopped"
+  check "RabbitMQ memory limit 4 GiB" "sudo docker inspect -f '{{.HostConfig.Memory}}' $RMQ" "4294967296"
+  check "RabbitMQ sizes itself to that limit" \
+    "sudo docker exec -u rabbitmq $RMQ rabbitmqctl -q eval 'vm_memory_monitor:get_total_memory().'" "4294967296"
+  check "RabbitMQ data in its named volume" \
+    "sudo docker inspect -f '{{range .Mounts}}{{if eq .Destination \"/var/lib/rabbitmq\"}}{{.Type}} {{.Name}}{{end}}{{end}}' $RMQ" \
+    "volume ${SERVICES_PROJECT}_rabbitmq-data"
+  check "RabbitMQ logs ship through the loki driver" \
+    "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $RMQ" \
+    "loki $LOKI_URL"
+  check "AMQP on loopback and the mesh only" \
+    "sudo ss -Htln 'sport = :5672' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$SELF_ADDRESS:5672 127.0.0.1:5672"
+  check "RabbitMQ management on loopback only" \
+    "sudo ss -Htln 'sport = :15672' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:15672"
+  check "No RabbitMQ guest user" \
+    "sudo docker exec -u rabbitmq $RMQ rabbitmqctl -q list_users | awk '{print \$1}' | grep -cx guest || true" "0"
+  check "No loki driver push errors in the last hour" \
+    "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
+}
+
 case "$ROLE" in
   files-gateway) files_gateway_checks ;;
+  services) services_checks ;;
 esac
 
 echo ""

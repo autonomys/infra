@@ -2,19 +2,22 @@
 
 Builds the Auto Drive staging environment on the Chronos testnet.
 
-This pass covers the **files gateway host only**, and on it only the Subspace
-node, so that its archival Chronos sync can start while the rest is built.
+So far it covers two hosts: the files gateway, running only the Subspace node so
+that its archival Chronos sync can start while the rest is built, and the
+services host, running Postgres and RabbitMQ for the others.
 
 The project provisions boxes that already exist; it creates no cloud resources.
 Each host is configured by a role module that takes an IP and an SSH user and is
 independent of where the machine comes from. The files gateway host,
-`auto-drive-files-gateway-chronos`, uses `modules/auto-drive-gateway-host`.
-The hosts reach each other over a private WireGuard mesh,
-`modules/wireguard-mesh`.
+`auto-drive-files-gateway-chronos`, uses `modules/auto-drive-gateway-host`; the
+services host, `auto-drive-staging-services`, uses
+`modules/auto-drive-services-host`. The hosts reach each other over a private
+WireGuard mesh, `modules/wireguard-mesh`.
 
 Every role builds on `modules/host-bootstrap`: hostname, SSH hardening, UFW,
-fail2ban, unattended upgrades, the Infisical CLI, and Docker with the loki log
-driver via `scripts/installer.sh`.
+fail2ban, unattended upgrades, and Docker with the loki log driver via
+`scripts/installer.sh`. Hosts never fetch secrets themselves: Terraform writes
+the ones a role needs, from this project's tfvars.
 
 ## The gateway role
 
@@ -27,13 +30,14 @@ project name as that repo's own deploy playbook, so volume names match.
 Image references, the chain, the object-mapping start block and the list of
 services to start are inputs. Terraform writes them to
 `~/deploy/auto-files-gateway.env` and re-runs the deploy whenever any of them,
-the pinned commit, or the deploy script changes. An Infisical-fetched
-`~/deploy/.env` is also read when present, for the services that need secrets;
-the node needs none.
+the pinned commit, or the deploy script changes. A `~/deploy/.env` is also read
+when present, for the services that need secrets; the node needs none.
 
 Before starting anything, the deploy resolves the compose model and refuses to
-continue if a service would publish a port beyond `127.0.0.1` other than the
-node's P2P ports 30333 and 30433. Ports Docker publishes bypass UFW.
+continue if a service would publish a port beyond `127.0.0.1` and the host's
+mesh address, other than the node's P2P ports 30333 and 30433. Ports Docker
+publishes bypass UFW. Both roles run the same check,
+`scripts/compose-port-guard.py`.
 
 The node runs as the gateway repo defines it, with `--chain chronos`,
 `--sync full`, `--blocks-pruning archive`, `--state-pruning archive` and
@@ -53,6 +57,62 @@ Defined in the gateway repo but not started by this pass:
 - node Prometheus metrics on 127.0.0.1:9615: upstream's node command does not
   pass `--prometheus-listen-on` and its compose file does not publish 9615
 
+## The services role
+
+`modules/auto-drive-services-host` runs Postgres 17.9 and RabbitMQ 3.13, the
+versions production runs, from a compose file kept in the module. Their data
+lives in named volumes, and their logs ship through the loki driver in
+non-blocking mode, so an unreachable Loki can't stall either service.
+
+| Service             | Port  | Published on                             |
+| ------------------- | ----- | ---------------------------------------- |
+| Postgres            | 5432  | loopback and the mesh address 10.77.0.10 |
+| RabbitMQ AMQP       | 5672  | loopback and the mesh address            |
+| RabbitMQ management | 15672 | loopback only, through an SSH tunnel     |
+
+The other hosts connect over the mesh:
+
+```
+postgres://postgres:<postgres_password>@10.77.0.10:5432/<database>
+amqp://<rabbitmq_username>:<rabbitmq_password>@10.77.0.10:5672
+```
+
+Postgres holds the `postgres` database, which the backend and Hasura share, plus
+`gateway`, both under the one `postgres` account. Auth's database is not here:
+as in production, it is Aurora DSQL, so its migrations meet DSQL's rules before
+they reach production. RabbitMQ has the one account `rabbitmq_username`,
+created when the broker first starts; changing the name later needs a fresh
+broker volume.
+
+The passwords come from this project's `services.auto.tfvars` in Infisical.
+Terraform writes them to owner-only env files in `~/deploy/auto-drive-services/`
+and keeps only their hashes in state. Each image applies its password only when
+its data is first created, so every deploy sets both again from the containers'
+own environment, and a password changed in tfvars takes effect on the next apply.
+
+The deploy runs the same published-port check as the gateway, refuses to start
+if the mesh address isn't on the host, and fails the apply unless both services
+turn healthy within 300 seconds and stay healthy, without restarting, for 30
+seconds more.
+
+### Sizing
+
+For a 64 GB box, set in `main.tf`:
+
+| Setting                    | Value  | Why                                                        |
+| -------------------------- | ------ | ---------------------------------------------------------- |
+| Postgres memory limit      | 32 GiB | half the box; the rest is page cache, RabbitMQ and the OS  |
+| `shared_buffers`           | 8GB    | a quarter of Postgres's limit                              |
+| `effective_cache_size`     | 24GB   | shared buffers plus the page cache Postgres can expect     |
+| `work_mem`                 | 32MB   | per sort or hash, so modest with up to 300 connections     |
+| `maintenance_work_mem`     | 1GB    | faster vacuum and index builds                             |
+| `max_connections`          | 300    | the backend's pools, Hasura and the gateway together       |
+| `max_wal_size`             | 4GB    | fewer forced checkpoints in write bursts                   |
+| `random_page_cost`         | 1.1    | NVMe: random reads cost little more than sequential ones   |
+| `effective_io_concurrency` | 200    | NVMe serves many reads at once                             |
+| Postgres `shm_size`        | 2 GiB  | Docker's 64 MB default is too small for parallel queries   |
+| RabbitMQ memory limit      | 4 GiB  | the broker is told it, as it doesn't read the container's limit, and raises its memory alarm at 40% of it |
+
 ## The private mesh
 
 The staging hosts talk to each other over WireGuard rather than a provider's
@@ -61,6 +121,7 @@ directly with every other; nothing is routed through a third host.
 
 | Member          | Host                               | Mesh address |
 | --------------- | ---------------------------------- | ------------ |
+| `services`      | `auto-drive-staging-services`      | 10.77.0.10   |
 | `files-gateway` | `auto-drive-files-gateway-chronos` | 10.77.0.20   |
 
 The subnet is `10.77.0.0/24`, with a block of ten addresses per role, and the
@@ -117,7 +178,9 @@ A rebuilt host has a new key, so after rebuilding one, repeat step 3 with its ne
 key. Moving a host to another provider is the same: update its address variable,
 apply, then update its key.
 
-## Building the gateway host from scratch
+## Building a host from scratch
+
+The steps are the same for every role; only the install config differs.
 
 ### 1. Reinstall the OS
 
@@ -128,10 +191,11 @@ Activate the rescue system from the provider's control panel (Linux, 64 bit, wit
 your SSH key), then reboot or reset the box. The activation is valid for **one
 boot only** and **expires after 60 minutes** if you don't reboot in that window.
 
-SSH in as root and install:
+SSH in as root and install, with `ROLE` set to `gateway` or `services`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/autonomys/infra/main/resources/terraform/auto-drive-staging/installimage-gateway.conf -o /autosetup
+ROLE=gateway
+curl -fsSL https://raw.githubusercontent.com/autonomys/infra/main/resources/terraform/auto-drive-staging/installimage-$ROLE.conf -o /autosetup
 installimage
 ```
 
@@ -143,7 +207,8 @@ are all **RAID 1** across both NVMe drives.
 > reliable source for drive names, the image filename and whether the box needs an
 > explicit ESP partition. Copy that config out, fold it into a new
 > `installimage-<role>.conf` keeping the `SWRAID`/`SWRAIDLEVEL`/`HOSTNAME` lines,
-> and commit.
+> and commit. `installimage-services.conf` is the gateway's with the hostname
+> changed, since the boxes match.
 
 Reboot into the installed system when it finishes.
 
@@ -183,8 +248,11 @@ Prerequisites:
 - Terraform Cloud workspace `auto-drive-staging` in the `subspace-sre` org, with
   execution mode set to **local**
 - Infisical path `/auto-drive-staging` holding this project's
-  `common.auto.tfvars` with `gateway_host_ipv4` and `mesh_public_keys`. The
-  address lives there rather than in the repo, which is public.
+  `common.auto.tfvars`, with `gateway_host_ipv4`, `services_host_ipv4` and
+  `mesh_public_keys`, and `services.auto.tfvars`, with `postgres_password`,
+  `rabbitmq_username` and `rabbitmq_password`. The addresses live there rather
+  than in the repo, which is public. Each password must be at least 32 letters
+  and digits, such as the output of `openssl rand -hex 24`.
 - A local `user.auto.tfvars` with your `ssh_agent_identity`
 - The deploy key loaded in your SSH agent (`ssh-add -l`)
 
@@ -194,29 +262,36 @@ Prerequisites:
 ./resources/terraform/manage.sh auto-drive-staging apply
 ```
 
-The apply bootstraps the host, brings up its mesh interface, then starts the
-node and fails if it is not running, or restarts, within 30 seconds of starting.
-After the first apply on a rebuilt host, record its new mesh public key (see
-"Adding a host to the mesh").
+The apply bootstraps each host, brings up its mesh interface, then deploys its
+role: on the gateway the node, which fails the apply if it is not running, or
+restarts, within 30 seconds of starting; on the services host Postgres and
+RabbitMQ, as in "The services role". After the first apply on a rebuilt host,
+record its new mesh public key (see "Adding a host to the mesh").
 
 ## Verifying
 
 ```bash
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway                      # SSH host "auto-drive-files-gateway-chronos"
+./resources/terraform/auto-drive-staging/validate.sh services                           # SSH host "auto-drive-staging-services"
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
 ```
 
-Every check only reads, and none reads a private key. It covers what
-`terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both members
-active and in sync, GRUB boot code on both disks, SSH hardening, the firewall,
-that nothing but the role's ports listens beyond loopback, the host agent's
-ports left free, and the mesh: `wg0`'s address and port, that it has its key
-loaded, the key and config files' permissions, that the peers are exactly the
-other members and each answers a ping over the mesh, that UFW opens the mesh
-port to peers only, Docker's ordering after `wg0`, and the `DOCKER-USER` rule.
+Every check only reads, and none reads a private key or a password. It covers
+what `terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both
+members active and in sync, GRUB boot code on both disks, SSH hardening, the
+firewall, that nothing but the role's ports listens beyond loopback and the mesh
+address, the host agent's ports left free, and the mesh: `wg0`'s address and
+port, that it has its key loaded, the key and config files' permissions, that
+the peers are exactly the other members and each answers a ping over the mesh,
+that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
+the `DOCKER-USER` rule.
+
 On the gateway it then checks the node's image, flags, health, peers and log
 driver, and samples its sync state a minute apart to show whether it is
-importing blocks.
+importing blocks. On the services host it checks that Postgres and RabbitMQ are
+healthy, their images, limits, volumes, log driver and listeners, that the
+databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
+to its limit, and that it has no `guest` user.
 
 It also reports whether `wg0` came up before Docker on the current boot. That
 only holds once the host has rebooted since it joined the mesh.
@@ -239,12 +314,13 @@ sudo docker logs --tail 20 \
 
 ### Confirming logs reach Loki
 
-The node's container logs ship through the loki driver to
+The containers' logs ship through the loki driver to
 `https://logging.subspace.network/loki/api/v1/push`. Check in Grafana Explore
 with:
 
 ```
 {host="auto-drive-files-gateway-chronos", compose_service="subspace-node"}
+{host="auto-drive-staging-services", compose_project="auto-drive-services"}
 ```
 
 Push failures show in the Docker daemon's journal as `error sending batch`, which
@@ -252,23 +328,29 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 ## Changing what runs
 
-- Image tags, the pinned gateway commit and the service list are in `main.tf`.
-  Changing any of them re-runs the deploy on the next apply.
-- Services removed from `services` are not stopped; stop their containers by
-  hand.
-- To re-run the bootstrap without a change, plan with
-  `-replace=module.files_gateway.module.host.null_resource.bootstrap`.
+- Image tags, the pinned gateway commit, the gateway's service list and the
+  services host's sizing are in `main.tf`. Changing any of them re-runs that
+  host's deploy on the next apply.
+- Services removed from the gateway's `services` are not stopped; stop their
+  containers by hand.
+- A new Postgres or RabbitMQ major version needs its data migrated first; a
+  minor or patch release only needs the tag changed.
+- A password changed in `services.auto.tfvars` takes effect on the next apply;
+  restart whatever uses it after updating its settings.
+- To re-run a bootstrap without a change, plan with
+  `-replace=module.<files_gateway or services>.module.host.null_resource.bootstrap`.
 
 ## Rules for these hosts
 
 - Treat them as production.
 - Keep their addresses out of this repo, PR descriptions and commit messages.
 - Bind every container port to `127.0.0.1`, or to the host's mesh address if
-  other members need it, unless it must be public. The gateway role's deploy
-  enforces the loopback rule.
+  other members need it, unless it must be public. Both roles' deploys enforce
+  this.
 
 ## Recovery from total host loss
 
-Repeat "Building the gateway host from scratch", record the host's new mesh
-public key (see "Adding a host to the mesh"), then run `validate.sh`. The node
-resyncs from genesis.
+Repeat "Building a host from scratch", record the host's new mesh public key
+(see "Adding a host to the mesh"), then run `validate.sh`. The gateway's node
+resyncs from genesis. The services host has no backups: rebuilding it starts
+with empty databases and queues.

@@ -1,0 +1,67 @@
+# Rendered by Terraform from modules/auto-drive-services-host.
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: ${loki_url}
+    # a slow or unreachable Loki must never block the services' own writes
+    mode: non-blocking
+    max-buffer-size: 4m
+
+services:
+  postgres:
+    image: ${postgres_image}
+    restart: unless-stopped
+    env_file: postgres.env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    command:
+      - postgres
+%{ for name, value in postgres_settings ~}
+      - -c
+      - ${name}=${value}
+%{ endfor ~}
+    shm_size: ${postgres_shm_size_gib}g
+    mem_limit: ${postgres_memory_limit_gib}g
+    ports:
+      - 127.0.0.1:5432:5432
+      - ${mesh_address}:5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+    logging: *logging
+
+  rabbitmq:
+    image: ${rabbitmq_image}
+    restart: unless-stopped
+    # the broker's node name, and with it where it finds its data, follows the
+    # hostname
+    hostname: rabbitmq
+    env_file: rabbitmq.env
+    mem_limit: ${rabbitmq_memory_limit_gib}g
+    ports:
+      - 127.0.0.1:5672:5672
+      - ${mesh_address}:5672:5672
+      - 127.0.0.1:15672:15672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/conf.d/90-auto-drive.conf:ro
+    healthcheck:
+      # as the rabbitmq user: a CLI run as root before the broker has written its
+      # Erlang cookie writes a root-owned one, and the broker then fails to start
+      test: ["CMD", "gosu", "rabbitmq", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
+    logging: *logging
+
+volumes:
+  postgres-data:
+  rabbitmq-data:

@@ -3,6 +3,28 @@ variable "gateway_host_ipv4" {
   type        = string
 }
 
+variable "services_host_ipv4" {
+  description = "Public IPv4 of the services host, which Terraform connects to over SSH"
+  type        = string
+}
+
+variable "postgres_password" {
+  description = "Password of the services host's postgres account, from services.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
+variable "rabbitmq_username" {
+  description = "The services host's RabbitMQ account, from services.auto.tfvars"
+  type        = string
+}
+
+variable "rabbitmq_password" {
+  description = "Password of rabbitmq_username, from services.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
 variable "mesh_public_keys" {
   description = "WireGuard public key of each mesh host, keyed as in local.mesh_hosts. A host's key exists once its first apply has run; until it is added here, its peers leave it out."
   type        = map(string)
