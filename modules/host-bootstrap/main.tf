@@ -22,15 +22,9 @@ resource "null_resource" "bootstrap" {
     timeout        = "300s"
   }
 
-  # There's no cloud-init to wait on here, so pause the background apt timers
-  # and wait out any run in progress: they hold locks apt-get won't wait for.
-  # The timers are started again after the bootstrap.
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer
-      sudo systemd-run --quiet --property=After=apt-daily.service --property=After=apt-daily-upgrade.service --wait /bin/true
-      sudo apt update -y
       sudo mkdir -p ${local.staging_dir}/
       sudo chown -R ${var.deployer.ssh_user}:${var.deployer.ssh_user} ${local.staging_dir}/ && sudo chmod -R 750 ${local.staging_dir}/
       EOT
@@ -47,18 +41,22 @@ resource "null_resource" "bootstrap" {
     destination = "${local.staging_dir}/host-bootstrap.sh"
   }
 
+  # There's no cloud-init to wait on here, so pause the background apt timers
+  # and wait out any run in progress: they hold locks apt-get won't wait for.
+  # The trap starts them again however this script ends.
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo bash ${local.staging_dir}/installer.sh \
-        && sudo BOOTSTRAP_USER=${var.deployer.ssh_user} \
-          BOOTSTRAP_HOSTNAME=${var.host.hostname} \
-          PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
-          PEER_RULES='${local.peer_rules}' \
-          bash ${local.staging_dir}/host-bootstrap.sh
-      status=$?
-      sudo systemctl start apt-daily.timer apt-daily-upgrade.timer
-      exit $status
+      sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer
+      trap 'sudo systemctl start apt-daily.timer apt-daily-upgrade.timer' EXIT
+      trap 'exit 1' HUP INT TERM
+      sudo systemd-run --quiet --property=After=apt-daily.service --property=After=apt-daily-upgrade.service --wait /bin/true
+      sudo BOOTSTRAP_USER=${var.deployer.ssh_user} \
+        BOOTSTRAP_HOSTNAME=${var.host.hostname} \
+        INSTALLER=${local.staging_dir}/installer.sh \
+        PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
+        PEER_RULES='${local.peer_rules}' \
+        bash ${local.staging_dir}/host-bootstrap.sh
       EOT
     ]
   }

@@ -1,19 +1,44 @@
 #!/bin/bash
 
-# Brings a bare Ubuntu box up to the baseline every host role builds on. Runs
-# after scripts/installer.sh, which owns docker and the loki log driver.
-# Terraform re-runs it whenever it or its inputs change, so every step must be
-# safe over a live host.
+# Brings a bare Ubuntu box up to the baseline every host role builds on.
+# scripts/installer.sh owns docker and the loki log driver. Terraform re-runs
+# this whenever it or its inputs change, so every step must be safe over a live
+# host.
 
 set -euo pipefail
 
 : "${BOOTSTRAP_USER:?BOOTSTRAP_USER is required}"
 : "${BOOTSTRAP_HOSTNAME:?BOOTSTRAP_HOSTNAME is required}"
+: "${INSTALLER:?INSTALLER is required}"
 PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
 # space-separated protocol:port:source entries
 PEER_RULES="${PEER_RULES:-}"
 
+INSTALLER_MARKER=/var/lib/host-bootstrap/installer.md5
+
 export DEBIAN_FRONTEND=noninteractive
+
+# installer.sh upgrades docker-ce whenever a newer package exists, which
+# restarts dockerd and every container on the host. Run it only when docker is
+# incomplete or installer.sh has changed since this host last ran it. A host
+# with docker but no marker (built before the marker, or adopted) is taken as
+# current rather than having its containers restarted on first contact.
+docker_ready() {
+  command -v docker >/dev/null 2>&1 \
+    && docker compose version >/dev/null 2>&1 \
+    && docker plugin inspect loki:latest >/dev/null 2>&1
+}
+
+installer_hash="$(md5sum "$INSTALLER" | cut -d' ' -f1)"
+if ! docker_ready \
+  || { [ -f "$INSTALLER_MARKER" ] && [ "$(cat "$INSTALLER_MARKER")" != "$installer_hash" ]; }; then
+  echo "==> Running $INSTALLER"
+  bash "$INSTALLER"
+else
+  echo "==> Docker already set up by this installer version, not re-running it"
+fi
+install -d -m 0755 /var/lib/host-bootstrap
+echo "$installer_hash" > "$INSTALLER_MARKER"
 
 echo "==> Installing base packages"
 apt-get update -y

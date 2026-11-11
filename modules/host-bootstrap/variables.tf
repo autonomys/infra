@@ -37,8 +37,11 @@ variable "peer_rules" {
 
   validation {
     condition = alltrue([
-      for r in var.peer_rules : contains(["tcp", "udp"], r.protocol) && can(cidrhost(strcontains(r.from, "/") ? r.from : "${r.from}/32", 0))
+      for r in var.peer_rules : contains(["tcp", "udp"], r.protocol)
+      && r.port >= 1 && r.port <= 65535 && floor(r.port) == r.port
+      && can(regex("^[0-9]+(\\.[0-9]+){3}(/[0-9]+)?$", r.from))
+      && can(cidrhost(strcontains(r.from, "/") ? r.from : "${r.from}/32", 0))
     ])
-    error_message = "Each peer rule needs protocol tcp or udp and from set to an IPv4 address or CIDR."
+    error_message = "Each peer rule needs protocol tcp or udp, a port from 1 to 65535, and from set to an IPv4 address or CIDR."
   }
 }

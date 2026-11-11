@@ -18,9 +18,16 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# matches expected as a substring of result, or exactly when mode is "exact"
 report() {
-  local desc="$1" result="$2" expected="$3"
-  if [[ "$result" == *"$expected"* ]]; then
+  local desc="$1" result="$2" expected="$3" mode="${4:-contains}"
+  local matched=false
+  if [[ "$mode" == exact ]]; then
+    [[ "$result" == "$expected" ]] && matched=true
+  else
+    [[ "$result" == *"$expected"* ]] && matched=true
+  fi
+  if $matched; then
     echo -e "  ${GREEN}PASS${NC}: $desc"
     PASS=$((PASS + 1))
   else
@@ -33,7 +40,7 @@ report() {
 
 # runs on the host
 check() {
-  report "$1" "$(ssh -o ConnectTimeout=5 "$HOST" "$2" 2>/dev/null || echo "COMMAND_FAILED")" "$3"
+  report "$1" "$(ssh -o ConnectTimeout=5 "$HOST" "$2" 2>/dev/null || echo "COMMAND_FAILED")" "$3" "${4:-contains}"
 }
 
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
@@ -65,20 +72,20 @@ check "Swap mirror in sync with both members active" \
 check "No array degraded or resyncing" \
   "grep -E '\\[[U_]+\\]' /proc/mdstat | grep -q _ && echo degraded || { grep -qE 'resync|recovery' /proc/mdstat && echo resyncing || echo healthy; }" \
   "healthy"
-check "No RAID 0 anywhere" "grep -cE '^md[0-9]+ : active raid0' /proc/mdstat || true" "0"
+check "No RAID 0 anywhere" "grep -cE '^md[0-9]+ : active raid0' /proc/mdstat || true" "0" exact
 
 echo ""
 echo "[Bootloader]"
 BOOT_DISKS="for m in /sys/block/\$(basename \$(readlink -f \$(findmnt -no SOURCE /boot)))/slaves/*; do echo /dev/\$(lsblk -dno PKNAME /dev/\$(basename \$m)); done"
 check "Both /boot disks carry GRUB boot code" \
   "n=0; for d in \$($BOOT_DISKS); do sudo dd if=\$d bs=512 count=1 status=none | grep -aq GRUB && n=\$((n+1)); done; echo \"\$n disks with boot code\"" \
-  "2 disks with boot code"
+  "2 disks with boot code" exact
 check "BIOS GRUB package installed" "dpkg-query -W -f='\${Status}' grub-pc" "install ok installed"
 check "UEFI GRUB package absent" \
   "dpkg-query -W -f='\${Status}' grub-efi-amd64 2>/dev/null | grep -q 'install ok installed' && echo present || echo absent" \
   "absent"
 check "GRUB updates reinstall to both disks" \
-  "sudo debconf-show grub-pc | sed -n 's/.*grub-pc\\/install_devices: //p' | tr ',' '\\n' | grep -c /dev/" "2"
+  "sudo debconf-show grub-pc | sed -n 's/.*grub-pc\\/install_devices: //p' | tr ',' '\\n' | grep -c /dev/" "2" exact
 
 echo ""
 echo "[SSH Hardening]"
@@ -95,7 +102,7 @@ echo "[Firewall]"
 check "UFW active" "sudo ufw status" "Status: active"
 check "UFW SSH rule" "sudo ufw status" "22/tcp"
 check "UFW node P2P rules" \
-  "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
+  "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2" exact
 check "80/443 closed" \
   "sudo ufw status | grep -qE '^(80|443)' && echo open || echo closed" "closed"
 
@@ -125,9 +132,9 @@ echo "[Ports]"
 PUBLIC_LISTENERS="sudo ss -Htlnp | awk '\$4 !~ /^(127\\.|\\[::1\\]|\\[::ffff:127\\.)/ {n=split(\$4,a,\":\"); print a[n]}' | sort -un | tr '\\n' ' ' | sed 's/^/[/; s/ \$/]/'"
 check "Only SSH and node P2P listen beyond loopback" "$PUBLIC_LISTENERS" "[22 30333 30433]"
 check "Node RPC on loopback only" \
-  "sudo ss -Htln 'sport = :9944' | awk '{print \$4}' | sort -u | tr '\\n' ' '" "127.0.0.1:9944 "
+  "sudo ss -Htln 'sport = :9944' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:9944" exact
 check "Host-agent ports 8430, 9100, 9633 free" \
-  "sudo ss -Htln | awk '{print \$4}' | grep -cE ':(8430|9100|9633)\$' || true" "0"
+  "sudo ss -Htln | awk '{print \$4}' | grep -cE ':(8430|9100|9633)\$' || true" "0" exact
 check "No node_exporter running" "pgrep -x node_exporter >/dev/null && echo running || echo absent" "absent"
 check "At least 2 GB free under /var/lib" \
   "[ \$(df --output=avail -B1G /var/lib | tail -1) -ge 2 ] && echo ok" "ok"
@@ -135,10 +142,10 @@ check "At least 2 GB free under /var/lib" \
 echo ""
 echo "[Gateway deploy]"
 check "Gateway checkout present" "test -d $DEPLOY_DIR/auto-files-gateway/.git && echo exists" "exists"
-check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu"
+check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu" exact
 check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
 check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
-check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
+check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE" exact
 check "Node on Chronos" "sudo docker inspect -f '{{join .Args \" \"}}' $NODE" "--chain chronos"
 check "Node archives blocks and state" \
   "a=\$(sudo docker inspect -f '{{join .Args \" \"}}' $NODE); echo \"\$a\" | grep -q -- '--blocks-pruning archive' && echo \"\$a\" | grep -q -- '--state-pruning archive' && echo archive" \
@@ -148,7 +155,7 @@ check "Node logs ship through the loki driver" \
   "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $NODE" \
   "loki https://logging.subspace.network/loki/api/v1/push"
 check "No loki driver push errors in the last hour" \
-  "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
+  "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0" exact
 check "Node RPC answers on loopback" \
   "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_chain\"}'" '"result"'
 check "Node has peers" \
