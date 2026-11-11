@@ -13,6 +13,7 @@ locals {
     postgres_shm_size_gib     = var.postgres.shm_size_gib
     rabbitmq_image            = var.images.rabbitmq
     rabbitmq_memory_limit_gib = var.rabbitmq.memory_limit_gib
+    rabbitmq_conf_hash        = md5(local.rabbitmq_conf)
   })
   rabbitmq_conf = "total_memory_available_override_value = ${var.rabbitmq.memory_limit_gib}GiB\n"
 

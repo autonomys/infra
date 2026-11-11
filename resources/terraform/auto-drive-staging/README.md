@@ -31,7 +31,11 @@ Image references, the chain, the object-mapping start block and the list of
 services to start are inputs. Terraform writes them to
 `~/deploy/auto-files-gateway.env` and re-runs the deploy whenever any of them,
 the pinned commit, or the deploy script changes. A `~/deploy/.env` is also read
-when present, for the services that need secrets; the node needs none.
+when present, for the services that need secrets; the node needs none. Nothing
+writes it yet. The gateway repo's own playbook fetches it with the Infisical CLI
+on the host, but these hosts never fetch secrets themselves: when a service that
+needs them is started here, Terraform will write them from this project's tfvars,
+as it does for the services host.
 
 Before starting anything, the deploy resolves the compose model and refuses to
 continue if a service would publish a port beyond `127.0.0.1` and the host's
@@ -101,9 +105,9 @@ For a 64 GB box, set in `main.tf`:
 
 | Setting                    | Value  | Why                                                        |
 | -------------------------- | ------ | ---------------------------------------------------------- |
-| Postgres memory limit      | 32 GiB | half the box; the rest is page cache, RabbitMQ and the OS  |
+| Postgres memory limit      | 32 GiB | half the box; Postgres's file cache counts against it too  |
 | `shared_buffers`           | 8GB    | a quarter of Postgres's limit                              |
-| `effective_cache_size`     | 24GB   | shared buffers plus the page cache Postgres can expect     |
+| `effective_cache_size`     | 24GB   | shared buffers plus the file cache that fits in its limit  |
 | `work_mem`                 | 32MB   | per sort or hash, so modest with up to 300 connections     |
 | `maintenance_work_mem`     | 1GB    | faster vacuum and index builds                             |
 | `max_connections`          | 300    | the backend's pools, Hasura and the gateway together       |

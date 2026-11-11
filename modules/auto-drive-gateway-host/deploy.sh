@@ -55,8 +55,9 @@ for file in $COMPOSE_FILES; do compose+=(-f "$CHECKOUT/$file"); done
 compose+=(-f "$OVERRIDE")
 read -r -a services <<< "$SERVICES"
 
-# piped rather than kept, and without env files resolved, since the model can
-# hold secrets the compose files read
+# Piped straight into the guard, never kept: the model still holds every value
+# the compose files interpolate from the --env-file files, secrets included.
+# --no-env-resolution only leaves out the services' own env_file entries.
 echo "==> Checking published ports"
 "${compose[@]}" config --format json --no-env-resolution "${services[@]}" \
   | PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" python3 "$PORT_GUARD"

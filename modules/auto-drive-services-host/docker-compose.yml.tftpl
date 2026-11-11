@@ -15,6 +15,9 @@ services:
   postgres:
     image: ${postgres_image}
     restart: unless-stopped
+    # a fast shutdown ends in a checkpoint, which can outlast Docker's default 10s
+    # before SIGKILL; cut short, the next start has to recover
+    stop_grace_period: 2m
     env_file: postgres.env
     environment:
       POSTGRES_USER: postgres
@@ -33,7 +36,9 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      # over TCP, as clients connect: the socket also answers for the temporary
+      # server the image runs during first initialisation
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -46,7 +51,12 @@ services:
     # the broker's node name, and with it where it finds its data, follows the
     # hostname
     hostname: rabbitmq
+    stop_grace_period: 2m
     env_file: rabbitmq.env
+    # Compose doesn't see a bind-mounted file change, and the broker reads conf.d
+    # only at boot, so the file's hash recreates it when the file changes
+    labels:
+      auto-drive.rabbitmq-conf: "${rabbitmq_conf_hash}"
     mem_limit: ${rabbitmq_memory_limit_gib}g
     ports:
       - 127.0.0.1:5672:5672

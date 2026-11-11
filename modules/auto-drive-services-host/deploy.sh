@@ -49,9 +49,11 @@ if ! ip -4 -o addr show | awk '{print $4}' | cut -d/ -f1 | grep -qxF "$MESH_ADDR
   exit 1
 fi
 
-# pull before anything stops, so a failed pull leaves the running services untouched
-echo "==> Pulling ${SERVICES[*]}"
-"${compose[@]}" pull
+# Only images not on the host yet: the official images are rebuilt under the
+# same tag, and a new digest would otherwise recreate the database during an
+# unrelated deploy. A tag changed in main.tf still pulls, before anything stops.
+echo "==> Pulling ${SERVICES[*]} if missing"
+"${compose[@]}" pull --policy missing
 
 echo "==> Starting ${SERVICES[*]}"
 "${compose[@]}" up -d
@@ -98,12 +100,11 @@ postgres="$("${compose[@]}" ps -q postgres)"
 # broker reads it itself. As the rabbitmq user, for the healthcheck's reason.
 echo "==> Setting the RabbitMQ password"
 rabbitmq="$("${compose[@]}" ps -q rabbitmq)"
-result="$(docker exec -u rabbitmq "$rabbitmq" rabbitmqctl -q eval '
+if ! result="$(docker exec -u rabbitmq "$rabbitmq" rabbitmqctl -q eval '
   rabbit_auth_backend_internal:change_password(
     list_to_binary(os:getenv("RABBITMQ_DEFAULT_USER")),
     list_to_binary(os:getenv("RABBITMQ_DEFAULT_PASS")),
-    <<"auto-drive-services deploy">>).')"
-if [ "$result" != ok ]; then
+    <<"auto-drive-services deploy">>).' 2>&1)" || [ "$result" != ok ]; then
   echo "Could not set the RabbitMQ password: $result" >&2
   echo "The user is created on the broker's first start, so a changed username needs a fresh broker volume" >&2
   exit 1
