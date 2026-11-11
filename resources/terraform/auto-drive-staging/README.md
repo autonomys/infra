@@ -354,7 +354,26 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 ## Recovery from total host loss
 
-Repeat "Building a host from scratch", record the host's new mesh public key
-(see "Adding a host to the mesh"), then run `validate.sh`. The gateway's node
+Repeat "Building a host from scratch" up to the apply. A rebuilt host at the same
+address changes none of Terraform's triggers, so a plain plan finds nothing to
+do. Plan its first apply with its bootstrap and mesh replaced instead; its
+deploy follows the bootstrap. For the services host:
+
+```bash
+terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
+  -replace=module.services.module.host.null_resource.bootstrap \
+  -replace=module.services.module.mesh.null_resource.mesh
+```
+
+For the gateway:
+
+```bash
+terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
+  -replace=module.files_gateway.module.host.null_resource.bootstrap \
+  '-replace=module.files_gateway.module.mesh[0].null_resource.mesh'
+```
+
+Then `manage.sh auto-drive-staging apply`, record the host's new mesh public key
+(see "Adding a host to the mesh"), and run `validate.sh`. The gateway's node
 resyncs from genesis. The services host has no backups: rebuilding it starts
 with empty databases and queues.
