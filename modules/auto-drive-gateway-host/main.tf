@@ -58,8 +58,10 @@ resource "null_resource" "deploy" {
     compose_project  = var.compose_project
     compose_profiles = join(" ", var.compose_profiles)
     public_tcp_ports = join(" ", var.public_tcp_ports)
+    mesh_address     = var.mesh == null ? "" : var.mesh.address
     log_cap_hash     = md5(local.log_cap_override)
     deploy_hash      = filemd5("${path.module}/deploy.sh")
+    port_guard_hash  = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
   }
 
   connection {
@@ -86,6 +88,11 @@ resource "null_resource" "deploy" {
     destination = "${local.staging_dir}/auto-drive-gateway-deploy.sh"
   }
 
+  provisioner "file" {
+    source      = "${var.deployer.path_to_scripts}/compose-port-guard.py"
+    destination = "${local.staging_dir}/compose-port-guard.py"
+  }
+
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -100,6 +107,8 @@ resource "null_resource" "deploy" {
         COMPOSE_PROFILES='${join(" ", var.compose_profiles)}' \
         SERVICES='${join(" ", var.services)}' \
         PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
+        PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
+        PORT_GUARD=${local.staging_dir}/compose-port-guard.py \
         bash ${local.staging_dir}/auto-drive-gateway-deploy.sh
       EOT
     ]

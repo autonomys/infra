@@ -59,7 +59,7 @@ variable "services" {
 }
 
 variable "settings" {
-  description = "Further non-secret settings the compose files read, such as RUST_LOG_NODE. Secrets belong in the host's Infisical-fetched .env, never here."
+  description = "Further non-secret settings the compose files read, such as RUST_LOG_NODE. Secrets never go here."
   type        = map(string)
   default     = {}
 }
@@ -92,7 +92,7 @@ variable "compose_profiles" {
 }
 
 variable "public_tcp_ports" {
-  description = "Ports the gateway may publish beyond loopback. The deploy refuses any other non-loopback port."
+  description = "Ports the gateway may publish beyond loopback. The deploy refuses any other port published beyond loopback and the host's mesh address."
   type        = list(number)
   default     = [30333, 30433]
 }

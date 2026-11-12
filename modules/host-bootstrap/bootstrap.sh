@@ -144,13 +144,6 @@ systemctl enable --now fail2ban
 systemctl restart fail2ban
 systemctl enable --now unattended-upgrades
 
-echo "==> Installing Infisical CLI"
-if ! command -v infisical >/dev/null 2>&1; then
-  curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash
-  apt-get update -y
-  apt-get install -y infisical
-fi
-
 echo "==> Adding $BOOTSTRAP_USER to the docker group"
 usermod -aG docker "$BOOTSTRAP_USER"
 

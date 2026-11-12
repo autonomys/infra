@@ -17,3 +17,8 @@ output "mesh_addresses" {
     error_message = "mesh_public_keys has keys that name no mesh member: ${join(", ", sort(setsubtract(keys(var.mesh_public_keys), keys(local.mesh_hosts))))}. Keys must match the names in local.mesh_hosts."
   }
 }
+
+output "services_hostname" {
+  value       = module.services.hostname
+  description = "Hostname of the Auto Drive staging services host"
+}
