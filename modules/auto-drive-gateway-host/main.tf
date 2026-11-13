@@ -3,8 +3,8 @@ locals {
   staged_dir  = "${local.staging_dir}/auto-drive-gateway"
   deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-gateway"
 
-  # every file in compose/ is uploaded and installed; COMPOSE_FILE picks the
-  # ones in use
+  # every .yml in compose/ is uploaded and installed, and only those count
+  # towards the trigger; COMPOSE_FILE picks the ones in use
   compose_dir   = "${path.module}/compose"
   compose_files = concat(["docker-compose.yml"], var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [])
 
@@ -48,7 +48,7 @@ resource "null_resource" "deploy" {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
-    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
+    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
     env_hash         = md5(local.env_file)
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
