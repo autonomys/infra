@@ -21,8 +21,9 @@ the ones a role needs, from this project's tfvars.
 
 ## The gateway role
 
-`modules/auto-drive-gateway-host` deploys from its own compose file,
-`docker-compose.yml`. It defines the services as the compose files of
+`modules/auto-drive-gateway-host` deploys from its own compose files, in its
+`compose/` directory. `compose/docker-compose.yml` defines the services as the
+compose files of
 [autonomys/auto-files-gateway](https://github.com/autonomys/auto-files-gateway)
 do at the commit named in its header, with the same variable names, so the two
 can be compared side by side. `upstream-diff.sh` in the module shows what has
@@ -33,12 +34,14 @@ moved:
 ./modules/auto-drive-gateway-host/upstream-diff.sh
 ```
 
-Terraform writes the values to a `.env` beside the file: the node image, the
-chain, the object-mapping setting, the node's log level and the Loki URL. The
-`.env` also names the Compose project, `file-retriever`, and the files to use.
-`docker-compose.log-cap.yml` caps the loki driver's local copy of the logs as on
-the rest of the fleet, and is included unless the module's `cap_local_logs` is
-off. Everything lands in `~/deploy/auto-drive-gateway/`, so on the host
+Terraform writes the values to a `.env` beside the files, each in single quotes
+so Compose takes it literally: the node image, the chain, the object-mapping
+setting, the node's log level and the Loki URL. The `.env` also names the
+Compose project, `file-retriever`, and the files to use.
+`compose/docker-compose.log-cap.yml` caps the loki driver's local copy of the
+logs as on the rest of the fleet, and is included unless the module's
+`cap_local_logs` is off. Every file in `compose/` and the `.env` land in
+`~/deploy/auto-drive-gateway/`, so on the host
 
 ```bash
 cd ~/deploy/auto-drive-gateway && docker compose ps

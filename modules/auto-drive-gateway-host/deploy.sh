@@ -12,10 +12,8 @@ set -euo pipefail
 : "${PORT_GUARD:?PORT_GUARD is required}"
 PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
 PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
-COMPOSE_FILES=(docker-compose.yml docker-compose.log-cap.yml)
-STAGED=("${COMPOSE_FILES[@]/#/$STAGED_DIR/}" "$STAGED_DIR/.env")
 
-trap 'rm -f "${STAGED[@]}"' EXIT
+trap 'rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env"' EXIT
 trap 'exit 1' HUP INT TERM
 
 # Compose takes the project, the files and the values from the .env in the
@@ -28,7 +26,8 @@ compose_in() {
 
 # Every check runs against the uploaded files, and only files that pass them
 # replace the ones in use, so a refused deploy leaves the host as it was.
-read -r -a services <<< "$(compose_in "$STAGED_DIR" config --services | paste -sd ' ' -)"
+service_list="$(compose_in "$STAGED_DIR" config --services)"
+mapfile -t services <<< "$service_list"
 
 echo "==> Checking published ports"
 compose_in "$STAGED_DIR" config --format json --no-env-resolution \
@@ -42,11 +41,11 @@ compose_in "$STAGED_DIR" pull --policy missing
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$DEPLOY_DIR")"
 install -d -m 0750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"
-for file in "${COMPOSE_FILES[@]}"; do
-  install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/$file" "$DEPLOY_DIR/$file"
+for file in "$STAGED_DIR"/*.yml; do
+  install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$file" "$DEPLOY_DIR/$(basename "$file")"
 done
 install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/.env" "$DEPLOY_DIR/.env"
-rm -f "${STAGED[@]}"
+rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env"
 
 echo "==> Starting ${services[*]}"
 compose_in "$DEPLOY_DIR" up -d

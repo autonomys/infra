@@ -3,6 +3,9 @@ locals {
   staged_dir  = "${local.staging_dir}/auto-drive-gateway"
   deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-gateway"
 
+  # every file in compose/ is uploaded and installed; COMPOSE_FILE picks the
+  # ones in use
+  compose_dir   = "${path.module}/compose"
   compose_files = concat(["docker-compose.yml"], var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [])
 
   # Compose reads this from the deploy directory, so `docker compose` run there
@@ -16,7 +19,9 @@ locals {
     RUST_LOG_NODE              = var.node_rust_log
     LOKI_URL                   = var.loki_url
   }
-  env_file = join("", [for k in keys(local.env) : "${k}=${local.env[k]}\n"])
+  # single-quoted, so Compose takes each value literally instead of expanding a
+  # $ in it; the precondition below keeps quotes out of the values
+  env_file = join("", [for k in keys(local.env) : "${k}='${local.env[k]}'\n"])
 }
 
 module "host" {
@@ -43,13 +48,23 @@ resource "null_resource" "deploy" {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
-    compose_hash     = filemd5("${path.module}/docker-compose.yml")
-    log_cap_hash     = filemd5("${path.module}/docker-compose.log-cap.yml")
+    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
     env_hash         = md5(local.env_file)
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
     deploy_hash      = filemd5("${path.module}/deploy.sh")
     port_guard_hash  = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
+  }
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for v in values(local.env) : !strcontains(v, "'")])
+      error_message = "A value for the gateway's .env contains a single quote, which its quoting can't hold."
+    }
+    precondition {
+      condition     = alltrue([for f in local.compose_files : fileexists("${local.compose_dir}/${f}")])
+      error_message = "COMPOSE_FILE names a file that is not in the module's compose/ directory."
+    }
   }
 
   connection {
@@ -77,14 +92,10 @@ resource "null_resource" "deploy" {
     destination = "${local.staging_dir}/compose-port-guard.py"
   }
 
+  # the trailing slash uploads the directory's contents
   provisioner "file" {
-    source      = "${path.module}/docker-compose.yml"
-    destination = "${local.staged_dir}/docker-compose.yml"
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/docker-compose.log-cap.yml"
-    destination = "${local.staged_dir}/docker-compose.log-cap.yml"
+    source      = "${local.compose_dir}/"
+    destination = local.staged_dir
   }
 
   provisioner "file" {

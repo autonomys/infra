@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Shows what has changed in autonomys/auto-files-gateway since the commit the
 # gateway role's compose file mirrors, in the files it follows: the compose files
-# and the apps' settings and migrations. Reads only.
+# and the playbook that deploys them, and the apps' settings and migrations.
+# Reads only.
 # Usage: ./upstream-diff.sh [upstream branch, tag or commit; default main]
 # Exits 1 when something has changed, like diff.
 set -euo pipefail
 
 REPO="https://github.com/autonomys/auto-files-gateway.git"
-COMPOSE_FILE="$(dirname "$0")/docker-compose.yml"
+COMPOSE_FILE="$(dirname "$0")/compose/docker-compose.yml"
 TARGET="${1:-main}"
-PATHS=(docker/file-retriever docker/object-mapping-indexer 'services/*/src/config.ts' 'services/*/migrations')
+PATHS=(docker/file-retriever docker/object-mapping-indexer ansible/auto-files-gateway-deployment.yaml .env.sample 'services/*/.env.sample' 'services/*/src/config.ts' 'services/*/migrations')
 
 mirrored="$(sed -n 's/^# upstream: \([0-9a-f]\{40\}\)$/\1/p' "$COMPOSE_FILE")"
 if [ -z "$mirrored" ]; then

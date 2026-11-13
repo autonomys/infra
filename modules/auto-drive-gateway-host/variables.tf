@@ -36,17 +36,20 @@ variable "create_object_mappings" {
 }
 
 variable "images" {
-  description = "Image reference for each service, pinned to a tag or digest"
+  description = "Image reference for each service, pinned to a tag, a digest or both"
   type = object({
     node = string
   })
 
+  # name (a registry may carry a port), then a tag, a digest or both
   validation {
     condition = alltrue([
       for image in values(var.images) :
-      can(regex("^[a-z0-9./_-]+(:[A-Za-z0-9._-]+|@sha256:[0-9a-f]{64})$", image)) && !endswith(image, ":latest")
+      can(regex("^[a-z0-9][a-z0-9._-]*(:[0-9]+)?(/[a-z0-9][a-z0-9._-]*)*(:[A-Za-z0-9_][A-Za-z0-9._-]*)?(@sha256:[0-9a-f]{64})?$", image))
+      && can(regex("(:[A-Za-z0-9_][A-Za-z0-9._-]*|@sha256:[0-9a-f]{64})$", image))
+      && !endswith(image, ":latest")
     ])
-    error_message = "Each image must be pinned to a tag other than latest, or to a digest."
+    error_message = "Each image must be pinned to a tag other than latest, a digest, or a tag and a digest."
   }
 }
 
@@ -73,8 +76,8 @@ variable "loki_url" {
   default     = "https://logging.subspace.network/loki/api/v1/push"
 
   validation {
-    condition     = can(regex("^https?://[^\"\\s]+$", var.loki_url))
-    error_message = "loki_url must be an http or https URL."
+    condition     = can(regex("^https?://[^\"'\\s]+$", var.loki_url))
+    error_message = "loki_url must be an http or https URL without quotes or spaces."
   }
 }
 
