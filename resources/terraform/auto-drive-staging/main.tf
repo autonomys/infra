@@ -40,7 +40,7 @@ module "files_gateway" {
   }
 
   network_id             = "chronos"
-  create_object_mappings = "1"
+  create_object_mappings = "yes"
 
   images = {
     node = "ghcr.io/autonomys/node:mainnet-2026-jan-20"

@@ -39,8 +39,6 @@ module "mesh" {
 }
 
 resource "null_resource" "deploy" {
-  # allow_node_restart is deliberately not a trigger: it only decides what a
-  # deploy that runs anyway may do
   triggers = {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
@@ -102,7 +100,6 @@ resource "null_resource" "deploy" {
         STAGED_DIR=${local.staged_dir} \
         PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
         PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
-        ALLOW_NODE_RESTART=${var.allow_node_restart} \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \
         bash ${local.staging_dir}/auto-drive-gateway-deploy.sh
       EOT

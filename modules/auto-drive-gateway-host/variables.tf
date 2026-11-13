@@ -93,12 +93,6 @@ variable "compose_project" {
   }
 }
 
-variable "allow_node_restart" {
-  description = "Let a deploy recreate a running node, for an image upgrade or a changed setting. The deploy refuses otherwise: a restart takes the node offline, and with create_object_mappings set to a block number it re-archives the chain from there first. Set it for that apply only."
-  type        = bool
-  default     = false
-}
-
 variable "public_tcp_ports" {
   description = "Ports the gateway may publish beyond loopback. The deploy refuses any other port published beyond loopback and the host's mesh address."
   type        = list(number)

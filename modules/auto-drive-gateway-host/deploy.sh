@@ -12,7 +12,6 @@ set -euo pipefail
 : "${PORT_GUARD:?PORT_GUARD is required}"
 PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
 PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
-ALLOW_NODE_RESTART="${ALLOW_NODE_RESTART:-false}"
 COMPOSE_FILES=(docker-compose.yml docker-compose.log-cap.yml)
 STAGED=("${COMPOSE_FILES[@]/#/$STAGED_DIR/}" "$STAGED_DIR/.env")
 
@@ -40,23 +39,6 @@ compose_in "$STAGED_DIR" config --format json --no-env-resolution \
 # before anything stops.
 echo "==> Pulling ${services[*]} if missing"
 compose_in "$STAGED_DIR" pull --policy missing
-
-# A node restart takes it offline and, with mappings from a fixed block,
-# re-archives the chain from there first, so recreating a running node has to
-# be asked for. Compose recreates a container when its config hash or its image
-# changes.
-node="$(compose_in "$STAGED_DIR" ps -aq subspace-node)"
-if [ -n "$node" ] && [ "$ALLOW_NODE_RESTART" != true ]; then
-  want_hash="$(compose_in "$STAGED_DIR" config --hash subspace-node | awk '{print $2}')"
-  have_hash="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.config-hash"}}' "$node")"
-  want_image="$(docker image inspect -f '{{.Id}}' "$(compose_in "$STAGED_DIR" config --images subspace-node)")"
-  have_image="$(docker inspect -f '{{.Image}}' "$node")"
-  if [ "$want_hash" != "$have_hash" ] || [ "$want_image" != "$have_image" ]; then
-    echo "Refusing to deploy: this would recreate subspace-node." >&2
-    echo "Set allow_node_restart = true for this apply if the restart is intended." >&2
-    exit 1
-  fi
-fi
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$DEPLOY_DIR")"
 install -d -m 0750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"

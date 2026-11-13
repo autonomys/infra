@@ -56,13 +56,21 @@ publishes bypass UFW. Both roles run the same check,
 `scripts/compose-port-guard.py`.
 
 The node runs with `--chain chronos`, `--sync full`, `--blocks-pruning archive`,
-`--state-pruning archive` and `--create-object-mappings 1`. Its RPC (9944) is
-published on loopback only. With mappings from a fixed block, every node start
-re-archives the chain from that block before it imports anything, which takes
-hours at Chronos' height; with `yes` it carries on where archiving left off. The
-deploy refuses to recreate a running node, for a new image or any change to its
-definition, unless the apply sets `allow_node_restart = true` on the module.
-Set it for that apply only.
+`--state-pruning archive` and `--create-object-mappings yes`. Its RPC (9944) is
+published on loopback only. With `yes` the node creates mappings for blocks as
+it archives them and carries on where archiving left off when it restarts, so a
+restart takes minutes. A block number there would instead re-archive the chain
+from that block on every start before importing anything, which takes hours at
+Chronos' height. Any change to the node's definition or image restarts it on the
+next apply.
+
+A host still deployed from the gateway repo's own files can move to this role
+without restarting its node, as long as the role resolves the node exactly as
+that host runs it. Compare before its first apply: the node container's
+`com.docker.compose.config-hash` label against
+`docker compose config --hash subspace-node`, run over this module's compose
+files and a `.env` holding that host's values. Any difference restarts the node
+on the first apply.
 
 Hosts deployed before the role had its own compose file still have the gateway
 repo's checkout in `~/deploy/auto-files-gateway`, with
@@ -379,10 +387,8 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 - Image tags, the gateway node's settings and the services host's sizing are in
   `main.tf`. Changing any of them re-runs that host's deploy on the next apply.
-- A change that recreates the gateway's node, a new node image among them, also
-  needs `allow_node_restart = true` on the `files_gateway` module for that apply.
-  Without it the deploy fails before touching anything. Remove it again
-  afterwards.
+- A change to the gateway node's settings or image restarts the node on that
+  apply.
 - A new Postgres or RabbitMQ major version needs its data migrated first; a
   minor or patch release only needs the tag changed.
 - A password changed in `services.auto.tfvars` takes effect on the next apply;
