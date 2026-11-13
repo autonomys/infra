@@ -1,0 +1,18 @@
+# Caps the loki driver's local copy of each container's logs, kept for
+# `docker logs` and unbounded otherwise, as on the rest of the fleet. The .env's
+# COMPOSE_FILE includes this file when the role's cap_local_logs is set.
+
+x-log-cap: &log-cap
+  logging:
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  hasura-assets: *log-cap
+  hasura: *log-cap
+  backend-worker: *log-cap
+  backend-publish-worker: *log-cap
+  backend-api: *log-cap
+  backend-download-worker: *log-cap
+  backend-download-api: *log-cap

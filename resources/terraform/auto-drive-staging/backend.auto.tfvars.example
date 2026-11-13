@@ -1,0 +1,9 @@
+hasura_admin_secret   = ""
+hasura_jwt_public_key = <<-PEM
+  -----BEGIN PUBLIC KEY-----
+  -----END PUBLIC KEY-----
+PEM
+auth_service_api_key = ""
+victoria_username    = ""
+victoria_password    = ""
+slack_webhook_url    = ""

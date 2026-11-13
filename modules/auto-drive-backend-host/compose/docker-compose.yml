@@ -1,0 +1,233 @@
+# Auto Drive's backend services, as docker-compose.prod.yml in
+# autonomys/auto-drive defines them at the commit below, with the same variable
+# names and profiles. Values come from the .env Terraform writes beside this
+# file. upstream-diff.sh in this module shows what has changed upstream since;
+# move the commit when this file catches up.
+# upstream: 99e753be67c8e4404ebbb96c25c6eac66f3a8d37
+#
+# Where it differs from upstream:
+# - ports are published on PUBLISH_ADDRESS rather than every interface
+# - Hasura's metadata and migrations come from the backend image through
+#   hasura-assets, since there is no checkout on the host to mount them from,
+#   and Hasura is recreated when DATABASE_ID says the database was recreated
+# - Hasura's image and the Loki URL are variables
+# - the rabbit profile's broker and base's New Relic agent are left out
+
+volumes:
+  files_cache: {}
+  hasura-assets: {}
+
+services:
+  # Copies Hasura's metadata, and its SQL migrations if HASURA_ASSET_DIRS names
+  # them, out of the backend image before Hasura starts
+  hasura-assets:
+    image: ${BACKEND_IMAGE:?}
+    restart: 'no'
+    command:
+      - sh
+      - -c
+      - rm -rf /hasura-assets/metadata /hasura-assets/migrations && cp -a ${HASURA_ASSET_DIRS:?} /hasura-assets/
+    volumes:
+      - hasura-assets:/hasura-assets
+    healthcheck:
+      disable: true
+    profiles:
+      - base
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+
+  # Hasura GraphQL Engine
+  hasura:
+    image: ${HASURA_IMAGE:?}
+    depends_on:
+      hasura-assets:
+        condition: service_completed_successfully
+    # it applies its metadata and migrations only when it starts, so new assets,
+    # or a database recreated empty, have to recreate it
+    labels:
+      auto-drive.hasura-assets: ${BACKEND_IMAGE:?} ${HASURA_ASSET_DIRS:?}
+      auto-drive.database-id: ${DATABASE_ID:-}
+    volumes:
+      - hasura-assets:/hasura-assets:ro
+    restart: unless-stopped
+    environment:
+      HASURA_GRAPHQL_METADATA_DIR: /hasura-assets/metadata
+      HASURA_GRAPHQL_MIGRATIONS_DIR: /hasura-assets/migrations
+
+      # Essential Environment Variables
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: ${DATABASE_URL}
+      HASURA_GRAPHQL_DATABASE_URL: ${DATABASE_URL}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+
+      # Console and Development Mode
+      HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE}
+      HASURA_GRAPHQL_DEV_MODE: 'false'
+
+      # Role and CORS Settings
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+      HASURA_GRAPHQL_CORS_DOMAIN: ${HASURA_GRAPHQL_CORS_DOMAIN}
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: 'true'
+
+      # Performance and Connection Settings
+      HASURA_GRAPHQL_MAX_CONNECTIONS: 100
+      HASURA_GRAPHQL_STRIPES: 2
+      HASURA_GRAPHQL_CONNECTIONS_PER_STRIPE: 50
+      HASURA_GRAPHQL_IDLE_TIMEOUT: 180
+      HASURA_GRAPHQL_TIMEOUT: 60
+
+      # Logging Settings
+      HASURA_GRAPHQL_LOG_LEVEL: 'warn'
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: 'startup,http-log,webhook-log,websocket-log,query-log'
+
+      # Security and Authorization
+      HASURA_GRAPHQL_ENABLE_ALLOWLIST: 'false'
+
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${HASURA_GRAPHQL_PORT}:8080'
+    command:
+      - graphql-engine
+      - serve
+    profiles:
+      - base
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+
+  backend-worker:
+    image: ${BACKEND_IMAGE:?}
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${BACKEND_WORKER_PORT}:3000'
+    volumes:
+      - files_cache:/usr/src/app/apps/backend/.cache
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    profiles:
+      - frontend
+      - frontend-worker
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+    command:
+      - yarn
+      - workspace
+      - backend
+      - start:fe:worker
+
+  # The only on-chain publisher: signing accounts' nonces are tracked in memory
+  # per process, so it must run as exactly one replica. depends_on makes Compose
+  # recreate backend-worker, which used to sign inline, before this starts.
+  backend-publish-worker:
+    image: ${BACKEND_IMAGE:?}
+    depends_on:
+      - backend-worker
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${BACKEND_PUBLISH_WORKER_PORT}:3000'
+    volumes:
+      - files_cache:/usr/src/app/apps/backend/.cache
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - frontend
+      - frontend-worker
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+    command:
+      - yarn
+      - workspace
+      - backend
+      - start:publish:worker
+
+  backend-api:
+    image: ${BACKEND_IMAGE:?}
+    volumes:
+      - files_cache:/usr/src/app/apps/backend/.cache
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${BACKEND_API_PORT}:3000'
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - frontend
+      - frontend-api
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+    command:
+      - yarn
+      - workspace
+      - backend
+      - start:fe:api
+
+  backend-download-worker:
+    image: ${BACKEND_IMAGE:?}
+    volumes:
+      - files_cache:/usr/src/app/apps/backend/.cache
+    restart: unless-stopped
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${BACKEND_DOWNLOAD_WORKER_PORT}:3000'
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    profiles:
+      - download-worker
+      - download
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+    command:
+      - yarn
+      - workspace
+      - backend
+      - start:download:worker
+
+  backend-download-api:
+    image: ${BACKEND_IMAGE:?}
+    volumes:
+      - files_cache:/usr/src/app/apps/backend/.cache
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${BACKEND_DOWNLOAD_API_PORT}:3000'
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    profiles:
+      - download-api
+      - download
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}
+    command:
+      - yarn
+      - workspace
+      - backend
+      - start:download:api

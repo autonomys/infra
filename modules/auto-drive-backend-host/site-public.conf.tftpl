@@ -1,0 +1,362 @@
+# Rendered by Terraform from modules/auto-drive-backend-host, after
+# nginx/backend.mainnet.public.conf in autonomys/auto-drive, with the hostnames,
+# ports and certificate paths as inputs.
+%{ if !tls ~}
+# Port 80 only, until the certificate exists: certbot's nginx authenticator
+# answers its challenges through these server blocks.
+
+server {
+    listen 80;
+    server_name ${join(" ", compact([app_host, s3_host, gateway_host]))};
+
+    location / {
+        return 404;
+    }
+}
+%{ else ~}
+
+limit_req_zone $binary_remote_addr zone=mylimit:10m rate=100r/s;
+limit_req_zone $binary_remote_addr zone=hasuralimit:10m rate=50r/s;
+limit_conn_zone $binary_remote_addr zone=addr:10m;
+# Separate from `addr`: limit_conn counts per zone and key, so S3 requests in the
+# shared zone would count against the lower limits on /api, /file and /hasura.
+limit_conn_zone $binary_remote_addr zone=s3addr:10m;
+limit_req_status 429;
+
+# First on 443, so it also answers HTTPS for any name without a 443 server of
+# its own, as production's does for its gateway alias
+server {
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name ${app_host};
+
+    location /hasura {
+        limit_req zone=hasuralimit burst=20 delay=10;
+        limit_conn addr 2;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${hasura_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+        rewrite /hasura/(.*) /$1  break;
+    }
+
+    location /api {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+        rewrite /api/(.*) /$1  break;
+    }
+
+    location /s3 {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_status 503;
+        limit_req_log_level warn;
+
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Prefix /s3;
+
+        proxy_read_timeout 600;
+        proxy_send_timeout 600;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, HEAD, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-MD5,x-amz-content-sha256,x-amz-date,x-amz-security-token,x-amz-user-agent,x-amz-decoded-content-length,x-amz-checksum-crc64nvme,x-amz-trailer' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range,ETag,x-amz-meta-cid,x-amz-request-id,x-amz-id-2' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, HEAD, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-MD5,x-amz-content-sha256,x-amz-date,x-amz-security-token,x-amz-user-agent,x-amz-decoded-content-length,x-amz-checksum-crc64nvme,x-amz-trailer' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+    }
+
+    location /file {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        rewrite ^/file/(.*)$ /downloads/$1?ignoreEncoding=false break;
+    }
+
+    location /folder {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        rewrite /folder/(.*) /downloads/$1?ignoreEncoding=false break;
+    }
+
+    location / {
+%{ if root_redirect_url != null ~}
+        return 301 ${root_redirect_url}$request_uri;
+%{ else ~}
+        return 404;
+%{ endif ~}
+    }
+
+    listen 443 ssl http2;
+    ssl_certificate /etc/letsencrypt/live/${cert_name}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${cert_name}/privkey.pem;
+}
+%{ if s3_host != null ~}
+
+# Serves S3 at the root of its own name, mapped onto the backend's /s3 mount. Not
+# a redirect from the /s3 path: S3 clients sign the Host header and path, so a
+# redirect to another host would break their signatures.
+server {
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name ${s3_host};
+
+    # S3 returns object bytes verbatim, and nginx's gzip filter would weaken the
+    # ETag to W/"<md5>" and drop Content-Length and Accept-Ranges.
+    gzip off;
+
+    # The AWS SDK retries 500/502/503/504 but not 429.
+    limit_req_status 503;
+
+    location / {
+        limit_req zone=mylimit burst=200 nodelay;
+        # HTTP/1.1 S3 clients open a connection per parallel request; aws-cli
+        # and boto3 default to 10.
+        limit_conn s3addr 64;
+        limit_req_log_level warn;
+
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        # nginx drops empty-valued headers, so the empty public prefix is sent as
+        # "/", which the backend normalizes to ""
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Prefix /;
+
+        proxy_read_timeout 600;
+        proxy_send_timeout 600;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, HEAD, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-MD5,x-amz-content-sha256,x-amz-date,x-amz-security-token,x-amz-user-agent,x-amz-decoded-content-length,x-amz-checksum-crc64nvme,x-amz-trailer' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range,ETag,x-amz-meta-cid,x-amz-request-id,x-amz-id-2' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, HEAD, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-MD5,x-amz-content-sha256,x-amz-date,x-amz-security-token,x-amz-user-agent,x-amz-decoded-content-length,x-amz-checksum-crc64nvme,x-amz-trailer' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        rewrite "(?s)^/(.*)$" /s3/$1 break;
+    }
+
+    listen 443 ssl http2;
+    ssl_certificate /etc/letsencrypt/live/${cert_name}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${cert_name}/privkey.pem;
+}
+
+server {
+    if ($host = ${s3_host}) {
+        return 301 https://$host$request_uri;
+    }
+
+    server_name ${s3_host};
+    listen 80;
+    return 404;
+}
+%{ endif ~}
+%{ if gateway_host != null ~}
+
+# The download alias. Plain HTTP only, as in production: with Cloudflare's
+# Full mode, HTTPS requests for it reach the first 443 server above.
+server {
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name ${gateway_host};
+
+    location /file {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        rewrite /file/(.*) /downloads/$1  break;
+    }
+
+    location /folder {
+        limit_req zone=mylimit burst=200 nodelay;
+        limit_conn addr 5;
+        limit_req_log_level warn;
+
+        proxy_buffering off;
+        proxy_pass http://${upstream}:${api_port};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Auth-Provider,X-Auto-Sdk-Version' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        rewrite /folder/(.*) /downloads/$1  break;
+    }
+
+    location / {
+%{ if root_redirect_url != null ~}
+        return 301 ${root_redirect_url}$request_uri;
+%{ else ~}
+        return 404;
+%{ endif ~}
+    }
+
+    listen 80;
+}
+%{ endif ~}
+
+server {
+    if ($host = ${app_host}) {
+        return 301 https://$host$request_uri;
+    }
+
+    server_name ${app_host};
+    listen 80;
+    return 404;
+}
+%{ endif ~}
