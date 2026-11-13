@@ -1,29 +1,27 @@
 locals {
   staging_dir = module.host.staging_dir
-  # the gateway repo's deploy playbook uses the same paths
-  deploy_dir = "/home/${var.deployer.ssh_user}/deploy"
+  staged_dir  = "${local.staging_dir}/auto-drive-gateway"
+  deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-gateway"
 
-  # variable names are the ones the gateway's compose files and its Infisical
-  # folders already use
-  gateway_env = merge(var.settings, {
-    NODE_DOCKER_TAG                   = var.images.node
-    GATEWAY_DOCKER_TAG                = var.images.gateway
-    FILE_RETRIEVER_DOCKER_TAG         = var.images.file_retriever
-    OBJECT_MAPPING_INDEXER_DOCKER_TAG = var.images.object_mapping_indexer
-    NETWORK_ID                        = var.network_id
-    BLOCK_NUMBER_TO_START_FROM        = var.object_mapping_start_block
-  })
-  gateway_env_file = join("", [for k in sort(keys(local.gateway_env)) : "${k}=${local.gateway_env[k]}\n"])
+  # every .yml in compose/ is uploaded and installed, and only those count
+  # towards the trigger; COMPOSE_FILE picks the ones in use
+  compose_dir   = "${path.module}/compose"
+  compose_files = concat(["docker-compose.yml"], var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [])
 
-  # Upstream gives these services the loki driver with only loki-url, and the
-  # driver's local copy for `docker logs` then grows without limit. Same cap as
-  # the rest of the fleet. Every gateway service is listed so one started as a
-  # dependency is capped too.
-  log_cap_override = yamlencode({
-    services = { for s in ["subspace-node", "subspace-rpc-gateway", "file-retriever", "object-mapping-app"] : s => {
-      logging = { options = { "max-size" = "10m", "max-file" = "3" } }
-    } }
-  })
+  # Compose reads this from the deploy directory, so `docker compose` run there
+  # by hand sees the same project, files and values as the deploy
+  env = {
+    COMPOSE_PROJECT_NAME       = var.compose_project
+    COMPOSE_FILE               = join(":", local.compose_files)
+    NODE_DOCKER_TAG            = var.images.node
+    NETWORK_ID                 = var.network_id
+    BLOCK_NUMBER_TO_START_FROM = var.create_object_mappings
+    RUST_LOG_NODE              = var.node_rust_log
+    LOKI_URL                   = var.loki_url
+  }
+  # single-quoted, so Compose takes each value literally instead of expanding a
+  # $ in it; the precondition below keeps quotes out of the values
+  env_file = join("", [for k in keys(local.env) : "${k}='${local.env[k]}'\n"])
 }
 
 module "host" {
@@ -50,18 +48,23 @@ resource "null_resource" "deploy" {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
-    gateway_repo     = var.gateway_repo
-    gateway_repo_ref = var.gateway_repo_ref
-    env_hash         = md5(local.gateway_env_file)
-    services         = join(" ", var.services)
-    compose_files    = join(" ", var.compose_files)
-    compose_project  = var.compose_project
-    compose_profiles = join(" ", var.compose_profiles)
+    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
+    env_hash         = md5(local.env_file)
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
-    log_cap_hash     = md5(local.log_cap_override)
     deploy_hash      = filemd5("${path.module}/deploy.sh")
     port_guard_hash  = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
+  }
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for v in values(local.env) : !strcontains(v, "'")])
+      error_message = "A value for the gateway's .env contains a single quote, which its quoting can't hold."
+    }
+    precondition {
+      condition     = alltrue([for f in local.compose_files : fileexists("${local.compose_dir}/${f}")])
+      error_message = "COMPOSE_FILE names a file that is not in the module's compose/ directory."
+    }
   }
 
   connection {
@@ -73,14 +76,10 @@ resource "null_resource" "deploy" {
     timeout        = "300s"
   }
 
-  provisioner "file" {
-    content     = local.gateway_env_file
-    destination = "${local.staging_dir}/auto-files-gateway.env"
-  }
-
-  provisioner "file" {
-    content     = local.log_cap_override
-    destination = "${local.staging_dir}/auto-files-gateway.override.yml"
+  # Only the deploy user can read it, since provisioners can't set a file's
+  # mode; deploy.sh empties it however it ends.
+  provisioner "remote-exec" {
+    inline = ["install -d -m 0700 ${local.staged_dir}"]
   }
 
   provisioner "file" {
@@ -93,19 +92,23 @@ resource "null_resource" "deploy" {
     destination = "${local.staging_dir}/compose-port-guard.py"
   }
 
+  # the trailing slash uploads the directory's contents
+  provisioner "file" {
+    source      = "${local.compose_dir}/"
+    destination = local.staged_dir
+  }
+
+  provisioner "file" {
+    content     = local.env_file
+    destination = "${local.staged_dir}/.env"
+  }
+
   provisioner "remote-exec" {
     inline = [
       <<-EOT
       sudo DEPLOY_USER=${var.deployer.ssh_user} \
         DEPLOY_DIR=${local.deploy_dir} \
-        GATEWAY_REPO=${var.gateway_repo} \
-        GATEWAY_REPO_REF=${var.gateway_repo_ref} \
-        GATEWAY_ENV_SRC=${local.staging_dir}/auto-files-gateway.env \
-        GATEWAY_OVERRIDE_SRC=${local.staging_dir}/auto-files-gateway.override.yml \
-        COMPOSE_PROJECT=${var.compose_project} \
-        COMPOSE_FILES='${join(" ", var.compose_files)}' \
-        COMPOSE_PROFILES='${join(" ", var.compose_profiles)}' \
-        SERVICES='${join(" ", var.services)}' \
+        STAGED_DIR=${local.staged_dir} \
         PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
         PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \

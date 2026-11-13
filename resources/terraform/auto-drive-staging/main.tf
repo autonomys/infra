@@ -39,21 +39,12 @@ module "files_gateway" {
     hostname = "auto-drive-files-gateway-chronos"
   }
 
-  network_id                 = "chronos"
-  object_mapping_start_block = "1"
+  network_id             = "chronos"
+  create_object_mappings = "yes"
 
-  # autonomys/auto-files-gateway main as of 2026-11-09
-  gateway_repo_ref = "7c5093bd26c399e7e6f484cfc9e27b59f2ea04a2"
-
-  # file_retriever and object_mapping_indexer are not started yet
   images = {
-    node                   = "ghcr.io/autonomys/node:mainnet-2026-jan-20"
-    gateway                = "ghcr.io/autonomys/gateway:mainnet-2026-oct-22"
-    file_retriever         = "ghcr.io/autonomys/file-retriever:latest"
-    object_mapping_indexer = "ghcr.io/autonomys/object-mapping-indexer:latest"
+    node = "ghcr.io/autonomys/node:mainnet-2026-jan-20"
   }
-
-  services = ["subspace-node"]
 
   mesh = local.mesh["files-gateway"]
 }
