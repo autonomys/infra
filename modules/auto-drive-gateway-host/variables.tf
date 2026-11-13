@@ -25,13 +25,13 @@ variable "network_id" {
   }
 }
 
-variable "object_mapping_start_block" {
-  description = "Value for the node's --create-object-mappings. Every node start re-archives from this block."
+variable "create_object_mappings" {
+  description = "The node's --create-object-mappings. yes creates mappings as blocks are archived and carries on across restarts. A block number creates them from that block, and every node start then re-archives the chain from it, which takes hours on a long chain."
   type        = string
 
   validation {
-    condition     = can(regex("^[0-9]+$", var.object_mapping_start_block))
-    error_message = "object_mapping_start_block must be a block number."
+    condition     = can(regex("^(yes|[1-9][0-9]*)$", var.create_object_mappings))
+    error_message = "create_object_mappings must be yes or a block number above 0."
   }
 }
 
@@ -50,18 +50,21 @@ variable "images" {
   }
 }
 
-variable "node" {
-  description = "Node settings that differ between environments: its name on the network and its RUST_LOG"
-  type = object({
-    name     = optional(string, "object-mapping-node")
-    rust_log = optional(string, "info")
-  })
-  default = {}
+variable "node_rust_log" {
+  description = "The node's RUST_LOG"
+  type        = string
+  default     = "info"
 
   validation {
-    condition     = can(regex("^[A-Za-z0-9._-]+$", var.node.name)) && can(regex("^[A-Za-z0-9_=,:./-]+$", var.node.rust_log))
-    error_message = "node.name may hold letters, digits, dots, dashes and underscores; node.rust_log must be a RUST_LOG filter such as info or info,sub-libp2p=debug."
+    condition     = can(regex("^[A-Za-z0-9_=,:./-]+$", var.node_rust_log))
+    error_message = "node_rust_log must be a RUST_LOG filter such as info or info,sub-libp2p=debug."
   }
+}
+
+variable "cap_local_logs" {
+  description = "Cap the loki driver's local copy of the containers' logs at 10m x 3, as on the rest of the fleet. Turning it on or off recreates the node."
+  type        = bool
+  default     = true
 }
 
 variable "loki_url" {
@@ -91,7 +94,7 @@ variable "compose_project" {
 }
 
 variable "allow_node_restart" {
-  description = "Let a deploy recreate a running node, for an image upgrade or a changed setting. The deploy refuses otherwise, since every node start re-archives from object_mapping_start_block. Set it for that apply only."
+  description = "Let a deploy recreate a running node, for an image upgrade or a changed setting. The deploy refuses otherwise: a restart takes the node offline, and with create_object_mappings set to a block number it re-archives the chain from there first. Set it for that apply only."
   type        = bool
   default     = false
 }

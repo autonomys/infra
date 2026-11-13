@@ -39,8 +39,8 @@ module "files_gateway" {
     hostname = "auto-drive-files-gateway-chronos"
   }
 
-  network_id                 = "chronos"
-  object_mapping_start_block = "1"
+  network_id             = "chronos"
+  create_object_mappings = "1"
 
   images = {
     node = "ghcr.io/autonomys/node:mainnet-2026-jan-20"

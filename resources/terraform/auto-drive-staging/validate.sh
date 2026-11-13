@@ -249,10 +249,12 @@ files_gateway_checks() {
   local first second
   echo ""
   echo "[Gateway deploy]"
-  check "Compose file in place" "stat -c '%a %U' $GATEWAY_DIR/docker-compose.yml" "644 ubuntu"
-  # the running node's config hash is the file's: no change is waiting on a restart
-  check "Node matches the compose file" \
-    "[ \"\$(sudo docker compose -p $COMPOSE_PROJECT -f $GATEWAY_DIR/docker-compose.yml config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
+  check "Compose files and .env in place" \
+    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.log-cap.yml .env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu"
+  # the running node's config hash is the files': no change is waiting on a restart
+  check "Node matches the compose files" \
+    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
     "match"
   check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
   check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
@@ -265,6 +267,9 @@ files_gateway_checks() {
   check "Node logs ship through the loki driver" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $NODE" \
     "loki https://logging.subspace.network/loki/api/v1/push"
+  check "Node's local log copy capped" \
+    "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $NODE" \
+    "10m 3"
   check "No loki driver push errors in the last hour" \
     "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
   check "Node RPC answers on loopback" \

@@ -21,25 +21,33 @@ the ones a role needs, from this project's tfvars.
 
 ## The gateway role
 
-`modules/auto-drive-gateway-host` deploys from its own compose template,
-`docker-compose.yml.tftpl`. The template mirrors the services in the compose
-files of
+`modules/auto-drive-gateway-host` deploys from its own compose file,
+`docker-compose.yml`. It defines the services as the compose files of
 [autonomys/auto-files-gateway](https://github.com/autonomys/auto-files-gateway)
-at the commit named in its header. `upstream-diff.sh` in the module shows what
-has changed there since, so the template can be brought up to date and the
-commit moved:
+do at the commit named in its header, with the same variable names, so the two
+can be compared side by side. `upstream-diff.sh` in the module shows what has
+changed there since, so the file can be brought up to date and the commit
+moved:
 
 ```bash
 ./modules/auto-drive-gateway-host/upstream-diff.sh
 ```
 
-Terraform renders the template from the role's inputs: the node image, the
-chain, the object-mapping start block, the node's name and log level, and the
-Loki URL. It writes the result to `~/deploy/auto-drive-gateway/docker-compose.yml`
-and re-runs the deploy whenever it changes. The Compose project is
-`file-retriever`, the name the gateway repo's own deploy playbook ends up with,
-so a host deployed by that playbook keeps its volumes, the node's chain data
-among them.
+Terraform writes the values to a `.env` beside the file: the node image, the
+chain, the object-mapping setting, the node's log level and the Loki URL. The
+`.env` also names the Compose project, `file-retriever`, and the files to use.
+`docker-compose.log-cap.yml` caps the loki driver's local copy of the logs as on
+the rest of the fleet, and is included unless the module's `cap_local_logs` is
+off. Everything lands in `~/deploy/auto-drive-gateway/`, so on the host
+
+```bash
+cd ~/deploy/auto-drive-gateway && docker compose ps
+```
+
+sees what the deploy sees. The deploy re-runs whenever a file or a value
+changes. The project name is the one the gateway repo's own deploy playbook ends
+up with, so a host deployed by that playbook keeps its volumes, the node's chain
+data among them.
 
 Before starting anything, the deploy resolves the compose model and refuses to
 continue if a service would publish a port beyond `127.0.0.1` and the host's
@@ -49,20 +57,21 @@ publishes bypass UFW. Both roles run the same check,
 
 The node runs with `--chain chronos`, `--sync full`, `--blocks-pruning archive`,
 `--state-pruning archive` and `--create-object-mappings 1`. Its RPC (9944) is
-published on loopback only. Every time the node starts, it re-archives the chain
-from the object-mapping start block before it imports anything, which takes
-hours at Chronos' height. So the deploy also refuses to recreate a running node,
-for a new image or any change to its definition, unless the apply sets
-`allow_node_restart = true` on the module. Set it for that apply only.
+published on loopback only. With mappings from a fixed block, every node start
+re-archives the chain from that block before it imports anything, which takes
+hours at Chronos' height; with `yes` it carries on where archiving left off. The
+deploy refuses to recreate a running node, for a new image or any change to its
+definition, unless the apply sets `allow_node_restart = true` on the module.
+Set it for that apply only.
 
-Hosts deployed before the template existed still have the gateway repo's
-checkout in `~/deploy/auto-files-gateway`, with `~/deploy/auto-files-gateway.env`
-and `~/deploy/auto-files-gateway.override.yml`. Nothing reads them any more; they
-can be removed by hand.
+Hosts deployed before the role had its own compose file still have the gateway
+repo's checkout in `~/deploy/auto-files-gateway`, with
+`~/deploy/auto-files-gateway.env` and `~/deploy/auto-files-gateway.override.yml`.
+Nothing reads them any more; they can be removed by hand.
 
 ### Not yet
 
-Defined in the gateway repo but not in the template yet:
+Defined in the gateway repo but not in the role's compose file yet:
 
 - `subspace-rpc-gateway`, `file-retriever`, `object-mapping-app`: they need the
   services host's database and secrets from this project's tfvars
@@ -326,7 +335,7 @@ the peers are exactly the other members and each answers a ping over the mesh,
 that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
 the `DOCKER-USER` rule.
 
-On the gateway it then checks that the running node matches the compose file,
+On the gateway it then checks that the running node matches the compose files,
 the node's image, flags, health, peers and log driver, and samples its sync state a minute apart to show whether it is
 importing blocks. On the services host it checks that Postgres and RabbitMQ are
 healthy, their images, limits, volumes, log driver and listeners, that the

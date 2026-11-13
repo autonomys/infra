@@ -3,14 +3,20 @@ locals {
   staged_dir  = "${local.staging_dir}/auto-drive-gateway"
   deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-gateway"
 
-  compose_file = templatefile("${path.module}/docker-compose.yml.tftpl", {
-    node_image                 = var.images.node
-    node_name                  = var.node.name
-    node_rust_log              = var.node.rust_log
-    network_id                 = var.network_id
-    object_mapping_start_block = var.object_mapping_start_block
-    loki_url                   = var.loki_url
-  })
+  compose_files = concat(["docker-compose.yml"], var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [])
+
+  # Compose reads this from the deploy directory, so `docker compose` run there
+  # by hand sees the same project, files and values as the deploy
+  env = {
+    COMPOSE_PROJECT_NAME       = var.compose_project
+    COMPOSE_FILE               = join(":", local.compose_files)
+    NODE_DOCKER_TAG            = var.images.node
+    NETWORK_ID                 = var.network_id
+    BLOCK_NUMBER_TO_START_FROM = var.create_object_mappings
+    RUST_LOG_NODE              = var.node_rust_log
+    LOKI_URL                   = var.loki_url
+  }
+  env_file = join("", [for k in keys(local.env) : "${k}=${local.env[k]}\n"])
 }
 
 module "host" {
@@ -39,8 +45,9 @@ resource "null_resource" "deploy" {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
-    compose_hash     = md5(local.compose_file)
-    compose_project  = var.compose_project
+    compose_hash     = filemd5("${path.module}/docker-compose.yml")
+    log_cap_hash     = filemd5("${path.module}/docker-compose.log-cap.yml")
+    env_hash         = md5(local.env_file)
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
     deploy_hash      = filemd5("${path.module}/deploy.sh")
@@ -73,8 +80,18 @@ resource "null_resource" "deploy" {
   }
 
   provisioner "file" {
-    content     = local.compose_file
-    destination = "${local.staged_dir}/compose.yml"
+    source      = "${path.module}/docker-compose.yml"
+    destination = "${local.staged_dir}/docker-compose.yml"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/docker-compose.log-cap.yml"
+    destination = "${local.staged_dir}/docker-compose.log-cap.yml"
+  }
+
+  provisioner "file" {
+    content     = local.env_file
+    destination = "${local.staged_dir}/.env"
   }
 
   provisioner "remote-exec" {
@@ -83,7 +100,6 @@ resource "null_resource" "deploy" {
       sudo DEPLOY_USER=${var.deployer.ssh_user} \
         DEPLOY_DIR=${local.deploy_dir} \
         STAGED_DIR=${local.staged_dir} \
-        COMPOSE_PROJECT=${var.compose_project} \
         PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
         PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
         ALLOW_NODE_RESTART=${var.allow_node_restart} \
