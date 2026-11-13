@@ -31,15 +31,26 @@ variable "mesh" {
 }
 
 variable "images" {
-  description = "Image references for Postgres and RabbitMQ. Changing a major version needs a data migration first."
+  description = "Image references for Postgres and RabbitMQ, each pinned to a tag, a digest or both. Changing a major version needs a data migration first."
   type = object({
     postgres = string
     rabbitmq = string
   })
+
+  # name (a registry may carry a port), then a tag, a digest or both
+  validation {
+    condition = alltrue([
+      for image in values(var.images) :
+      can(regex("^[a-z0-9][a-z0-9._-]*(:[0-9]+)?(/[a-z0-9][a-z0-9._-]*)*(:[A-Za-z0-9_][A-Za-z0-9._-]*)?(@sha256:[0-9a-f]{64})?$", image))
+      && can(regex("(:[A-Za-z0-9_][A-Za-z0-9._-]*|@sha256:[0-9a-f]{64})$", image))
+      && !can(regex(":latest(@|$)", image))
+    ])
+    error_message = "Each image must be pinned to a tag other than latest, a digest, or a tag and a digest."
+  }
 }
 
 variable "postgres" {
-  description = "Postgres sizing and the databases to create besides postgres. settings are passed to the server as -c name=value."
+  description = "Postgres sizing and the databases to create besides postgres. settings sets the server parameters compose/docker-compose.yml passes as -c name=value, each of them and no others."
   type = object({
     databases        = list(string)
     memory_limit_gib = number
@@ -59,6 +70,14 @@ variable "postgres" {
       for k, v in var.postgres.settings : can(regex("^[a-z_]+$", k)) && can(regex("^[A-Za-z0-9._]+$", v))
     ])
     error_message = "postgres.settings names must be lowercase Postgres parameter names and values plain words or numbers."
+  }
+
+  validation {
+    condition = toset(keys(var.postgres.settings)) == toset([
+      "effective_cache_size", "effective_io_concurrency", "maintenance_work_mem", "max_connections",
+      "max_wal_size", "random_page_cost", "shared_buffers", "work_mem",
+    ])
+    error_message = "postgres.settings must set exactly the parameters compose/docker-compose.yml passes as -c; add a new one there first."
   }
 }
 
@@ -105,6 +124,11 @@ variable "loki_url" {
   description = "Loki push endpoint the containers' logs ship to"
   type        = string
   default     = "https://logging.subspace.network/loki/api/v1/push"
+
+  validation {
+    condition     = can(regex("^https?://[^\\s'\"$]+$", var.loki_url))
+    error_message = "loki_url must be an http or https URL."
+  }
 }
 
 variable "peer_rules" {

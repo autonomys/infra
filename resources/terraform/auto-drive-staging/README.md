@@ -99,9 +99,22 @@ Defined in the gateway repo but not in the role's compose file yet:
 ## The services role
 
 `modules/auto-drive-services-host` runs Postgres 17.9 and RabbitMQ 3.13, the
-versions production runs, from a compose file kept in the module. Their data
-lives in named volumes, and their logs ship through the loki driver in
-non-blocking mode, so an unreachable Loki can't stall either service.
+versions production runs, from its own compose file,
+`compose/docker-compose.yml`. Terraform writes the values to a `.env` beside it,
+each in single quotes so Compose takes it literally: the images, the mesh
+address, the memory limits, Postgres's `shm_size` and settings, and the Loki
+URL. The `.env` also names the Compose project, `auto-drive-services`, and the
+file to use. Terraform also writes `rabbitmq.conf`, which tells the broker its
+memory limit. All of them land in `~/deploy/auto-drive-services/`, so on the
+host
+
+```bash
+cd ~/deploy/auto-drive-services && docker compose ps
+```
+
+sees what the deploy sees. Their data lives in named volumes, and their logs
+ship through the loki driver in non-blocking mode, so an unreachable Loki can't
+stall either service.
 
 | Service             | Port  | Published on                             |
 | ------------------- | ----- | ---------------------------------------- |
@@ -124,17 +137,23 @@ created when the broker first starts; changing the name later needs a fresh
 broker volume.
 
 The passwords come from this project's `services.auto.tfvars` in Infisical.
-Terraform writes them to owner-only env files in `~/deploy/auto-drive-services/`
-and keeps only their hashes in state. Each image applies its password only when
-its data is first created, so every deploy sets both again from the containers'
-own environment, and a password changed in tfvars takes effect on the next apply.
+Terraform writes them to owner-only env files beside the compose file,
+`postgres.env` and `rabbitmq.env`, never to the `.env`, and keeps only their
+hashes in state. Each image applies its password only when its data is first
+created, so every deploy sets both again from the containers' own environment,
+and a password changed in tfvars takes effect on the next apply.
 
-The deploy runs the same published-port check as the gateway, refuses to start
-if the mesh address isn't on the host, and fails the apply unless both services
-turn healthy within 300 seconds and stay healthy, without restarting, for 30
-seconds more.
+The deploy checks the uploaded files before they replace the ones in use: it
+runs the same published-port check as the gateway and refuses to continue if
+the mesh address isn't on the host. It then fails the apply unless both
+services turn healthy within 300 seconds and stay healthy, without restarting,
+for 30 seconds more.
 
 ### Sizing
+
+Each Postgres setting is a variable in `compose/docker-compose.yml`, and the
+module accepts exactly those. A new setting goes into the compose file and the
+module's check on `postgres.settings` before `main.tf` can set it.
 
 For a 64 GB box, set in `main.tf`:
 
@@ -491,7 +510,9 @@ Then record the key, plan and apply in full.
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
 ```
 
-Every check only reads, and none reads a private key or a password. It covers
+Every check only reads, and none prints a private key or a password. The
+services and public hosts' compose hash checks have Compose read their env
+files, to hash them as the deploy does. It covers
 what `terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both
 members active and in sync, GRUB boot code on both disks, SSH hardening, the
 firewall, that nothing but the role's ports listens beyond loopback and the mesh
@@ -503,8 +524,9 @@ the `DOCKER-USER` rule.
 
 On the gateway it then checks that the running node matches the compose files,
 the node's image, flags, health, peers and log driver, and samples its sync state a minute apart to show whether it is
-importing blocks. On the services host it checks that Postgres and RabbitMQ are
-healthy, their images, limits, volumes, log driver and listeners, that the
+importing blocks. On the services host it checks that Postgres and RabbitMQ
+match the compose files and are healthy, their images, limits, stop timeouts,
+volumes, log driver and listeners, that the
 databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
 to its limit, and that it has no `guest` user. On the public backend it checks
 that the migrations ran with the deployed image and Hasura's assets came from it,
@@ -553,7 +575,8 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 - Image tags, the gateway node's settings and the services host's sizing are in
   `main.tf`. Changing any of them re-runs that host's deploy on the next apply.
 - A change to the gateway node's settings or image restarts the node on that
-  apply.
+  apply. A change to the services host's images, sizing or Postgres settings
+  recreates the service it belongs to on that apply.
 - A new Postgres or RabbitMQ major version needs its data migrated first; a
   minor or patch release only needs the tag changed.
 - A password changed in `services.auto.tfvars` takes effect on the next apply;
