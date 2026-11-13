@@ -14,3 +14,8 @@ output "mesh_address" {
   description = "Where the other mesh members reach Postgres (5432) and RabbitMQ (5672)"
   value       = var.mesh.address
 }
+
+output "deploy_id" {
+  description = "Changes whenever the deploy runs, which sets the Postgres and RabbitMQ passwords; a host that connects with them orders its own deploy after it"
+  value       = null_resource.deploy.id
+}

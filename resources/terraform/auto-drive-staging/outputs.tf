@@ -17,3 +17,18 @@ output "services_hostname" {
   value       = module.services.hostname
   description = "Hostname of the Auto Drive staging services host"
 }
+
+output "public_hostname" {
+  value       = module.public.hostname
+  description = "Hostname of the Auto Drive staging public backend host"
+}
+
+output "public_services" {
+  value       = module.public.services
+  description = "Services on the public backend host, with the loopback port each is published on"
+}
+
+output "public_hostnames" {
+  value       = module.public.hostnames
+  description = "Names the public backend host's nginx serves"
+}
