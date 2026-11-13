@@ -21,21 +21,25 @@ the ones a role needs, from this project's tfvars.
 
 ## The gateway role
 
-`modules/auto-drive-gateway-host` deploys from the compose files in
-[autonomys/auto-files-gateway](https://github.com/autonomys/auto-files-gateway),
-checked out on the host at the commit pinned in `main.tf`. It does not keep its
-own copy. It passes the files in the same order and under the same Compose
-project name as that repo's own deploy playbook, so volume names match.
+`modules/auto-drive-gateway-host` deploys from its own compose template,
+`docker-compose.yml.tftpl`. The template mirrors the services in the compose
+files of
+[autonomys/auto-files-gateway](https://github.com/autonomys/auto-files-gateway)
+at the commit named in its header. `upstream-diff.sh` in the module shows what
+has changed there since, so the template can be brought up to date and the
+commit moved:
 
-Image references, the chain, the object-mapping start block and the list of
-services to start are inputs. Terraform writes them to
-`~/deploy/auto-files-gateway.env` and re-runs the deploy whenever any of them,
-the pinned commit, or the deploy script changes. A `~/deploy/.env` is also read
-when present, for the services that need secrets; the node needs none. Nothing
-writes it yet. The gateway repo's own playbook fetches it with the Infisical CLI
-on the host, but these hosts never fetch secrets themselves: when a service that
-needs them is started here, Terraform will write them from this project's tfvars,
-as it does for the services host.
+```bash
+./modules/auto-drive-gateway-host/upstream-diff.sh
+```
+
+Terraform renders the template from the role's inputs: the node image, the
+chain, the object-mapping start block, the node's name and log level, and the
+Loki URL. It writes the result to `~/deploy/auto-drive-gateway/docker-compose.yml`
+and re-runs the deploy whenever it changes. The Compose project is
+`file-retriever`, the name the gateway repo's own deploy playbook ends up with,
+so a host deployed by that playbook keeps its volumes, the node's chain data
+among them.
 
 Before starting anything, the deploy resolves the compose model and refuses to
 continue if a service would publish a port beyond `127.0.0.1` and the host's
@@ -43,23 +47,31 @@ mesh address, other than the node's P2P ports 30333 and 30433. Ports Docker
 publishes bypass UFW. Both roles run the same check,
 `scripts/compose-port-guard.py`.
 
-The node runs as the gateway repo defines it, with `--chain chronos`,
-`--sync full`, `--blocks-pruning archive`, `--state-pruning archive` and
-`--create-object-mappings 1`. Its RPC (9944) is published on loopback only.
+The node runs with `--chain chronos`, `--sync full`, `--blocks-pruning archive`,
+`--state-pruning archive` and `--create-object-mappings 1`. Its RPC (9944) is
+published on loopback only. Every time the node starts, it re-archives the chain
+from the object-mapping start block before it imports anything, which takes
+hours at Chronos' height. So the deploy also refuses to recreate a running node,
+for a new image or any change to its definition, unless the apply sets
+`allow_node_restart = true` on the module. Set it for that apply only.
+
+Hosts deployed before the template existed still have the gateway repo's
+checkout in `~/deploy/auto-files-gateway`, with `~/deploy/auto-files-gateway.env`
+and `~/deploy/auto-files-gateway.override.yml`. Nothing reads them any more; they
+can be removed by hand.
 
 ### Not yet
 
-Defined in the gateway repo but not started by this pass:
+Defined in the gateway repo but not in the template yet:
 
-- `subspace-rpc-gateway`, `file-retriever`, `object-mapping-app`: they need a
-  database, and their compose definitions publish ports beyond loopback, which
-  the deploy's port check rejects until that changes upstream
+- `subspace-rpc-gateway`, `file-retriever`, `object-mapping-app`: they need the
+  services host's database and secrets from this project's tfvars
 - the DAG indexer (`docker/dag-indexer`)
 - metrics agents: the fleet host agent comes later from its own module. Its
   ports 8430, 9100 and 9633 on loopback are left free, and no node_exporter runs
   here
-- node Prometheus metrics on 127.0.0.1:9615: upstream's node command does not
-  pass `--prometheus-listen-on` and its compose file does not publish 9615
+- node Prometheus metrics on 127.0.0.1:9615: adding `--prometheus-listen-on`
+  changes the node's command, so it waits for the node's next planned restart
 
 ## The services role
 
@@ -314,8 +326,8 @@ the peers are exactly the other members and each answers a ping over the mesh,
 that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
 the `DOCKER-USER` rule.
 
-On the gateway it then checks the node's image, flags, health, peers and log
-driver, and samples its sync state a minute apart to show whether it is
+On the gateway it then checks that the running node matches the compose file,
+the node's image, flags, health, peers and log driver, and samples its sync state a minute apart to show whether it is
 importing blocks. On the services host it checks that Postgres and RabbitMQ are
 healthy, their images, limits, volumes, log driver and listeners, that the
 databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
@@ -356,11 +368,12 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 ## Changing what runs
 
-- Image tags, the pinned gateway commit, the gateway's service list and the
-  services host's sizing are in `main.tf`. Changing any of them re-runs that
-  host's deploy on the next apply.
-- Services removed from the gateway's `services` are not stopped; stop their
-  containers by hand.
+- Image tags, the gateway node's settings and the services host's sizing are in
+  `main.tf`. Changing any of them re-runs that host's deploy on the next apply.
+- A change that recreates the gateway's node, a new node image among them, also
+  needs `allow_node_restart = true` on the `files_gateway` module for that apply.
+  Without it the deploy fails before touching anything. Remove it again
+  afterwards.
 - A new Postgres or RabbitMQ major version needs its data migrated first; a
   minor or patch release only needs the tag changed.
 - A password changed in `services.auto.tfvars` takes effect on the next apply;

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Shows what has changed in autonomys/auto-files-gateway since the commit the
+# compose template mirrors, in the files the template follows: the compose files
+# and the apps' settings and migrations. Reads only.
+# Usage: ./upstream-diff.sh [upstream branch, tag or commit; default main]
+# Exits 1 when something has changed, like diff.
+set -euo pipefail
+
+REPO="https://github.com/autonomys/auto-files-gateway.git"
+TEMPLATE="$(dirname "$0")/docker-compose.yml.tftpl"
+TARGET="${1:-main}"
+PATHS=(docker/file-retriever docker/object-mapping-indexer 'services/*/src/config.ts' 'services/*/migrations')
+
+mirrored="$(sed -n 's/^# upstream: \([0-9a-f]\{40\}\)$/\1/p' "$TEMPLATE")"
+if [ -z "$mirrored" ]; then
+  echo "No '# upstream: <full commit SHA>' line in $TEMPLATE" >&2
+  exit 2
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+git clone -q --filter=blob:none --no-checkout "$REPO" "$tmp"
+git -C "$tmp" fetch -q origin "$TARGET"
+target="$(git -C "$tmp" rev-parse FETCH_HEAD)"
+
+echo "Template mirrors ${mirrored:0:8}; upstream $TARGET is ${target:0:8}"
+changes="$(git -C "$tmp" log --oneline "$mirrored..$target" -- "${PATHS[@]}")"
+if [ -z "$changes" ]; then
+  echo "Nothing the template follows has changed."
+  exit 0
+fi
+echo "$changes"
+echo ""
+git -C "$tmp" --no-pager diff "$mirrored" "$target" -- "${PATHS[@]}"
+exit 1

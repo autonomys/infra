@@ -18,61 +18,61 @@ variable "host" {
 variable "network_id" {
   description = "Chain the node syncs, passed to the node as --chain"
   type        = string
-}
-
-variable "object_mapping_start_block" {
-  description = "Value for the node's --create-object-mappings"
-  type        = string
-}
-
-variable "gateway_repo" {
-  description = "Git URL of autonomys/auto-files-gateway, whose compose files define the services"
-  type        = string
-  default     = "https://github.com/autonomys/auto-files-gateway.git"
-}
-
-variable "gateway_repo_ref" {
-  description = "Branch, tag or full commit SHA of gateway_repo to deploy from. Pin a full SHA so a deploy is reproducible."
-  type        = string
-}
-
-variable "images" {
-  description = "Image references for every service the compose files define. All are needed even for services not started: Compose rejects a model with an empty image."
-  type = object({
-    node                   = string
-    gateway                = string
-    file_retriever         = string
-    object_mapping_indexer = string
-  })
-}
-
-variable "services" {
-  description = "Compose services to start. Services left out are not stopped if already running."
-  type        = list(string)
 
   validation {
-    condition = length(var.services) > 0 && alltrue([
-      for s in var.services : contains(["subspace-node", "subspace-rpc-gateway", "file-retriever", "object-mapping-app"], s)
-    ])
-    error_message = "services must be a non-empty subset of subspace-node, subspace-rpc-gateway, file-retriever, object-mapping-app."
+    condition     = can(regex("^[a-z0-9-]+$", var.network_id))
+    error_message = "network_id must be a chain name such as chronos or mainnet."
   }
 }
 
-variable "settings" {
-  description = "Further non-secret settings the compose files read, such as RUST_LOG_NODE. Secrets never go here."
-  type        = map(string)
-  default     = {}
+variable "object_mapping_start_block" {
+  description = "Value for the node's --create-object-mappings. Every node start re-archives from this block."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.object_mapping_start_block))
+    error_message = "object_mapping_start_block must be a block number."
+  }
 }
 
-variable "compose_files" {
-  description = "Compose files, relative to the gateway checkout, in the order the gateway repo's deploy playbook passes them"
-  type        = list(string)
-  default = [
-    "docker/file-retriever/docker-compose.yml",
-    "docker/file-retriever/docker-compose.prod.yml",
-    "docker/object-mapping-indexer/docker-compose.yml",
-    "docker/object-mapping-indexer/docker-compose.prod.yml",
-  ]
+variable "images" {
+  description = "Image reference for each service, pinned to a tag or digest"
+  type = object({
+    node = string
+  })
+
+  validation {
+    condition = alltrue([
+      for image in values(var.images) :
+      can(regex("^[a-z0-9./_-]+(:[A-Za-z0-9._-]+|@sha256:[0-9a-f]{64})$", image)) && !endswith(image, ":latest")
+    ])
+    error_message = "Each image must be pinned to a tag other than latest, or to a digest."
+  }
+}
+
+variable "node" {
+  description = "Node settings that differ between environments: its name on the network and its RUST_LOG"
+  type = object({
+    name     = optional(string, "object-mapping-node")
+    rust_log = optional(string, "info")
+  })
+  default = {}
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9._-]+$", var.node.name)) && can(regex("^[A-Za-z0-9_=,:./-]+$", var.node.rust_log))
+    error_message = "node.name may hold letters, digits, dots, dashes and underscores; node.rust_log must be a RUST_LOG filter such as info or info,sub-libp2p=debug."
+  }
+}
+
+variable "loki_url" {
+  description = "Loki push URL the containers' log driver sends to"
+  type        = string
+  default     = "https://logging.subspace.network/loki/api/v1/push"
+
+  validation {
+    condition     = can(regex("^https?://[^\"\\s]+$", var.loki_url))
+    error_message = "loki_url must be an http or https URL."
+  }
 }
 
 # The gateway repo's deploy playbook never names the project, so Compose
@@ -83,12 +83,17 @@ variable "compose_project" {
   description = "Compose project name"
   type        = string
   default     = "file-retriever"
+
+  validation {
+    condition     = can(regex("^[a-z0-9][a-z0-9_-]*$", var.compose_project))
+    error_message = "compose_project must be a Compose project name: lowercase letters, digits, dashes and underscores."
+  }
 }
 
-variable "compose_profiles" {
-  description = "Compose profiles to enable. subspace-node sits behind the node and production profiles, and services that depend on it fail validation without one."
-  type        = list(string)
-  default     = ["node", "production"]
+variable "allow_node_restart" {
+  description = "Let a deploy recreate a running node, for an image upgrade or a changed setting. The deploy refuses otherwise, since every node start re-archives from object_mapping_start_block. Set it for that apply only."
+  type        = bool
+  default     = false
 }
 
 variable "public_tcp_ports" {

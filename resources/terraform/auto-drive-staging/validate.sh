@@ -35,6 +35,7 @@ MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20"
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
 COMPOSE_PROJECT="file-retriever"
+GATEWAY_DIR="$DEPLOY_DIR/auto-drive-gateway"
 SERVICES_DIR="$DEPLOY_DIR/auto-drive-services"
 SERVICES_PROJECT="auto-drive-services"
 POSTGRES_IMAGE="postgres:17.9-bookworm"
@@ -94,7 +95,9 @@ echo ""
 
 echo "[Host]"
 check "Hostname" "hostname" "$HOSTNAME_WANT"
-check "Timezone" "timedatectl show -p Timezone --value" "UTC"
+# the bootstrap sets UTC; tzdata upgrades repoint /etc/localtime at its
+# canonical name, Etc/UTC
+check "Timezone" "timedatectl show -p Timezone --value | sed 's|^Etc/UTC\$|UTC|'" "UTC"
 check "Ubuntu" "lsb_release -is" "Ubuntu"
 check "Booted via legacy BIOS" "test -d /sys/firmware/efi && echo uefi || echo bios" "bios"
 
@@ -246,8 +249,11 @@ files_gateway_checks() {
   local first second
   echo ""
   echo "[Gateway deploy]"
-  check "Gateway checkout present" "test -d $DEPLOY_DIR/auto-files-gateway/.git && echo exists" "exists"
-  check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu"
+  check "Compose file in place" "stat -c '%a %U' $GATEWAY_DIR/docker-compose.yml" "644 ubuntu"
+  # the running node's config hash is the file's: no change is waiting on a restart
+  check "Node matches the compose file" \
+    "[ \"\$(sudo docker compose -p $COMPOSE_PROJECT -f $GATEWAY_DIR/docker-compose.yml config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
+    "match"
   check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
   check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
   check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"

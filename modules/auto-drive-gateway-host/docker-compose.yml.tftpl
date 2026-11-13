@@ -1,0 +1,70 @@
+# Rendered by Terraform from modules/auto-drive-gateway-host.
+#
+# Mirrors the services in autonomys/auto-files-gateway's docker/ compose files
+# at the commit below. upstream-diff.sh in this module shows what has changed
+# there since; move the commit when the template catches up.
+# upstream: 7c5093bd26c399e7e6f484cfc9e27b59f2ea04a2
+#
+# The node's definition resolves exactly as it did from the upstream files, so
+# a host deployed from them keeps its node running when it moves to this file:
+# every node start re-archives from the object-mapping start block, which can
+# take hours.
+
+services:
+  subspace-node:
+    image: "${node_image}"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      RUST_LOG: "${node_rust_log}"
+    command:
+      - run
+      - --chain
+      - "${network_id}"
+      - --base-path
+      - /var/subspace
+      - --listen-on
+      - /ip4/0.0.0.0/tcp/30333
+      - --dsn-listen-on
+      - /ip4/0.0.0.0/tcp/30433
+      - --rpc-cors
+      - all
+      - --rpc-methods
+      - unsafe
+      - --rpc-listen-on
+      - 0.0.0.0:9944
+      - --rpc-max-subscriptions-per-connection
+      - "1000"
+      - --rpc-max-connections
+      - "20000"
+      - --name
+      - "${node_name}"
+      - --sync
+      - full
+      - --create-object-mappings
+      - "${object_mapping_start_block}"
+      - --blocks-pruning
+      - archive
+      - --state-pruning
+      - archive
+    ports:
+      - 30333:30333
+      - 30433:30433
+      - 127.0.0.1:9944:9944
+    volumes:
+      - subspace-node-data:/var/subspace
+    # the image's own test, with upstream's timings
+    healthcheck:
+      interval: 30s
+      timeout: 5s
+      retries: 60
+    logging:
+      driver: loki
+      options:
+        loki-url: "${loki_url}"
+        # the driver's local copy for `docker logs`, capped as on the rest of the fleet
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  subspace-node-data:

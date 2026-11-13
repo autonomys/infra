@@ -9,7 +9,3 @@ output "hostname" {
 output "deploy_dir" {
   value = local.deploy_dir
 }
-
-output "services" {
-  value = var.services
-}
