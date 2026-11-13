@@ -36,9 +36,12 @@ variable "create_object_mappings" {
 }
 
 variable "images" {
-  description = "Image reference for each service, pinned to a tag, a digest or both"
+  description = "Image reference for each service, pinned to a tag, a digest or both. Both apps' migrations run from their app's image."
   type = object({
-    node = string
+    node                   = string
+    gateway                = string
+    object_mapping_indexer = string
+    file_retriever         = string
   })
 
   # name (a registry may carry a port), then a tag, a digest or both
@@ -61,6 +64,130 @@ variable "node_rust_log" {
   validation {
     condition     = can(regex("^[A-Za-z0-9_=,:./-]+$", var.node_rust_log))
     error_message = "node_rust_log must be a RUST_LOG filter such as info or info,sub-libp2p=debug."
+  }
+}
+
+variable "rpc_gateway" {
+  description = "The RPC gateway's DSN connection limits and RUST_LOG"
+  type = object({
+    out_connections         = optional(number, 100)
+    pending_out_connections = optional(number, 100)
+    rust_log                = optional(string, "info")
+  })
+  default = {}
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_=,:./-]+$", var.rpc_gateway.rust_log))
+    error_message = "rpc_gateway.rust_log must be a RUST_LOG filter such as info."
+  }
+}
+
+variable "log_level" {
+  description = "LOG_LEVEL for the object-mapping indexer and the file retriever"
+  type        = string
+  default     = "info"
+
+  validation {
+    condition     = contains(["error", "warn", "info", "http", "verbose", "debug", "silly"], var.log_level)
+    error_message = "log_level must be a winston level such as info or debug."
+  }
+}
+
+variable "object_mapping" {
+  description = "Settings of the object-mapping indexer that differ from its defaults"
+  type = object({
+    request_size_limit = optional(string, "200mb")
+    cors_allow_origins = optional(string, "")
+    recovery_interval  = optional(number, 1000)
+  })
+  default = {}
+}
+
+variable "file_retriever" {
+  description = "Settings of the file retriever that differ from its defaults. metric_environment_tag defaults to chain=<network_id>."
+  type = object({
+    cors_origin              = optional(string, "*")
+    max_simultaneous_fetches = optional(number, 10)
+    cache_max_size           = optional(number, 10737418240)
+    cache_ttl                = optional(number, 86400000)
+    metric_environment_tag   = optional(string)
+  })
+  default = {}
+}
+
+variable "metrics" {
+  description = "VictoriaMetrics endpoint and user the file retriever pushes to, or null to send none"
+  type = object({
+    endpoint = string
+    username = string
+  })
+  default = null
+}
+
+variable "metrics_password" {
+  description = "Password of metrics.username"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "database" {
+  description = "Postgres database both apps share, on the services host"
+  type = object({
+    host = string
+    port = optional(number, 5432)
+    name = string
+    user = string
+  })
+
+  # all go into the database URL unencoded
+  validation {
+    condition = (
+      can(regex("^[A-Za-z0-9.-]+$", var.database.host))
+      && can(regex("^[a-z_][a-z0-9_]*$", var.database.name))
+      && can(regex("^[a-z_][a-z0-9_]*$", var.database.user))
+      && var.database.port >= 1 && var.database.port <= 65535 && floor(var.database.port) == var.database.port
+    )
+    error_message = "database.host must be a hostname or IPv4 address, database.name and database.user lowercase Postgres identifiers, and database.port a port number."
+  }
+}
+
+variable "database_password" {
+  description = "Password of database.user. Letters and digits only, as it goes into a URL unencoded."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9]{32,}$", var.database_password))
+    error_message = "database_password must be at least 32 letters and digits."
+  }
+}
+
+variable "wait_for" {
+  description = "IDs of resources this host's deploy must follow, such as the services host's deploy, which sets the password in the database URL"
+  type        = list(string)
+  default     = []
+}
+
+variable "database_id" {
+  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs both apps' migrations and recreates the apps, so they connect to the new database."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9._-]*$", var.database_id))
+    error_message = "database_id must be letters, digits, '.', '_' or '-'."
+  }
+}
+
+variable "api_secret" {
+  description = "The file retriever's API_SECRET, which callers send as their bearer token"
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9]{32,}$", var.api_secret))
+    error_message = "api_secret must be at least 32 letters and digits."
   }
 }
 

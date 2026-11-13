@@ -2,9 +2,16 @@
 # `docker logs` and unbounded otherwise, as on the rest of the fleet. The .env's
 # COMPOSE_FILE includes this file when the role's cap_local_logs is set.
 
+x-log-cap: &log-cap
+  logging:
+    options:
+      max-size: 10m
+      max-file: '3'
+
 services:
-  subspace-node:
-    logging:
-      options:
-        max-size: 10m
-        max-file: '3'
+  subspace-node: *log-cap
+  subspace-rpc-gateway: *log-cap
+  object-mapping-indexer-migrate: *log-cap
+  object-mapping-app: *log-cap
+  file-retriever-migrate: *log-cap
+  file-retriever: *log-cap

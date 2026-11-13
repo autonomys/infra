@@ -37,13 +37,25 @@ moved:
 ./modules/auto-drive-gateway-host/upstream-diff.sh
 ```
 
-Terraform writes the values to a `.env` beside the files, each in single quotes
-so Compose takes it literally: the node image, the chain, the object-mapping
-setting, the node's log level and the Loki URL. The `.env` also names the
-Compose project, `file-retriever`, and the files to use.
+It runs the Subspace node, the RPC gateway, the object-mapping indexer
+(`object-mapping-app`) and the file retriever. Each app's database migrations
+run in a one-shot service before the app starts, on every deploy; a run with
+nothing new to apply changes nothing. The deploy runs them before it installs
+anything, so a migration that fails leaves the running apps as they were.
+
+Terraform writes the settings to a `.env` beside the files, each in single
+quotes so Compose takes it literally: the images, the chain, the object-mapping
+setting, the log levels, the apps' settings and the Loki URL. The `.env` also
+names the Compose project, `file-retriever`, and the files to use. The secrets go
+in `object-mapping-indexer.env` and `file-retriever.env` instead, readable by
+the deploy user only: the database URL, built from `postgres_password` in
+`services.auto.tfvars`, and the file retriever's API secret,
+`files_gateway_token` in `gateway.auto.tfvars`.
+`compose/docker-compose.mesh.yml` publishes the indexer and the file retriever on
+the host's mesh address as well as loopback, for the backends.
 `compose/docker-compose.log-cap.yml` caps the loki driver's local copy of the
 logs as on the rest of the fleet, and is included unless the module's
-`cap_local_logs` is off. Every file in `compose/` and the `.env` land in
+`cap_local_logs` is off. The `.yml` files in `compose/` and the env files land in
 `~/deploy/auto-drive-gateway/`, so on the host
 
 ```bash
@@ -83,13 +95,38 @@ repo's checkout in `~/deploy/auto-files-gateway`, with
 `~/deploy/auto-files-gateway.env` and `~/deploy/auto-files-gateway.override.yml`.
 Nothing reads them any more; they can be removed by hand.
 
+### The apps
+
+- The RPC gateway reaches the node over the compose network and publishes its
+  RPC (9955) on loopback only. Upstream also publishes 30334 and 30434 for it,
+  but it listens on neither, so they are left out.
+- The object-mapping indexer (3000) and the file retriever (8090) listen on
+  loopback and the mesh address. Both use the services host's `gateway`
+  database, as `postgres`, over the mesh.
+- The backends reach them at `http://10.77.0.20:8090` with
+  `files_gateway_token` as their bearer token (`FILES_GATEWAY_URL`,
+  `FILES_GATEWAY_TOKEN`), and at `ws://10.77.0.20:3000/ws`
+  (`OBJECT_MAPPING_ARCHIVER_URL`).
+  The gateway module outputs both URLs, as `file_retriever_url` and
+  `object_mapping_url`. Its deploy waits for the services host's deploy, which
+  sets the database password the migrations connect with. When the services host
+  is bootstrapped again (`database_id`), the migrations run again and both apps
+  are recreated, since each keeps the one database connection it opens.
+- The indexer stores the mappings the node sends while it is subscribed. With
+  `--create-object-mappings yes` that is every block archived from then on;
+  earlier blocks would need one run with a block number.
+- File retriever metrics stay off unless the module is given `metrics`.
+
 ### Not yet
 
 Defined in the gateway repo but not in the role's compose file yet:
 
-- `subspace-rpc-gateway`, `file-retriever`, `object-mapping-app`: they need the
-  services host's database and secrets from this project's tfvars
-- the DAG indexer (`docker/dag-indexer`)
+- the DAG indexer (`docker/dag-indexer`), the SubQuery node that fills the
+  `dag-indexer` schema. The file retriever looks every download up in that
+  schema, through its own database URL, so until the DAG indexer writes it into
+  the services host's `gateway` database, every download from the file
+  retriever fails. Its health check doesn't touch the database, so `validate.sh`
+  still passes.
 - metrics agents: the fleet host agent comes later from its own module. Its
   ports 8430, 9100 and 9633 on loopback are left free, and no node_exporter runs
   here
@@ -352,6 +389,10 @@ few seconds while the other members handshake again.
    ```
 
    It can also be read later with `ssh ubuntu@<HOST_IPv4> sudo wg show wg0 public-key`.
+   A host whose deploy reaches another member over the mesh, as the gateway's
+   and the public backend's reach the services host's Postgres, would fail its
+   deploy here: plan this apply with `-target=module.<its module>.module.mesh`,
+   and its deploy runs in step 3.
 3. Add the key to `mesh_public_keys` in `common.auto.tfvars`, run
    `manage.sh auto-drive-staging store-secrets`, then plan and apply again. Every
    other member adds the new host as a peer.
@@ -501,6 +542,19 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
 
 Then record the key, plan and apply in full.
 
+The gateway's deploy runs its apps' migrations against the services host's
+Postgres over the mesh too, so a new gateway's first apply stops at its mesh the
+same way, with `-target=module.files_gateway.module.mesh`. On a first build of
+every host, the first apply covers the services host and both meshes:
+
+```bash
+terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
+  -target=module.services -target=module.public.module.mesh -target=module.files_gateway.module.mesh
+```
+
+then record every key (see "Adding a host to the mesh") and plan and apply in
+full.
+
 ## Verifying
 
 ```bash
@@ -523,15 +577,19 @@ that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
 the `DOCKER-USER` rule.
 
 On the gateway it then checks that the running node matches the compose files,
-the node's image, flags, health, peers and log driver, and samples its sync state a minute apart to show whether it is
-importing blocks. On the services host it checks that Postgres and RabbitMQ
-match the compose files and are healthy, their images, limits, stop timeouts,
-volumes, log driver and listeners, that the
+the node's image, flags, health, peers and log driver, that the apps run their
+pinned images, that their migrations finished cleanly, that their logs are capped,
+their listeners and their health endpoints, and samples the node's sync state a
+minute apart to show whether it is importing blocks. On the services host it
+checks that Postgres and RabbitMQ match the compose files and are healthy, their
+images, limits, stop timeouts, volumes, log driver and listeners, that the
 databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
-to its limit, and that it has no `guest` user. On the public backend it checks
-that the migrations ran with the deployed image and Hasura's assets came from it,
-each service's health, image, restart policy, log driver and loopback listener,
-the file cache volume, that Hasura's metadata is consistent, that Postgres and
+to its limit, and that it has no `guest` user. From there it also checks that
+the gateway's migrations are recorded and that the indexer and the file
+retriever answer over the mesh. On the public backend it checks that the
+migrations ran with the deployed image and Hasura's assets came from it, each
+service's health, image, restart policy, log driver and loopback listener, the
+file cache volume, that Hasura's metadata is consistent, that Postgres and
 RabbitMQ are reachable over the mesh from the host and from a container, nginx,
 the certificate's names, issuer, expiry and renewal, and that the site answers
 through nginx and redirects HTTP to HTTPS.
@@ -572,15 +630,20 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 ## Changing what runs
 
-- Image tags, the gateway node's settings and the services host's sizing are in
+- Image tags, the gateway's settings and the services host's sizing are in
   `main.tf`. Changing any of them re-runs that host's deploy on the next apply.
+- The object-mapping indexer and file retriever images are tagged with the
+  auto-files-gateway commit they were built from. Move them together with the
+  `# upstream:` commit in the role's compose file, after reading what
+  `upstream-diff.sh` shows for that commit.
 - A change to the gateway node's settings or image restarts the node on that
   apply. A change to the services host's images, sizing or Postgres settings
   recreates the service it belongs to on that apply.
 - A new Postgres or RabbitMQ major version needs its data migrated first; a
   minor or patch release only needs the tag changed.
-- A password changed in `services.auto.tfvars` takes effect on the next apply;
-  restart whatever uses it after updating its settings.
+- A password changed in `services.auto.tfvars` takes effect on the next apply.
+  The gateway's apps are recreated with the new database URL in the same apply;
+  restart anything else that uses it after updating its settings.
 - To re-run a bootstrap without a change, plan with
   `-replace=module.<files_gateway, services or public>.module.host.null_resource.bootstrap`.
   The host's mesh and deploy re-run with it.
@@ -618,7 +681,7 @@ A rebuilt host also has a new mesh key, which the other members don't have until
 it is recorded. A host whose deploy reaches another over the mesh, or that the
 others reach, is therefore rebuilt in two applies: first the host on its own,
 then, once its new key is recorded (see "Adding a host to the mesh"), a plan and
-apply in full.
+apply in full. Every host here is rebuilt that way.
 
 For the services host, the first apply:
 
@@ -628,9 +691,15 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
 ```
 
 The services host has no backups, so it starts with empty databases and queues.
-In the full apply after its key is recorded, the other members take the new key,
-the public backend's migrations run again, and Hasura and the backend services
-are recreated, so the schema and Hasura's metadata are set up again.
+In the full apply after its key is recorded, the other members take the new key.
+The public backend's migrations run again, and Hasura and the backend services
+are recreated, so the schema and Hasura's metadata are set up again. The
+gateway's apps' migrations run again too, and both apps are recreated. The
+object mappings indexed before are gone, though, as the gateway's node maps only
+blocks it archives from then on. To map the chain again, set
+`create_object_mappings` to the first block to map and apply, then set it back
+to `yes` once the indexer logs mappings for new blocks. Re-archiving from early
+blocks takes hours.
 
 For the public backend, the first apply:
 
@@ -643,13 +712,13 @@ The full apply after its key is recorded runs its migrations, which find the
 database already current, and its deploy, which requests a new certificate;
 Let's Encrypt issues at most five for the same names a week.
 
-The gateway's deploy reaches nothing over the mesh, so it is rebuilt in one
-apply, and its key recorded and applied afterwards. Its node resyncs from
-genesis:
+For the gateway, the first apply bootstraps the host and brings up its mesh. Its
+deploy, whose migrations reach the services host's Postgres over the mesh, waits
+for the full apply, and its node then resyncs from genesis:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -replace=module.files_gateway.module.host.null_resource.bootstrap
+  -replace=module.files_gateway.module.host.null_resource.bootstrap -target=module.files_gateway.module.mesh
 ```
 
 Apply each plan with `manage.sh auto-drive-staging apply`, and once every key is

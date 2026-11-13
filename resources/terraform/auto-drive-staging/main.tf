@@ -43,9 +43,27 @@ module "files_gateway" {
   network_id             = "chronos"
   create_object_mappings = "yes"
 
+  # The apps are a prerelease build of autonomys/auto-files-gateway#218's head,
+  # whose migrations run on an empty database. Move them to the merge commit's
+  # tag once it merges, as main's builds are tagged with their commit.
   images = {
-    node = "ghcr.io/autonomys/node:mainnet-2026-jan-20"
+    node                   = "ghcr.io/autonomys/node:mainnet-2026-jan-20"
+    gateway                = "ghcr.io/autonomys/gateway:mainnet-2026-oct-22"
+    object_mapping_indexer = "ghcr.io/autonomys/object-mapping-indexer:snapshot-9f2f2c66@sha256:c5eacd88cdbea3705aef0538fc7c4a7a567e3059616ad0d683ecee707798fec5"
+    file_retriever         = "ghcr.io/autonomys/file-retriever:snapshot-9f2f2c66@sha256:8e5c1dd70789835df442284f0f214f862135caf1fde980b4d86f9c8e93771372"
   }
+
+  database = {
+    host = local.mesh_hosts.services.address
+    name = "gateway"
+    user = "postgres"
+  }
+  database_password = var.postgres_password
+  api_secret        = var.files_gateway_token
+  # the services deploy sets that password, so the migrations follow it
+  wait_for = [module.services.deploy_id]
+  # a rebuilt services host starts with an empty database
+  database_id = module.services.bootstrap_id
 
   mesh = local.mesh["files-gateway"]
 }
