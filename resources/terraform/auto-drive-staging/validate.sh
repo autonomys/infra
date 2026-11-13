@@ -40,6 +40,10 @@ MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20 public=10.77.0.30"
 
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
+GATEWAY_IMAGE="ghcr.io/autonomys/gateway:mainnet-2026-oct-22"
+INDEXER_IMAGE="ghcr.io/autonomys/object-mapping-indexer:snapshot-9f2f2c66@sha256:c5eacd88cdbea3705aef0538fc7c4a7a567e3059616ad0d683ecee707798fec5"
+RETRIEVER_IMAGE="ghcr.io/autonomys/file-retriever:snapshot-9f2f2c66@sha256:8e5c1dd70789835df442284f0f214f862135caf1fde980b4d86f9c8e93771372"
+GATEWAY_MESH_ADDRESS="10.77.0.20"
 COMPOSE_PROJECT="file-retriever"
 GATEWAY_DIR="$DEPLOY_DIR/auto-drive-gateway"
 SERVICES_DIR="$DEPLOY_DIR/auto-drive-services"
@@ -100,6 +104,8 @@ check() {
 
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
 RPC="curl -s -H 'Content-Type: application/json' http://127.0.0.1:9944"
+# the running container of a gateway service, looked up on the host
+container() { echo "\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=$1)"; }
 PG="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=postgres)"
 RMQ="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=rabbitmq)"
 PSQL="sudo docker exec $PG psql -X -At -U postgres -d postgres -c"
@@ -268,9 +274,9 @@ files_gateway_checks() {
   local first second
   echo ""
   echo "[Gateway deploy]"
-  check "Compose files and .env in place" \
-    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.log-cap.yml .env | paste -sd ' ' -" \
-    "docker-compose.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu"
+  check "Compose files and env files in place" \
+    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.mesh.yml docker-compose.log-cap.yml .env file-retriever.env object-mapping-indexer.env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu docker-compose.mesh.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu file-retriever.env 600 ubuntu object-mapping-indexer.env 600 ubuntu"
   # the running node's config hash is the files': no change is waiting on a restart
   check "Node matches the compose files" \
     "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
@@ -298,6 +304,31 @@ files_gateway_checks() {
   check "Node has peers" \
     "$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_health\"}' | grep -o '\"peers\":[0-9]*' | grep -qv '\"peers\":0\$' && echo peered" \
     "peered"
+
+  echo ""
+  echo "[Gateway apps]"
+  for service in subspace-rpc-gateway object-mapping-app file-retriever; do
+    check "$service running" "sudo docker inspect -f '{{.State.Status}}' $(container "$service")" "running"
+  done
+  check "RPC gateway image" "sudo docker inspect -f '{{.Config.Image}}' $(container subspace-rpc-gateway)" "$GATEWAY_IMAGE"
+  check "Object-mapping indexer image" "sudo docker inspect -f '{{.Config.Image}}' $(container object-mapping-app)" "$INDEXER_IMAGE"
+  check "File retriever image" "sudo docker inspect -f '{{.Config.Image}}' $(container file-retriever)" "$RETRIEVER_IMAGE"
+  for service in object-mapping-indexer-migrate file-retriever-migrate; do
+    check "$service finished cleanly" \
+      "sudo docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' \$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=$service)" \
+      "exited 0"
+  done
+  check "Apps log through the loki driver, capped" \
+    "for c in $(container subspace-rpc-gateway) $(container object-mapping-app) $(container file-retriever); do sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' \$c; done | sort -u" \
+    "loki 10m 3"
+  check "RPC gateway on loopback only" \
+    "sudo ss -Htln 'sport = :9955' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:9955"
+  check "Object-mapping indexer on loopback and the mesh only" \
+    "sudo ss -Htln 'sport = :3000' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$GATEWAY_MESH_ADDRESS:3000 127.0.0.1:3000"
+  check "File retriever on loopback and the mesh only" \
+    "sudo ss -Htln 'sport = :8090' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$GATEWAY_MESH_ADDRESS:8090 127.0.0.1:8090"
+  check "Object-mapping indexer healthy" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health" "200"
+  check "File retriever healthy" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8090/health" "200"
 
   echo ""
   echo "[Sync progress]"
@@ -378,6 +409,15 @@ services_checks() {
     "sudo docker exec -u rabbitmq $RMQ rabbitmqctl -q list_users | awk '{print \$1}' | grep -cx guest || true" "0"
   check "No loki driver push errors in the last hour" \
     "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
+
+  echo ""
+  echo "[Files gateway, from here]"
+  check "Gateway's migrations recorded" \
+    "sudo docker exec $PG psql -X -At -U postgres -d gateway -c 'SELECT count(*) FROM migrations'" "3"
+  check "Object-mapping indexer answers over the mesh" \
+    "curl -s -m 5 -o /dev/null -w '%{http_code}' http://$GATEWAY_MESH_ADDRESS:3000/health" "200"
+  check "File retriever answers over the mesh" \
+    "curl -s -m 5 -o /dev/null -w '%{http_code}' http://$GATEWAY_MESH_ADDRESS:8090/health" "200"
 }
 
 # by compose service name, in the backend project
