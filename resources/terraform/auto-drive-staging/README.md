@@ -212,7 +212,13 @@ production's `nginx/nginx.conf` and `nginx/backend.mainnet.public.conf`:
 | ----------------------------------------- | ----------- | ------------------------------------------------ |
 | `public.staging.auto-drive.autonomys.xyz` | proxied     | `/api`, `/hasura`, `/s3`, `/file`, `/folder`     |
 | `s3.staging.auto-drive.autonomys.xyz`     | not proxied | the S3 API at its root                           |
-| `gateway.staging.autonomys.xyz`           | proxied     | `/file` and `/folder`, over plain HTTP from Cloudflare |
+| `gateway.staging.autonomys.xyz`           | proxied     | the same routes as the app name (below)          |
+
+The gateway alias is a CNAME to the app name, as production's
+`gateway.autonomys.xyz` is. Cloudflare's Full mode reaches the origin over
+HTTPS, and with no 443 server of its own the alias lands on the app's, the first
+on 443, so it answers every app route. Its port-80 server block, `/file` and
+`/folder` only, is reached only if Cloudflare connects over plain HTTP.
 
 UFW opens 80 and 443 to everyone, as production's security group does, since the
 S3 name is reached directly. Let's Encrypt issues one certificate for the first
@@ -582,30 +588,46 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 
 Repeat "Building a host from scratch" up to the apply. A host rebuilt at the same
 address changes none of Terraform's triggers, so a plain plan finds nothing to
-do. Plan its first apply with its bootstrap replaced instead; its mesh and
-deploy follow the bootstrap. For the services host:
+do: plan its first apply with its bootstrap replaced instead, and its mesh and
+deploy follow the bootstrap.
+
+A rebuilt host also has a new mesh key, which the other members don't have until
+it is recorded. A host whose deploy reaches another over the mesh, or that the
+others reach, is therefore rebuilt in two applies: first the host on its own,
+then, once its new key is recorded (see "Adding a host to the mesh"), a plan and
+apply in full.
+
+For the services host, the first apply:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -replace=module.services.module.host.null_resource.bootstrap
+  -replace=module.services.module.host.null_resource.bootstrap -target=module.services
 ```
 
-For the public backend:
+The services host has no backups, so it starts with empty databases and queues.
+In the full apply after its key is recorded, the other members take the new key,
+the public backend's migrations run again, and Hasura and the backend services
+are recreated, so the schema and Hasura's metadata are set up again.
+
+For the public backend, the first apply:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -replace=module.public.module.host.null_resource.bootstrap
+  -replace=module.public.module.host.null_resource.bootstrap -target=module.public.module.mesh
 ```
 
-For the gateway:
+The full apply after its key is recorded runs its migrations, which find the
+database already current, and its deploy, which requests a new certificate;
+Let's Encrypt issues at most five for the same names a week.
+
+The gateway's deploy reaches nothing over the mesh, so it is rebuilt in one
+apply, and its key recorded and applied afterwards. Its node resyncs from
+genesis:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
   -replace=module.files_gateway.module.host.null_resource.bootstrap
 ```
 
-Then `manage.sh auto-drive-staging apply`, record the host's new mesh public key
-(see "Adding a host to the mesh"), and run `validate.sh`. The gateway's node
-resyncs from genesis. The services host has no backups: rebuilding it starts
-with empty databases and queues. A rebuilt public backend requests a new
-certificate; Let's Encrypt issues at most five for the same names a week.
+Apply each plan with `manage.sh auto-drive-staging apply`, and once every key is
+recorded and applied, run `validate.sh` on each host.

@@ -43,6 +43,7 @@ locals {
     BACKEND_IMAGE                 = var.images.backend
     HASURA_IMAGE                  = var.images.hasura
     HASURA_ASSET_DIRS             = var.hasura.apply_sql_migrations ? "apps/hasura/metadata apps/hasura/migrations" : "apps/hasura/metadata"
+    DATABASE_ID                   = var.database_id
     PUBLISH_ADDRESS               = var.publish_address
     LOKI_URL                      = var.loki_url
     HASURA_GRAPHQL_PORT           = var.ports.hasura
@@ -124,6 +125,7 @@ resource "null_resource" "migrate" {
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
     backend_image    = var.images.backend
+    database_id      = var.database_id
     migrate_env_hash = nonsensitive(sha256(local.migrate_env))
     migrate_hash     = filemd5("${path.module}/migrate.sh")
   }

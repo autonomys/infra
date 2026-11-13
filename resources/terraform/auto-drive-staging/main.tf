@@ -159,6 +159,8 @@ module "public" {
   rabbitmq_url   = local.rabbitmq_url
   # the services deploy sets the passwords these URLs carry
   wait_for = [module.services.deploy_id]
+  # a rebuilt services host starts with an empty database
+  database_id = module.services.bootstrap_id
 
   endpoints = merge(local.backend_endpoints, {
     rpc = "wss://rpc-0.chronos.autonomys.xyz/ws"

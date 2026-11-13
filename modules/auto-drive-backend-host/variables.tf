@@ -114,6 +114,17 @@ variable "wait_for" {
   default     = []
 }
 
+variable "database_id" {
+  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs the migrations and recreates Hasura and the backend services, so the schema and Hasura's metadata are set up again."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9._-]*$", var.database_id))
+    error_message = "database_id must be letters, digits, '.', '_' or '-'."
+  }
+}
+
 variable "migration_database_url" {
   description = "Postgres URL the migrations run with; null uses database_url. It is staged on the host only for the migration run, never written to the services' .env."
   type        = string

@@ -8,7 +8,8 @@
 # Where it differs from upstream:
 # - ports are published on PUBLISH_ADDRESS rather than every interface
 # - Hasura's metadata and migrations come from the backend image through
-#   hasura-assets, since there is no checkout on the host to mount them from
+#   hasura-assets, since there is no checkout on the host to mount them from,
+#   and Hasura is recreated when DATABASE_ID says the database was recreated
 # - Hasura's image and the Loki URL are variables
 # - the rabbit profile's broker and base's New Relic agent are left out
 
@@ -43,10 +44,11 @@ services:
     depends_on:
       hasura-assets:
         condition: service_completed_successfully
-    # it applies its metadata and migrations only when it starts, so new assets
-    # have to recreate it
+    # it applies its metadata and migrations only when it starts, so new assets,
+    # or a database recreated empty, have to recreate it
     labels:
       auto-drive.hasura-assets: ${BACKEND_IMAGE:?} ${HASURA_ASSET_DIRS:?}
+      auto-drive.database-id: ${DATABASE_ID:-}
     volumes:
       - hasura-assets:/hasura-assets:ro
     restart: unless-stopped
