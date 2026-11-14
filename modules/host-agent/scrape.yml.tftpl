@@ -1,0 +1,35 @@
+# Rendered for each server by modules/host-agent. vmagent runs in the host
+# network, so every target is on 127.0.0.1. instance carries the server's name so
+# dashboards can tell servers apart; vmagent adds host=<the same name> on write.
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: node
+    static_configs:
+      - targets: ["127.0.0.1:9100"]
+        labels:
+          instance: "${server}"
+
+  # smartctl_exporter polls the disks every 60s, so scraping faster adds nothing
+  - job_name: smartctl
+    scrape_interval: 60s
+    static_configs:
+      - targets: ["127.0.0.1:9633"]
+        labels:
+          instance: "${server}"
+
+  - job_name: vmagent
+    static_configs:
+      - targets: ["127.0.0.1:8430"]
+        labels:
+          instance: "${server}"
+%{ for job, port in scrape_ports ~}
+
+  - job_name: ${job}
+    static_configs:
+      - targets: ["127.0.0.1:${port}"]
+        labels:
+          instance: "${server}"
+%{ endfor ~}
