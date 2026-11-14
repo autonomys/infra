@@ -93,13 +93,19 @@ for service in "${services[@]}"; do
   fi
 done
 
-# vmagent's first write follows its first scrape, within about 15 seconds; a
-# refused credential or an unreachable monitoring host shows here
-echo "==> Waiting for vmagent's first write"
+successful_writes() {
+  curl -fsS http://127.0.0.1:8430/metrics 2>/dev/null \
+    | awk '/^vmagent_remotewrite_requests_total\{.*status_code="2XX"/ {n += $NF} END {print n + 0}'
+}
+
+# A changed credential reaches vmagent without a restart, so writes it made with
+# the old one still count: the count has to rise. vmagent writes after each
+# scrape, every 15 seconds, so a refused credential or an unreachable monitoring
+# host shows here.
+echo "==> Waiting for a successful write"
+before="$(successful_writes)"
 for _ in $(seq 1 45); do
-  written="$(curl -fsS http://127.0.0.1:8430/metrics 2>/dev/null \
-    | awk '/^vmagent_remotewrite_requests_total\{.*status_code="2XX"/ {n += $NF} END {print n + 0}')"
-  if [ "$written" -gt 0 ]; then
+  if [ "$(successful_writes)" -gt "$before" ]; then
     echo "==> Running: ${services[*]}, writing to the monitoring host"
     exit 0
   fi

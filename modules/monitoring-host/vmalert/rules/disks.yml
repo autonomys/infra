@@ -62,12 +62,15 @@ groups:
         annotations:
           summary: "{{ $labels.device }} has started using spare blocks ({{ $value }}% left)"
 
-      # An increase, not a level: some disks carry old errors from before their
-      # last install, and a level rule would fire forever
+      # A rise over the count a day earlier, not a level: some disks carry old
+      # errors from before their last install. Not increase(), which also counts a
+      # disk's first small reading and a falling count as a rise; the cost is that
+      # a rise during a series' first day goes unseen.
       - alert: MediaErrorsRising
         expr: >-
-          increase(smartctl_device_media_errors[24h]) > 0
-          or increase(smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"}[24h]) > 0
+          (smartctl_device_media_errors - smartctl_device_media_errors offset 24h) > 0
+          or (smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"}
+            - smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"} offset 24h) > 0
         labels:
           severity: warning
         annotations:

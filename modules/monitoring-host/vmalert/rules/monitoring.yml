@@ -28,8 +28,10 @@ groups:
         annotations:
           summary: "The certificate for {{ $labels.cn }} expires in {{ $value | humanize }} days; Let's Encrypt renewals may be failing"
 
+      # Loki creates its counter only on the first line it accepts, so after a
+      # restart with nothing arriving there is no series; up stands in as zero
       - alert: LokiNotReceivingLogs
-        expr: sum by (host) (rate(loki_distributor_lines_received_total[15m])) == 0
+        expr: (sum by (host) (rate(loki_distributor_lines_received_total[15m])) or max by (host) (up{job="loki"}) * 0) == 0
         for: 15m
         labels:
           severity: critical
