@@ -121,7 +121,8 @@ locals {
   rabbitmq_url     = "amqp://${var.rabbitmq_username}:${var.rabbitmq_password}@${local.services_address}:5672"
 
   # Production's public backend settings, with Chronos and staging values in
-  # place of mainnet's
+  # place of mainnet's. The backend posts its metrics to VICTORIA_ENDPOINT as
+  # given, so it names the write path.
   backend_settings = {
     NODE_ENV               = "production"
     OPTIONAL_AUTH          = "true"
@@ -130,7 +131,7 @@ locals {
     STAFF_DOMAINS          = "@autonomys.xyz,@subspace.network"
     METRIC_ENVIRONMENT_TAG = "staging"
     VICTORIA_ACTIVE        = "true"
-    VICTORIA_ENDPOINT      = "https://vmetrics.subspace.network"
+    VICTORIA_ENDPOINT      = "https://vmetrics.subspace.network/write"
     VICTORIA_USERNAME      = var.victoria_username
     EVM_CHAIN_ID           = "8700"
     # payments are off on the public backend; the address only has to be valid
