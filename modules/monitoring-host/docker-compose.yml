@@ -202,8 +202,9 @@ services:
       - alertmanager_slack_webhook_url
     logging: *local-logging
 
-  # Checks the metrics write credential and passes only /write on to
-  # VictoriaMetrics. Traefik routes POST /write on vmetrics.subspace.network here.
+  # Checks each metrics write credential and passes only that credential's write
+  # path on to VictoriaMetrics. Traefik routes POST /write and /api/v1/write on
+  # vmetrics.subspace.network here.
   vmauth:
     image: victoriametrics/vmauth:v1.155.0
     container_name: vmauth

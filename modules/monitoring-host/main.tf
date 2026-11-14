@@ -105,10 +105,10 @@ resource "null_resource" "setup_monitoring_host" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo bash ${local.home}/subspace/installer.sh
-      sudo MONITORING_USER=${var.deployer.ssh_user} \
-        MONITORING_DATA_DIR=${local.data_dir} \
-        bash ${local.home}/subspace/monitoring-host-bootstrap.sh
+      sudo bash -e ${local.home}/subspace/installer.sh &&
+        sudo MONITORING_USER=${var.deployer.ssh_user} \
+          MONITORING_DATA_DIR=${local.data_dir} \
+          bash ${local.home}/subspace/monitoring-host-bootstrap.sh
       status=$?
       sudo systemctl start apt-daily.timer apt-daily-upgrade.timer
       exit $status

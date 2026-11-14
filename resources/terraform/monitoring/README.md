@@ -76,8 +76,8 @@ servers (`resources/terraform/host-agents`).
   rejected credentials.
 - Metric reads and alerting have no public route. Their ports are on `127.0.0.1`
   only, and Grafana reads them on the box.
-- smartctl_exporter runs privileged so it can read every disk, including one added
-  later. It listens on `127.0.0.1` only.
+- smartctl_exporter runs privileged so it can read the disks. It listens on
+  `127.0.0.1` only.
 - Alertmanager reads the Slack webhook, the relay the Uptime Kuma push URL, and
   vmauth the write credentials from files in `secrets/`, so none appears in a
   config file or API.

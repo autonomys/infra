@@ -64,10 +64,11 @@ check "Every array in sync" \
 check "Boot code on every disk" \
   "if [ -d /sys/firmware/efi ]; then e=\$(sudo efibootmgr | grep -ci ubuntu); d=\$(lsblk -dn -o TYPE | grep -c disk); [ \$e -ge \$d ] && echo all-disks || echo \"\$e boot entries for \$d disks\"; else for d in \$(lsblk -dnp -o NAME,TYPE | awk '\$2 == \"disk\" {print \$1}'); do sudo dd if=\$d bs=512 count=1 2>/dev/null | grep -aq GRUB || echo \"\$d:no-grub\"; done | grep . || echo all-disks; fi" \
   "all-disks"
-# install_devices can be set while grub-pc itself is absent, so check both
+# install_devices can be set while grub-pc itself is absent, so check both. A UEFI
+# box has no grub-pc; the check above covers its boot entries.
 check "GRUB updates target both disks" \
-  "[ -d /sys/firmware/efi ] && echo uefi || { dpkg-query -W -f='\${Status}' grub-pc 2>/dev/null | grep -q 'install ok installed' || { echo 'grub-pc not installed'; exit 0; }; n=\$(sudo debconf-show grub-pc 2>/dev/null | sed -n 's/^\\* grub-pc\\/install_devices: //p' | tr ',' '\n' | grep -c .); [ \$n -ge 2 ] && echo both || echo \"\$n install_devices\"; }" \
-  "both"
+  "[ -d /sys/firmware/efi ] && echo 'targets-ok (UEFI)' || { dpkg-query -W -f='\${Status}' grub-pc 2>/dev/null | grep -q 'install ok installed' || { echo 'grub-pc not installed'; exit 0; }; n=\$(sudo debconf-show grub-pc 2>/dev/null | sed -n 's/^\\* grub-pc\\/install_devices: //p' | tr ',' '\n' | grep -c .); [ \$n -ge 2 ] && echo targets-ok || echo \"\$n install_devices\"; }" \
+  "targets-ok"
 check "SMART healthy on every disk" \
   "for d in \$(lsblk -dnp -o NAME,TYPE | awk '\$2 == \"disk\" {print \$1}'); do sudo smartctl -H \$d | grep -qE 'PASSED|OK' || echo \"\$d:failing\"; done | grep . || echo healthy" \
   "healthy"

@@ -13,7 +13,9 @@ route:
       matchers: ['alertname="Watchdog"']
       group_wait: 0s
       group_interval: 1m
-      repeat_interval: 1m
+      # Alertmanager repeats only once more than repeat_interval has passed, which
+      # a 1m repeat misses by moments at each 1m flush, halving the rate
+      repeat_interval: 30s
     - receiver: slack
       matchers: ['severity="critical"']
       repeat_interval: 4h
@@ -34,10 +36,12 @@ receivers:
     slack_configs:
       - api_url_file: /run/secrets/alertmanager_slack_webhook_url
         send_resolved: true
+        # The default links to Alertmanager's own UI, which has no public route
+        title_link: ""
         title: >-
           {{ if eq .Status "firing" }}:red_circle:{{ else }}:large_green_circle:{{ end }}
           {{ .CommonLabels.host }}: {{ range .Alerts }}{{ .Labels.alertname }} {{ end }}
-        text: >-
+        text: |-
           {{ range .Alerts }}*{{ .Labels.alertname }}* ({{ .Labels.severity }}{{ if eq .Status "resolved" }}, resolved{{ end }})
           {{ .Annotations.summary }}
           {{ end }}
