@@ -1,6 +1,8 @@
 # Disk and RAID health for every server that ships metrics here. Each series
 # carries host=<server>, added by the vmagent that collected it.
-# node_disks_expected comes from a textfile the deploy writes for each server.
+# node_disks_expected and node_bootloader_grub_present come from textfiles: the
+# monitoring host's deploy writes the first for itself, and the host agent
+# writes both on the other servers.
 
 groups:
   - name: disks
@@ -21,8 +23,10 @@ groups:
         annotations:
           summary: "{{ $labels.device }} has {{ $value }} failed member(s)"
 
+      # One value per server on each side, so a server whose series briefly exist
+      # twice, as when their labels change, can't make the match ambiguous
       - alert: DiskMissing
-        expr: smartctl_devices < on(host) node_disks_expected
+        expr: max by (host) (smartctl_devices) < on(host) max by (host) (node_disks_expected)
         for: 10m
         labels:
           severity: critical
@@ -85,9 +89,29 @@ groups:
         annotations:
           summary: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free"
 
-      # lag() is the time since the server's last scrape result within the window
+      # Reported only by servers that boot through legacy BIOS, for the disks /boot
+      # lives on
+      - alert: BootloaderMissing
+        expr: node_bootloader_grub_present == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} has no GRUB boot code, so the server can't boot from it if the other disk fails"
+
+      # The check rewrites its file every 6 hours
+      - alert: BootloaderCheckStale
+        expr: time() - node_textfile_mtime_seconds{file=~".*bootloader[.]prom"} > 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "The bootloader check last ran {{ $value | humanizeDuration }} ago"
+
+      # lag() is the time since a target's last scrape result within the window. The
+      # server is silent only when every target has stopped: a target that went away
+      # alone, as when its labels change, leaves a stale series for the next 24 hours.
       - alert: ServerSilent
-        expr: max by (host) (lag(up[24h])) > 900
+        expr: min by (host) (lag(up[24h])) > 900
         labels:
           severity: warning
         annotations:

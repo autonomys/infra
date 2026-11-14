@@ -53,6 +53,26 @@ tests:
             exp_annotations:
               summary: "smartctl sees 1 disk(s), fewer than this server should have"
 
+  - name: a missing disk while a server's series exist twice
+    interval: 1m
+    input_series:
+      - series: 'smartctl_devices{host="h1", job="smartctl", instance="127.0.0.1:9633"}'
+        values: "1x20"
+      - series: 'smartctl_devices{host="h1", job="smartctl", instance="h1"}'
+        values: "1x20"
+      - series: 'node_disks_expected{host="h1", job="node", instance="127.0.0.1:9100"}'
+        values: "2x20"
+      - series: 'node_disks_expected{host="h1", job="node", instance="h1"}'
+        values: "2x20"
+    alert_rule_test:
+      - eval_time: 15m
+        groupname: disks
+        alertname: DiskMissing
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "smartctl sees 1 disk(s), fewer than this server should have"
+
   - name: SMART failure and wear
     interval: 1m
     input_series:
@@ -126,6 +146,9 @@ tests:
         values: "1x10"
       - series: 'up{host="h2", job="node"}'
         values: "1x40"
+      # h2 also had a target that went away, which mustn't make h2 look silent
+      - series: 'up{host="h2", job="node", instance="127.0.0.1:9100"}'
+        values: "1x10"
     alert_rule_test:
       - eval_time: 30m
         groupname: disks
@@ -134,3 +157,41 @@ tests:
           - exp_labels: {host: h1, severity: warning}
             exp_annotations:
               summary: "No metrics from h1 for 20m 0s"
+
+  - name: a boot disk without GRUB
+    interval: 1m
+    input_series:
+      - series: 'node_bootloader_grub_present{host="h1", device="nvme0n1"}'
+        values: "1x10"
+      - series: 'node_bootloader_grub_present{host="h1", device="nvme1n1"}'
+        values: "0x10"
+    alert_rule_test:
+      - eval_time: 5m
+        groupname: disks
+        alertname: BootloaderMissing
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme1n1, severity: critical}
+            exp_annotations:
+              summary: "nvme1n1 has no GRUB boot code, so the server can't boot from it if the other disk fails"
+
+  # vmalert-tool's clock starts at 2000-01-01 (946684800), when both files were
+  # last written; only the bootloader check's file counts
+  - name: the bootloader check stopping
+    interval: 5m
+    input_series:
+      - series: 'node_textfile_mtime_seconds{host="h1", file="/textfiles/bootloader.prom"}'
+        values: "946684800x330"
+      - series: 'node_textfile_mtime_seconds{host="h1", file="/textfiles/disks.prom"}'
+        values: "946684800x330"
+    alert_rule_test:
+      - eval_time: 20h
+        groupname: disks
+        alertname: BootloaderCheckStale
+        exp_alerts: []
+      - eval_time: 26h
+        groupname: disks
+        alertname: BootloaderCheckStale
+        exp_alerts:
+          - exp_labels: {host: h1, file: /textfiles/bootloader.prom, severity: warning}
+            exp_annotations:
+              summary: "The bootloader check last ran 1d 2h 0m 0s ago"
