@@ -51,3 +51,12 @@ variable "vmetrics_writer" {
   })
   sensitive = true
 }
+
+variable "vmetrics_fleet" {
+  description = "Basic auth credential the host agents write metrics with, through vmetrics.subspace.network"
+  type = object({
+    username = string
+    password = string
+  })
+  sensitive = true
+}

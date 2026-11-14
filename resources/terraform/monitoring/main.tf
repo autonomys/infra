@@ -32,4 +32,9 @@ module "monitoring" {
     username = var.vmetrics_username
     password = var.vmetrics_password
   }
+
+  vmetrics_fleet = {
+    username = var.vmetrics_fleet_username
+    password = var.vmetrics_fleet_password
+  }
 }

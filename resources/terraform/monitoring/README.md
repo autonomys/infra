@@ -19,7 +19,7 @@ box over SSH through `modules/monitoring-host`.
 | smartctl_exporter | `prometheuscommunity/smartctl-exporter:v0.15.0` | `127.0.0.1:9633` (host network) | SMART data for every disk |
 | vmalert | `victoriametrics/vmalert:v1.155.0` | `127.0.0.1:8880` | Evaluates the alert rules |
 | Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to the relay |
-| vmauth | `victoriametrics/vmauth:v1.155.0` | `127.0.0.1:8427` | Checks the metrics write credential and passes `/write` to VictoriaMetrics |
+| vmauth | `victoriametrics/vmauth:v1.155.0` | `127.0.0.1:8427` | Checks the metrics write credentials and passes the write paths to VictoriaMetrics |
 | Watchdog relay | `python:3.13.18-alpine3.24` | compose network only | Turns each Watchdog notification into the GET that Uptime Kuma 1.x's push route needs |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
@@ -33,7 +33,8 @@ compose network.
 | `POST https://logging.subspace.network/loki/api/v1/push` | Loki | None |
 | `GET https://logging.subspace.network/ready` | Loki | None |
 | `https://grafana.subspace.network/*` except `/metrics` | Grafana | Grafana login |
-| `POST https://vmetrics.subspace.network/write` | VictoriaMetrics, through vmauth | Basic auth, one credential shared by every sender |
+| `POST https://vmetrics.subspace.network/write` | VictoriaMetrics, through vmauth | Basic auth, the credential Auto Drive's services share |
+| `POST https://vmetrics.subspace.network/api/v1/write` | VictoriaMetrics, through vmauth | Basic auth, the credential the host agents share |
 | `GET http://<any of the three hosts>/.well-known/acme-challenge/*` | Traefik | None |
 
 Any other request to `logging.subspace.network` gets a 403 from Cloudflare and a
@@ -42,7 +43,9 @@ Traefik. Loki and VictoriaMetrics can only be queried from the box itself, which
 is how Grafana reads them.
 
 Writes to `/write` use the InfluxDB line protocol. VictoriaMetrics stores each
-field as a series named `<measurement>_<field>`, with the tags as labels.
+field as a series named `<measurement>_<field>`, with the tags as labels. Writes
+to `/api/v1/write` use Prometheus remote write, from the host agents on the other
+servers (`resources/terraform/host-agents`).
 
 ### Exposure
 
@@ -62,16 +65,16 @@ field as a series named `<measurement>_<field>`, with the tags as labels.
   on the API, snapshots and public dashboards are off, and its health endpoint
   doesn't show the version without a login. Traefik doesn't route its `/metrics`
   page, which Grafana serves without a login.
-- Metric writes need the write credential, which vmauth checks before passing
-  the request on. vmauth maps only `/write`, so a credential can't read metrics
-  or reach any other VictoriaMetrics path, and it doesn't log rejected
-  credentials.
+- Metric writes need a write credential, which vmauth checks before passing
+  the request on. Each credential maps to one write path, so it can't read
+  metrics or reach any other VictoriaMetrics path, and vmauth doesn't log
+  rejected credentials.
 - Metric reads and alerting have no public route. Their ports are on `127.0.0.1`
   only, and Grafana reads them on the box.
 - smartctl_exporter runs privileged so it can read every disk, including one added
   later. It listens on `127.0.0.1` only.
 - Alertmanager reads the Slack webhook, the relay the Uptime Kuma push URL, and
-  vmauth the write credential from files in `secrets/`, so none appears in a
+  vmauth the write credentials from files in `secrets/`, so none appears in a
   config file or API.
 - Certificates come from Let's Encrypt over HTTP-01 through the proxy, so the box
   holds no DNS API token. Renewals depend on the Loki rule in the `dns` project
@@ -123,7 +126,7 @@ upgrades Docker if a newer release is out, which restarts every container.
 
 | Setting | Where |
 |---|---|
-| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url`, `vmetrics_username`, `vmetrics_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
+| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url`, `vmetrics_username`, `vmetrics_password`, `vmetrics_fleet_username`, `vmetrics_fleet_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
 | `ssh_agent_identity` | Your local `user.auto.tfvars`, not stored in Infisical |
 | Hostname, Loki, Grafana and vmetrics domains, expected disk count | `main.tf` |
 | Image versions | `modules/monitoring-host/docker-compose.yml` |
@@ -136,7 +139,7 @@ upgrades Docker if a newer release is out, which restarts every container.
 | What the box scrapes | `modules/monitoring-host/vmagent/scrape.yml` |
 | Alert rules | `modules/monitoring-host/vmalert/rules/` |
 | Alert routing, grouping and repeats | `modules/monitoring-host/alertmanager/alertmanager.yml` |
-| Paths the write credential may reach | `modules/monitoring-host/vmauth/auth.yml.tftpl` |
+| Paths each write credential may reach | `modules/monitoring-host/vmauth/auth.yml.tftpl` |
 
 ## Deploying a change
 
@@ -278,18 +281,19 @@ match. To move to a new revision, update both:
 curl -fsSL https://grafana.com/api/dashboards/<id>/revisions/<revision>/download | shasum -a 256
 ```
 
-### Metrics write credential
+### Metrics write credentials
 
-Every sender uses one credential, `vmetrics_username` and `vmetrics_password`,
-as basic auth. Auto Drive's services read it from `VICTORIA_USERNAME` and
-`VICTORIA_PASSWORD`.
+| Credential | Variables | Senders | Path | vmauth name |
+|---|---|---|---|---|
+| Auto Drive | `vmetrics_username`, `vmetrics_password` | Auto Drive's services, from `VICTORIA_USERNAME` and `VICTORIA_PASSWORD` | `/write` | `metrics-writer` |
+| Host agents | `vmetrics_fleet_username`, `vmetrics_fleet_password` | The host agents; the `host-agents` project holds the same pair | `/api/v1/write` | `fleet` |
 
-To rotate it, change both in `common.auto.tfvars`, then plan and apply. vmauth
+To rotate one, change it in `common.auto.tfvars`, then plan and apply. vmauth
 reloads its file within 30 seconds without a restart, and the old credential
-stops working at that point, so update every sender at the same time. To give a
-sender its own credential, add a user to `vmauth/auth.yml.tftpl`.
-`vmauth_user_requests_total{username="metrics-writer"}` in VictoriaMetrics counts
-the requests.
+stops working at that point, so update its senders at the same time. The host
+agents buffer up to 1 GB each while their writes are refused, and send it once
+they have the new credential. `vmauth_user_requests_total{username="<vmauth
+name>"}` in VictoriaMetrics counts each credential's requests.
 
 ### Picking up new Cloudflare ranges
 

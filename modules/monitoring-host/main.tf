@@ -16,8 +16,8 @@ locals {
   })
 
   vmauth_config = templatefile("${path.module}/vmauth/auth.yml.tftpl", {
-    username = var.vmetrics_writer.username
-    password = var.vmetrics_writer.password
+    writer = var.vmetrics_writer
+    fleet  = var.vmetrics_fleet
   })
 
   # Directories copied to the box as they are, then synced into place

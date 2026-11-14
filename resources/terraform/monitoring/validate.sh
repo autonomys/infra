@@ -160,10 +160,10 @@ check "VictoriaMetrics healthy" "curl -fsS http://127.0.0.1:8428/health" "OK"
 check "vmalert healthy" "curl -fsS http://127.0.0.1:8880/health" "OK"
 check "Alertmanager ready" "curl -fsS http://127.0.0.1:9093/-/ready" "OK"
 check "vmauth healthy" "curl -fsS http://127.0.0.1:8427/health" "OK"
-check "All 10 scrape targets present" "$(vm_expect 'count(up)' 'v == 10' ten-targets)" "ten-targets"
-check "Every scrape target up" "$(vm_expect 'count(up == 0) or vector(0)' 'v == 0' all-up)" "all-up"
-check "SMART data for both disks" "$(vm_expect 'smartctl_devices' 'v == 2' two-disks)" "two-disks"
-check "Expected disk count published" "$(vm_expect 'node_disks_expected' 'v == 2' expected-two)" "expected-two"
+check "All 10 scrape targets present" "$(vm_expect 'count(up{host="monitoring-loki"})' 'v == 10' ten-targets)" "ten-targets"
+check "Every scrape target up" "$(vm_expect 'count(up{host="monitoring-loki"} == 0) or vector(0)' 'v == 0' all-up)" "all-up"
+check "SMART data for both disks" "$(vm_expect 'smartctl_devices{host="monitoring-loki"}' 'v == 2' two-disks)" "two-disks"
+check "Expected disk count published" "$(vm_expect 'node_disks_expected{host="monitoring-loki"}' 'v == 2' expected-two)" "expected-two"
 check "Alert rules loaded without errors" \
   "curl -fsS http://127.0.0.1:8880/api/v1/rules | python3 -c \"import json,sys; g=json.load(sys.stdin)['data']['groups']; e=[r['name'] for x in g for r in x['rules'] if r.get('lastError')]; print('rules-ok' if len(g) >= 2 and not e else 'groups=%d errors=%s' % (len(g), e))\"" \
   "rules-ok"
@@ -215,8 +215,10 @@ check "GET on the write path not routed" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $VMETRICS_DOMAIN:443:127.0.0.1 https://$VMETRICS_DOMAIN/write" "404"
 check "Metric queries not routed" \
   "curl -s -o /dev/null -w '%{http_code}' --resolve $VMETRICS_DOMAIN:443:127.0.0.1 'https://$VMETRICS_DOMAIN/api/v1/query?query=up'" "404"
-check "Prometheus remote write not routed" \
-  "curl -s -o /dev/null -w '%{http_code}' --resolve $VMETRICS_DOMAIN:443:127.0.0.1 --data-binary x https://$VMETRICS_DOMAIN/api/v1/write" "404"
+check "Remote write without a credential refused" \
+  "curl -s -o /dev/null -w '%{http_code}' --resolve $VMETRICS_DOMAIN:443:127.0.0.1 --data-binary x https://$VMETRICS_DOMAIN/api/v1/write" "401"
+check "GET on the remote write path not routed" \
+  "curl -s -o /dev/null -w '%{http_code}' --resolve $VMETRICS_DOMAIN:443:127.0.0.1 https://$VMETRICS_DOMAIN/api/v1/write" "404"
 
 # --- From outside ---
 # curl exits 7 on a refused connection and 28 on a timeout; anything else means
@@ -244,6 +246,8 @@ check_local "Grafana metrics page not reachable through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' https://$GRAFANA_DOMAIN/metrics" "404"
 check_local "Metric write without a credential refused through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' --data-binary 'validate value=1' https://$VMETRICS_DOMAIN/write" "401"
+check_local "Remote write without a credential refused through Cloudflare" \
+  "curl -s -o /dev/null -w '%{http_code}' --data-binary x https://$VMETRICS_DOMAIN/api/v1/write" "401"
 check_local "Metric queries not reachable through Cloudflare" \
   "curl -s -o /dev/null -w '%{http_code}' 'https://$VMETRICS_DOMAIN/api/v1/query?query=up'" "404"
 check_local "Grafana health endpoint hides its version" \

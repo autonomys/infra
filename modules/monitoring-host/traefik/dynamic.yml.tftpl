@@ -19,9 +19,10 @@ http:
       tls:
         certResolver: le
 
-    # Writes only; reads stay on the box, where Grafana queries VictoriaMetrics
+    # Writes only, InfluxDB line protocol and Prometheus remote write; reads stay
+    # on the box, where Grafana queries VictoriaMetrics
     vmetrics:
-      rule: "Host(`${vmetrics_domain}`) && Method(`POST`) && Path(`/write`)"
+      rule: "Host(`${vmetrics_domain}`) && Method(`POST`) && (Path(`/write`) || Path(`/api/v1/write`))"
       entryPoints:
         - websecure
       service: vmauth

@@ -49,3 +49,15 @@ variable "vmetrics_password" {
   type        = string
   sensitive   = true
 }
+
+variable "vmetrics_fleet_username" {
+  description = "Basic auth username the host agents write metrics with; the host-agents project holds the same pair"
+  type        = string
+  sensitive   = true
+}
+
+variable "vmetrics_fleet_password" {
+  description = "Basic auth password the host agents write metrics with"
+  type        = string
+  sensitive   = true
+}
