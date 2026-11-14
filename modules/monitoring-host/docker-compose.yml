@@ -152,7 +152,8 @@ services:
     container_name: smartctl-exporter
     restart: unless-stopped
     network_mode: host
-    # smartctl needs raw access to every disk, including ones added later
+    # smartctl needs raw access to the disks. It only sees the ones there when
+    # it starts, so it is restarted after a disk is replaced (see the README).
     privileged: true
     user: root
     command:

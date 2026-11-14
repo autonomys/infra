@@ -69,7 +69,7 @@ check "vmagent has written to vmetrics" \
   "curl -fsS http://127.0.0.1:8430/metrics | awk '/^vmagent_remotewrite_requests_total\\{.*status_code=\"2XX\"/ {n += \$NF} END {print (n > 0 ? \"writing\" : \"no successful writes\")}'" \
   "writing"
 check "vmagent has dropped nothing" \
-  "curl -fsS http://127.0.0.1:8430/metrics | awk '/^vmagent_remotewrite_packets_dropped_total/ {n += \$NF} END {print (n == 0 ? \"none-dropped\" : n \" dropped\")}'" \
+  "curl -fsS http://127.0.0.1:8430/metrics | awk '/^vmagent_remotewrite_packets_dropped_total/ {seen = 1; n += \$NF} END {print (!seen ? \"no dropped counter\" : n == 0 ? \"none-dropped\" : n \" dropped\")}'" \
   "none-dropped"
 check "node_exporter serves both textfiles" \
   "curl -fsS http://127.0.0.1:9100/metrics | grep -cE '^node_(disks_expected|boot_efi) '" "2"

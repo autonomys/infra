@@ -111,7 +111,9 @@ time, plan with `-target='module.host_agent["<server>"]'`.
 
 3. Add the server to `local.agents` in `main.tf`: SSH user, number of
    disks, and `scrape_ports` for any node metrics endpoint on `127.0.0.1` (a
-   Subspace node's is usually 9615, a DSN bootstrap node's 9616).
+   Subspace node's is usually 9615, a DSN bootstrap node's 9616), named for what
+   it is, such as `subspace-node`. The agent's own jobs take `node`, `smartctl`
+   and `vmagent`.
 4. Add its address (`ipv4`) and ECDSA host key (`host_key`) under the same name in
    `servers` in `common.auto.tfvars`.
 5. Plan, check that only that server's module is added, apply, and run
@@ -137,6 +139,27 @@ boot disks carry GRUB or the server boots UEFI. It changes nothing.
 
 Grafana's Metrics > Fleet health dashboard shows every server's state at a
 glance, including each disk's SMART health and wear.
+
+### Replacing a disk
+
+The RAID rebuild doesn't copy boot code. Once `/proc/mdstat` shows every array in
+sync, on a BIOS server:
+
+```bash
+sudo grub-install --target=i386-pc /dev/sdX
+sudo dpkg-reconfigure grub-pc    # keep every disk selected
+```
+
+Then restart the containers that read the disks: smartctl only sees the disks
+that were there when it started, and the bootloader check otherwise waits up to
+6 hours for its next run, with BootloaderMissing firing until then.
+
+```bash
+cd ~/deploy/host-agent && docker compose restart smartctl-exporter textfiles
+```
+
+Once both are healthy again, give smartctl's once-a-minute scrape a minute to
+report the new disk, then run `validate.sh`.
 
 ### Changing a server's disk count
 

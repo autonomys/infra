@@ -12,6 +12,9 @@ INTERVAL_SECONDS = 6 * 3600
 # starts at byte 446, so the code fits in the first 440
 BOOT_CODE_BYTES = 440
 HOST_BOOT = "/proc/1/root/boot"
+# The host's own /dev: the container's copy is taken when it starts, so it lacks
+# any disk added since
+HOST_DEV = "/proc/1/root/dev"
 
 
 def write_textfile(name, text):
@@ -41,7 +44,7 @@ def disks_under(name):
 
 
 def has_grub(disk):
-    with open(f"/dev/{disk}", "rb") as f:
+    with open(f"{HOST_DEV}/{disk}", "rb") as f:
         return b"GRUB" in f.read(BOOT_CODE_BYTES)
 
 

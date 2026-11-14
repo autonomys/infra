@@ -94,7 +94,7 @@ for service in "${services[@]}"; do
 done
 
 successful_writes() {
-  curl -fsS http://127.0.0.1:8430/metrics 2>/dev/null \
+  { curl -fsS http://127.0.0.1:8430/metrics 2>/dev/null || true; } \
     | awk '/^vmagent_remotewrite_requests_total\{.*status_code="2XX"/ {n += $NF} END {print n + 0}'
 }
 

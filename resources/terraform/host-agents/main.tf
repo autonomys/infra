@@ -43,9 +43,8 @@ module "host_agent" {
   }
 
   host = {
-    name = each.key
-    # only the address needs hiding from plans
-    host_key     = nonsensitive(var.servers[each.key].host_key)
+    name         = each.key
+    host_key     = var.servers[each.key].host_key
     disks        = each.value.disks
     scrape_ports = each.value.scrape_ports
   }

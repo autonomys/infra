@@ -71,7 +71,8 @@ services:
     image: ${SMARTCTL_EXPORTER_IMAGE:?}
     restart: unless-stopped
     network_mode: host
-    # smartctl needs raw access to every disk, including ones added later
+    # smartctl needs raw access to the disks. It only sees the ones there when
+    # it starts, so it is restarted after a disk is replaced (see the README).
     privileged: true
     user: root
     command:
@@ -84,9 +85,9 @@ services:
       start_period: 30s
     logging: *logging
 
-  # Reads each boot disk's first sector, which needs the raw devices, and the
-  # host's mounts and firmware type, which need its process namespace and an
-  # unmasked /sys
+  # Reads each boot disk's first sector through the host's /dev, and the host's
+  # mounts and firmware type, which need its process namespace, raw device
+  # access and an unmasked /sys
   textfiles:
     image: ${PYTHON_IMAGE:?}
     restart: unless-stopped

@@ -348,6 +348,12 @@ sudo grub-install --target=i386-pc /dev/sdX
 sudo dpkg-reconfigure grub-pc    # keep both disks selected
 ```
 
+smartctl only sees the disks that were there when it started, so restart it:
+
+```bash
+cd ~/monitoring && sudo docker compose restart smartctl-exporter
+```
+
 Then run `validate.sh`. RaidDegraded and DiskMissing clear once the arrays are in
 sync. If a server's number of disks changes, update `disks` in `main.tf`.
 

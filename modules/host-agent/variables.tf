@@ -29,6 +29,14 @@ variable "host" {
   }
 
   validation {
+    condition = alltrue([
+      for job in keys(var.host.scrape_ports) :
+      can(regex("^[a-z0-9][a-z0-9_-]*$", job)) && !contains(["node", "smartctl", "vmagent"], job)
+    ])
+    error_message = "host.scrape_ports names must be lowercase letters, digits, hyphens and underscores, and not node, smartctl or vmagent, which the agent already scrapes."
+  }
+
+  validation {
     condition     = can(regex("^ecdsa-sha2-nistp(256|384|521) [A-Za-z0-9+/]+=*$", var.host.host_key))
     error_message = "host.host_key must be the server's ECDSA public key, \"ecdsa-sha2-nistp256 AAAA...\", without a host name or comment."
   }
