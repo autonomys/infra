@@ -57,7 +57,7 @@ stacks.
 
 | Resource | Does | Re-runs when |
 |---|---|---|
-| `module.host_agent["<server>"].null_resource.deploy` | Uploads the compose file, scrape config, textfiles script, `.env` and credential to the staging directory, then runs `deploy.sh`, which checks there are 2 GB free and the loki log driver is installed, checks the published ports, pulls missing images, installs the files, starts the stack, waits for every container to turn healthy and stay so for 30 seconds, and waits up to 90 seconds for vmagent's first successful write | The compose file, `.env` (images, scrape config, textfiles script, disk count), credential, `deploy.sh`, port guard, or the server's address or SSH user changes |
+| `module.host_agent["<server>"].null_resource.deploy` | Uploads the compose file, scrape config, textfiles script, `.env` and credential to the staging directory, then runs `deploy.sh`, which checks there are 2 GB free and the loki log driver is installed, checks the published ports, pulls missing images, installs the files, starts the stack, waits for every container to turn healthy and stay so for 30 seconds, and waits up to 90 seconds for vmagent's first successful write | The compose file, `.env` (images, scrape config, textfiles script, disk count), credential, `deploy.sh`, port guard, or the server's address, host key or SSH user changes |
 
 Re-running is safe on a live server. Only the containers whose configuration
 changed are recreated, and vmagent keeps its buffer.
@@ -158,6 +158,10 @@ forgets the deploy but doesn't touch the server, so stop the agent there:
 ```bash
 cd ~/deploy/host-agent && docker compose down --volumes
 ```
+
+ServerSilent fires for it 15 minutes later and keeps firing until its record is
+deleted on the monitoring host, as in the monitoring README's
+[Forgetting a server](../monitoring/README.md#forgetting-a-server).
 
 ## Rules for these hosts
 

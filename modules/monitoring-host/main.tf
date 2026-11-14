@@ -58,8 +58,11 @@ locals {
 }
 
 resource "null_resource" "setup_monitoring_host" {
+  # A reinstalled box has new host keys, so rebuilding it at the same address sets
+  # it up again, and the stack deploy follows
   triggers = {
     ipv4           = var.instance.ipv4
+    host_key       = var.host_key
     installer_hash = filemd5("${var.deployer.path_to_scripts}/installer.sh")
     bootstrap_hash = filemd5("${var.deployer.path_to_scripts}/monitoring-host-bootstrap.sh")
   }
@@ -131,6 +134,7 @@ resource "null_resource" "deploy_monitoring_stack" {
     alerting_hash      = sha256(jsonencode(var.alerting))
     vmauth_hash        = sha256(local.vmauth_config)
     env_hash           = md5(local.compose_env)
+    setup_id           = null_resource.setup_monitoring_host.id
   })
 
   connection {

@@ -121,8 +121,8 @@ Swap, `/boot`, `/` and `/srv` are each RAID 1 across both disks. Data lives on
 
 | Resource | Does | Re-runs when |
 |---|---|---|
-| `null_resource.setup_monitoring_host` | Runs `installer.sh`, then `monitoring-host-bootstrap.sh` | Either script or the host address changes |
-| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs, secrets and `.env`, fetches the third-party dashboards, sets the hostname and expected disk count, starts the stack, waits for each service, resets the Grafana admin password | Any of those files, the dashboard pins, the secrets or the instance settings change |
+| `null_resource.setup_monitoring_host` | Runs `installer.sh`, then `monitoring-host-bootstrap.sh` | Either script, the host address or its host key changes |
+| `null_resource.deploy_monitoring_stack` | Uploads the compose file, configs, secrets and `.env`, fetches the third-party dashboards, sets the hostname and expected disk count, starts the stack, waits for each service, resets the Grafana admin password | Any of those files, the dashboard pins, the secrets or the instance settings change, or the setup step runs |
 
 Both steps are safe to re-run over a live host. A re-run of the setup step
 upgrades Docker if a newer release is out, which restarts every container.
@@ -208,8 +208,9 @@ Prerequisites:
    This creates `ubuntu` with passwordless sudo and the key used for the rescue
    system.
 
-5. Apply this project as in [Deploying a change](#deploying-a-change). DNS already
-   points at the box, so the fleet's pushes arrive as soon as Loki is up.
+5. Apply this project as in [Deploying a change](#deploying-a-change). The new
+   `host_key` makes Terraform set the box up and deploy the stack again. DNS
+   already points at the box, so the fleet's pushes arrive as soon as Loki is up.
 
 ## Operations
 
@@ -268,6 +269,24 @@ sudo docker exec alertmanager amtool alert add TestAlert severity=warning host=m
   --annotation='summary="Test alert, please ignore"' --alertmanager.url=http://localhost:9093
 ```
 
+### Forgetting a server
+
+ServerSilent fires for a server 15 minutes after it stops sending, and keeps
+firing until it sends again, however long that takes. Once a server is gone for
+good (see Removing a server in the host agents' README) and ServerSilent has
+fired for it, delete its last-scrape record on the box:
+
+```bash
+q='host:last_scrape_timestamp:max{host="<server>"}'
+curl -fsS http://127.0.0.1:8428/api/v1/admin/tsdb/delete_series --data-urlencode "match[]=$q"
+sleep 60
+curl -fsS http://127.0.0.1:8428/api/v1/query --data-urlencode "query=$q"
+```
+
+The query should return no result, and the alert resolves. Deleting sooner
+doesn't stick: for 5 minutes after a server's last scrape vmalert still sees it
+and writes the record again.
+
 ### Changing alert rules
 
 Edit or add a file in `modules/monitoring-host/vmalert/rules/`, cover it in
@@ -309,7 +328,8 @@ name>"}` in VictoriaMetrics counts each credential's requests.
 
 ### Picking up new Cloudflare ranges
 
-The bootstrap fetches Cloudflare's ranges each time it runs. To re-run it:
+The bootstrap fetches Cloudflare's ranges each time it runs. To re-run it, and
+the stack deploy after it:
 
 ```bash
 terraform -chdir=resources/terraform/monitoring plan \

@@ -116,7 +116,7 @@
       "id": 2,
       "type": "stat",
       "title": "Silent servers",
-      "description": "Servers that sent nothing for 15 minutes, within the last day",
+      "description": "Servers that have sent nothing for 15 minutes",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -134,7 +134,7 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "count(min by (host) (lag(up{host=~\"$host\"}[24h])) > 900) or vector(0)",
+          "expr": "count(time() - host:last_scrape_timestamp:max{host=~\"$host\"} > 900) or vector(0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -474,7 +474,7 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "min by (host) (lag(up{host=~\"$host\"}[24h]))",
+          "expr": "time() - host:last_scrape_timestamp:max{host=~\"$host\"}",
           "editorMode": "code",
           "instant": true,
           "range": false,

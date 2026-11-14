@@ -36,8 +36,11 @@ locals {
 }
 
 resource "null_resource" "deploy" {
+  # A reinstalled server has new host keys, so rebuilding it at the same address
+  # deploys again
   triggers = {
     ipv4            = var.ipv4
+    host_key        = sensitive(var.host.host_key)
     ssh_user        = var.deployer.ssh_user
     compose_hash    = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
     env_hash        = md5(local.env_file)

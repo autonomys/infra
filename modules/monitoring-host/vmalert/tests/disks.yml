@@ -249,6 +249,26 @@ tests:
             exp_annotations:
               summary: "No metrics from h1 for 20m 0s"
 
+  - name: a server down for more than a day, then back
+    interval: 5m
+    input_series:
+      - series: 'up{host="h1", job="node"}'
+        values: "1x2 _x330 1x10"
+      - series: 'up{host="h2", job="node"}'
+        values: "1x350"
+    alert_rule_test:
+      - eval_time: 26h
+        groupname: disks
+        alertname: ServerSilent
+        exp_alerts:
+          - exp_labels: {host: h1, severity: warning}
+            exp_annotations:
+              summary: "No metrics from h1 for 1d 1h 50m 0s"
+      - eval_time: 28h40m
+        groupname: disks
+        alertname: ServerSilent
+        exp_alerts: []
+
   - name: a boot disk without GRUB
     interval: 1m
     input_series:

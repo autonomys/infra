@@ -110,11 +110,16 @@ groups:
         annotations:
           summary: "The bootloader check last ran {{ $value | humanizeDuration }} ago"
 
-      # lag() is the time since a target's last scrape result within the window. The
-      # server is silent only when every target has stopped: a target that went away
-      # alone, as when its labels change, leaves a stale series for the next 24 hours.
+      # Each server's latest scrape across its targets, so a target that goes away
+      # alone doesn't make the server look silent. Once the server stops sending,
+      # the record carries its last value forward, so ServerSilent keeps firing until
+      # the server is back or its record is deleted (see the monitoring README)
+      # rather than resolving once the last scrape leaves a lookback window.
+      - record: host:last_scrape_timestamp:max
+        expr: max by (host) (timestamp(up)) or last_over_time(host:last_scrape_timestamp:max[7d])
+
       - alert: ServerSilent
-        expr: min by (host) (lag(up[24h])) > 900
+        expr: time() - host:last_scrape_timestamp:max > 900
         labels:
           severity: warning
         annotations:
