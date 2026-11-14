@@ -1,3 +1,4 @@
+host_key                       = ""
 host_ipv4                      = ""
 letsencrypt_email              = ""
 grafana_admin_user             = ""

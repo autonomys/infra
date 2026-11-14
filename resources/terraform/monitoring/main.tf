@@ -16,6 +16,7 @@ module "monitoring" {
     disks           = 2
   }
 
+  host_key          = var.host_key
   letsencrypt_email = var.letsencrypt_email
 
   grafana_admin = {

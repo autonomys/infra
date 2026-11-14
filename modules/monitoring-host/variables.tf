@@ -60,3 +60,14 @@ variable "vmetrics_fleet" {
   })
   sensitive = true
 }
+
+variable "host_key" {
+  description = "The box's ECDSA host key (\"ecdsa-sha2-nistp256 AAAA...\"), checked before anything is sent. Terraform's SSH client asks for an ECDSA key first, so an ed25519 key here fails as a mismatch."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^ecdsa-sha2-nistp(256|384|521) [A-Za-z0-9+/]+=*$", var.host_key))
+    error_message = "host_key must be the box's ECDSA public key, \"ecdsa-sha2-nistp256 AAAA...\", without a host name or comment."
+  }
+}

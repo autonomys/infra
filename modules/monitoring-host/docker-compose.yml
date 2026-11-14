@@ -70,7 +70,8 @@ services:
       GF_SECURITY_COOKIE_SECURE: "true"
       GF_SECURITY_DISABLE_GRAVATAR: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
-      # Keeps the version off /api/health for anyone not logged in
+      # Keeps the version off /api/health for anyone not logged in. The login
+      # page still shows it.
       GF_AUTH_ANONYMOUS_HIDE_VERSION: "true"
       GF_AUTH_BASIC_ENABLED: "false"
       GF_USERS_ALLOW_SIGN_UP: "false"
@@ -117,6 +118,9 @@ services:
     network_mode: host
     labels:
       monitoring.config-sha: ${VMAGENT_CONFIG_SHA}
+    environment:
+      # scrape.yml takes each target's instance label from it
+      MONITORING_HOSTNAME: ${MONITORING_HOSTNAME}
     command:
       - -httpListenAddr=127.0.0.1:8429
       - -promscrape.config=/etc/vmagent/scrape.yml

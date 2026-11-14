@@ -4,6 +4,12 @@ variable "host_ipv4" {
   sensitive   = true
 }
 
+variable "host_key" {
+  description = "The box's ECDSA host key, which Terraform checks before sending anything. Kept out of the repo: scanners index host keys, so it would give the address away."
+  type        = string
+  sensitive   = true
+}
+
 variable "ssh_agent_identity" {
   description = "Agent key Terraform offers first: its comment as `ssh-add -l` shows it, or the absolute path of its key file. The public key text itself matches nothing."
   type        = string

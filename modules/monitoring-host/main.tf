@@ -66,6 +66,7 @@ resource "null_resource" "setup_monitoring_host" {
 
   connection {
     host           = var.instance.ipv4
+    host_key       = var.host_key
     user           = var.deployer.ssh_user
     type           = "ssh"
     agent          = true
@@ -134,6 +135,7 @@ resource "null_resource" "deploy_monitoring_stack" {
 
   connection {
     host           = var.instance.ipv4
+    host_key       = var.host_key
     user           = var.deployer.ssh_user
     type           = "ssh"
     agent          = true

@@ -50,7 +50,11 @@ servers (`resources/terraform/host-agents`).
 ### Exposure
 
 - Only proxied DNS records point at the box. Its address is kept in Infisical,
-  and `host_ipv4` is marked sensitive so plans don't print it.
+  and `host_ipv4` is marked sensitive so plans don't print it. Its host key is
+  kept there too: scanners index SSH host keys, so a published key would give
+  the address away.
+- Terraform checks the box's ECDSA host key (`host_key`) before sending
+  anything, so a server answering in its place gets none of the secrets.
 - UFW denies incoming by default, allows 22 from anywhere, and allows 80 and 443
   from Cloudflare's published ranges only.
 - Ports Docker publishes bypass UFW, so containers publish on `127.0.0.1` only
@@ -62,9 +66,10 @@ servers (`resources/terraform/host-agents`).
 - Loki takes pushes without credentials, so it rejects any push larger than
   16 MB, compressed or decompressed.
 - Grafana requires a login for everything. Anonymous access, sign-up, basic auth
-  on the API, snapshots and public dashboards are off, and its health endpoint
-  doesn't show the version without a login. Traefik doesn't route its `/metrics`
-  page, which Grafana serves without a login.
+  on the API, snapshots and public dashboards are off. Its health endpoint
+  doesn't show the version without a login, but the login page does, as does the
+  compose file in this repo. Traefik doesn't route its `/metrics` page, which
+  Grafana serves without a login and which also lists its users and datasources.
 - Metric writes need a write credential, which vmauth checks before passing
   the request on. Each credential maps to one write path, so it can't read
   metrics or reach any other VictoriaMetrics path, and vmauth doesn't log
@@ -126,7 +131,7 @@ upgrades Docker if a newer release is out, which restarts every container.
 
 | Setting | Where |
 |---|---|
-| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url`, `vmetrics_username`, `vmetrics_password`, `vmetrics_fleet_username`, `vmetrics_fleet_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
+| `host_ipv4`, `letsencrypt_email`, `grafana_admin_user`, `grafana_admin_password`, `alertmanager_slack_webhook_url`, `watchdog_push_url`, `host_key`, `vmetrics_username`, `vmetrics_password`, `vmetrics_fleet_username`, `vmetrics_fleet_password` | `common.auto.tfvars`, stored in Infisical at `/monitoring` |
 | `ssh_agent_identity` | Your local `user.auto.tfvars`, not stored in Infisical |
 | Hostname, Loki, Grafana and vmetrics domains, expected disk count | `main.tf` |
 | Image versions | `modules/monitoring-host/docker-compose.yml` |
@@ -181,12 +186,15 @@ Prerequisites:
    without `/autosetup` and compare its drive names, image filename and boot mode
    with `installimage.conf`.
 
-3. Before rebooting, record the new system's host key from the rescue session.
-   With this config `/` is `md2`:
+3. Before rebooting, record the new system's host keys from the rescue session:
+   the ed25519 fingerprint to check your first login, and the ECDSA public key,
+   without its comment, for `host_key` in `common.auto.tfvars`, which Terraform
+   checks. With this config `/` is `md2`:
 
    ```bash
    mkdir -p /mnt/newroot && mount -o ro /dev/md2 /mnt/newroot
    ssh-keygen -lf /mnt/newroot/etc/ssh/ssh_host_ed25519_key.pub
+   awk '{print $1, $2}' /mnt/newroot/etc/ssh/ssh_host_ecdsa_key.pub
    umount /mnt/newroot
    ```
 
@@ -333,5 +341,6 @@ project. `vmetrics` has no Cloudflare rule; Traefik and vmauth restrict it.
 ## Rules for this host
 
 - Point only proxied records at it.
-- Keep its address out of this repo, PR descriptions and commit messages.
+- Keep its address and host keys out of this repo, PR descriptions and commit
+  messages.
 - Publish container ports on `127.0.0.1` only.

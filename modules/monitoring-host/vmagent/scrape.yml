@@ -1,7 +1,7 @@
 # The box's own metrics. vmagent runs in the host network, so every target is on
 # 127.0.0.1, and it adds host=<the box's hostname> to everything it writes.
 # instance carries the box's name, as on the host agents, so dashboards can tell
-# servers apart.
+# servers apart; vmagent fills in %{MONITORING_HOSTNAME} from its environment.
 
 global:
   scrape_interval: 15s
@@ -11,7 +11,7 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9100"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   # smartctl_exporter polls the disks every 60s, so scraping faster adds nothing
   - job_name: smartctl
@@ -19,52 +19,52 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9633"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: victoriametrics
     static_configs:
       - targets: ["127.0.0.1:8428"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: vmagent
     static_configs:
       - targets: ["127.0.0.1:8429"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: vmauth
     static_configs:
       - targets: ["127.0.0.1:8427"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: vmalert
     static_configs:
       - targets: ["127.0.0.1:8880"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: alertmanager
     static_configs:
       - targets: ["127.0.0.1:9093"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: loki
     static_configs:
       - targets: ["127.0.0.1:3100"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: grafana
     static_configs:
       - targets: ["127.0.0.1:3000"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
 
   - job_name: traefik
     static_configs:
       - targets: ["127.0.0.1:8082"]
         labels:
-          instance: monitoring-loki
+          instance: "%{MONITORING_HOSTNAME}"
