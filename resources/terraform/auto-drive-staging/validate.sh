@@ -264,9 +264,6 @@ echo "[Ports]"
 SELF_ADDRESS_RE="${SELF_ADDRESS//./\\.}"
 PUBLIC_LISTENERS="sudo ss -Htlnp | awk '\$4 !~ /^(127\\.|\\[::1\\]|\\[::ffff:127\\.|$SELF_ADDRESS_RE:)/ {n=split(\$4,a,\":\"); print a[n]}' | sort -un | tr '\\n' ' ' | sed 's/^/[/; s/ \$/]/'"
 check "Only the role's TCP ports listen beyond loopback and the mesh" "$PUBLIC_LISTENERS" "$PUBLIC_TCP_LISTENERS"
-check "Host-agent ports 8430, 9100, 9633 free" \
-  "sudo ss -Htln | awk '{print \$4}' | grep -cE ':(8430|9100|9633)\$' || true" "0"
-check "No node_exporter running" "pgrep -x node_exporter >/dev/null && echo running || echo absent" "absent"
 check "At least 2 GB free under /var/lib" \
   "[ \$(df --output=avail -B1G /var/lib | tail -1) -ge 2 ] && echo ok" "ok"
 

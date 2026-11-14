@@ -127,9 +127,8 @@ Defined in the gateway repo but not in the role's compose file yet:
   the services host's `gateway` database, every download from the file
   retriever fails. Its health check doesn't touch the database, so `validate.sh`
   still passes.
-- metrics agents: the fleet host agent comes later from its own module. Its
-  ports 8430, 9100 and 9633 on loopback are left free, and no node_exporter runs
-  here
+- metrics agents: the fleet's host agent covers this host from its own module,
+  which validates it too
 - node Prometheus metrics on 127.0.0.1:9615: adding `--prometheus-listen-on`
   changes the node's command, so it waits for the node's next planned restart
 
@@ -570,7 +569,7 @@ files, to hash them as the deploy does. It covers
 what `terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both
 members active and in sync, GRUB boot code on both disks, SSH hardening, the
 firewall, that nothing but the role's ports listens beyond loopback and the mesh
-address, the host agent's ports left free, and the mesh: `wg0`'s address and
+address, and the mesh: `wg0`'s address and
 port, that it has its key loaded, the key and config files' permissions, that
 the peers are exactly the other members and each answers a ping over the mesh,
 that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
