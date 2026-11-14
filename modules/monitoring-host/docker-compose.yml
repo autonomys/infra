@@ -10,7 +10,7 @@ x-logging: &local-logging
 
 services:
   traefik:
-    image: traefik:v3.7.17
+    image: traefik:v3.7.19
     container_name: traefik
     restart: unless-stopped
     # Host networking puts 80 and 443 behind UFW's Cloudflare-only rules. Ports
@@ -41,7 +41,7 @@ services:
     logging: *local-logging
 
   loki:
-    image: grafana/loki:3.6.20
+    image: grafana/loki:3.6.21
     container_name: loki
     restart: unless-stopped
     command: -config.file=/etc/loki/config.yml
@@ -55,7 +55,7 @@ services:
     logging: *local-logging
 
   grafana:
-    image: grafana/grafana:13.2.5
+    image: grafana/grafana:13.2.6
     container_name: grafana
     restart: unless-stopped
     labels:

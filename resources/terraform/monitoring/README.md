@@ -10,9 +10,9 @@ box over SSH through `modules/monitoring-host`.
 
 | Component | Image | Listens on | Role |
 |---|---|---|---|
-| Traefik | `traefik:v3.7.17` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
-| Loki | `grafana/loki:3.6.20` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
-| Grafana | `grafana/grafana:13.2.5` | `127.0.0.1:3000` | Dashboards over logs and metrics; alert silences |
+| Traefik | `traefik:v3.7.19` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
+| Loki | `grafana/loki:3.6.21` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
+| Grafana | `grafana/grafana:13.2.6` | `127.0.0.1:3000` | Dashboards over logs and metrics; alert silences |
 | VictoriaMetrics | `victoriametrics/victoria-metrics:v1.155.0` | `127.0.0.1:8428` | Metrics, kept 90 days |
 | vmagent | `victoriametrics/vmagent:v1.155.0` | `127.0.0.1:8429` (host network) | Scrapes the box's own metrics into VictoriaMetrics |
 | node_exporter | `prom/node-exporter:v1.12.1` | `127.0.0.1:9100` (host network) | Host, RAID and filesystem metrics |
