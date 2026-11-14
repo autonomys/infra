@@ -238,6 +238,10 @@ provisioned dashboard. Edit it in the UI, export it as JSON, replace the file in
 the repo, and apply. Grafana picks up dashboard changes without a
 restart. Dashboards created in the UI stay in Grafana's database.
 
+Metrics > Fleet health summarises every server that sends metrics: whether it
+reports, CPU, memory and filesystems, RAID arrays, each disk's SMART health and
+wear, boot code, firing alerts, and trends.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts
@@ -273,9 +277,9 @@ rule can group by server.
 
 ### Updating a third-party dashboard
 
-The Metrics folder's dashboards come from grafana.com at the revision pinned in
-`grafana_com_dashboards`, and the deploy refuses a download whose SHA-256 doesn't
-match. To move to a new revision, update both:
+The Metrics folder also holds dashboards fetched from grafana.com at the
+revision pinned in `grafana_com_dashboards`, and the deploy refuses a download
+whose SHA-256 doesn't match. To move to a new revision, update both:
 
 ```bash
 curl -fsSL https://grafana.com/api/dashboards/<id>/revisions/<revision>/download | shasum -a 256

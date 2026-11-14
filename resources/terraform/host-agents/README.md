@@ -135,6 +135,9 @@ nothing, and that node_exporter serves both textfiles. On the monitoring host it
 is up and fresh, that smartctl sees the expected number of disks, and that the
 boot disks carry GRUB or the server boots UEFI. It changes nothing.
 
+Grafana's Metrics > Fleet health dashboard shows every server's state at a
+glance, including each disk's SMART health and wear.
+
 ### Changing a server's disk count
 
 Update `disks` in `local.agents`, then plan and apply. DiskMissing compares it

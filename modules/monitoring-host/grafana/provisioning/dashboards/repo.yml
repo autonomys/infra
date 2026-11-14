@@ -12,7 +12,8 @@ providers:
     options:
       path: /etc/grafana/dashboards/logs
 
-  # Filled at deploy time from grafana.com at pinned revisions (see main.tf)
+  # The repo's dashboards/metrics, plus dashboards fetched from grafana.com at
+  # pinned revisions during the deploy (see main.tf)
   - name: metrics
     folder: Metrics
     type: file
