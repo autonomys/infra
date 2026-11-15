@@ -21,7 +21,7 @@ case "$ROLE" in
   files-gateway)
     HOSTNAME_WANT="auto-drive-files-gateway-chronos"
     # TCP ports expected to listen beyond loopback and the mesh address
-    PUBLIC_TCP_LISTENERS="[22 30333 30433]"
+    PUBLIC_TCP_LISTENERS="[22 30333 30343 30433 30443 30543]"
     ;;
   services)
     HOSTNAME_WANT="auto-drive-staging-services"
@@ -29,7 +29,7 @@ case "$ROLE" in
     ;;
   public)
     HOSTNAME_WANT="auto-drive-staging-public"
-    PUBLIC_TCP_LISTENERS="[22 80 443]"
+    PUBLIC_TCP_LISTENERS="[22 80 443 30343 30443 30543]"
     ;;
   private)
     HOSTNAME_WANT="auto-drive-staging-private"
@@ -91,6 +91,18 @@ AUTH_PROJECT="auto-drive-auth"
 AUTH_IMAGE="ghcr.io/autonomys/auto-drive-auth:snapshot-6554f564@sha256:c689550a14ffa2815f81164283a388133548b1da3742628e30fee8d9a7771ffd"
 AUTH_PORT=3040
 SERVICES_MESH_ADDRESS="10.77.0.10"
+FARMER_DIR="$DEPLOY_DIR/subspace-farmer"
+FARMER_PROJECT="subspace-farmer"
+FARMER_NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-oct-22@sha256:76cf36d40ecbc382edd072567f3a7b2c631530fd81027f29095877ad3509a24f"
+FARMER_IMAGE="ghcr.io/autonomys/farmer:mainnet-2026-oct-22@sha256:d140be610587c679a031b69df033be95adb777e425720e7ccefe34a686eff543"
+FARMER_SYNC="full"
+# the node's P2P and DSN ports, then the farmer's
+FARMER_NODE_PORT=30343
+FARMER_NODE_DSN_PORT=30443
+FARMER_PORT=30543
+FARM_SIZE="1GiB"
+FARM_BYTES=1073741824
+REWARD_ADDRESS="suexrxoBh96UgcCyKXVMTEUhR8LtJozJssVT8Wrzs16bjBSn6"
 # what a backend role's checks look at
 case "$ROLE" in
   public)
@@ -713,10 +725,133 @@ private_checks() {
     "301 https://$AUTH_HOST/health"
 }
 
+# by compose service name, in the farmer project
+farmer_container() {
+  echo "\$(sudo docker ps -a -q --filter label=com.docker.compose.project=$FARMER_PROJECT --filter label=com.docker.compose.service=$1)"
+}
+
+# whether a container's args hold a JSON fragment, without printing them: the
+# farmer's hold the host's address
+has_args() {
+  echo "sudo docker inspect -f '{{json .Args}}' $1 | grep -qF '$2' && echo yes || echo no"
+}
+
+farmer_rpc() {
+  echo "sudo docker exec $(farmer_container node) curl -s -m 5 -H 'Content-Type: application/json' -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"$1\"}' http://localhost:9944"
+}
+
+farmer_checks() {
+  local node farmer service c port ports_re sync_state restarts first second r1 r2 n1 f1 n2 f2
+  node="$(farmer_container node)"
+  farmer="$(farmer_container farmer)"
+  echo ""
+  echo "[Farmer]"
+  check "Compose file and .env in place" \
+    "cd $FARMER_DIR && stat -c '%n %a %U' docker-compose.yml .env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu .env 600 ubuntu"
+  for service in node farmer; do
+    c="$(farmer_container "$service")"
+    # the running container's config hash is the file's: no change is waiting on a restart
+    check "Farmer's $service matches the compose file" \
+      "cd $FARMER_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
+      "match"
+    check "Farmer's $service running" "sudo docker inspect -f '{{.State.Status}}' $c" "running"
+    check "Farmer's $service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
+    check "Farmer's $service logs ship through the loki driver, capped" \
+      "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $c" \
+      "loki $LOKI_URL 10m 3"
+  done
+  check "Farmer's node healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $node" "healthy"
+  check "Farmer's node image" "sudo docker inspect -f '{{.Config.Image}}' $node" "$FARMER_NODE_IMAGE"
+  check "Farmer's node on Chronos" "$(has_args "$node" '"--chain","chronos"')" "yes"
+  check "Farmer's node serves a farmer" "$(has_args "$node" '"--farmer"')" "yes"
+  check "Farmer's node syncs $FARMER_SYNC" "$(has_args "$node" "\"--sync\",\"$FARMER_SYNC\"")" "yes"
+  check "Farmer's node listens on $FARMER_NODE_PORT" \
+    "$(has_args "$node" "\"--listen-on\",\"/ip4/0.0.0.0/tcp/$FARMER_NODE_PORT\"")" "yes"
+  check "Farmer's node's DSN listens on $FARMER_NODE_DSN_PORT" \
+    "$(has_args "$node" "\"--dsn-listen-on\",\"/ip4/0.0.0.0/tcp/$FARMER_NODE_DSN_PORT\"")" "yes"
+  check "Farmer's node on Chronos (RPC)" "$(farmer_rpc system_chain)" '"result":"Autonomys Chronos Testnet"' contains
+  check "Farmer's node has peers" \
+    "$(farmer_rpc system_health) | grep -o '\"peers\":[0-9]*' | grep -qv '\"peers\":0\$' && echo peered" \
+    "peered"
+
+  check "Farmer image" "sudo docker inspect -f '{{.Config.Image}}' $farmer" "$FARMER_IMAGE"
+  check "Farm of $FARM_SIZE at /var/subspace" \
+    "$(has_args "$farmer" "\"path=/var/subspace,size=$FARM_SIZE\"")" "yes"
+  check "Farmer pays its rewards to $REWARD_ADDRESS" \
+    "$(has_args "$farmer" "\"--reward-address\",\"$REWARD_ADDRESS\"")" "yes"
+  check "Farmer listens on $FARMER_PORT" \
+    "$(has_args "$farmer" "\"--listen-on\",\"/ip4/0.0.0.0/tcp/$FARMER_PORT\"")" "yes"
+  check "Farmer advertises one of this host's addresses on $FARMER_PORT" \
+    "a=\$(sudo docker inspect -f '{{json .Args}}' $farmer | grep -oE '\"--external-address\",\"/ip4/[0-9.]+/tcp/$FARMER_PORT\"' | sed -E 's|.*/ip4/([0-9.]+)/.*|\\1|'); [ -n \"\$a\" ] && ip -4 -o addr show | awk '{print \$4}' | cut -d/ -f1 | grep -qxF \"\$a\" && echo yes || echo no" \
+    "yes"
+  # the farm's own record of itself, which holds only public IDs and writes the
+  # genesis hash without its 0x
+  check "Farm allocated $FARM_SIZE on Chronos" \
+    "sudo docker exec $farmer cat /var/subspace/single_disk_farm.json | python3 -c 'import json, sys; f = json.load(sys.stdin)[\"v0\"]; print(f[\"allocatedSpace\"], f[\"genesisHash\"])'" \
+    "$FARM_BYTES ${CHRONOS_GENESIS#0x}"
+
+  for port in $FARMER_NODE_PORT $FARMER_NODE_DSN_PORT $FARMER_PORT; do
+    check "$port published on every interface" \
+      "sudo ss -Htln 'sport = :$port' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "0.0.0.0:$port [::]:$port"
+  done
+  ports_re="($FARMER_NODE_PORT|$FARMER_NODE_DSN_PORT|$FARMER_PORT)"
+  check "UFW opens the farmer's ports as farmer-port, and nothing else" \
+    "s=\$(sudo ufw status); echo \"\$(grep -cE '^$ports_re/tcp +ALLOW +Anywhere +# farmer-port\$' <<< \"\$s\") \$(grep -cE '^$ports_re/tcp \\(v6\\) +ALLOW +Anywhere \\(v6\\) +# farmer-port\$' <<< \"\$s\") \$(grep -c '# farmer-port\$' <<< \"\$s\")\"" \
+    "3 3 6"
+  # the farmer's node and farm share the disk with everything else on the host
+  check "At least 50 GB free under /var/lib/docker" \
+    "a=\$(df --output=avail -B1G /var/lib/docker | tail -1 | tr -d ' '); [ \"\$a\" -ge 50 ] && echo ok || echo \"\$a GB free\"" "ok"
+  # the loki driver's local copy, which `docker logs` reads, holds only the
+  # farmer's current run
+  echo "  rewards signed since the farmer last started: $(ssh -o ConnectTimeout=5 "$HOST" "sudo docker logs $farmer 2>&1 | grep -c 'Successfully signed reward hash' || true" 2>/dev/null || echo unknown)"
+
+  echo ""
+  echo "[Farmer node sync]"
+  # Two samples a minute apart. A container that restarted in between exited
+  # with an error that only Loki has: `docker logs` reads the loki driver's
+  # local copy, which holds just the current run.
+  sync_state="$(farmer_rpc system_syncState)"
+  # each container's restart count, or none while it doesn't exist
+  restarts="for c in \"$node\" \"$farmer\"; do sudo docker inspect -f '{{.RestartCount}}' \"\$c\" 2>/dev/null || echo none; done | paste -sd ' ' -"
+  r1="$(ssh -o ConnectTimeout=5 "$HOST" "$restarts" 2>/dev/null || true)"
+  first="$(ssh -o ConnectTimeout=5 "$HOST" "$sync_state" 2>/dev/null || true)"
+  echo "  now:       ${first:-no answer}"
+  sleep 60
+  second="$(ssh -o ConnectTimeout=5 "$HOST" "$sync_state" 2>/dev/null || true)"
+  r2="$(ssh -o ConnectTimeout=5 "$HOST" "$restarts" 2>/dev/null || true)"
+  echo "  +60s:      ${second:-no answer}"
+  read -r n1 f1 <<< "$r1"
+  read -r n2 f2 <<< "$r2"
+  steady() {
+    if [[ -z "$3" || "$3" == none ]]; then
+      report "$1" "no container" "steady"
+    elif [[ "$3" == "$4" ]]; then
+      report "$1" "steady" "steady"
+    else
+      report "$1" "restarted, $3 -> $4 restarts; its errors are in Loki under compose_project=\"$FARMER_PROJECT\", compose_service=\"$2\"" "steady"
+    fi
+  }
+  steady "Farmer's node not restarting" node "$n1" "$n2"
+  steady "Farmer not restarting" farmer "$f1" "$f2"
+  current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
+  if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
+    report "Farmer's node importing blocks" "advancing" "advancing"
+  else
+    report "Farmer's node importing blocks" "not advancing" "advancing"
+  fi
+}
+
 case "$ROLE" in
-  files-gateway) files_gateway_checks ;;
+  files-gateway)
+    files_gateway_checks
+    farmer_checks
+    ;;
   services) services_checks ;;
-  public) backend_checks ;;
+  public)
+    backend_checks
+    farmer_checks
+    ;;
   private)
     backend_checks
     private_checks

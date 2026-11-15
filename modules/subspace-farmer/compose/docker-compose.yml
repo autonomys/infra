@@ -1,0 +1,74 @@
+# A Subspace farmer and the pruned node it farms through, a node of its own.
+# Values come from the .env Terraform writes beside this file.
+#
+# The farmer reaches the node over this project's network, so the node serves
+# its RPC beyond its own loopback, to every origin and with every method: under
+# the defaults the farmer's WebSocket is refused, and so are its slot, signing
+# and piece calls. The RPC is never published, so only this project's
+# containers reach it.
+#
+# Each P2P port is published as itself, and the farmer is told its public
+# address, which Docker's NAT hides from it, so it serves the DSN from the start.
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: ${LOKI_URL:?}
+    # a slow or unreachable Loki must never block the services' own writes
+    mode: non-blocking
+    max-buffer-size: 4m
+    # the driver's local copy for `docker logs`, capped as on the rest of the fleet
+    max-size: 10m
+    max-file: '3'
+
+volumes:
+  node-data: {}
+  farm: {}
+
+services:
+  node:
+    image: ${NODE_IMAGE:?}
+    restart: unless-stopped
+    stop_grace_period: 30s
+    volumes:
+      - node-data:/var/subspace
+    ports:
+      - '${NODE_PORT:?}:${NODE_PORT:?}'
+      - '${NODE_DSN_PORT:?}:${NODE_DSN_PORT:?}'
+    command:
+      [
+        "run",
+        "--chain", "${CHAIN:?}",
+        "--base-path", "/var/subspace",
+        "--sync", "${SYNC:?}",
+        "--listen-on", "/ip4/0.0.0.0/tcp/${NODE_PORT:?}",
+        "--dsn-listen-on", "/ip4/0.0.0.0/tcp/${NODE_DSN_PORT:?}",
+        "--rpc-cors", "all",
+        "--rpc-methods", "unsafe",
+        "--rpc-listen-on", "0.0.0.0:9944",
+        "--farmer"
+      ]
+    logging: *logging
+
+  farmer:
+    image: ${FARMER_IMAGE:?}
+    depends_on:
+      node:
+        condition: service_healthy
+        restart: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    volumes:
+      - farm:/var/subspace
+    ports:
+      - '${FARMER_PORT:?}:${FARMER_PORT:?}'
+    command:
+      [
+        "farm",
+        "--node-rpc-url", "ws://node:9944",
+        "--listen-on", "/ip4/0.0.0.0/tcp/${FARMER_PORT:?}",
+        "--external-address", "/ip4/${PUBLIC_IPV4:?}/tcp/${FARMER_PORT:?}",
+        "--reward-address", "${REWARD_ADDRESS:?}",
+        "path=/var/subspace,size=${FARM_SIZE:?}"
+      ]
+    logging: *logging

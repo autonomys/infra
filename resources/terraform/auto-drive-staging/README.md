@@ -17,7 +17,9 @@ services host, `auto-drive-staging-services`, uses
 `auto-drive-staging-public`, and the private backend,
 `auto-drive-staging-private`, both use `modules/auto-drive-backend-host` with
 different inputs. Auth runs on the private backend host from
-`modules/auto-drive-auth`. The hosts reach each other over a private WireGuard
+`modules/auto-drive-auth`. The files gateway and the public backend also each
+run a Chronos farmer, with a pruned node of its own, from
+`modules/subspace-farmer`. The hosts reach each other over a private WireGuard
 mesh, `modules/wireguard-mesh`.
 
 Every role builds on `modules/host-bootstrap`: hostname, SSH hardening, UFW,
@@ -545,6 +547,90 @@ an existing admin, so the first is made by setting that user's `role` to
 `STAFF_DOMAINS` does not restrict any of this: it only says who counts as staff
 for a feature flag in staff-only mode.
 
+## The farmers
+
+The files gateway and the public backend each run a Chronos farmer with a 1 GiB
+farm, through a pruned node of its own, from `modules/subspace-farmer`. Like
+auth, the role takes a host another role has bootstrapped. Its
+`compose/docker-compose.yml` has two services, `node` and `farmer`. Terraform
+writes the images, the chain, the sync mode, the ports, the farm size, the
+reward address, the host's address and the Loki URL to a `.env` beside it, and
+both land in `~/deploy/subspace-farmer/`. The node's chain data and the farm are
+in the project's named volumes, `subspace-farmer_node-data` and
+`subspace-farmer_farm`. The gateway's own node, in the `file-retriever` project,
+is a separate archive node that the farmer doesn't use.
+
+Their rewards go to `suexrxoBh96UgcCyKXVMTEUhR8LtJozJssVT8Wrzs16bjBSn6`, the
+staging-only account the private backend's publish worker signs with, so farming
+funds publishing. The address is public, so it is in `main.tf` and `validate.sh`.
+If `publish_private_keys` moves to another account, move it too.
+
+| Port  | Listener   | Default | Published on    |
+| ----- | ---------- | ------- | --------------- |
+| 30343 | node P2P   | 30333   | every interface |
+| 30443 | node DSN   | 30433   | every interface |
+| 30543 | farmer DSN | 30533   | every interface |
+
+Each is its default plus ten, the same on both hosts and clear of the gateway's
+node, and each is TCP, as every listener the node and the farmer have is. Each is
+published as itself, and the farmer is told the host's address with
+`--external-address`, which Docker's NAT would otherwise hide from it, so it
+serves the DSN as a Kademlia server from the start. The node's RPC stays on 9944
+inside its container, unpublished. The farmer reaches it over the project's
+network, so the node serves it beyond its own loopback with `--rpc-cors all` and
+`--rpc-methods unsafe`: under the defaults the farmer's WebSocket is refused,
+and so are its slot, signing and piece calls.
+
+The deploy keeps the three ports open in UFW under a comment of its own,
+`farmer-port`, which host-bootstrap's firewall pass leaves alone, as it leaves
+the mesh's `mesh-peer` rules. So adding, moving or removing the farmers touches
+neither host's bootstrap. Docker-published ports bypass UFW anyway: before it
+installs anything, the deploy runs `scripts/compose-port-guard.py` on its compose
+model with those three as the only public ports. It then starts the node, and the
+farmer once the node is healthy, and fails the apply unless both are running
+within 300 seconds and neither restarts in the 30 seconds after. A failure
+prints both containers' restart counts and the Loki query for their errors:
+the loki driver's local copy, which `docker logs` reads, holds only a
+container's current run, so the error a restarted container exited with is
+only in Loki.
+
+### Sync
+
+Both nodes full-sync, which takes about two days to reach Chronos' tip, and a
+farmer wins nothing until its node is synced. Snap sync, the node's default,
+failed in every attempt when this was built, tried with the
+`chronos-2026-aug-18` release. It needs reachable farmers to serve the chain's segment headers and
+found too few, so the node exited with `Snap sync exited with a fatal error ...
+Can't find peers to download headers from`, and again after every restart. Snap
+sync applies only to an empty database: to try it again, set `local.farmer.sync`
+to `snap` before a host's node starts from empty.
+
+### Farm size
+
+The farmer refuses less than about 1021 MiB, one sector and its overhead, so
+`1GiB` is the smallest. A 1 GiB farm holds one sector and takes 1.07 GB on disk.
+Changing `local.farmer.farm_size` recreates the farmer only. It extends the farm
+in place and plots the new sectors at the lowest thread priority, behind
+everything else on the host. 10 GiB holds about ten sectors.
+
+### Moving or retiring the farmers
+
+Everything the role puts on a host is its own: `~/deploy/subspace-farmer/`, the
+compose project and its volumes, and the `farmer-port` rules. To move the
+farmers to another Terraform project, deploy the same module there with the same
+compose project. Then remove both blocks from `main.tf` and the farmer checks and
+ports from `validate.sh`, and apply here. That only drops their deploys from this
+state, so they keep running, and the other project's first deploy keeps their
+chain data and farms.
+
+To retire them, remove the blocks and apply, then on each host:
+
+```bash
+cd ~/deploy/subspace-farmer && docker compose down -v && cd
+rm -rf ~/deploy/subspace-farmer
+for port in 30343 30443 30543; do sudo ufw delete allow "$port/tcp"; done
+```
+
 ## The private mesh
 
 The staging hosts talk to each other over WireGuard rather than a provider's
@@ -753,7 +839,8 @@ role: on the gateway the node, which fails the apply if it is not running, or
 restarts, within 30 seconds of starting; on the services host Postgres and
 RabbitMQ, as in "The services role"; on the public backend the migrations, then
 nginx, its certificate and the services, as in "The public backend role"; on
-the private backend the same without the migrations, then auth. After the first
+the private backend the same without the migrations, then auth; and on the
+gateway and the public backend, the farmer and its node. After the first
 apply on a rebuilt host, record its new mesh public key (see "Adding a host to
 the mesh").
 
@@ -843,6 +930,22 @@ only), and auth: its files, its migrations, its health, image, log driver and
 loopback listener, that it answers through nginx, and that nginx refuses
 onboarding.
 
+On the gateway and the public backend it also checks the farmer:
+
+- **Files and model.** Its files, and that the node and the farmer match the
+  compose file, run their pinned images, restart unless stopped and log through
+  the loki driver, capped.
+- **Node.** Its chain, farmer mode, sync mode, listen ports, health and peers.
+- **Farmer.** Its farm, reward address and listen port, and that the address it
+  advertises is one of the host's own, reported as yes or no, never the address.
+- **The farm's own record.** Its allocated space and genesis.
+- **Ports and disk.** The three ports published on every interface and open in
+  UFW as `farmer-port`, and at least 50 GB free.
+
+It reports the rewards signed since the farmer last started, and samples the
+node's sync state a minute apart. It fails if the node or the farmer restarted
+between the samples, and says where in Loki their errors are.
+
 It also reports whether `wg0` came up before Docker on the current boot. That
 only holds once the host has rebooted since it joined the mesh.
 
@@ -862,6 +965,17 @@ sudo docker logs --tail 20 \
 
 `currentBlock` should rise between calls.
 
+### Confirming a farmer's node is syncing
+
+On the gateway or the public backend:
+
+```bash
+cd ~/deploy/subspace-farmer
+docker compose exec node curl -s -H 'Content-Type: application/json' \
+  -d '{"id":1,"jsonrpc":"2.0","method":"system_syncState"}' http://localhost:9944
+docker compose logs --tail 20 node farmer
+```
+
 ### Confirming logs reach Loki
 
 The containers' logs ship through the loki driver to
@@ -874,6 +988,7 @@ with:
 {host="auto-drive-staging-public", compose_project="auto-drive"}
 {host="auto-drive-staging-private", compose_project="auto-drive"}
 {host="auto-drive-staging-private", compose_project="auto-drive-auth"}
+{host=~"auto-drive-files-gateway-chronos|auto-drive-staging-public", compose_project="subspace-farmer"}
 ```
 
 Push failures show in the Docker daemon's journal as `error sending batch`, which
@@ -926,6 +1041,12 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   private host's bootstrap, and with it its mesh and deploys.
 - Changing a backend host's names needs a new certificate: delete the old one
   with `sudo certbot delete --cert-name <old app name>` on the host, then apply.
+- The farmers' images, sync mode, farm size, reward address and ports are in
+  `local.farmer` in `main.tf`, which both hosts share. A new release moves both
+  images together, to the newest of the `mainnet-` and `chronos-` tags: mainnet
+  releases run Chronos too. A change to the node's image or settings recreates the node, and the
+  farmer with it. The farm size and the reward address recreate only the farmer.
+  The ports recreate both and swap the UFW rules.
 
 ## Rules for these hosts
 
@@ -995,6 +1116,11 @@ for the full apply, and its node then resyncs from genesis:
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
   -replace=module.files_gateway.module.host.null_resource.bootstrap -target=module.files_gateway.module.mesh
 ```
+
+A rebuilt gateway or public backend loses its farmer's volumes too. The full
+apply runs the farmer's deploy again: its node full-syncs from genesis, about two
+days, and the farmer makes a new farm, with a new identity, and plots it. Rewards
+already paid stay in the account.
 
 Apply each plan with `manage.sh auto-drive-staging apply`, and once every key is
 recorded and applied, run `validate.sh` on each host.
