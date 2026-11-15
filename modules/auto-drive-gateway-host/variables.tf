@@ -207,7 +207,7 @@ variable "dag_indexer" {
 
   # name (a registry may carry a port), then a tag and a digest
   validation {
-    condition = var.dag_indexer == null || alltrue([
+    condition = var.dag_indexer == null ? true : alltrue([
       for image in [var.dag_indexer.image, var.dag_indexer.backup_image] :
       can(regex("^[a-z0-9][a-z0-9._-]*(:[0-9]+)?(/[a-z0-9][a-z0-9._-]*)*:[A-Za-z0-9_][A-Za-z0-9._-]*@sha256:[0-9a-f]{64}$", image))
       && !strcontains(image, ":latest@")
@@ -216,7 +216,7 @@ variable "dag_indexer" {
   }
 
   validation {
-    condition = var.dag_indexer == null || (
+    condition = var.dag_indexer == null ? true : (
       can(regex("^([0-9a-f]{64})?$", var.dag_indexer.accept_schema_sha256))
       && (var.dag_indexer.accept_rewind_to == null || try(var.dag_indexer.accept_rewind_to >= 1 && floor(var.dag_indexer.accept_rewind_to) == var.dag_indexer.accept_rewind_to, false))
     )
