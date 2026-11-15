@@ -170,7 +170,7 @@ variable "wait_for" {
 }
 
 variable "database_id" {
-  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs both apps' migrations and recreates the apps, so they connect to the new database."
+  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs both apps' migrations and recreates the apps and the DAG indexer, so they connect to the new database. The DAG indexer's start guard decides whether it may then run."
   type        = string
   default     = ""
 
@@ -189,6 +189,45 @@ variable "api_secret" {
     condition     = can(regex("^[A-Za-z0-9]{32,}$", var.api_secret))
     error_message = "api_secret must be at least 32 letters and digits."
   }
+}
+
+variable "dag_indexer" {
+  description = <<-EOT
+    The DAG indexer, the SubQuery node that writes the dag-indexer schema the file retriever reads, with nightly backups of the database, or null to run neither.
+    image is an auto-files-gateway DAG indexer image, which carries the mapping, schema.graphql and /app/project.<network_id>.yaml. backup_image is the Postgres client the backups and the deploy's checks use.
+    accept_schema_sha256 lets one deploy start an image whose schema.graphql differs from the one the schema was created from, once the schema's tables are brought up to date by hand. accept_rewind_to lets one deploy start the indexer behind the last backup's progress, down to that height, after a deliberate rewind. Remove each after its apply.
+  EOT
+  type = object({
+    image                = string
+    backup_image         = string
+    accept_schema_sha256 = optional(string, "")
+    accept_rewind_to     = optional(number)
+  })
+  default = null
+
+  # name (a registry may carry a port), then a tag and a digest
+  validation {
+    condition = var.dag_indexer == null || alltrue([
+      for image in [var.dag_indexer.image, var.dag_indexer.backup_image] :
+      can(regex("^[a-z0-9][a-z0-9._-]*(:[0-9]+)?(/[a-z0-9][a-z0-9._-]*)*:[A-Za-z0-9_][A-Za-z0-9._-]*@sha256:[0-9a-f]{64}$", image))
+      && !strcontains(image, ":latest@")
+    ])
+    error_message = "Each of the DAG indexer's images must be pinned to a tag other than latest and a digest."
+  }
+
+  validation {
+    condition = var.dag_indexer == null || (
+      can(regex("^([0-9a-f]{64})?$", var.dag_indexer.accept_schema_sha256))
+      && (var.dag_indexer.accept_rewind_to == null || try(var.dag_indexer.accept_rewind_to >= 1 && floor(var.dag_indexer.accept_rewind_to) == var.dag_indexer.accept_rewind_to, false))
+    )
+    error_message = "dag_indexer.accept_schema_sha256 must be a sha256 digest in lowercase hex, and accept_rewind_to a block number of 1 or more."
+  }
+}
+
+variable "database_start_empty" {
+  description = "Lets one deploy past a gateway database that is behind the last backup's progress, by removing the progress floor, so the indexes carry on from whatever the database holds: an older dump restored on purpose resumes from there, and an empty database starts over. Only takes effect with dag_indexer, and only while the database is behind. Remove it after that apply."
+  type        = bool
+  default     = false
 }
 
 variable "cap_local_logs" {

@@ -41,7 +41,8 @@ moved:
 ```
 
 It runs the Subspace node, the RPC gateway, the object-mapping indexer
-(`object-mapping-app`) and the file retriever. Each app's database migrations
+(`object-mapping-app`), the file retriever and, given `dag_indexer`, the DAG
+indexer and the `gateway` database's backups. Each app's database migrations
 run in a one-shot service before the app starts, on every deploy; a run with
 nothing new to apply changes nothing. The deploy runs them before it installs
 anything, so a migration that fails leaves the running apps as they were.
@@ -50,16 +51,17 @@ Terraform writes the settings to a `.env` beside the files, each in single
 quotes so Compose takes it literally: the images, the chain, the object-mapping
 setting, the log levels, the apps' settings and the Loki URL. The `.env` also
 names the Compose project, `file-retriever`, and the files to use. The secrets go
-in `object-mapping-indexer.env` and `file-retriever.env` instead, readable by
-the deploy user only: the database URL, built from `postgres_password` in
-`services.auto.tfvars`, and the file retriever's API secret,
-`files_gateway_token` in `gateway.auto.tfvars`.
+in `object-mapping-indexer.env`, `file-retriever.env` and `gateway-db.env`
+instead, readable by the deploy user only: the database's credentials, from
+`postgres_password` in `services.auto.tfvars`, and the file retriever's API
+secret, `files_gateway_token` in `gateway.auto.tfvars`.
 `compose/docker-compose.mesh.yml` publishes the indexer and the file retriever on
 the host's mesh address as well as loopback, for the backends.
 `compose/docker-compose.log-cap.yml` caps the loki driver's local copy of the
 logs as on the rest of the fleet, and is included unless the module's
-`cap_local_logs` is off. The `.yml` files in `compose/` and the env files land in
-`~/deploy/auto-drive-gateway/`, so on the host
+`cap_local_logs` is off. `compose/docker-compose.dag-indexer.yml` and its two
+scripts are included given `dag_indexer`. The files in `compose/` and the env
+files land in `~/deploy/auto-drive-gateway/`, so on the host
 
 ```bash
 cd ~/deploy/auto-drive-gateway && docker compose ps
@@ -120,16 +122,116 @@ Nothing reads them any more; they can be removed by hand.
   earlier blocks would need one run with a block number.
 - File retriever metrics stay off unless the module is given `metrics`.
 
+### The DAG indexer
+
+The DAG indexer is the SubQuery node that fills the `dag-indexer` schema in the
+services host's `gateway` database. The file retriever looks every download up
+in that schema, so without it every download fails. It runs with the flags the
+gateway repo's own compose file gives it, `/ready` as its health check, and its
+API on `127.0.0.1:30001` only.
+
+The image, `dag_indexer.image`, is the gateway repo's DAG indexer image: the
+SubQuery node with the mapping, `schema.graphql` and one manifest per network in
+`/app`, each starting at block 1. The indexer runs `/app/project.<network>.yaml`
+for the role's `network_id`, with the node's RPC on the compose network as its
+endpoint. Before anything changes, the deploy reads the image and refuses it
+unless:
+
+- its manifest for the network exists, and starts at the block the index
+  recorded on its first start. The indexer refuses a start block above its
+  progress and ignores a lower one.
+- its `schema.graphql` is the one the schema was created from, whose hash the
+  deploy records as the schema's comment. The indexer never alters an existing
+  schema's tables: a new field makes it stop at its first write. Bring the
+  tables up to date by hand first, then set `dag_indexer.accept_schema_sha256`
+  to the new file's hash for one apply.
+
+A new image recreates the indexer, and the index resumes where it left off.
+`validate.sh` checks that the running bundle, `/app/dist/index.js`, is the
+pinned mapping. The index follows the chain's finalized head, which on Chronos
+trails the best block by five segments, about six days.
+
+On an empty or missing schema the indexer starts over from its start block,
+which takes a day or two on Chronos. So `dag-indexer-start-guard.js` runs before
+it and compares the database's progress with the floor the last backup recorded
+(see "Backups of the gateway database"). If the database is behind, the guard
+exits with `refusing to start`, and Docker retries until the database is
+restored or a deploy with `database_start_empty` removes the floor. The deploy
+makes the same check, on both indexes, before it runs the migrations.
+
+### Backups of the gateway database
+
+With `dag_indexer`, the gateway host also backs up the services host's `gateway`
+database, which holds both indexes, over the mesh. `gateway-db-backup` runs
+`gateway-db.sh backup` in `dag_indexer.backup_image` on every deploy, and
+nightly from the `auto-drive-gateway-db-backup` systemd timer.
+
+- Each dump is a `pg_dump -Fc` in `/var/backups/auto-drive-gateway`, readable by
+  root only, beside a `.progress` file: the DAG index's `lastProcessedHeight`
+  and the highest block in `object_mappings`, read just before the dump, so the
+  dump holds at least that much.
+- Both only ever rise. A dump behind the last good one's progress is kept as
+  `.dump.suspect`, the run fails, and it doesn't count towards the seven dumps
+  kept, so a run of bad dumps can't push out the last good one.
+- The last good dump's progress is the floor, in `floor/progress-floor`. The
+  deploy and the start guard refuse a database behind it. Two settings let one
+  apply past it, and do nothing once the database has caught up; take them out
+  after that apply:
+  - `database_start_empty = true` removes the floor, so the indexes carry on
+    from whatever the database holds: an older dump restored on purpose resumes
+    from there, and an empty database starts over;
+  - `dag_indexer.accept_rewind_to = <height>`, after rewinding the DAG index by
+    hand, lowers the floor's DAG height to that height.
+- Auto Drive's own database, on the same Postgres, isn't backed up.
+
+### Restoring the gateway database
+
+A rebuilt services host starts with an empty `gateway` database. Restore it
+before the gateway's deploy runs against it:
+
+1. Before rebuilding, stop the apps that use the database, on the gateway host.
+   A stopped container stays stopped, across reboots too, and the start guard
+   is there if this step is missed:
+
+   ```bash
+   cd ~/deploy/auto-drive-gateway && docker compose stop dag-indexer object-mapping-app file-retriever
+   ```
+
+2. Rebuild the services host with its first apply, and record its new mesh key,
+   as in "Recovery from total host loss".
+3. Apply the other members' meshes only, so the gateway reaches the new host:
+
+   ```bash
+   terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
+     -target=module.files_gateway.module.mesh -target=module.public.module.mesh
+   ```
+
+4. Restore the newest dump, on the gateway host. It refuses a database that
+   already holds either index:
+
+   ```bash
+   sudo ls /var/backups/auto-drive-gateway
+   cd ~/deploy/auto-drive-gateway && sudo docker compose run --rm --no-deps -T gateway-db-backup restore gateway-<newest>.dump
+   ```
+
+5. To restore an older dump instead, such as when the newest is damaged, name
+   it in the same command. The database is then behind the floor on both
+   indexes, which `dag_indexer.accept_rewind_to` can't pass, as it only lowers
+   the DAG height. Set `database_start_empty = true` for the next apply: it
+   removes the floor, and the indexes resume from that dump.
+6. Plan and apply in full. The deploy finds the database at the floor, or past
+   it with `database_start_empty`, the migrations find their records, the apps
+   start again, and the index resumes where the dump left it. Take
+   `database_start_empty` out after that apply.
+7. Mappings the node archived while the indexer app was stopped are lost.
+   `validate.sh` counts indexed DAG nodes without a mapping once the index has
+   passed their blocks, which on Chronos is up to six days later. A gap needs
+   the mapping backfill in "Recovery from total host loss".
+
 ### Not yet
 
 Defined in the gateway repo but not in the role's compose file yet:
 
-- the DAG indexer (`docker/dag-indexer`), the SubQuery node that fills the
-  `dag-indexer` schema. The file retriever looks every download up in that
-  schema, through its own database URL, so until the DAG indexer writes it into
-  the services host's `gateway` database, every download from the file
-  retriever fails. Its health check doesn't touch the database, so `validate.sh`
-  still passes.
 - metrics agents: the fleet's host agent covers this host from its own module,
   which validates it too
 - node Prometheus metrics on 127.0.0.1:9615: adding `--prometheus-listen-on`
@@ -704,20 +806,31 @@ On the gateway it then checks that the running node matches the compose files,
 the node's image, flags, health, peers and log driver, that the apps run their
 pinned images, that their migrations finished cleanly, that their logs are capped,
 their listeners and their health endpoints, and samples the node's sync state a
-minute apart to show whether it is importing blocks. On the services host it
-checks that Postgres and RabbitMQ match the compose files and are healthy, their
-images, limits, stop timeouts, volumes, log driver and listeners, that the
-databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
-to its limit, and that it has no `guest` user. From there it also checks that
-the gateway's migrations are recorded and that the indexer and the file
-retriever answer over the mesh, that auth's migrations are recorded, and that
-the publish queue has exactly one consumer. On a backend host it checks that
-the migrations ran with the deployed image (public only) and Hasura's assets came from it, each
-service's health, image, restart policy, log driver and loopback listener, the
-file cache volume, that Hasura's metadata is consistent, that Postgres and
-RabbitMQ are reachable over the mesh from the host and from a container, nginx,
-the certificate's names, issuer, expiry and renewal, and that the site answers
-through nginx and redirects HTTP to HTTPS. On the private backend it also checks
+minute apart to show whether it is importing blocks. For the DAG indexer it
+checks the container, its image, manifest, endpoint, flags, health and listener,
+that its bundle is the pinned mapping and its manifest Chronos' from block 1,
+its connection to the chain and how far its target trails the best block, that
+the index started at block 1, records the image's `schema.graphql`, and is
+advancing or caught up, and that every indexed DAG node has its object mapping.
+For the backups it checks the timer, the directories' modes, that one to seven
+dumps are kept, the newest under 26 hours old and readable, that none was set
+aside, that the floor is the newest dump's progress, and that the database is at
+or above it. Its database checks run `gateway-db.sh`'s read-only commands in a
+one-off container. On the services host it checks that Postgres and RabbitMQ
+match the compose files and are healthy, their images, limits, stop timeouts,
+volumes, log driver and listeners, that the databases exist and the Postgres
+tuning took effect, that RabbitMQ sized itself to its limit, and that it has no
+`guest` user. From there it also checks that
+the gateway's migrations are recorded, that the DAG indexer's schema exists,
+that the indexer and the file retriever answer over the mesh, that auth's
+migrations are recorded, and that the publish queue has exactly one consumer.
+On a backend host it checks that the migrations ran with the deployed image
+(public only) and Hasura's assets came from it, each service's health, image,
+restart policy, log driver and loopback listener, the file cache volume, that
+Hasura's metadata is consistent, that Postgres and RabbitMQ are reachable over
+the mesh from the host and from a container, nginx, the certificate's names,
+issuer, expiry and renewal, and that the site answers through nginx and
+redirects HTTP to HTTPS. On the private backend it also checks
 that 80 and 443 are open to exactly the ingress ranges, that one publish worker
 runs, that the workers hold the signing seeds and the API does not (by name
 only), and auth: its files, its migrations, its health, image, log driver and
@@ -771,6 +884,11 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 - A change to the gateway node's settings or image restarts the node on that
   apply. A change to the services host's images, sizing or Postgres settings
   recreates the service it belongs to on that apply.
+- The DAG indexer's image is tagged with the auto-files-gateway commit it was
+  built from; the index resumes on a new one. Move `DAG_DIST_SHA256` in
+  `validate.sh` with it when its mapping changes. The deploy refuses an image
+  whose manifest starts at another block, or whose `schema.graphql` differs,
+  until the schema is brought up to date.
 - A new Postgres or RabbitMQ major version needs its data migrated first; a
   minor or patch release only needs the tag changed.
 - A password changed in `services.auto.tfvars` takes effect on the next apply.
@@ -831,14 +949,18 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
   -replace=module.services.module.host.null_resource.bootstrap -target=module.services
 ```
 
-The services host has no backups, so it starts with empty databases and queues.
-In the full apply after its key is recorded, the other members take the new key.
-The public backend's migrations run again, and Hasura and the backend services
-are recreated, so the schema and Hasura's metadata are set up again. The
-gateway's apps' migrations run again too, and both apps are recreated. The
-private backend's Hasura and services and auth are recreated too, with auth's
-migrations run again on its empty database, so every user and API key is gone.
-The object mappings indexed before are gone as well, as the gateway's node maps only
+The services host keeps no backups of its own, so it starts with empty databases
+and queues. The gateway host keeps the `gateway` database's: restore it as in
+"Restoring the gateway database", which also covers stopping the gateway's apps
+before the rebuild. In the full apply after its key is recorded, the other
+members take the new key. The public backend's migrations run again, and Hasura
+and the backend services are recreated, so the schema and Hasura's metadata are
+set up again. The gateway's apps' migrations run again too, and the apps and the
+DAG indexer are recreated. The private backend's Hasura and services and auth
+are recreated too, with auth's migrations run again on its empty database, so
+every user and API key is gone. Without a restore, the deploy refuses the empty
+`gateway` database until `database_start_empty` is set for one apply, and the
+object mappings indexed before are gone as well, as the gateway's node maps only
 blocks it archives from then on. To map the chain again, set
 `create_object_mappings` to the first block to map and apply, then set it back
 to `yes` once the indexer logs mappings for new blocks. Re-archiving from early

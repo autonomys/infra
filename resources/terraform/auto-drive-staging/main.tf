@@ -66,6 +66,16 @@ module "files_gateway" {
   # a rebuilt services host starts with an empty database
   database_id = module.services.bootstrap_id
 
+  # The indexer is a prerelease build of autonomys/auto-files-gateway's
+  # dag-indexer-fe4d7b2 branch: fe4d7b2's mapping in an image of its own, on the
+  # v0.3.1 SubQuery node. autonomys/auto-files-gateway#221 publishes main's
+  # build, whose mapping bundles a newer auto-dag-data, so moving to its merge
+  # commit's tag is an upgrade to rehearse, not a like-for-like swap.
+  dag_indexer = {
+    image        = "ghcr.io/autonomys/dag-indexer:snapshot-4e5990ad@sha256:496343e32a5930aa9aac05de30852d288e50dc556c73351b2860eaf572b673fc"
+    backup_image = "postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641"
+  }
+
   mesh = local.mesh["files-gateway"]
 }
 

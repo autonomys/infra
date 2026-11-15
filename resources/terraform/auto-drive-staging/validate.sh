@@ -2,7 +2,8 @@
 # Verify that a live Auto Drive staging host matches its spec. Every check only
 # reads; none prints secrets or keys or touches service data. The services and
 # backend hosts' compose hash checks have Compose read their env files, to hash
-# them as the deploy does.
+# them as the deploy does. The gateway's database checks run gateway-db.sh's
+# read-only commands in a one-off container of its backup service.
 # Usage: ./validate.sh <role> [ssh-host]
 #   role: files-gateway, services, public or private
 #   ssh-host defaults to the role's hostname (configure it in ~/.ssh/config, or
@@ -47,9 +48,22 @@ NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
 GATEWAY_IMAGE="ghcr.io/autonomys/gateway:mainnet-2026-oct-22"
 INDEXER_IMAGE="ghcr.io/autonomys/object-mapping-indexer:snapshot-9f2f2c66@sha256:c5eacd88cdbea3705aef0538fc7c4a7a567e3059616ad0d683ecee707798fec5"
 RETRIEVER_IMAGE="ghcr.io/autonomys/file-retriever:snapshot-9f2f2c66@sha256:8e5c1dd70789835df442284f0f214f862135caf1fde980b4d86f9c8e93771372"
+DAG_INDEXER_IMAGE="ghcr.io/autonomys/dag-indexer:snapshot-4e5990ad@sha256:496343e32a5930aa9aac05de30852d288e50dc556c73351b2860eaf572b673fc"
+DAG_BACKUP_IMAGE="postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641"
+# the image's bundled mapping: fe4d7b2's, as built from its source
+DAG_DIST_SHA256="6aff7267cefbd9f637372cb05fbacc9becdf543202ca757a57e37d87de4a771c"
+DAG_START_BLOCK="1"
+CHRONOS_GENESIS="0x91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
+# the chain's finalized head trails its best block by five segments, each 10,000
+# to 19,000 blocks on Chronos
+DAG_LAG_MAX=150000
+BACKUP_DIR="/var/backups/auto-drive-gateway"
+BACKUP_UNIT="auto-drive-gateway-db-backup"
 GATEWAY_MESH_ADDRESS="10.77.0.20"
 COMPOSE_PROJECT="file-retriever"
 GATEWAY_DIR="$DEPLOY_DIR/auto-drive-gateway"
+# gateway-db.sh's read-only commands, in a one-off container of the backup service
+GATEWAY_DB="cd $GATEWAY_DIR && sudo docker compose run --rm --no-deps -T gateway-db-backup"
 SERVICES_DIR="$DEPLOY_DIR/auto-drive-services"
 SERVICES_PROJECT="auto-drive-services"
 POSTGRES_IMAGE="postgres:17.9-bookworm"
@@ -308,9 +322,9 @@ files_gateway_checks() {
   local first second
   echo ""
   echo "[Gateway deploy]"
-  check "Compose files and env files in place" \
-    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.mesh.yml docker-compose.log-cap.yml .env file-retriever.env object-mapping-indexer.env | paste -sd ' ' -" \
-    "docker-compose.yml 644 ubuntu docker-compose.mesh.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu file-retriever.env 600 ubuntu object-mapping-indexer.env 600 ubuntu"
+  check "Compose files, scripts and env files in place" \
+    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.mesh.yml docker-compose.log-cap.yml docker-compose.dag-indexer.yml dag-indexer-start-guard.js gateway-db.sh .env file-retriever.env object-mapping-indexer.env gateway-db.env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu docker-compose.mesh.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu docker-compose.dag-indexer.yml 644 ubuntu dag-indexer-start-guard.js 644 ubuntu gateway-db.sh 644 ubuntu .env 600 ubuntu file-retriever.env 600 ubuntu object-mapping-indexer.env 600 ubuntu gateway-db.env 600 ubuntu"
   # the running node's config hash is the files': no change is waiting on a restart
   check "Node matches the compose files" \
     "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
@@ -347,13 +361,13 @@ files_gateway_checks() {
   check "RPC gateway image" "sudo docker inspect -f '{{.Config.Image}}' $(container subspace-rpc-gateway)" "$GATEWAY_IMAGE"
   check "Object-mapping indexer image" "sudo docker inspect -f '{{.Config.Image}}' $(container object-mapping-app)" "$INDEXER_IMAGE"
   check "File retriever image" "sudo docker inspect -f '{{.Config.Image}}' $(container file-retriever)" "$RETRIEVER_IMAGE"
-  for service in object-mapping-indexer-migrate file-retriever-migrate; do
+  for service in object-mapping-indexer-migrate file-retriever-migrate gateway-db-backup; do
     check "$service finished cleanly" \
-      "sudo docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' \$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=$service)" \
+      "sudo docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' \$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=$service --filter label=com.docker.compose.oneoff=False)" \
       "exited 0"
   done
   check "Apps log through the loki driver, capped" \
-    "for c in $(container subspace-rpc-gateway) $(container object-mapping-app) $(container file-retriever); do sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' \$c; done | sort -u" \
+    "for c in $(container subspace-rpc-gateway) $(container object-mapping-app) $(container file-retriever) $(container dag-indexer); do sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' \$c; done | sort -u" \
     "loki 10m 3"
   check "RPC gateway on loopback only" \
     "sudo ss -Htln 'sport = :9955' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:9955"
@@ -366,19 +380,108 @@ files_gateway_checks() {
 
   echo ""
   echo "[Sync progress]"
-  # not a pass/fail: two samples a minute apart show whether the node is moving
+  # not a pass/fail: two samples a minute apart show whether the node and the
+  # DAG index are moving
   SYNC_STATE="$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_syncState\"}'"
+  DAG_PROGRESS="$GATEWAY_DB meta lastProcessedHeight"
   first="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
-  echo "  now:       $first"
+  dag_first="$(ssh -o ConnectTimeout=5 "$HOST" "$DAG_PROGRESS" 2>/dev/null || true)"
+  echo "  now:       $first, DAG index at ${dag_first:-none}"
   sleep 60
   second="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
-  echo "  +60s:      $second"
+  dag_second="$(ssh -o ConnectTimeout=5 "$HOST" "$DAG_PROGRESS" 2>/dev/null || true)"
+  echo "  +60s:      $second, DAG index at ${dag_second:-none}"
   current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
+  importing=false
   if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
+    importing=true
     report "Node importing blocks" "advancing" "advancing"
   else
     report "Node importing blocks" "not advancing" "advancing"
   fi
+
+  dag_indexer_checks "$dag_first" "$dag_second" "$importing"
+  gateway_backup_checks
+}
+
+dag_indexer_checks() {
+  local dag_first="$1" dag_second="$2" importing="$3" c target health
+  # stopped or restarting too, so its state shows
+  c="\$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=dag-indexer)"
+  echo ""
+  echo "[DAG indexer]"
+  # a start the guard refused shows in Loki, and as the database behind the
+  # floor in the backup checks; the local log copy may not hold it
+  check "dag-indexer running" \
+    "sudo docker inspect -f '{{.State.Status}}' $c" "running"
+  check "dag-indexer healthy (/ready)" "sudo docker inspect -f '{{.State.Health.Status}}' $c" "healthy"
+  check "dag-indexer matches the compose files" \
+    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash dag-indexer | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
+    "match"
+  check "dag-indexer image" "sudo docker inspect -f '{{.Config.Image}}' $c" "$DAG_INDEXER_IMAGE"
+  check "dag-indexer manifest, endpoint and flags" "sudo docker inspect -f '{{json .Args}}' $c" \
+    '"-f","/app/project.chronos.yaml","--network-endpoint=ws://subspace-node:9944/ws","--db-schema=dag-indexer","--workers=1","--unsafe","--batch-size=125","--scale-batch-size","--unfinalized-blocks=true","--disable-historical=false","--finalized-depth=100"' contains
+  check "Backup service image" \
+    "sudo docker inspect -f '{{.Config.Image}}' \$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=gateway-db-backup --filter label=com.docker.compose.oneoff=False)" \
+    "$DAG_BACKUP_IMAGE"
+  check "dag-indexer on loopback only" \
+    "sudo ss -Htln 'sport = :30001' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:30001"
+  check "Running mapping is the pinned bundle" \
+    "sudo docker exec $c sha256sum /app/dist/index.js | cut -d' ' -f1" "$DAG_DIST_SHA256"
+  check "Manifest is Chronos' from block $DAG_START_BLOCK" \
+    "sudo docker exec $c grep -cE \"^ *(chainId: '$CHRONOS_GENESIS'|startBlock: $DAG_START_BLOCK)\$\" /app/project.chronos.yaml" "2"
+  check "dag-indexer on Chronos (/meta genesisHash)" \
+    "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; print(json.load(sys.stdin).get(\"genesisHash\"))'" \
+    "$CHRONOS_GENESIS"
+  target="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; m = json.load(sys.stdin); print(m[\"targetHeight\"], m[\"bestHeight\"])'" 2>/dev/null || true)"
+  if [[ -n "$target" ]] && (( ${target#* } - ${target% *} <= DAG_LAG_MAX )); then
+    report "Target within the finalized head's lag of the best block" "within $DAG_LAG_MAX" "within $DAG_LAG_MAX"
+  else
+    report "Target within the finalized head's lag of the best block" "target and best: ${target:-unknown}" "within $DAG_LAG_MAX"
+  fi
+  health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
+  report "dag-indexer's endpoint healthy (/health)" "$health" "200"
+  if [[ "$health" != 200 && "$importing" == false ]]; then
+    echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
+  fi
+  # caught up means at the target, which moves a segment at a time
+  if [[ -n "$dag_first" && -n "$dag_second" ]] && { (( dag_second > dag_first )) || [[ -n "$target" && "$dag_second" -ge $(( ${target% *} - 5 )) ]]; }; then
+    report "DAG index advancing or caught up" "yes" "yes"
+  else
+    report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target% *}" "yes"
+  fi
+  check "Index started at block $DAG_START_BLOCK" "$GATEWAY_DB meta startHeight" "$DAG_START_BLOCK"
+  check "Schema records the image's schema.graphql" \
+    "h=\$(sudo docker exec $c sha256sum /app/schema.graphql | cut -d' ' -f1); r=\$($GATEWAY_DB schema-hash); [ \"\$h\" = \"\$r\" ] && echo match || echo \"recorded '\$r', image \$h\"" \
+    "match"
+  check "Every indexed node has its object mapping" "$GATEWAY_DB coverage" "0"
+}
+
+gateway_backup_checks() {
+  local newest="sudo ls $BACKUP_DIR | grep -E '^gateway-[0-9TZ]+\\.dump\$' | sort | tail -1"
+  echo ""
+  echo "[Gateway database backups]"
+  check "Backup timer enabled and active" \
+    "echo \$(systemctl is-enabled $BACKUP_UNIT.timer) \$(systemctl is-active $BACKUP_UNIT.timer)" "enabled active"
+  check "Last timed backup succeeded" "systemctl show $BACKUP_UNIT.service -p Result --value" "success"
+  check "Backup directories root-only, floor readable" \
+    "sudo stat -c '%a %U' $BACKUP_DIR $BACKUP_DIR/floor $BACKUP_DIR/floor/progress-floor | paste -sd ' ' -" \
+    "700 root 755 root 644 root"
+  check "1 to 7 dumps kept" \
+    "n=\$(sudo ls $BACKUP_DIR | grep -cE '^gateway-[0-9TZ]+\\.dump\$'); [ \$n -ge 1 ] && [ \$n -le 7 ] && echo ok || echo \"\$n dumps\"" "ok"
+  check "Newest dump under 26 hours old" \
+    "n=\$($newest); if [ -z \"\$n\" ]; then echo 'no dump'; else age=\$(( (\$(date +%s) - \$(sudo stat -c %Y $BACKUP_DIR/\$n)) / 3600 )); [ \$age -lt 26 ] && echo fresh || echo \"\$n is \${age}h old\"; fi" \
+    "fresh"
+  check "No dump set aside as behind the floor" \
+    "n=\$(sudo ls $BACKUP_DIR | grep -c '\\.dump\\.suspect\$' || true); [ \"\$n\" = 0 ] && echo none || echo \"\$n: \$(sudo sh -c 'cat $BACKUP_DIR/*.progress.suspect' | tr '\\n' ' ')\"" \
+    "none"
+  check "Floor is the newest dump's progress" \
+    "n=\$($newest); [ \"\$(sudo grep -E '^(dag|mapping)_height=' $BACKUP_DIR/floor/progress-floor)\" = \"\$(sudo grep -E '^(dag|mapping)_height=' $BACKUP_DIR/\${n%.dump}.progress)\" ] && echo match || echo differs" \
+    "match"
+  check "Newest dump readable by pg_restore" \
+    "n=\$($newest); cd $GATEWAY_DIR && sudo docker compose run --rm --no-deps -T --entrypoint pg_restore gateway-db-backup --list /backups/\$n > /dev/null && echo readable" \
+    "readable"
+  check "Database at or above the floor" "$GATEWAY_DB check-progress" "at or above the floor"
 }
 
 services_checks() {
@@ -448,6 +551,8 @@ services_checks() {
   echo "[Files gateway, from here]"
   check "Gateway's migrations recorded" \
     "sudo docker exec $PG psql -X -At -U postgres -d gateway -c 'SELECT count(*) FROM migrations'" "3"
+  check "DAG indexer's schema present" \
+    "sudo docker exec $PG psql -X -At -U postgres -d gateway -c \"SELECT count(*) FROM pg_namespace WHERE nspname = 'dag-indexer'\"" "1"
   check "Object-mapping indexer answers over the mesh" \
     "curl -s -m 5 -o /dev/null -w '%{http_code}' http://$GATEWAY_MESH_ADDRESS:3000/health" "200"
   check "File retriever answers over the mesh" \
