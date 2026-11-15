@@ -2,10 +2,11 @@
 
 Builds the Auto Drive staging environment on the Chronos testnet.
 
-So far it covers three hosts: the files gateway, running only the Subspace node
-so that its archival Chronos sync can start while the rest is built; the services
-host, running Postgres and RabbitMQ for the others; and the public backend,
-running Hasura and the download API and worker behind nginx.
+It covers four hosts: the files gateway, running the Subspace node and the
+gateway's apps; the services host, running Postgres and RabbitMQ for the others;
+the public backend, running Hasura and the download API and worker behind
+nginx; and the private backend, running Hasura, the API, the worker and the
+publish worker behind nginx, with the auth service beside them.
 
 The project provisions boxes that already exist; it creates no cloud resources.
 Each host is configured by a role module that takes an IP and an SSH user and is
@@ -13,9 +14,11 @@ independent of where the machine comes from. The files gateway host,
 `auto-drive-files-gateway-chronos`, uses `modules/auto-drive-gateway-host`; the
 services host, `auto-drive-staging-services`, uses
 `modules/auto-drive-services-host`; the public backend,
-`auto-drive-staging-public`, uses `modules/auto-drive-backend-host`, which the
-private backend will reuse with different inputs. The hosts reach each other
-over a private WireGuard mesh, `modules/wireguard-mesh`.
+`auto-drive-staging-public`, and the private backend,
+`auto-drive-staging-private`, both use `modules/auto-drive-backend-host` with
+different inputs. Auth runs on the private backend host from
+`modules/auto-drive-auth`. The hosts reach each other over a private WireGuard
+mesh, `modules/wireguard-mesh`.
 
 Every role builds on `modules/host-bootstrap`: hostname, SSH hardening, UFW,
 fail2ban, unattended upgrades, and Docker with the loki log driver via
@@ -166,9 +169,10 @@ amqp://<rabbitmq_username>:<rabbitmq_password>@10.77.0.10:5672
 ```
 
 Postgres holds the `postgres` database, which the backend and Hasura share, plus
-`gateway`, both under the one `postgres` account. Auth's database is not here:
-as in production, it is Aurora DSQL, so its migrations meet DSQL's rules before
-they reach production. RabbitMQ has the one account `rabbitmq_username`,
+`gateway` and `auth`, all under the one `postgres` account. Production's auth
+database is Aurora DSQL; staging's starts here and moves later, so until then
+auth's migrations do not meet DSQL's rules before they reach production.
+RabbitMQ has the one account `rabbitmq_username`,
 created when the broker first starts; changing the name later needs a fresh
 broker volume.
 
@@ -313,7 +317,8 @@ services host's mesh address. The files gateway's token is
 file retriever checks. The rest comes from `backend.auto.tfvars`. All of
 it reaches the host only in the owner-only `~/deploy/auto-drive/.env`, and only
 its hash reaches the state. As on production, every backend service reads the
-whole `.env`, Hasura's admin secret included.
+whole `.env`, Hasura's admin secret included. What only the workers may hold
+goes in `worker_secrets` instead (see "The private backend").
 
 ### Deploy checks
 
@@ -326,6 +331,115 @@ through nginx. A configuration nginx rejects is put back to the previous one
 before anything reloads. The migrations and the deploy wait for the services
 host's deploy in the same apply, since it sets the passwords they connect with.
 
+## The private backend
+
+The same role with production's private host's profiles, `base,frontend`, and
+the same images as the public host:
+
+| Service                  | Command                | Port | Published on |
+| ------------------------ | ---------------------- | ---- | ------------ |
+| `hasura`                 | as on the public host  | 6565 | loopback     |
+| `backend-api`            | `start:fe:api`         | 3000 | loopback     |
+| `backend-worker`         | `start:fe:worker`      | 3030 | loopback     |
+| `backend-publish-worker` | `start:publish:worker` | 3031 | loopback     |
+
+Only the public host runs the migrations. This host's deploy waits for the
+public host's, so its Hasura starts on a database the other has already brought
+up to the image's metadata and migrations.
+
+`ALL_SERVICES_ACTIVE` is on here and off on the public host. It turns on the
+task manager and the object-mapping listener in the worker, and it is what lets
+the publish worker sign. The host's other settings are production's private
+host's: the confirmation depth, the log level, the broker prefetch, the
+attribution start and the API description URL, under this host's name. Payments
+stay off (`BUY_CREDITS_ACTIVE` unset, the contract address zero) until there is
+a credits contract on Chronos' Auto EVM; production runs them, so its payment
+settings are left out too.
+
+### The publish worker
+
+`backend-publish-worker` is the only on-chain publisher. Its signing accounts'
+nonces are tracked in one process, so two publishers collide. Exactly one runs:
+
+- only this host has the `frontend` profile, and the project refuses a plan in
+  which the number of backend hosts running the publish worker is not one;
+- its host port is fixed, so a second replica of the service can't start;
+- `validate.sh` checks for one container here and, from the services host, for
+  exactly one consumer on the `publish-manager` queue.
+
+It signs with the accounts in `publish_private_keys`, in `private.auto.tfvars`:
+their secret URIs, comma-separated. They are staging-only accounts funded on
+Chronos, never one that exists on mainnet. Production keeps its seeds out of
+the API's environment by resolving them from a secret store in the worker
+processes only. Here they go in `worker_secrets`, which Terraform writes to an
+owner-only `~/deploy/auto-drive/workers.env`, and
+`compose/docker-compose.workers-env.yml` gives that file to `backend-worker`
+and `backend-publish-worker` alone. The API, which takes requests from the
+internet, never holds them.
+
+### nginx, certificate and firewall
+
+The site is after production's `nginx/backend.mainnet.private.conf`:
+
+| Name                                    | Cloudflare | Serves                          |
+| --------------------------------------- | ---------- | ------------------------------- |
+| `chronos.auto-drive.autonomys.xyz`      | proxied    | `/api`, `/hasura`               |
+| `auth.staging.auto-drive.autonomys.xyz` | proxied    | auth, except onboarding (below) |
+
+One Let's Encrypt certificate covers both names. Both are proxied, so UFW opens
+80 and 443 to Cloudflare's ranges only (`ingress.allow_from`, from
+`local.cloudflare_ipv4` in `main.tf`), where production and the public host
+open them to everyone. The origin can't be reached around Cloudflare. Let's
+Encrypt's check arrives through Cloudflare too.
+
+## Auth
+
+Production runs auth as a Lambda behind an API gateway. Here it is a container
+on the private backend host, from `modules/auto-drive-auth`, which takes a host
+another role has bootstrapped. Its `compose/docker-compose.yml` has two
+services: `auth-migrate`, a one-shot that applies auth's database migrations,
+and `auth`. Terraform writes the image, the port, the Loki URL and auth's
+settings to a `.env` beside it, and the three credentials to an owner-only
+`auth.env`: the database URL, built from `postgres_password`; the signing key,
+`auth_jwt_private_key` in `auth.auto.tfvars`; and the API secret, which is the
+backends' `auth_service_api_key`. They land in `~/deploy/auto-drive-auth/`.
+
+Auth is published on loopback, on 3040 since 3030 is the backend worker's here,
+and the private host's nginx serves it under its own name. The backends reach
+it at that name, as production's reach the API gateway.
+
+Before it changes anything, the deploy checks the uploaded files: the published
+port, that the database is reachable, and that the signing key is the private
+half of `hasura_jwt_public_key`, since a mismatched pair starts cleanly and
+then has every token refused. It runs the migrations next, so a migration that
+fails leaves the running auth as it was, then starts auth and fails the apply
+unless it turns healthy within 300 seconds and stays healthy for 30 more.
+
+Auth needs no sign-in provider's credentials: for Google, Discord and GitHub it
+takes the provider's own token from the caller and asks the provider whose it
+is. Those providers' client IDs and secrets belong to a frontend.
+
+### Who can use staging
+
+Staging is for staff. Auth onboards anyone who presents a valid provider token,
+and onboarding is what gives a user an organization, API keys and an upload
+allowance. So nginx refuses the onboarding route (`public_onboarding = false`),
+and it answers only on auth's own port, which needs SSH access to the host:
+
+```bash
+ssh -L 3040:127.0.0.1:3040 auto-drive-staging-private
+curl -X POST http://127.0.0.1:3040/users/@me/onboard \
+  -H "Authorization: Bearer <a GitHub token of yours>" -H "X-Auth-Provider: github"
+```
+
+Everything else is served at the auth name, so an onboarded user creates API
+keys and signs in as on production. The route that makes a user an admin needs
+an existing admin, so the first is made by setting that user's `role` to
+`Admin` in the `auth` database's `users.users` table.
+
+`STAFF_DOMAINS` does not restrict any of this: it only says who counts as staff
+for a feature flag in staff-only mode.
+
 ## The private mesh
 
 The staging hosts talk to each other over WireGuard rather than a provider's
@@ -337,6 +451,7 @@ directly with every other; nothing is routed through a third host.
 | `services`      | `auto-drive-staging-services`      | 10.77.0.10   |
 | `files-gateway` | `auto-drive-files-gateway-chronos` | 10.77.0.20   |
 | `public`        | `auto-drive-staging-public`        | 10.77.0.30   |
+| `private`       | `auto-drive-staging-private`       | 10.77.0.40   |
 
 The subnet is `10.77.0.0/24`, with a block of ten addresses per role, and the
 port is 51820/udp. Members and their addresses are in `local.mesh_hosts` in
@@ -433,7 +548,8 @@ Activate the rescue system from the provider's control panel (Linux, 64 bit, wit
 your SSH key), then reboot or reset the box. The activation is valid for **one
 boot only** and **expires after 60 minutes** if you don't reboot in that window.
 
-SSH in as root and install, with `ROLE` set to `gateway`, `services` or `public`:
+SSH in as root and install, with `ROLE` set to `gateway`, `services`, `public`
+or `private`:
 
 ```bash
 ROLE=gateway
@@ -491,7 +607,8 @@ Prerequisites:
   execution mode set to **local**
 - Infisical path `/auto-drive-staging` holding this project's
   `common.auto.tfvars`, with `gateway_host_ipv4`, `services_host_ipv4`,
-  `public_host_ipv4` and `mesh_public_keys`, and `services.auto.tfvars`, with
+  `public_host_ipv4`, `private_host_ipv4` and `mesh_public_keys`, and
+  `services.auto.tfvars`, with
   `postgres_password`, `rabbitmq_username` and `rabbitmq_password`. The
   addresses live there rather than in the repo, which is public. Each password
   must be at least 32 letters and digits, such as the output of
@@ -511,9 +628,12 @@ Prerequisites:
   openssl pkey -in auth-jwt.key -pubout
   ```
 
-  The private half becomes auth's `JWT_SECRET`, base64-encoded, when auth is
-  deployed. Keep it in Infisical, not on disk.
-- The public host's names in DNS, pointing at it, before its first full apply
+  The private half is `auth_jwt_private_key` in `auth.auto.tfvars`, in the same
+  path. Keep it in Infisical, not on disk.
+- For the private backend, `private.auto.tfvars` in the same path, with
+  `publish_private_keys`: the secret URIs of the staging-only accounts the
+  publish worker signs with, funded on Chronos
+- Each backend host's names in DNS, pointing at it, before its first full apply
 - A local `user.auto.tfvars` with your `ssh_agent_identity`
 - The deploy key loaded in your SSH agent (`ssh-add -l`)
 
@@ -527,9 +647,10 @@ The apply bootstraps each host, brings up its mesh interface, then deploys its
 role: on the gateway the node, which fails the apply if it is not running, or
 restarts, within 30 seconds of starting; on the services host Postgres and
 RabbitMQ, as in "The services role"; on the public backend the migrations, then
-nginx, its certificate and the services, as in "The public backend role". After
-the first apply on a rebuilt host, record its new mesh public key (see "Adding a
-host to the mesh").
+nginx, its certificate and the services, as in "The public backend role"; on
+the private backend the same without the migrations, then auth. After the first
+apply on a rebuilt host, record its new mesh public key (see "Adding a host to
+the mesh").
 
 A new backend host can't reach the services host until its key is recorded, so
 its first apply stops at the mesh:
@@ -539,16 +660,19 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
   -target=module.public.module.mesh
 ```
 
-Then record the key, plan and apply in full.
+Then record the key, plan and apply in full. The private backend is the same,
+with `-target=module.private.module.mesh`; auth deploys with it in the full
+apply.
 
 The gateway's deploy runs its apps' migrations against the services host's
 Postgres over the mesh too, so a new gateway's first apply stops at its mesh the
 same way, with `-target=module.files_gateway.module.mesh`. On a first build of
-every host, the first apply covers the services host and both meshes:
+every host, the first apply covers the services host and the other meshes:
 
 ```bash
 terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-staging.tfplan \
-  -target=module.services -target=module.public.module.mesh -target=module.files_gateway.module.mesh
+  -target=module.services -target=module.public.module.mesh -target=module.private.module.mesh \
+  -target=module.files_gateway.module.mesh
 ```
 
 then record every key (see "Adding a host to the mesh") and plan and apply in
@@ -560,11 +684,12 @@ full.
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway                      # SSH host "auto-drive-files-gateway-chronos"
 ./resources/terraform/auto-drive-staging/validate.sh services                           # SSH host "auto-drive-staging-services"
 ./resources/terraform/auto-drive-staging/validate.sh public                             # SSH host "auto-drive-staging-public"
+./resources/terraform/auto-drive-staging/validate.sh private                            # SSH host "auto-drive-staging-private"
 ./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
 ```
 
 Every check only reads, and none prints a private key or a password. The
-services and public hosts' compose hash checks have Compose read their env
+services and backend hosts' compose hash checks have Compose read their env
 files, to hash them as the deploy does. It covers
 what `terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both
 members active and in sync, GRUB boot code on both disks, SSH hardening, the
@@ -585,13 +710,19 @@ images, limits, stop timeouts, volumes, log driver and listeners, that the
 databases exist and the Postgres tuning took effect, that RabbitMQ sized itself
 to its limit, and that it has no `guest` user. From there it also checks that
 the gateway's migrations are recorded and that the indexer and the file
-retriever answer over the mesh. On the public backend it checks that the
-migrations ran with the deployed image and Hasura's assets came from it, each
+retriever answer over the mesh, that auth's migrations are recorded, and that
+the publish queue has exactly one consumer. On a backend host it checks that
+the migrations ran with the deployed image (public only) and Hasura's assets came from it, each
 service's health, image, restart policy, log driver and loopback listener, the
 file cache volume, that Hasura's metadata is consistent, that Postgres and
 RabbitMQ are reachable over the mesh from the host and from a container, nginx,
 the certificate's names, issuer, expiry and renewal, and that the site answers
-through nginx and redirects HTTP to HTTPS.
+through nginx and redirects HTTP to HTTPS. On the private backend it also checks
+that 80 and 443 are open to exactly the ingress ranges, that one publish worker
+runs, that the workers hold the signing seeds and the API does not (by name
+only), and auth: its files, its migrations, its health, image, log driver and
+loopback listener, that it answers through nginx, and that nginx refuses
+onboarding.
 
 It also reports whether `wg0` came up before Docker on the current boot. That
 only holds once the host has rebooted since it joined the mesh.
@@ -622,6 +753,8 @@ with:
 {host="auto-drive-files-gateway-chronos", compose_service="subspace-node"}
 {host="auto-drive-staging-services", compose_project="auto-drive-services"}
 {host="auto-drive-staging-public", compose_project="auto-drive"}
+{host="auto-drive-staging-private", compose_project="auto-drive"}
+{host="auto-drive-staging-private", compose_project="auto-drive-auth"}
 ```
 
 Push failures show in the Docker daemon's journal as `error sending batch`, which
@@ -644,8 +777,8 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   The gateway's apps are recreated with the new database URL in the same apply;
   restart anything else that uses it after updating its settings.
 - To re-run a bootstrap without a change, plan with
-  `-replace=module.<files_gateway, services or public>.module.host.null_resource.bootstrap`.
-  The host's mesh and deploy re-run with it.
+  `-replace=module.<files_gateway, services, public or private>.module.host.null_resource.bootstrap`.
+  The host's mesh and deploy re-run with it, and auth's with the private host's.
 - To move the backend to a new image, first list what changed upstream since
   the commit the compose file mirrors, and bring the compose file and the
   module's nginx templates up to date with it:
@@ -657,8 +790,17 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   Then move the `# upstream:` line, and the backend image's tag (the same
   commit's first eight characters) and digest in `main.tf`, together. The apply
   runs the new migrations, re-copies Hasura's assets, and recreates the
-  services.
-- Changing the public host's names needs a new certificate: delete the old one
+  services, on the public host first and then on the private one.
+- The auth image is built from the same repository and tagged with its commit.
+  Changing it in `main.tf` runs auth's new migrations and recreates auth.
+- To change the publish worker's accounts, change `publish_private_keys` in
+  `private.auto.tfvars` and apply: the two workers are recreated and the API is
+  not.
+- Cloudflare publishes its ranges at https://www.cloudflare.com/ips-v4. When
+  they change, update `local.cloudflare_ipv4` in `main.tf` and
+  `PRIVATE_INGRESS_RANGES` in `validate.sh` together; the apply re-runs the
+  private host's bootstrap, and with it its mesh and deploys.
+- Changing a backend host's names needs a new certificate: delete the old one
   with `sudo certbot delete --cert-name <old app name>` on the host, then apply.
 
 ## Rules for these hosts
@@ -694,7 +836,9 @@ In the full apply after its key is recorded, the other members take the new key.
 The public backend's migrations run again, and Hasura and the backend services
 are recreated, so the schema and Hasura's metadata are set up again. The
 gateway's apps' migrations run again too, and both apps are recreated. The
-object mappings indexed before are gone, though, as the gateway's node maps only
+private backend's Hasura and services and auth are recreated too, with auth's
+migrations run again on its empty database, so every user and API key is gone.
+The object mappings indexed before are gone as well, as the gateway's node maps only
 blocks it archives from then on. To map the chain again, set
 `create_object_mappings` to the first block to map and apply, then set it back
 to `yes` once the indexer logs mappings for new blocks. Re-archiving from early
@@ -710,6 +854,10 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
 The full apply after its key is recorded runs its migrations, which find the
 database already current, and its deploy, which requests a new certificate;
 Let's Encrypt issues at most five for the same names a week.
+
+The private backend is rebuilt the same way, with `module.private` in place of
+`module.public`. Its full apply also deploys auth, whose database, on the
+services host, is as it was.
 
 For the gateway, the first apply bootstraps the host and brings up its mesh. Its
 deploy, whose migrations reach the services host's Postgres over the mesh, waits

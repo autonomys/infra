@@ -200,6 +200,21 @@ variable "secrets" {
   }
 }
 
+variable "worker_secrets" {
+  description = "Secrets for the worker services only, by env name, such as the publish worker's signing seeds (PRIVATE_KEYS_PATH). They go in an owner-only workers.env that backend-worker and backend-publish-worker read as well as the .env, so the API's environment never holds them."
+  type        = map(string)
+  default     = {}
+  sensitive   = true
+
+  validation {
+    condition = alltrue([
+      for k, v in var.worker_secrets :
+      can(regex("^[A-Z][A-Z0-9_]*$", k)) && length(v) > 0 && !can(regex("['\\n\\r$]", v))
+    ])
+    error_message = "worker_secrets keys must be upper-case env names, and values non-empty and free of quotes, newlines and '$'."
+  }
+}
+
 variable "hasura_admin_secret" {
   description = "Hasura's admin secret"
   type        = string
@@ -230,7 +245,7 @@ variable "hasura" {
 }
 
 variable "ingress" {
-  description = "Host nginx in front of the services: the hostnames it serves, the Let's Encrypt account its certificates are issued under, where / redirects (null answers 404), and Cloudflare ranges whose CF-Connecting-IP header nginx trusts (empty trusts none, as production does)"
+  description = "Host nginx in front of the services: which site it serves (public, the download side, or private, the upload side), the hostnames, the Let's Encrypt account its certificates are issued under, where / redirects on a public site (null answers 404), Cloudflare ranges whose CF-Connecting-IP header nginx trusts (empty trusts none, as production does), the only sources ports 80 and 443 are open to (empty opens them to everyone, as production does), and, on a private site, an auth service on this host to serve under its own name. public_onboarding = false refuses auth's onboarding route, which then answers only on the auth port itself."
   type = object({
     site = string
     hostnames = object({
@@ -244,19 +259,37 @@ variable "ingress" {
     })
     root_redirect_url = optional(string)
     real_ip_from      = optional(list(string), [])
+    allow_from        = optional(list(string), [])
+    auth = optional(object({
+      hostname          = string
+      port              = number
+      public_onboarding = optional(bool, true)
+    }))
   })
 
   validation {
-    condition     = var.ingress.site == "public"
-    error_message = "ingress.site must be public; the private host's site is not written yet."
+    condition     = contains(["public", "private"], var.ingress.site)
+    error_message = "ingress.site must be public or private."
+  }
+
+  validation {
+    condition = var.ingress.site == "private" ? (
+      var.ingress.hostnames.s3 == null && var.ingress.hostnames.gateway == null && var.ingress.root_redirect_url == null
+    ) : var.ingress.auth == null
+    error_message = "A private site serves the app name and, optionally, auth; the S3 and gateway names and the root redirect belong to a public site, and auth to a private one."
   }
 
   validation {
     condition = alltrue([
-      for h in compact([var.ingress.hostnames.app, var.ingress.hostnames.s3, var.ingress.hostnames.gateway]) :
+      for h in compact([var.ingress.hostnames.app, var.ingress.hostnames.s3, var.ingress.hostnames.gateway, try(var.ingress.auth.hostname, null)]) :
       can(regex("^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$", h))
     ])
-    error_message = "ingress.hostnames must be lowercase DNS names."
+    error_message = "ingress.hostnames and ingress.auth.hostname must be lowercase DNS names."
+  }
+
+  validation {
+    condition     = var.ingress.auth == null || try(var.ingress.auth.port >= 1 && var.ingress.auth.port <= 65535 && floor(var.ingress.auth.port) == var.ingress.auth.port, false)
+    error_message = "ingress.auth.port must be from 1 to 65535."
   }
 
   validation {
@@ -267,9 +300,9 @@ variable "ingress" {
   validation {
     condition = (
       (var.ingress.root_redirect_url == null || can(regex("^https://([a-z0-9-]+\\.)+[a-z]{2,}(/[A-Za-z0-9._~/-]*)?$", var.ingress.root_redirect_url)))
-      && alltrue([for c in var.ingress.real_ip_from : can(cidrhost(c, 0))])
+      && alltrue([for c in concat(var.ingress.real_ip_from, var.ingress.allow_from) : can(cidrhost(c, 0))])
     )
-    error_message = "ingress.root_redirect_url must be null or an https URL, and real_ip_from CIDRs."
+    error_message = "ingress.root_redirect_url must be null or an https URL, and real_ip_from and allow_from IPv4 CIDRs."
   }
 }
 

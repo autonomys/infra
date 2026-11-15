@@ -13,6 +13,11 @@ variable "public_host_ipv4" {
   type        = string
 }
 
+variable "private_host_ipv4" {
+  description = "Public IPv4 of the private backend host, which Terraform connects to over SSH"
+  type        = string
+}
+
 variable "postgres_password" {
   description = "Password of the services host's postgres account, from services.auto.tfvars"
   type        = string
@@ -39,6 +44,18 @@ variable "hasura_admin_secret" {
 variable "hasura_jwt_public_key" {
   description = "PEM public key of the RS256 pair auth signs its tokens with, which Hasura verifies them against, from backend.auto.tfvars"
   type        = string
+}
+
+variable "auth_jwt_private_key" {
+  description = "PEM private key of the RS256 pair auth signs its tokens with, the other half of hasura_jwt_public_key, from auth.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
+variable "publish_private_keys" {
+  description = "Secret URIs of the staging-only accounts the publish worker signs with, comma-separated, from private.auto.tfvars. Never an account that exists on mainnet."
+  type        = string
+  sensitive   = true
 }
 
 variable "auth_service_api_key" {

@@ -6,8 +6,12 @@ locals {
 
   # every .yml in compose/ is uploaded and installed, and only those count
   # towards the trigger; COMPOSE_FILE picks the ones in use
-  compose_dir   = "${path.module}/compose"
-  compose_files = concat(["docker-compose.yml"], var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [])
+  compose_dir = "${path.module}/compose"
+  compose_files = concat(
+    ["docker-compose.yml"],
+    var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [],
+    length(local.worker_secret_keys) > 0 ? ["docker-compose.workers-env.yml"] : [],
+  )
 
   # the services each profile starts, as the compose file assigns them
   profile_services = {
@@ -70,11 +74,16 @@ locals {
   # single-quoted, so Compose takes every value literally
   env_file = join("", [for k in sort(keys(local.env_values)) : "${k}='${local.env_values[k]}'\n"])
 
+  # A second env_file for the worker services alone, quoted like the .env. A
+  # host without worker secrets uploads a blank one, which the deploy discards.
+  worker_secret_keys = nonsensitive(keys(var.worker_secrets))
+  workers_env_file   = length(local.worker_secret_keys) == 0 ? "\n" : join("", [for k in local.worker_secret_keys : "${k}='${var.worker_secrets[k]}'\n"])
+
   # read by `docker run --env-file`, which takes values as written, unquoted
   migrate_env = "DATABASE_URL=${coalesce(var.migration_database_url, var.database_url)}\n"
 
   cert_name    = var.ingress.hostnames.app
-  cert_domains = compact([var.ingress.hostnames.app, var.ingress.hostnames.s3])
+  cert_domains = compact([var.ingress.hostnames.app, var.ingress.hostnames.s3, try(var.ingress.auth.hostname, null)])
   nginx_conf = templatefile("${path.module}/nginx.conf.tftpl", {
     real_ip_from = var.ingress.real_ip_from
   })
@@ -88,16 +97,22 @@ locals {
     upstream          = var.publish_address
     api_port          = lookup(local.ports, local.api_service, 0)
     hasura_port       = lookup(local.ports, "hasura", 0)
+    auth_host         = try(var.ingress.auth.hostname, null)
+    auth_port         = try(var.ingress.auth.port, 0)
+    auth_onboarding   = try(var.ingress.auth.public_onboarding, true)
   }) }
 }
 
 module "host" {
   source = "../host-bootstrap"
 
-  deployer         = var.deployer
-  host             = var.host
-  public_tcp_ports = [80, 443]
-  peer_rules       = var.peer_rules
+  deployer = var.deployer
+  host     = var.host
+  # to everyone, or to ingress.allow_from alone
+  public_tcp_ports = length(var.ingress.allow_from) == 0 ? [80, 443] : []
+  peer_rules = concat(var.peer_rules, [
+    for rule in setproduct([80, 443], var.ingress.allow_from) : { port = rule[0], protocol = "tcp", from = rule[1] }
+  ])
 }
 
 module "mesh" {
@@ -177,6 +192,7 @@ resource "null_resource" "deploy" {
     migrate_id      = join("", null_resource.migrate[*].id)
     compose_hash    = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
     env_hash        = nonsensitive(sha256(local.env_file))
+    workers_env     = nonsensitive(sha256(sensitive(local.workers_env_file)))
     nginx_conf_hash = md5(local.nginx_conf)
     site_hash       = md5(join("", values(local.site)))
     cert            = join(" ", concat(local.cert_domains, [var.ingress.letsencrypt.email, tostring(var.ingress.letsencrypt.staging)]))
@@ -212,6 +228,19 @@ resource "null_resource" "deploy" {
       )
       error_message = "settings or secrets.extra repeat a key the module sets itself, or each other."
     }
+
+    precondition {
+      condition = length(setintersection(
+        local.worker_secret_keys,
+        concat(keys(var.settings), nonsensitive(keys(var.secrets.extra)), keys(local.module_env)),
+      )) == 0
+      error_message = "worker_secrets repeat a key the .env sets."
+    }
+
+    precondition {
+      condition     = length(local.worker_secret_keys) == 0 || length(setintersection(local.services, ["backend-worker", "backend-publish-worker"])) > 0
+      error_message = "worker_secrets is set, but the profiles run no worker service to read it."
+    }
   }
 
   connection {
@@ -224,8 +253,9 @@ resource "null_resource" "deploy" {
   }
 
   # Only the deploy user can read it, since provisioners can't set a file's
-  # mode; deploy.sh empties it however it ends. The .env, which holds the
-  # credentials, goes last, so an upload that fails early leaves none behind.
+  # mode; deploy.sh empties it however it ends. The .env and workers.env, which
+  # hold the credentials, go last, so an upload that fails early leaves none
+  # behind.
   provisioner "remote-exec" {
     inline = ["install -d -m 0700 ${local.staged_dir}"]
   }
@@ -259,6 +289,11 @@ resource "null_resource" "deploy" {
   provisioner "file" {
     content     = local.site.tls
     destination = "${local.staged_dir}/site.conf"
+  }
+
+  provisioner "file" {
+    content     = local.workers_env_file
+    destination = "${local.staged_dir}/workers.env"
   }
 
   provisioner "file" {

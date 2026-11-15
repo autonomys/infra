@@ -1,0 +1,13 @@
+# Gives the worker services a second env file, workers.env, for what the API
+# must not hold: the publish worker's signing seeds. Upstream keeps them out of
+# the API by resolving them from a secret store in the worker processes only.
+# The .env's COMPOSE_FILE includes this file when the role's worker_secrets is
+# set.
+
+services:
+  backend-worker:
+    env_file:
+      - workers.env
+  backend-publish-worker:
+    env_file:
+      - workers.env
