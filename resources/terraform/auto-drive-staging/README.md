@@ -214,6 +214,9 @@ before the gateway's deploy runs against it:
    cd ~/deploy/auto-drive-gateway && sudo docker compose run --rm --no-deps -T gateway-db-backup restore gateway-<newest>.dump
    ```
 
+   It runs as one transaction, so nothing is visible until it finishes, and a
+   failed restore leaves the database empty to try again.
+
 5. To restore an older dump instead, such as when the newest is damaged, name
    it in the same command. The database is then behind the floor on both
    indexes, which `dag_indexer.accept_rewind_to` can't pass, as it only lowers

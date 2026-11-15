@@ -158,7 +158,8 @@ if $dag_indexer && { [ "$START_EMPTY" = true ] || [ -n "$ACCEPT_REWIND_TO" ]; };
 fi
 
 echo "==> Starting ${services[*]}"
-compose_in "$DEPLOY_DIR" up -d
+# removes the DAG indexer's services when their compose file leaves COMPOSE_FILE
+compose_in "$DEPLOY_DIR" up -d --remove-orphans
 
 # a service that is not running, or restarts within 30s, fails the apply before
 # old images are pruned

@@ -255,7 +255,9 @@ restore() {
   if [ "$occupied" = t ]; then
     die "The $PGDATABASE database already holds object_mappings or the $SCHEMA schema; restore only into an empty database"
   fi
-  pg_restore --exit-on-error --no-owner -j 4 -d "$PGDATABASE" "$BACKUPS/$1"
+  # one transaction: the start guard and a backup see nothing until it
+  # commits, and a failed restore leaves the database empty to retry
+  pg_restore --single-transaction --no-owner -d "$PGDATABASE" "$BACKUPS/$1"
   echo "Restored $1. The database now holds:"
   progress
 }
