@@ -53,6 +53,10 @@ DAG_BACKUP_IMAGE="postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1
 # the image's bundled mapping: fe4d7b2's, as built from its source
 DAG_DIST_SHA256="6aff7267cefbd9f637372cb05fbacc9becdf543202ca757a57e37d87de4a771c"
 DAG_START_BLOCK="1"
+# Chronos' launch seeding wrote each DAG node into its remark as hex text, which
+# the node maps as the text it is, so no node indexed from those blocks can have
+# a mapping; the seeding's last object is at block 29,505
+DAG_COVERAGE_FROM="29506"
 CHRONOS_GENESIS="0x91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
 # the chain's finalized head trails its best block by five segments, each 10,000
 # to 19,000 blocks on Chronos
@@ -454,7 +458,7 @@ dag_indexer_checks() {
   check "Schema records the image's schema.graphql" \
     "h=\$(sudo docker exec $c sha256sum /app/schema.graphql | cut -d' ' -f1); r=\$($GATEWAY_DB schema-hash); [ \"\$h\" = \"\$r\" ] && echo match || echo \"recorded '\$r', image \$h\"" \
     "match"
-  check "Every indexed node has its object mapping" "$GATEWAY_DB coverage" "0"
+  check "Every node indexed from block $DAG_COVERAGE_FROM has its object mapping" "$GATEWAY_DB coverage $DAG_COVERAGE_FROM" "0"
 }
 
 gateway_backup_checks() {

@@ -9,7 +9,7 @@
 # replaced, and nothing should index it again from scratch by itself.
 #
 # Usage: gateway-db.sh backup | guard | reset-floor | check-progress | progress
-#        | meta <key> | schema-hash | record-schema <sha256> | coverage
+#        | meta <key> | schema-hash | record-schema <sha256> | coverage [from block]
 #        | restore <dump name>
 set -euo pipefail
 # a failed query must stop the script, never read as "no progress"
@@ -230,17 +230,20 @@ record_schema() {
   echo "Recorded schema.graphql $1 on the $SCHEMA schema"
 }
 
-# Indexed nodes more than 200 blocks below the index's progress with no
-# mapping: mappings arrive at depth 100, so each of those has lost its own
+# Indexed nodes from the given block (1 by default) and more than 200 blocks
+# below the index's progress with no mapping: mappings arrive at depth 100, so
+# each of those has lost its own
 coverage() {
-  local present
+  local from="$1" present
+  [[ "$from" =~ ^[0-9]+$ ]] || die "coverage takes a block number to count from"
   present="$(tables)"
   if [ "$present" != "t|t" ]; then
     echo "n/a"
     return
   fi
   sql "SELECT count(*) FROM \"$SCHEMA\".nodes n
-        WHERE n.block_height <= (SELECT (value #>> '{}')::bigint - 200 FROM \"$SCHEMA\"._metadata WHERE key = 'lastProcessedHeight')
+        WHERE n.block_height >= $from
+          AND n.block_height <= (SELECT (value #>> '{}')::bigint - 200 FROM \"$SCHEMA\"._metadata WHERE key = 'lastProcessedHeight')
           AND NOT EXISTS (SELECT 1 FROM object_mappings m WHERE m.hash = n.blake3_hash)"
 }
 
@@ -266,7 +269,7 @@ case "${1:-}" in
   meta) meta "${2:-}" ;;
   schema-hash) schema_hash ;;
   record-schema) record_schema "${2:-}" ;;
-  coverage) coverage ;;
+  coverage) coverage "${2:-1}" ;;
   restore) restore "${2:-}" ;;
-  *) die "Usage: $0 backup | guard | reset-floor | check-progress | progress | meta <key> | schema-hash | record-schema <sha256> | coverage | restore <dump name>" ;;
+  *) die "Usage: $0 backup | guard | reset-floor | check-progress | progress | meta <key> | schema-hash | record-schema <sha256> | coverage [from block] | restore <dump name>" ;;
 esac

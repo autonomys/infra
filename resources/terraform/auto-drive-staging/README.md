@@ -811,7 +811,10 @@ checks the container, its image, manifest, endpoint, flags, health and listener,
 that its bundle is the pinned mapping and its manifest Chronos' from block 1,
 its connection to the chain and how far its target trails the best block, that
 the index started at block 1, records the image's `schema.graphql`, and is
-advancing or caught up, and that every indexed DAG node has its object mapping.
+advancing or caught up, and that every DAG node indexed after Chronos' launch
+seeding has its object mapping. The seeding, which ends at block 29,505, wrote
+each node into its remark as hex text, and the node maps the text, so none of
+its nodes can have a mapping and the gateway can't serve them.
 For the backups it checks the timer, the directories' modes, that one to seven
 dumps are kept, the newest under 26 hours old and readable, that none was set
 aside, that the floor is the newest dump's progress, and that the database is at
