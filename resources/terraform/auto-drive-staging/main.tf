@@ -342,7 +342,7 @@ module "auth" {
   # A prerelease build of autonomys/auto-drive#966's head, the first to publish
   # an auth image. Move it to the merge commit's tag once that merges, as main's
   # builds are tagged with their commit.
-  image = "ghcr.io/autonomys/auto-drive-auth:snapshot-20871d07@sha256:19683bab2a6d9c64e002f6529e2615fc87e7f7a5b9e77346be2293441f0bb4f3"
+  image = "ghcr.io/autonomys/auto-drive-auth:snapshot-6554f564@sha256:c689550a14ffa2815f81164283a388133548b1da3742628e30fee8d9a7771ffd"
   port  = local.auth_port
 
   database_url = local.auth_database_url

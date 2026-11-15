@@ -21,10 +21,10 @@ services:
     restart: 'no'
     env_file: auth.env
     command:
-      - yarn
-      - workspace
-      - auth
+      - npm
+      - run
       - migrate
+      - --
       - up
     healthcheck:
       disable: true
@@ -36,6 +36,9 @@ services:
       auth-migrate:
         condition: service_completed_successfully
     restart: unless-stopped
+    # Node as process 1 ignores SIGTERM, so a stop would wait out its grace
+    # period and end in a kill
+    init: true
     env_file: auth.env
     environment:
       AUTH_PORT: '3030'
@@ -50,10 +53,4 @@ services:
       auto-drive.database-id: ${DATABASE_ID-}
     ports:
       - '${PUBLISH_ADDRESS:?}:${AUTH_HOST_PORT:?}:3030'
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3030/health']
-      interval: 15s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     logging: *logging
