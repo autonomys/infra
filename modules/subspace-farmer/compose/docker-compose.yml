@@ -48,6 +48,13 @@ services:
         "--rpc-listen-on", "0.0.0.0:9944",
         "--farmer"
       ]
+    # The image's own test, with the timings of the farming docs' compose file
+    # and the gateway's node. The image's defaults turn a node unhealthy after
+    # 90s without an answer, which stops a deploy and leaves the farmer down.
+    healthcheck:
+      timeout: 5s
+      interval: 30s
+      retries: 60
     logging: *logging
 
   farmer:
