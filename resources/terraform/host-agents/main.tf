@@ -29,6 +29,11 @@ locals {
       disks        = 2
       scrape_ports = {}
     }
+    "auto-drive-staging-private" = {
+      ssh_user     = "ubuntu"
+      disks        = 2
+      scrape_ports = {}
+    }
   }
 }
 
