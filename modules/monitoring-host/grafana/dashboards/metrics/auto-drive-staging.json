@@ -238,7 +238,7 @@
       "id": 3,
       "type": "stat",
       "title": "Backend processes",
-      "description": "Backend processes that sent their 10-second heartbeat in the last minute. 5 is all of them: the API, the worker and the publish worker on the private host, the download API and the download worker on the public host.",
+      "description": "Backend processes that sent a sample in the last minute. 5 is all of them: the API, the worker and the publish worker on the private host, the download API and the download worker on the public host. A process samples only once it has used the database, so after a restart on a quiet host the APIs and the publish worker can be missing until they are used. Fewer than 5 is grey, as this cannot tell an idle process from a stopped one.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -284,7 +284,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "#6e7781",
                 "value": null
               },
               {
@@ -306,7 +306,7 @@
       "id": 4,
       "type": "stat",
       "title": "Publish workers",
-      "description": "Publish workers running, inferred from the heartbeat rate: one writes 30 samples in 5 minutes, two write 60 to the same series. 0 means nothing is publishing; 2 or more means two publishers hand out the same nonces. This only holds while VictoriaMetrics keeps every sample: with -dedup.minScrapeInterval at 15s two read as one, and at 30s one reads as zero, so change this panel before turning deduplication on.",
+      "description": "Publish workers running, inferred from the heartbeat rate: one writes 30 samples in 5 minutes, two write 60 to the same series. 0, grey, means no publish worker is sampling: none is running, or the one running has not published since it started, as it samples only once it has used the database; 2 or more means two publishers hand out the same nonces. This only holds while VictoriaMetrics keeps every sample: with -dedup.minScrapeInterval at 15s two read as one, and at 30s one reads as zero, so change this panel before turning deduplication on.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -352,7 +352,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "#6e7781",
                 "value": null
               },
               {
@@ -1755,7 +1755,7 @@
       "id": 19,
       "type": "table",
       "title": "Backend processes",
-      "description": "One row per backend process, from the heartbeat each sends every 10 seconds. A process that has stopped keeps its row for a day, with Last sample turning red. Samples should be 30: 0 means it stopped, about 60 means two processes are running under one name.",
+      "description": "One row per backend process, from the samples each sends every 10 seconds once it has used the database. A process that has sent none for a minute keeps its row for a day, with Last sample grey: it may have stopped, or not have served anything that needs the database since it started, as the APIs and the publish worker can on a quiet host. Samples should be 30 for a process that is sampling; about 60, red, means two processes are running under one name.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1995,7 +1995,7 @@
                       "value": null
                     },
                     {
-                      "color": "red",
+                      "color": "#6e7781",
                       "value": 60
                     }
                   ]
@@ -2042,7 +2042,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "red",
+                      "color": "#6e7781",
                       "value": null
                     },
                     {
@@ -2206,7 +2206,7 @@
       "id": 20,
       "type": "stat",
       "title": "DAG index height",
-      "description": "The last block the DAG indexer reports having processed.",
+      "description": "The last height the DAG indexer reported: as it works through a finality step, and when it starts. Between steps it is idle and reports nothing, so this holds where its last run ended.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -2225,7 +2225,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Current height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m])) or (vector(0) - 1)",
+          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |~ \"INDEXING:|start guard: progress\" | regexp `(?:Current height: |start guard: progress )(?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [3d])) or (vector(0) - 1)",
           "queryType": "instant"
         }
       ],
@@ -2280,7 +2280,7 @@
       "id": 21,
       "type": "stat",
       "title": "DAG index target",
-      "description": "The height the DAG indexer is working towards: the archive node's finalized head.",
+      "description": "The height the DAG indexer works towards: the archive node's finalized head, from the node's log. Finality moves one archived segment at a time, every 10,000 to 20,000 blocks, so the index catches up in bursts and then waits.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -2299,7 +2299,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Target height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m])) or (vector(0) - 1)",
+          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"subspace-node\"} |= \"best: #\" | regexp `finalized #(?P<v>[0-9]+)` | unwrap v [5m])) or (vector(0) - 1)",
           "queryType": "instant"
         }
       ],
@@ -2354,7 +2354,7 @@
       "id": 22,
       "type": "stat",
       "title": "DAG index rate",
-      "description": "Blocks a second, as the DAG indexer reports it.",
+      "description": "Blocks a second while the DAG indexer works through a finality step, as it reports it. Idle means it is running and has caught up with the finalized head; No data means it has logged nothing for 5 minutes.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -2373,7 +2373,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `INDEXING: (?P<v>[0-9.]+) blocks/s` | unwrap v [5m])) or (vector(0) - 1)",
+          "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `INDEXING: (?P<v>[0-9.]+) blocks/s` | unwrap v [5m])) or (sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"Host Status:\" [5m])) * 0 - 2) or (vector(0) - 1)",
           "queryType": "instant"
         }
       ],
@@ -2416,6 +2416,11 @@
                   "text": "No data",
                   "color": "#6e7781",
                   "index": 0
+                },
+                "-2": {
+                  "text": "Idle",
+                  "color": "#6e7781",
+                  "index": 1
                 }
               }
             }
@@ -3553,7 +3558,7 @@
           "id": 33,
           "type": "timeseries",
           "title": "DAG index",
-          "description": "The DAG index's height against its target, the node's finalized head.",
+          "description": "The DAG index's height against its target, the archive node's finalized head. Finality moves in steps, and the index follows each in a burst; its height holds between them.",
           "datasource": {
             "type": "loki",
             "uid": "loki"
@@ -3572,7 +3577,7 @@
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Current height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [1m]))",
+              "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |~ \"INDEXING:|start guard: progress\" | regexp `(?:Current height: |start guard: progress )(?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [1m]))",
               "queryType": "range",
               "legendFormat": "index"
             },
@@ -3583,7 +3588,7 @@
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Target height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [1m]))",
+              "expr": "max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"subspace-node\"} |= \"best: #\" | regexp `finalized #(?P<v>[0-9]+)` | unwrap v [1m]))",
               "queryType": "range",
               "legendFormat": "target"
             }
@@ -3614,7 +3619,8 @@
                 "lineWidth": 1,
                 "fillOpacity": 0,
                 "showPoints": "never",
-                "spanNulls": false
+                "spanNulls": true,
+                "lineInterpolation": "stepAfter"
               },
               "color": {
                 "mode": "palette-classic"
