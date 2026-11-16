@@ -62,9 +62,8 @@ module "files_gateway" {
   database_password = var.postgres_password
   api_secret        = var.files_gateway_token
   # the services deploy sets that password, so the migrations follow it
-  wait_for = [module.services.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id]
+  database_id = local.services_database_id
 
   # The indexer is a prerelease build of autonomys/auto-files-gateway's
   # dag-indexer-fe4d7b2 branch: fe4d7b2's mapping in an image of its own, on the
@@ -132,6 +131,11 @@ locals {
   auth_database_url = "postgres://postgres:${var.postgres_password}@${local.services_address}:5432/auth"
   rabbitmq_url      = "amqp://${var.rabbitmq_username}:${var.rabbitmq_password}@${local.services_address}:5672"
 
+  # Changes when the services host is rebuilt, and with it its databases: the
+  # mesh key is generated only on a fresh install, so a bootstrap that re-runs
+  # over the live host, for an installer.sh change say, keeps it
+  services_database_id = sha1(lookup(var.mesh_public_keys, "services", ""))
+
   # what production ran on 2026-11-12, so upgrades are rehearsed here first; the
   # backend tag is the commit the module's compose file mirrors
   backend_images = {
@@ -190,9 +194,8 @@ module "public" {
   database_url   = local.database_url
   rabbitmq_url   = local.rabbitmq_url
   # the services deploy sets the passwords these URLs carry
-  wait_for = [module.services.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id]
+  database_id = local.services_database_id
 
   endpoints = merge(local.backend_endpoints, {
     rpc = "wss://rpc-0.chronos.autonomys.xyz/ws"
@@ -272,9 +275,8 @@ module "private" {
   # the services deploy sets the passwords these URLs carry, and the public
   # deploy's Hasura has applied the image's metadata and migrations before this
   # host's Hasura starts on the same database
-  wait_for = [module.services.deploy_id, module.public.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id, module.public.deploy_id]
+  database_id = local.services_database_id
 
   endpoints = merge(local.backend_endpoints, {
     rpc = "wss://rpc-0.chronos.autonomys.xyz/ws"
@@ -358,9 +360,8 @@ module "auth" {
   database_url = local.auth_database_url
   # the services deploy creates the database and sets that password, and the
   # private backend's deploy installs the nginx that serves auth's name
-  wait_for = [module.services.deploy_id, module.private.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id, module.private.deploy_id]
+  database_id = local.services_database_id
 
   jwt_private_key = var.auth_jwt_private_key
   jwt_public_key  = var.hasura_jwt_public_key

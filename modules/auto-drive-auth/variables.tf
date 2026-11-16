@@ -77,7 +77,7 @@ variable "wait_for" {
 }
 
 variable "database_id" {
-  description = "Changes whenever the database may have been recreated empty, such as the database host's bootstrap_id. A change recreates auth, which keeps the one connection it opens."
+  description = "Changes whenever the database may have been recreated empty, such as when the host it lives on is rebuilt, and at no other time. A change recreates auth, which keeps the one connection it opens."
   type        = string
   default     = ""
 
