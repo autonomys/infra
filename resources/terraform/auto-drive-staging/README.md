@@ -605,9 +605,11 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
 ```
 
 The services host has no backups, so it starts with empty databases and queues.
-In the full apply after its key is recorded, the other members take the new key,
-the public backend's migrations run again, and Hasura and the backend services
-are recreated, so the schema and Hasura's metadata are set up again.
+In the full apply after its key is recorded, the other members take the new key.
+The public backend's `database_id` follows that key too, so its migrations run
+again and Hasura and the backend services are recreated, setting up the schema
+and Hasura's metadata again. Only a new key does this: a bootstrap that re-runs
+over the live host keeps its key, and the databases with it.
 
 For the public backend, the first apply:
 
