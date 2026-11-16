@@ -6,8 +6,10 @@
 #
 # Unlike upstream, every port is published on loopback only, the mesh override
 # adds the host's mesh address, and the RPC gateway publishes no P2P ports: it
-# listens on none. Each app's migrations run in a one-shot service before it
-# starts, since the images don't run them. Both apps are recreated when
+# listens on none. Each app's migrations run in a one-shot service, which the
+# deploy runs before `up`, since the images don't run them. The apps don't
+# depend on them: `up` runs them again, and a rerun that failed would leave an
+# app `up` had just replaced unstarted. Both apps are recreated when
 # DATABASE_ID says the database was recreated, since each opens one Postgres
 # connection and never opens another.
 # upstream: 7c5093bd26c399e7e6f484cfc9e27b59f2ea04a2
@@ -59,7 +61,8 @@ services:
     depends_on:
       subspace-node:
         condition: service_healthy
-        # The gateway never reconnects its node WebSocket, so restart it when Compose recreates the node.
+        # The gateway never reconnects its node WebSocket: it exits on its first fetch after the node goes,
+        # and its restart policy brings it back. This restarts it with a node Compose recreates, before that fetch.
         restart: true
     ports:
       - '127.0.0.1:9955:9955'
@@ -107,8 +110,6 @@ services:
     depends_on:
       subspace-node:
         condition: service_healthy
-      object-mapping-indexer-migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
     logging:
       driver: loki
@@ -160,8 +161,6 @@ services:
     depends_on:
       subspace-node:
         condition: service_healthy
-      file-retriever-migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
     logging:
       driver: loki
