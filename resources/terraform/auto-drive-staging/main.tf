@@ -265,9 +265,8 @@ module "private" {
   # the services deploy sets the passwords these URLs carry, and the public
   # deploy's Hasura has applied the image's metadata and migrations before this
   # host's Hasura starts on the same database
-  wait_for = [module.services.deploy_id, module.public.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id, module.public.deploy_id]
+  database_id = local.services_database_id
 
   endpoints = merge(local.backend_endpoints, {
     rpc = "wss://rpc-0.chronos.autonomys.xyz/ws"
@@ -351,9 +350,8 @@ module "auth" {
   database_url = local.auth_database_url
   # the services deploy creates the database and sets that password, and the
   # private backend's deploy installs the nginx that serves auth's name
-  wait_for = [module.services.deploy_id, module.private.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id, module.private.deploy_id]
+  database_id = local.services_database_id
 
   jwt_private_key = var.auth_jwt_private_key
   jwt_public_key  = var.hasura_jwt_public_key
