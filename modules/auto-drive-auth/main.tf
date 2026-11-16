@@ -8,7 +8,8 @@ locals {
   compose_files = ["docker-compose.yml"]
 
   # Compose reads this from the deploy directory, so `docker compose` run there
-  # by hand sees the same project, files and values as the deploy
+  # by hand sees the same project, files and values as the deploy. The signing
+  # algorithm is not a setting: the backend role's Hasura verifies RS256.
   env = {
     COMPOSE_PROJECT_NAME                   = var.compose_project
     COMPOSE_FILE                           = join(":", local.compose_files)
@@ -17,7 +18,7 @@ locals {
     AUTH_HOST_PORT                         = var.port
     DATABASE_ID                            = var.database_id
     LOKI_URL                               = var.loki_url
-    JWT_SECRET_ALGORITHM                   = var.settings.jwt_algorithm
+    JWT_SECRET_ALGORITHM                   = "RS256"
     CORS_ALLOWED_ORIGINS                   = var.settings.cors_allowed_origins
     WEB3_AUTH_ALLOWED_ORIGINS              = var.settings.web3_allowed_origins
     LOG_LEVEL                              = var.settings.log_level

@@ -240,7 +240,8 @@ locals {
   auth_port = 3040
 
   # Cloudflare's published IPv4 ranges, https://www.cloudflare.com/ips-v4, as
-  # of 2026-11-14. A range added there is refused here until it is added too.
+  # of 2026-11-14. A range added there is refused here until it is added too;
+  # validate.sh compares its copy of this list with the published one.
   cloudflare_ipv4 = [
     "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18",
     "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17",
