@@ -35,6 +35,7 @@ MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20"
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
 COMPOSE_PROJECT="file-retriever"
+GATEWAY_DIR="$DEPLOY_DIR/auto-drive-gateway"
 SERVICES_DIR="$DEPLOY_DIR/auto-drive-services"
 SERVICES_PROJECT="auto-drive-services"
 POSTGRES_IMAGE="postgres:17.9-bookworm"
@@ -94,7 +95,9 @@ echo ""
 
 echo "[Host]"
 check "Hostname" "hostname" "$HOSTNAME_WANT"
-check "Timezone" "timedatectl show -p Timezone --value" "UTC"
+# the bootstrap sets UTC; tzdata upgrades repoint /etc/localtime at its
+# canonical name, Etc/UTC
+check "Timezone" "timedatectl show -p Timezone --value | sed 's|^Etc/UTC\$|UTC|'" "UTC"
 check "Ubuntu" "lsb_release -is" "Ubuntu"
 check "Booted via legacy BIOS" "test -d /sys/firmware/efi && echo uefi || echo bios" "bios"
 
@@ -246,8 +249,13 @@ files_gateway_checks() {
   local first second
   echo ""
   echo "[Gateway deploy]"
-  check "Gateway checkout present" "test -d $DEPLOY_DIR/auto-files-gateway/.git && echo exists" "exists"
-  check "Settings env file owner-only" "stat -c '%a %U' $DEPLOY_DIR/auto-files-gateway.env" "600 ubuntu"
+  check "Compose files and .env in place" \
+    "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.log-cap.yml .env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu"
+  # the running node's config hash is the files': no change is waiting on a restart
+  check "Node matches the compose files" \
+    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
+    "match"
   check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
   check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
   check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
@@ -255,10 +263,13 @@ files_gateway_checks() {
   check "Node archives blocks and state" \
     "a=\$(sudo docker inspect -f '{{json .Args}}' $NODE); echo \"\$a\" | grep -qF '\"--blocks-pruning\",\"archive\"' && echo \"\$a\" | grep -qF '\"--state-pruning\",\"archive\"' && echo archive" \
     "archive"
-  check "Node creates object mappings" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--create-object-mappings","1"' contains
+  check "Node creates object mappings" "sudo docker inspect -f '{{json .Args}}' $NODE" '"--create-object-mappings","yes"' contains
   check "Node logs ship through the loki driver" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $NODE" \
     "loki https://logging.subspace.network/loki/api/v1/push"
+  check "Node's local log copy capped" \
+    "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $NODE" \
+    "10m 3"
   check "No loki driver push errors in the last hour" \
     "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
   check "Node RPC answers on loopback" \

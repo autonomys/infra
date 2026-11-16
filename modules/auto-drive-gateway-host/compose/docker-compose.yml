@@ -1,0 +1,47 @@
+# The gateway's services, as autonomys/auto-files-gateway's docker/ compose files
+# define them at the commit below, with the same variable names. Values come
+# from the .env Terraform writes beside this file. upstream-diff.sh in this
+# module shows what has changed upstream since; move the commit when this file
+# catches up.
+# upstream: 7c5093bd26c399e7e6f484cfc9e27b59f2ea04a2
+
+volumes:
+  subspace-node-data: {}
+
+services:
+  subspace-node:
+    image: ${NODE_DOCKER_TAG:?}
+    volumes:
+      - subspace-node-data:/var/subspace:rw
+    ports:
+      - '30333:30333'
+      - '30433:30433'
+      - '127.0.0.1:9944:9944'
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=${RUST_LOG_NODE:-info}
+    command: >
+      run
+      --chain ${NETWORK_ID:?}
+      --base-path /var/subspace
+      --listen-on /ip4/0.0.0.0/tcp/30333
+      --dsn-listen-on /ip4/0.0.0.0/tcp/30433
+      --rpc-cors all
+      --rpc-methods unsafe
+      --rpc-listen-on 0.0.0.0:9944
+      --rpc-max-subscriptions-per-connection 1000
+      --rpc-max-connections 20000
+      --name object-mapping-node
+      --sync full
+      --create-object-mappings ${BLOCK_NUMBER_TO_START_FROM:?}
+      --blocks-pruning archive
+      --state-pruning archive
+    healthcheck:
+      timeout: 5s
+      interval: 30s
+      retries: 60
+    stop_grace_period: 30s
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL:?}

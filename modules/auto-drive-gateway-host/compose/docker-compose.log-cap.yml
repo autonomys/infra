@@ -1,0 +1,10 @@
+# Caps the loki driver's local copy of each container's logs, kept for
+# `docker logs` and unbounded otherwise, as on the rest of the fleet. The .env's
+# COMPOSE_FILE includes this file when the role's cap_local_logs is set.
+
+services:
+  subspace-node:
+    logging:
+      options:
+        max-size: 10m
+        max-file: '3'
