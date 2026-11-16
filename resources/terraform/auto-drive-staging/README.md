@@ -117,8 +117,8 @@ Nothing reads them any more; they can be removed by hand.
   The gateway module outputs both URLs, as `file_retriever_url` and
   `object_mapping_url`. Its deploy waits for the services host's deploy, which
   sets the database password the migrations connect with. When the services host
-  is bootstrapped again (`database_id`), the migrations run again and both apps
-  are recreated, since each keeps the one database connection it opens.
+  is rebuilt (`database_id`), the migrations run again and both apps are
+  recreated, since each keeps the one database connection it opens.
 - The indexer stores the mappings the node sends while it is subscribed. With
   `--create-object-mappings yes` that is every block archived from then on;
   earlier blocks would need one run with a block number.
