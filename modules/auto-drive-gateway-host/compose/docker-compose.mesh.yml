@@ -1,0 +1,11 @@
+# Publishes the object-mapping indexer and the file retriever on the host's
+# mesh address too, for the backends. The .env's COMPOSE_FILE includes this file
+# when the role is given a mesh.
+
+services:
+  object-mapping-app:
+    ports:
+      - '${MESH_ADDRESS:?}:3000:3000'
+  file-retriever:
+    ports:
+      - '${MESH_ADDRESS:?}:8090:8090'

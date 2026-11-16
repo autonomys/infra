@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Runs the gateway's services from the compose files and .env Terraform
-# uploaded. Terraform re-runs this whenever any of them or anything else in its
-# triggers changes, so every step must be safe over a live host.
+# Runs the gateway's services from the compose files, .env and env files
+# Terraform uploaded. Terraform re-runs this whenever any of them or anything
+# else in its triggers changes, so every step must be safe over a live host.
 
 set -euo pipefail
+shopt -s nullglob
 
 : "${DEPLOY_USER:?DEPLOY_USER is required}"
 : "${DEPLOY_DIR:?DEPLOY_DIR is required}"
@@ -13,7 +14,8 @@ set -euo pipefail
 PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
 PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
 
-trap 'rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env"' EXIT
+# the env files hold the credentials, so they go however this ends
+trap 'rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR"/*.env "$STAGED_DIR/.env"' EXIT
 trap 'exit 1' HUP INT TERM
 
 # Compose takes the project, the files and the values from the .env in the
@@ -26,12 +28,63 @@ compose_in() {
 
 # Every check runs against the uploaded files, and only files that pass them
 # replace the ones in use, so a refused deploy leaves the host as it was.
-service_list="$(compose_in "$STAGED_DIR" config --services)"
+# Nothing here reads an environment, so none is kept: --no-env-resolution
+# leaves the env files' credentials out on Compose 5.7, but not on 2.40.
+model="$(compose_in "$STAGED_DIR" config --format json --no-env-resolution | python3 -c '
+import json, sys
+model = json.load(sys.stdin)
+for service in model["services"].values():
+    service.pop("environment", None)
+json.dump(model, sys.stdout)
+')"
+service_list="$(python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["services"]))' <<< "$model")"
 mapfile -t services <<< "$service_list"
+long_running_list="$(python3 -c '
+import json, sys
+services = json.load(sys.stdin)["services"]
+print("\n".join(name for name, svc in services.items() if svc.get("restart", "no") != "no"))
+' <<< "$model")"
+mapfile -t long_running <<< "$long_running_list"
+# in the order their depends_on gives, as `up` would run them
+one_shot_list="$(python3 -c '
+import json, sys
+services = json.load(sys.stdin)["services"]
+ordered = []
+def visit(name):
+    if name not in ordered:
+        for dependency in services[name].get("depends_on") or {}:
+            visit(dependency)
+        ordered.append(name)
+for name in sorted(services):
+    visit(name)
+print("\n".join(name for name in ordered if services[name].get("restart", "no") == "no"))
+' <<< "$model")"
+mapfile -t one_shots <<< "$one_shot_list"
 
 echo "==> Checking published ports"
-compose_in "$STAGED_DIR" config --format json --no-env-resolution \
-  | PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" python3 "$PORT_GUARD"
+PUBLIC_TCP_PORTS="$PUBLIC_TCP_PORTS" PRIVATE_ADDRESSES="$PRIVATE_ADDRESSES" python3 "$PORT_GUARD" <<< "$model"
+
+for address in $PRIVATE_ADDRESSES; do
+  if ! ip -4 -o addr show | awk '{print $4}' | cut -d/ -f1 | grep -qxF "$address"; then
+    echo "$address is not on this host, so the other mesh members can't reach these services: bring wg0 up first" >&2
+    exit 1
+  fi
+done
+
+echo "==> Checking the database is reachable"
+python3 - "$STAGED_DIR/object-mapping-indexer.env" <<'PY'
+import socket, sys
+from urllib.parse import urlsplit
+
+url = next(line.rstrip("\n").partition("=")[2].strip("'") for line in open(sys.argv[1]) if line.startswith("DATABASE_URL="))
+parts = urlsplit(url)
+target = "%s:%s" % (parts.hostname, parts.port or 5432)
+try:
+    socket.create_connection((parts.hostname, parts.port or 5432), timeout=10).close()
+except OSError as e:
+    sys.exit("Can't reach the database at %s (%s). On a mesh host, check its key is in mesh_public_keys and the services host has applied it." % (target, e.strerror or e))
+print("    %s reachable" % target)
+PY
 
 # Only images not on the host yet, so a tag pushed again upstream can't recreate
 # a service during an unrelated deploy. A tag changed in Terraform still pulls,
@@ -39,13 +92,24 @@ compose_in "$STAGED_DIR" config --format json --no-env-resolution \
 echo "==> Pulling ${services[*]} if missing"
 compose_in "$STAGED_DIR" pull --policy missing
 
+# Migrations first, one at a time, from the uploaded files, so a failed one
+# stops the deploy before anything is replaced. `up` runs them again, with
+# nothing left to apply and no app waiting on them.
+for one_shot in "${one_shots[@]}"; do
+  [ -n "$one_shot" ] || continue
+  echo "==> Running $one_shot"
+  compose_in "$STAGED_DIR" run --rm --no-deps -T "$one_shot"
+done
+
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$DEPLOY_DIR")"
 install -d -m 0750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"
 for file in "$STAGED_DIR"/*.yml; do
   install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$file" "$DEPLOY_DIR/$(basename "$file")"
 done
-install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/.env" "$DEPLOY_DIR/.env"
-rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env"
+for file in "$STAGED_DIR"/*.env "$STAGED_DIR/.env"; do
+  install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$file" "$DEPLOY_DIR/$(basename "$file")"
+done
+rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR"/*.env "$STAGED_DIR/.env"
 
 echo "==> Starting ${services[*]}"
 compose_in "$DEPLOY_DIR" up -d
@@ -53,7 +117,7 @@ compose_in "$DEPLOY_DIR" up -d
 # a service that is not running, or restarts within 30s, fails the apply before
 # old images are pruned
 declare -A started
-for service in "${services[@]}"; do
+for service in "${long_running[@]}"; do
   i=0
   until container="$(compose_in "$DEPLOY_DIR" ps -q "$service" 2>/dev/null)" \
     && [ -n "$container" ] \
@@ -65,7 +129,7 @@ for service in "${services[@]}"; do
   started[$service]="$container $(docker inspect -f '{{.RestartCount}}' "$container")"
 done
 sleep 30
-for service in "${services[@]}"; do
+for service in "${long_running[@]}"; do
   read -r container count <<< "${started[$service]}"
   if [ "$(docker inspect -f '{{.State.Status}} {{.RestartCount}}' "$container")" != "running $count" ]; then
     echo "$service restarted or stopped within 30s of starting" >&2
@@ -75,4 +139,4 @@ done
 
 docker image prune -af
 
-echo "==> Running: ${services[*]}"
+echo "==> Running: ${long_running[*]}"
