@@ -1,3 +1,16 @@
+resource "cloudflare_dns_record" "auth_staging_auto_drive_autonomys_xyz" {
+  content = "chronos.auto-drive.autonomys.xyz"
+  name    = "auth.staging.auto-drive.autonomys.xyz"
+  proxied = true
+  tags    = []
+  ttl     = 1
+  type    = "CNAME"
+  zone_id = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {
+    flatten_cname = false
+  }
+}
+
 resource "cloudflare_dns_record" "terraform_managed_resource_db2ccd228b09227cfcbe56dad03865bf_10" {
   content  = local.proxied_data.autonomys_xyz.root_0
   name     = "autonomys.xyz"
@@ -42,6 +55,17 @@ resource "cloudflare_dns_record" "terraform_managed_resource_84830ebfc27e4dd33d1
   settings = {}
 }
 
+resource "cloudflare_dns_record" "chronos_auto_drive_autonomys_xyz" {
+  content  = local.proxied_data.autonomys_xyz.autodrive_staging_private
+  name     = "chronos.auto-drive.autonomys.xyz"
+  proxied  = true
+  tags     = []
+  ttl      = 1
+  type     = "A"
+  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
+  settings = {}
+}
+
 resource "cloudflare_dns_record" "terraform_managed_resource_b4767669daa0f3c0fa1de7aec3e73771_22" {
   content  = "13.248.133.137"
   name     = "community.autonomys.xyz"
@@ -56,17 +80,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_b4767669daa0f3c0fa1
 resource "cloudflare_dns_record" "terraform_managed_resource_9653f8ed07c0583ebe3b0b967e8e3f4a_23" {
   content  = local.proxied_data.autonomys_xyz.demo_autodrive
   name     = "demo.auto-drive.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
-resource "cloudflare_dns_record" "terraform_managed_resource_7e1937606b6f23fb1ac12d89ac5f8ad7_24" {
-  content  = local.proxied_data.autonomys_xyz.download_staging_autodrive
-  name     = "download.staging.auto-drive.autonomys.xyz"
   proxied  = true
   tags     = []
   ttl      = 1
@@ -178,17 +191,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_3070d116f3c08fa1a0d
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_76ed9da0576917f810d7ff2ff3734c01_37" {
-  content  = local.proxied_data.autonomys_xyz.indexer_staging
-  name     = "indexer.staging.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
 resource "cloudflare_dns_record" "terraform_managed_resource_2a444446e3153ebae375a41326582c23_40" {
   content  = local.proxied_data.autonomys_xyz.autodrive_mainnet
   name     = "mainnet.auto-drive.autonomys.xyz"
@@ -258,17 +260,6 @@ resource "cloudflare_dns_record" "terraform_managed_resource_565610ef1e10ab365a5
 resource "cloudflare_dns_record" "terraform_managed_resource_5c2d6d05b0bed40ac962d18ff179838e_54" {
   content  = local.proxied_data.autonomys_xyz.scv_explorer_autodrive_taurus
   name     = "scv.explorer.auto-evm.taurus.autonomys.xyz"
-  proxied  = true
-  tags     = []
-  ttl      = 1
-  type     = "A"
-  zone_id  = data.cloudflare_zone.autonomys_xyz.zone_id
-  settings = {}
-}
-
-resource "cloudflare_dns_record" "terraform_managed_resource_b4647a2059431d6676c35ee056ca412e_55" {
-  content  = local.proxied_data.autonomys_xyz.staging_autodrive
-  name     = "staging.auto-drive.autonomys.xyz"
   proxied  = true
   tags     = []
   ttl      = 1
