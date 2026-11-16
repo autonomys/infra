@@ -68,9 +68,9 @@ PY
 echo "==> Pulling the auth image if missing"
 compose_in "$STAGED_DIR" pull --policy missing
 
-# The migrations first, from the uploaded files: if they fail, `up` would
-# already have replaced auth with a container that never starts. `up` runs
-# them again, with nothing left to apply.
+# The migrations first, from the uploaded files, so a failed run stops the
+# deploy before anything is replaced. `up` runs them again, with nothing left
+# to apply and auth not waiting on them.
 echo "==> Running auth-migrate"
 compose_in "$STAGED_DIR" run --rm --no-deps -T auth-migrate
 

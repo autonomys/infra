@@ -15,7 +15,10 @@ x-logging: &logging
     max-file: '3'
 
 services:
-  # Applies auth's database migrations, a run with nothing new changing nothing
+  # Applies auth's database migrations, a run with nothing new changing nothing.
+  # The deploy runs it before `up`. auth doesn't depend on it: `up` runs it
+  # again, and a rerun that failed would leave an auth `up` had just replaced
+  # unstarted.
   auth-migrate:
     image: ${AUTH_IMAGE:?}
     restart: 'no'
@@ -32,9 +35,6 @@ services:
 
   auth:
     image: ${AUTH_IMAGE:?}
-    depends_on:
-      auth-migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
     # Node as process 1 ignores SIGTERM, so a stop would wait out its grace
     # period and end in a kill
