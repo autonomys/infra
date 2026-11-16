@@ -170,7 +170,7 @@ variable "wait_for" {
 }
 
 variable "database_id" {
-  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs both apps' migrations and recreates the apps and the DAG indexer, so they connect to the new database. The DAG indexer's start guard decides whether it may then run."
+  description = "Changes whenever the database may have been recreated empty, such as when the host it lives on is rebuilt, and at no other time. A change re-runs both apps' migrations and recreates the apps and the DAG indexer, so they connect to the new database. The DAG indexer's start guard decides whether it may then run."
   type        = string
   default     = ""
 

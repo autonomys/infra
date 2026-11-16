@@ -97,27 +97,33 @@ fi
 
 # Installs nginx.conf and the given site, and reloads nginx only if they pass
 # `nginx -t`. Otherwise the files they replaced go back, so a rejected config
-# never waits on disk for the next restart.
+# never waits on disk for the next restart. With --check it stops after the
+# test and puts the files they replaced back either way.
 install_nginx() {
-  local backup
+  local check=false backup
+  if [ "$1" = --check ]; then check=true; shift; fi
   backup="$(mktemp -d)"
   cp -a /etc/nginx/nginx.conf "$backup/nginx.conf"
   if [ -f "$SITE" ]; then cp -a "$SITE" "$backup/site"; fi
   install -m 0644 "$STAGED_DIR/nginx.conf" /etc/nginx/nginx.conf
   install -m 0644 "$1" "$SITE"
   ln -sfn "$SITE" /etc/nginx/sites-enabled/auto-drive
-  if ! nginx -t -q; then
+  local accepted=true
+  nginx -t -q || accepted=false
+  if ! $accepted || $check; then
     cp -a "$backup/nginx.conf" /etc/nginx/nginx.conf
     if [ -f "$backup/site" ]; then
       cp -a "$backup/site" "$SITE"
     else
       rm -f "$SITE" /etc/nginx/sites-enabled/auto-drive
     fi
-    rm -rf "$backup"
+  fi
+  rm -rf "$backup"
+  if ! $accepted; then
     echo "nginx rejected the new configuration; the previous one is back in place" >&2
     exit 1
   fi
-  rm -rf "$backup"
+  if $check; then return; fi
   rm -f /etc/nginx/sites-enabled/default
   systemctl enable -q nginx
   if systemctl is-active -q nginx; then systemctl reload nginx; else systemctl start nginx; fi
@@ -163,8 +169,8 @@ if $need_cert; then
   certbot "${certbot_args[@]}"
 fi
 
-echo "==> Installing the site"
-install_nginx "$STAGED_DIR/site.conf"
+echo "==> Checking the site"
+install_nginx --check "$STAGED_DIR/site.conf"
 
 install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$(dirname "$DEPLOY_DIR")"
 install -d -m 0750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_DIR"
@@ -179,7 +185,7 @@ if grep -q '[^[:space:]]' "$STAGED_DIR/workers.env"; then
 else
   rm -f "$DEPLOY_DIR/workers.env"
 fi
-rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env" "$STAGED_DIR/workers.env" "${NGINX_FILES[@]}"
+rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env" "$STAGED_DIR/workers.env"
 
 echo "==> Starting ${services[*]}"
 compose_in "$DEPLOY_DIR" up -d --remove-orphans
@@ -191,6 +197,12 @@ if [[ " ${services[*]} " == *" hasura "* ]]; then
     exit 1
   fi
 fi
+
+# Only now: a deploy that stops before the services are recreated leaves them
+# on the ports the old site sends to, even when this one moves them
+echo "==> Installing the site"
+install_nginx "$STAGED_DIR/site.conf"
+rm -f "${NGINX_FILES[@]}"
 
 # a service that is not healthy within 300s, or restarts or turns unhealthy in
 # the 30s after, fails the apply before old images are pruned
