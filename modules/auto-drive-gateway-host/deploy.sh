@@ -47,8 +47,15 @@ refuse() {
 
 # Every check runs against the uploaded files, and only files that pass them
 # replace the ones in use, so a refused deploy leaves the host as it was.
-# --no-env-resolution keeps the env files' credentials out of the model.
-model="$(compose_in "$STAGED_DIR" config --format json --no-env-resolution)"
+# Nothing here reads an environment, so none is kept: --no-env-resolution
+# leaves the env files' credentials out on Compose 5.7, but not on 2.40.
+model="$(compose_in "$STAGED_DIR" config --format json --no-env-resolution | python3 -c '
+import json, sys
+model = json.load(sys.stdin)
+for service in model["services"].values():
+    service.pop("environment", None)
+json.dump(model, sys.stdout)
+')"
 service_list="$(python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["services"]))' <<< "$model")"
 mapfile -t services <<< "$service_list"
 long_running_list="$(python3 -c '
@@ -91,6 +98,21 @@ for address in $PRIVATE_ADDRESSES; do
   fi
 done
 
+echo "==> Checking the database is reachable"
+python3 - "$STAGED_DIR/object-mapping-indexer.env" <<'PY'
+import socket, sys
+from urllib.parse import urlsplit
+
+url = next(line.rstrip("\n").partition("=")[2].strip("'") for line in open(sys.argv[1]) if line.startswith("DATABASE_URL="))
+parts = urlsplit(url)
+target = "%s:%s" % (parts.hostname, parts.port or 5432)
+try:
+    socket.create_connection((parts.hostname, parts.port or 5432), timeout=10).close()
+except OSError as e:
+    sys.exit("Can't reach the database at %s (%s). On a mesh host, check its key is in mesh_public_keys and the services host has applied it." % (target, e.strerror or e))
+print("    %s reachable" % target)
+PY
+
 # Only images not on the host yet, so a tag pushed again upstream can't recreate
 # a service during an unrelated deploy. A tag changed in Terraform still pulls,
 # before anything stops.
@@ -132,10 +154,10 @@ print(command[command.index("-f") + 1])
   fi
 fi
 
-# Migrations first, one at a time, from the uploaded files: if one fails, `up`
-# would already have replaced the app it belongs to with a container that never
-# starts. `up` runs them again, with nothing left to apply. The backup runs on
-# `up` only, after this deploy's changes.
+# Migrations first, one at a time, from the uploaded files, so a failed one
+# stops the deploy before anything is replaced. `up` runs them again, with
+# nothing left to apply and no app waiting on them. The backup runs on `up`
+# only, after this deploy's changes.
 for one_shot in "${one_shots[@]}"; do
   [ -n "$one_shot" ] && [ "$one_shot" != gateway-db-backup ] || continue
   echo "==> Running $one_shot"
