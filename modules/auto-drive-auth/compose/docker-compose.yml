@@ -1,0 +1,56 @@
+# Auto Drive's auth service, apps/auth in autonomys/auto-drive, which production
+# runs as a Lambda instead. Values come from the .env Terraform writes beside
+# this file. The credentials are only in auth.env, which the containers read
+# and the deploy's port check never resolves.
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: ${LOKI_URL:?}
+    # a slow or unreachable Loki must never block the service's own writes
+    mode: non-blocking
+    max-buffer-size: 4m
+    # the driver's local copy for `docker logs`, capped as on the rest of the fleet
+    max-size: 10m
+    max-file: '3'
+
+services:
+  # Applies auth's database migrations, a run with nothing new changing nothing
+  auth-migrate:
+    image: ${AUTH_IMAGE:?}
+    restart: 'no'
+    env_file: auth.env
+    command:
+      - npm
+      - run
+      - migrate
+      - --
+      - up
+    healthcheck:
+      disable: true
+    logging: *logging
+
+  auth:
+    image: ${AUTH_IMAGE:?}
+    depends_on:
+      auth-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    # Node as process 1 ignores SIGTERM, so a stop would wait out its grace
+    # period and end in a kill
+    init: true
+    env_file: auth.env
+    environment:
+      AUTH_PORT: '3030'
+      JWT_SECRET_ALGORITHM: ${JWT_SECRET_ALGORITHM:?}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS-}
+      WEB3_AUTH_ALLOWED_ORIGINS: ${WEB3_AUTH_ALLOWED_ORIGINS:?}
+      LOG_LEVEL: ${LOG_LEVEL:?}
+      REVOKE_TOKEN_EMITTED_BEFORE_IN_SECONDS: ${REVOKE_TOKEN_EMITTED_BEFORE_IN_SECONDS:?}
+    # it keeps the one database connection it opens, so a database recreated
+    # empty has to recreate it
+    labels:
+      auto-drive.database-id: ${DATABASE_ID-}
+    ports:
+      - '${PUBLISH_ADDRESS:?}:${AUTH_HOST_PORT:?}:3030'
+    logging: *logging

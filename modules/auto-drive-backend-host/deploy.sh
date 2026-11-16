@@ -21,8 +21,8 @@ LIVE="/etc/letsencrypt/live/$CERT_NAME"
 
 apt_timers_stopped=false
 cleanup() {
-  # the staged .env holds the credentials, so it goes however this ends
-  rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env" "${NGINX_FILES[@]}"
+  # the staged .env and workers.env hold the credentials, so they go however this ends
+  rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env" "$STAGED_DIR/workers.env" "${NGINX_FILES[@]}"
   if $apt_timers_stopped; then systemctl start apt-daily.timer apt-daily-upgrade.timer; fi
 }
 trap cleanup EXIT
@@ -178,7 +178,14 @@ for file in "$STAGED_DIR"/*.yml; do
   install -m 0644 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$file" "$DEPLOY_DIR/$(basename "$file")"
 done
 install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/.env" "$DEPLOY_DIR/.env"
-rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env"
+# the workers' own settings, which a host without any is sent blank: it gets no
+# file, and loses one left from before
+if grep -q '[^[:space:]]' "$STAGED_DIR/workers.env"; then
+  install -m 0600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$STAGED_DIR/workers.env" "$DEPLOY_DIR/workers.env"
+else
+  rm -f "$DEPLOY_DIR/workers.env"
+fi
+rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR/.env" "$STAGED_DIR/workers.env"
 
 echo "==> Starting ${services[*]}"
 compose_in "$DEPLOY_DIR" up -d --remove-orphans

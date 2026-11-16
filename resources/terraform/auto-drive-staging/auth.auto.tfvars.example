@@ -1,0 +1,4 @@
+auth_jwt_private_key = <<-PEM
+  -----BEGIN PRIVATE KEY-----
+  -----END PRIVATE KEY-----
+PEM
