@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Verify that a live Auto Drive staging host matches its spec. Every check only
-# reads; none touches secrets, keys or service data.
+# reads; none prints secrets or keys or touches service data. The services and
+# public hosts' compose hash checks have Compose read their env files, to hash
+# them as the deploy does.
 # Usage: ./validate.sh <role> [ssh-host]
 #   role: files-gateway, services or public
 #   ssh-host defaults to the role's hostname (configure it in ~/.ssh/config, or
@@ -317,11 +319,20 @@ files_gateway_checks() {
 services_checks() {
   echo ""
   echo "[Services deploy]"
-  check "Credential files owner-only" \
-    "stat -c '%a %U' $SERVICES_DIR/postgres.env $SERVICES_DIR/rabbitmq.env | sort -u" "600 ubuntu"
+  check "Compose files, .env and env files in place" \
+    "cd $SERVICES_DIR && stat -c '%n %a %U' docker-compose.yml rabbitmq.conf .env postgres.env rabbitmq.env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu rabbitmq.conf 644 ubuntu .env 600 ubuntu postgres.env 600 ubuntu rabbitmq.env 600 ubuntu"
+  # each running container's config hash is the files': no change is waiting on a restart
+  check "Postgres matches the compose files" \
+    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash postgres | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $PG)\" ] && echo match || echo differs" \
+    "match"
+  check "RabbitMQ matches the compose files" \
+    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash rabbitmq | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $RMQ)\" ] && echo match || echo differs" \
+    "match"
   check "Postgres healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $PG" "healthy"
   check "Postgres image" "sudo docker inspect -f '{{.Config.Image}}' $PG" "$POSTGRES_IMAGE"
   check "Postgres restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $PG" "unless-stopped"
+  check "Postgres given 2 minutes to stop" "sudo docker inspect -f '{{.Config.StopTimeout}}' $PG" "120"
   check "Postgres memory limit 32 GiB, shm 2 GiB" \
     "sudo docker inspect -f '{{.HostConfig.Memory}} {{.HostConfig.ShmSize}}' $PG" "34359738368 2147483648"
   check "Postgres data in its named volume" \
@@ -330,6 +341,9 @@ services_checks() {
   check "Postgres logs ship through the loki driver" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $PG" \
     "loki $LOKI_URL"
+  check "Postgres's local log copy capped" \
+    "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $PG" \
+    "10m 3"
   check "Postgres on loopback and the mesh only" \
     "sudo ss -Htln 'sport = :5432' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$SELF_ADDRESS:5432 127.0.0.1:5432"
   check "Postgres version" "$PSQL 'SHOW server_version'" "17.9" contains
@@ -343,6 +357,7 @@ services_checks() {
   check "RabbitMQ healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $RMQ" "healthy"
   check "RabbitMQ image" "sudo docker inspect -f '{{.Config.Image}}' $RMQ" "$RABBITMQ_IMAGE"
   check "RabbitMQ restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $RMQ" "unless-stopped"
+  check "RabbitMQ given 2 minutes to stop" "sudo docker inspect -f '{{.Config.StopTimeout}}' $RMQ" "120"
   check "RabbitMQ memory limit 4 GiB" "sudo docker inspect -f '{{.HostConfig.Memory}}' $RMQ" "4294967296"
   check "RabbitMQ sizes itself to that limit" \
     "sudo docker exec -u rabbitmq $RMQ rabbitmqctl -q eval 'vm_memory_monitor:get_total_memory().'" "4294967296"
@@ -352,6 +367,9 @@ services_checks() {
   check "RabbitMQ logs ship through the loki driver" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $RMQ" \
     "loki $LOKI_URL"
+  check "RabbitMQ's local log copy capped" \
+    "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $RMQ" \
+    "10m 3"
   check "AMQP on loopback and the mesh only" \
     "sudo ss -Htln 'sport = :5672' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "$SELF_ADDRESS:5672 127.0.0.1:5672"
   check "RabbitMQ management on loopback only" \

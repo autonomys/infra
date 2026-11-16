@@ -1,20 +1,32 @@
 locals {
-  staging_dir     = module.host.staging_dir
-  staged_dir      = "${local.staging_dir}/auto-drive-services"
-  deploy_dir      = "/home/${var.deployer.ssh_user}/deploy/auto-drive-services"
-  compose_project = "auto-drive-services"
+  staging_dir = module.host.staging_dir
+  staged_dir  = "${local.staging_dir}/auto-drive-services"
+  deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-services"
 
-  compose_file = templatefile("${path.module}/docker-compose.yml.tftpl", {
-    loki_url                  = var.loki_url
-    mesh_address              = var.mesh.address
-    postgres_image            = var.images.postgres
-    postgres_settings         = var.postgres.settings
-    postgres_memory_limit_gib = var.postgres.memory_limit_gib
-    postgres_shm_size_gib     = var.postgres.shm_size_gib
-    rabbitmq_image            = var.images.rabbitmq
-    rabbitmq_memory_limit_gib = var.rabbitmq.memory_limit_gib
-    rabbitmq_conf_hash        = md5(local.rabbitmq_conf)
-  })
+  # every .yml in compose/ is uploaded and installed, and only those count
+  # towards the trigger; COMPOSE_FILE picks the ones in use
+  compose_dir   = "${path.module}/compose"
+  compose_files = ["docker-compose.yml"]
+
+  # Compose reads this from the deploy directory, so `docker compose` run there
+  # by hand sees the same project, files and values as the deploy. Each Postgres
+  # setting becomes POSTGRES_<NAME>, which the compose file passes as -c.
+  env = merge({
+    COMPOSE_PROJECT_NAME  = "auto-drive-services"
+    COMPOSE_FILE          = join(":", local.compose_files)
+    POSTGRES_IMAGE        = var.images.postgres
+    RABBITMQ_IMAGE        = var.images.rabbitmq
+    MESH_ADDRESS          = var.mesh.address
+    LOKI_URL              = var.loki_url
+    POSTGRES_MEMORY_LIMIT = "${var.postgres.memory_limit_gib}g"
+    POSTGRES_SHM_SIZE     = "${var.postgres.shm_size_gib}g"
+    RABBITMQ_MEMORY_LIMIT = "${var.rabbitmq.memory_limit_gib}g"
+    RABBITMQ_CONF_HASH    = md5(local.rabbitmq_conf)
+  }, { for name, value in var.postgres.settings : "POSTGRES_${upper(name)}" => value })
+  # single-quoted, so Compose takes each value literally instead of expanding a
+  # $ in it; the precondition below keeps quotes out of the values
+  env_file = join("", [for k in keys(local.env) : "${k}='${local.env[k]}'\n"])
+
   rabbitmq_conf = "total_memory_available_override_value = ${var.rabbitmq.memory_limit_gib}GiB\n"
 
   postgres_env = "POSTGRES_PASSWORD=${var.postgres_password}\n"
@@ -41,16 +53,27 @@ module "mesh" {
 resource "null_resource" "deploy" {
   # hashes only: the credentials themselves never reach the state
   triggers = {
-    bootstrap_id       = module.host.bootstrap_id
-    ipv4               = var.host.ipv4
-    ssh_user           = var.deployer.ssh_user
-    compose_hash       = md5(local.compose_file)
-    rabbitmq_conf_hash = md5(local.rabbitmq_conf)
-    postgres_env_hash  = nonsensitive(sha256(local.postgres_env))
-    rabbitmq_env_hash  = nonsensitive(sha256(local.rabbitmq_env))
-    databases          = join(" ", var.postgres.databases)
-    deploy_hash        = filemd5("${path.module}/deploy.sh")
-    port_guard_hash    = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
+    bootstrap_id      = module.host.bootstrap_id
+    ipv4              = var.host.ipv4
+    ssh_user          = var.deployer.ssh_user
+    compose_hash      = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
+    env_hash          = md5(local.env_file)
+    postgres_env_hash = nonsensitive(sha256(local.postgres_env))
+    rabbitmq_env_hash = nonsensitive(sha256(local.rabbitmq_env))
+    databases         = join(" ", var.postgres.databases)
+    deploy_hash       = filemd5("${path.module}/deploy.sh")
+    port_guard_hash   = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
+  }
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for v in values(local.env) : !strcontains(v, "'")])
+      error_message = "A value for the services host's .env contains a single quote, which its quoting can't hold."
+    }
+    precondition {
+      condition     = alltrue([for f in local.compose_files : fileexists("${local.compose_dir}/${f}")])
+      error_message = "COMPOSE_FILE names a file that is not in the module's compose/ directory."
+    }
   }
 
   connection {
@@ -79,9 +102,15 @@ resource "null_resource" "deploy" {
     destination = "${local.staging_dir}/compose-port-guard.py"
   }
 
+  # the trailing slash uploads the directory's contents
   provisioner "file" {
-    content     = local.compose_file
-    destination = "${local.staged_dir}/compose.yml"
+    source      = "${local.compose_dir}/"
+    destination = local.staged_dir
+  }
+
+  provisioner "file" {
+    content     = local.env_file
+    destination = "${local.staged_dir}/.env"
   }
 
   provisioner "file" {
@@ -105,7 +134,6 @@ resource "null_resource" "deploy" {
       sudo DEPLOY_USER=${var.deployer.ssh_user} \
         DEPLOY_DIR=${local.deploy_dir} \
         STAGED_DIR=${local.staged_dir} \
-        COMPOSE_PROJECT=${local.compose_project} \
         MESH_ADDRESS=${var.mesh.address} \
         POSTGRES_DATABASES='${join(" ", var.postgres.databases)}' \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \

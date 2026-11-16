@@ -1,9 +1,12 @@
-# Rendered by Terraform from modules/auto-drive-services-host.
+# The services host's Postgres and RabbitMQ. Values come from the .env Terraform
+# writes beside this file. The credentials are only in postgres.env and
+# rabbitmq.env, which the containers read and the deploy's port check never
+# resolves.
 
 x-logging: &logging
   driver: loki
   options:
-    loki-url: ${loki_url}
+    loki-url: ${LOKI_URL:?}
     # a slow or unreachable Loki must never block the services' own writes
     mode: non-blocking
     max-buffer-size: 4m
@@ -13,7 +16,7 @@ x-logging: &logging
 
 services:
   postgres:
-    image: ${postgres_image}
+    image: ${POSTGRES_IMAGE:?}
     restart: unless-stopped
     # a fast shutdown ends in a checkpoint, which can outlast Docker's default 10s
     # before SIGKILL; cut short, the next start has to recover
@@ -24,15 +27,27 @@ services:
       POSTGRES_DB: postgres
     command:
       - postgres
-%{ for name, value in postgres_settings ~}
       - -c
-      - ${name}=${value}
-%{ endfor ~}
-    shm_size: ${postgres_shm_size_gib}g
-    mem_limit: ${postgres_memory_limit_gib}g
+      - effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:?}
+      - -c
+      - effective_io_concurrency=${POSTGRES_EFFECTIVE_IO_CONCURRENCY:?}
+      - -c
+      - maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:?}
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:?}
+      - -c
+      - max_wal_size=${POSTGRES_MAX_WAL_SIZE:?}
+      - -c
+      - random_page_cost=${POSTGRES_RANDOM_PAGE_COST:?}
+      - -c
+      - shared_buffers=${POSTGRES_SHARED_BUFFERS:?}
+      - -c
+      - work_mem=${POSTGRES_WORK_MEM:?}
+    shm_size: ${POSTGRES_SHM_SIZE:?}
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:?}
     ports:
       - 127.0.0.1:5432:5432
-      - ${mesh_address}:5432:5432
+      - ${MESH_ADDRESS:?}:5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -46,7 +61,7 @@ services:
     logging: *logging
 
   rabbitmq:
-    image: ${rabbitmq_image}
+    image: ${RABBITMQ_IMAGE:?}
     restart: unless-stopped
     # the broker's node name, and with it where it finds its data, follows the
     # hostname
@@ -56,11 +71,11 @@ services:
     # Compose doesn't see a bind-mounted file change, and the broker reads conf.d
     # only at boot, so the file's hash recreates it when the file changes
     labels:
-      auto-drive.rabbitmq-conf: "${rabbitmq_conf_hash}"
-    mem_limit: ${rabbitmq_memory_limit_gib}g
+      auto-drive.rabbitmq-conf: "${RABBITMQ_CONF_HASH:?}"
+    mem_limit: ${RABBITMQ_MEMORY_LIMIT:?}
     ports:
       - 127.0.0.1:5672:5672
-      - ${mesh_address}:5672:5672
+      - ${MESH_ADDRESS:?}:5672:5672
       - 127.0.0.1:15672:15672
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
