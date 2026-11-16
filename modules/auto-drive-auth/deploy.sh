@@ -87,23 +87,33 @@ clear_staged
 echo "==> Starting auth"
 compose_in "$DEPLOY_DIR" up -d
 
-# not healthy within 300s, or restarted or unhealthy in the 30s after, fails the
-# apply before old images are pruned
+# not healthy within 300s, or restarted or not answering in the 30s after,
+# fails the apply before old images are pruned. Docker takes three failed
+# probes, 90s, to call a healthy container unhealthy, so the 30s ask auth's
+# health route directly.
 health() { docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$1"; }
 i=0
 until container="$(compose_in "$DEPLOY_DIR" ps -q auth 2>/dev/null)" \
   && [ -n "$container" ] \
   && [ "$(health "$container")" = healthy ]; do
+  if [ -n "$container" ] && [ "$(health "$container")" = none ]; then
+    echo "auth has no healthcheck, so the deploy can't tell when it is ready" >&2
+    exit 1
+  fi
   i=$((i + 1))
   if [ "$i" -ge 300 ]; then echo "auth not healthy after 300s" >&2; exit 1; fi
   sleep 1
 done
 restarts="$(docker inspect -f '{{.RestartCount}}' "$container")"
-sleep 30
-if [ "$(health "$container") $(docker inspect -f '{{.RestartCount}}' "$container")" != "healthy $restarts" ]; then
-  echo "auth restarted or turned unhealthy within 30s of becoming healthy" >&2
-  exit 1
-fi
+published="$(docker port "$container" 3030/tcp | head -n 1)"
+for _ in 1 2 3 4 5 6; do
+  sleep 5
+  if ! python3 -c 'import sys, urllib.request; urllib.request.urlopen(sys.argv[1], timeout=4)' "http://$published/health" 2>/dev/null \
+    || [ "$(health "$container") $(docker inspect -f '{{.RestartCount}}' "$container")" != "healthy $restarts" ]; then
+    echo "auth restarted or stopped answering its health route within 30s of becoming healthy" >&2
+    exit 1
+  fi
+done
 
 docker image prune -af
 

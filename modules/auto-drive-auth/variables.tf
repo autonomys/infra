@@ -120,20 +120,14 @@ variable "api_secret" {
 }
 
 variable "settings" {
-  description = "Auth's settings that are not secret: the signing algorithm, the origins CORS allows (empty allows none), the frontend origins wallet sign-in messages may be issued for, the log level, and a Unix time before which issued tokens are refused (0 refuses none)"
+  description = "Auth's settings that are not secret: the origins CORS allows (empty allows none), the frontend origins wallet sign-in messages may be issued for, the log level, and a Unix time before which issued tokens are refused (0 refuses none)"
   type = object({
-    jwt_algorithm               = optional(string, "RS256")
     cors_allowed_origins        = optional(string, "")
     web3_allowed_origins        = optional(string, "https://explorer.ai3.storage")
     log_level                   = optional(string, "info")
     revoke_tokens_issued_before = optional(number, 0)
   })
   default = {}
-
-  validation {
-    condition     = contains(["RS256", "RS384", "RS512"], var.settings.jwt_algorithm)
-    error_message = "settings.jwt_algorithm must be RS256, RS384 or RS512, the algorithms a PEM key pair signs with."
-  }
 
   validation {
     condition = alltrue([

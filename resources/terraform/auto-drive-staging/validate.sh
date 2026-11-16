@@ -248,6 +248,12 @@ elif [[ $ROLE == private ]]; then
       "sudo ufw status | awk '\$1 == \"$port/tcp\" || \$1 == \"$port\" {print \$3}' | sort | paste -sd ' ' -" \
       "$(tr ' ' '\n' <<< "$PRIVATE_INGRESS_RANGES" | sort | paste -sd ' ' -)"
   done
+  # fetched from here, not the host: a range Cloudflare adds is refused until
+  # the list above and main.tf's have it, and nothing else would say so
+  published="$(curl -fsS -m 10 https://www.cloudflare.com/ips-v4 2>/dev/null | sort | paste -sd ' ' -)" || true
+  report "The ingress ranges are the ones Cloudflare publishes" \
+    "${published:-could not fetch https://www.cloudflare.com/ips-v4}" \
+    "$(tr ' ' '\n' <<< "$PRIVATE_INGRESS_RANGES" | sort | paste -sd ' ' -)"
 else
   check "80/443 closed" \
     "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
