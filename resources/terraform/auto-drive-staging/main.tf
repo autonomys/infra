@@ -62,9 +62,8 @@ module "files_gateway" {
   database_password = var.postgres_password
   api_secret        = var.files_gateway_token
   # the services deploy sets that password, so the migrations follow it
-  wait_for = [module.services.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id]
+  database_id = local.services_database_id
 
   mesh = local.mesh["files-gateway"]
 }
@@ -121,6 +120,11 @@ locals {
   database_url      = "postgres://postgres:${var.postgres_password}@${local.services_address}:5432/postgres"
   auth_database_url = "postgres://postgres:${var.postgres_password}@${local.services_address}:5432/auth"
   rabbitmq_url      = "amqp://${var.rabbitmq_username}:${var.rabbitmq_password}@${local.services_address}:5672"
+
+  # Changes when the services host is rebuilt, and with it its databases: the
+  # mesh key is generated only on a fresh install, so a bootstrap that re-runs
+  # over the live host, for an installer.sh change say, keeps it
+  services_database_id = sha1(lookup(var.mesh_public_keys, "services", ""))
 
   # what production ran on 2026-11-12, so upgrades are rehearsed here first; the
   # backend tag is the commit the module's compose file mirrors
@@ -180,9 +184,8 @@ module "public" {
   database_url   = local.database_url
   rabbitmq_url   = local.rabbitmq_url
   # the services deploy sets the passwords these URLs carry
-  wait_for = [module.services.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id]
+  database_id = local.services_database_id
 
   endpoints = merge(local.backend_endpoints, {
     rpc = "wss://rpc-0.chronos.autonomys.xyz/ws"

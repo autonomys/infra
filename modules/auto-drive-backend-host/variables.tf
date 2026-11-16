@@ -115,7 +115,7 @@ variable "wait_for" {
 }
 
 variable "database_id" {
-  description = "Changes whenever the database may have been recreated empty, such as the services host's bootstrap_id. A change re-runs the migrations and recreates Hasura and the backend services, so the schema and Hasura's metadata are set up again."
+  description = "Changes whenever the database may have been recreated empty, such as when the host it lives on is rebuilt, and at no other time. A change re-runs the migrations and recreates Hasura and the backend services, so the schema and Hasura's metadata are set up again."
   type        = string
   default     = ""
 

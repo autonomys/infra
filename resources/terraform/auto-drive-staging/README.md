@@ -833,16 +833,18 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
 
 The services host has no backups, so it starts with empty databases and queues.
 In the full apply after its key is recorded, the other members take the new key.
-The public backend's migrations run again, and Hasura and the backend services
-are recreated, so the schema and Hasura's metadata are set up again. The
-gateway's apps' migrations run again too, and both apps are recreated. The
-private backend's Hasura and services and auth are recreated too, with auth's
+The `database_id` of every app with a database there follows that key too. The
+public backend's migrations run again, and Hasura and the backend services are
+recreated, so the schema and Hasura's metadata are set up again. The gateway's
+apps' migrations run again too, and both apps are recreated. The private
+backend's Hasura and services and auth are recreated too, with auth's
 migrations run again on its empty database, so every user and API key is gone.
-The object mappings indexed before are gone as well, as the gateway's node maps only
-blocks it archives from then on. To map the chain again, set
-`create_object_mappings` to the first block to map and apply, then set it back
-to `yes` once the indexer logs mappings for new blocks. Re-archiving from early
-blocks takes hours.
+Only a new key does this: a bootstrap that re-runs over the live host keeps its
+key, and the databases with it. The object mappings indexed before are gone as
+well, as the gateway's node maps only blocks it archives from then on. To map
+the chain again, set `create_object_mappings` to the first block to map and
+apply, then set it back to `yes` once the indexer logs mappings for new blocks.
+Re-archiving from early blocks takes hours.
 
 For the public backend, the first apply:
 
