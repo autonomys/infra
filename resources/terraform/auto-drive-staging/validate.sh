@@ -163,6 +163,13 @@ check() {
   fi
 }
 
+# usage: config_hash_cmd <dir> <service> <container>; prints match when the
+# container's config hash is the one Compose computes in dir. A compose run
+# that fails prints no hash, which must not match a missing container's.
+config_hash_cmd() {
+  echo "cd $1 && h=\$(sudo docker compose config --hash $2 | awk '{print \$2}') && [ -n \"\$h\" ] && [ \"\$h\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $3)\" ] && echo match || echo differs"
+}
+
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
 RPC="curl -s -H 'Content-Type: application/json' http://127.0.0.1:9944"
 # the running container of a gateway service, looked up on the host
@@ -342,9 +349,7 @@ files_gateway_checks() {
     "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.mesh.yml docker-compose.log-cap.yml docker-compose.dag-indexer.yml dag-indexer-start-guard.js gateway-db.sh .env file-retriever.env object-mapping-indexer.env gateway-db.env | paste -sd ' ' -" \
     "docker-compose.yml 644 ubuntu docker-compose.mesh.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu docker-compose.dag-indexer.yml 644 ubuntu dag-indexer-start-guard.js 644 ubuntu gateway-db.sh 644 ubuntu .env 600 ubuntu file-retriever.env 600 ubuntu object-mapping-indexer.env 600 ubuntu gateway-db.env 600 ubuntu"
   # the running node's config hash is the files': no change is waiting on a restart
-  check "Node matches the compose files" \
-    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
-    "match"
+  check "Node matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" subspace-node "$NODE")" "match"
   check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
   check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
   check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
@@ -431,9 +436,7 @@ dag_indexer_checks() {
   check "dag-indexer running" \
     "sudo docker inspect -f '{{.State.Status}}' $c" "running"
   check "dag-indexer healthy (/ready)" "sudo docker inspect -f '{{.State.Health.Status}}' $c" "healthy"
-  check "dag-indexer matches the compose files" \
-    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash dag-indexer | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-    "match"
+  check "dag-indexer matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" dag-indexer "$c")" "match"
   check "dag-indexer image" "sudo docker inspect -f '{{.Config.Image}}' $c" "$DAG_INDEXER_IMAGE"
   check "dag-indexer manifest, endpoint and flags" "sudo docker inspect -f '{{json .Args}}' $c" \
     '"-f","/app/project.chronos.yaml","--network-endpoint=ws://subspace-node:9944/ws","--db-schema=dag-indexer","--workers=1","--unsafe","--batch-size=125","--scale-batch-size","--unfinalized-blocks=true","--disable-historical=false","--finalized-depth=100"' contains
@@ -507,12 +510,8 @@ services_checks() {
     "cd $SERVICES_DIR && stat -c '%n %a %U' docker-compose.yml rabbitmq.conf .env postgres.env rabbitmq.env | paste -sd ' ' -" \
     "docker-compose.yml 644 ubuntu rabbitmq.conf 644 ubuntu .env 600 ubuntu postgres.env 600 ubuntu rabbitmq.env 600 ubuntu"
   # each running container's config hash is the files': no change is waiting on a restart
-  check "Postgres matches the compose files" \
-    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash postgres | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $PG)\" ] && echo match || echo differs" \
-    "match"
-  check "RabbitMQ matches the compose files" \
-    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash rabbitmq | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $RMQ)\" ] && echo match || echo differs" \
-    "match"
+  check "Postgres matches the compose files" "$(config_hash_cmd "$SERVICES_DIR" postgres "$PG")" "match"
+  check "RabbitMQ matches the compose files" "$(config_hash_cmd "$SERVICES_DIR" rabbitmq "$RMQ")" "match"
   check "Postgres healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $PG" "healthy"
   check "Postgres image" "sudo docker inspect -f '{{.Config.Image}}' $PG" "$POSTGRES_IMAGE"
   check "Postgres restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $PG" "unless-stopped"
@@ -611,9 +610,7 @@ backend_checks() {
     check "$service image" "sudo docker inspect -f '{{.Config.Image}}' $c" \
       "$([[ $service == hasura ]] && echo "$HASURA_IMAGE" || echo "$BACKEND_IMAGE")"
     # the running container's config hash is the files': no change is waiting on a restart
-    check "$service matches the compose files" \
-      "cd $BACKEND_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-      "match"
+    check "$service matches the compose files" "$(config_hash_cmd "$BACKEND_DIR" "$service" "$c")" "match"
     check "$service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
     check "$service's local log copy capped" \
       "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $c" \
@@ -705,9 +702,7 @@ private_checks() {
   check "Auth healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $auth" "healthy"
   check "Auth image" "sudo docker inspect -f '{{.Config.Image}}' $auth" "$AUTH_IMAGE"
   # the running container's config hash is the files': no change is waiting on a restart
-  check "Auth matches the compose file" \
-    "cd $AUTH_DIR && [ \"\$(sudo docker compose config --hash auth | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $auth)\" ] && echo match || echo differs" \
-    "match"
+  check "Auth matches the compose file" "$(config_hash_cmd "$AUTH_DIR" auth "$auth")" "match"
   check "Auth restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $auth" "unless-stopped"
   check "Auth logs ship through the loki driver, capped" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $auth" \
@@ -752,9 +747,7 @@ farmer_checks() {
   for service in node farmer; do
     c="$(farmer_container "$service")"
     # the running container's config hash is the file's: no change is waiting on a restart
-    check "Farmer's $service matches the compose file" \
-      "cd $FARMER_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-      "match"
+    check "Farmer's $service matches the compose file" "$(config_hash_cmd "$FARMER_DIR" "$service" "$c")" "match"
     check "Farmer's $service running" "sudo docker inspect -f '{{.State.Status}}' $c" "running"
     check "Farmer's $service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
     check "Farmer's $service logs ship through the loki driver, capped" \
