@@ -61,9 +61,8 @@ module "files_gateway" {
   database_password = var.postgres_password
   api_secret        = var.files_gateway_token
   # the services deploy sets that password, so the migrations follow it
-  wait_for = [module.services.deploy_id]
-  # a rebuilt services host starts with an empty database
-  database_id = module.services.bootstrap_id
+  wait_for    = [module.services.deploy_id]
+  database_id = local.services_database_id
 
   mesh = local.mesh["files-gateway"]
 }
