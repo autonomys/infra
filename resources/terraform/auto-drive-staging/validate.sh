@@ -2,13 +2,13 @@
 # Verify that a live Auto Drive staging host matches its spec. Every check only
 # reads; none touches secrets, keys or service data.
 # Usage: ./validate.sh <role> [ssh-host]
-#   role: files-gateway or services
+#   role: files-gateway, services or public
 #   ssh-host defaults to the role's hostname (configure it in ~/.ssh/config, or
 #   pass ubuntu@<HOST_IPv4>)
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <role> [ssh-host]   (role: files-gateway or services)" >&2
+  echo "Usage: $0 <role> [ssh-host]   (role: files-gateway, services or public)" >&2
   exit 2
 }
 
@@ -24,13 +24,17 @@ case "$ROLE" in
     HOSTNAME_WANT="auto-drive-staging-services"
     PUBLIC_TCP_LISTENERS="[22]"
     ;;
+  public)
+    HOSTNAME_WANT="auto-drive-staging-public"
+    PUBLIC_TCP_LISTENERS="[22 80 443]"
+    ;;
   *) usage ;;
 esac
 HOST="${2:-$HOSTNAME_WANT}"
 
 MESH_PORT=51820
 MESH_SUBNET=10.77.0.0/24
-MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20"
+MESH_HOSTS="services=10.77.0.10 files-gateway=10.77.0.20 public=10.77.0.30"
 
 DEPLOY_DIR="/home/ubuntu/deploy"
 NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-jan-20"
@@ -41,6 +45,14 @@ SERVICES_PROJECT="auto-drive-services"
 POSTGRES_IMAGE="postgres:17.9-bookworm"
 RABBITMQ_IMAGE="rabbitmq:3.13.7-management"
 LOKI_URL="https://logging.subspace.network/loki/api/v1/push"
+BACKEND_DIR="$DEPLOY_DIR/auto-drive"
+BACKEND_PROJECT="auto-drive"
+BACKEND_IMAGE="ghcr.io/autonomys/auto-drive-backend:99e753be@sha256:78288688bf82fd87101eea25bed789410ef4ade33085978432dc91df0d7d80d2"
+HASURA_IMAGE="hasura/graphql-engine:v2.40.0.cli-migrations-v3@sha256:68b16a019e4f6f3136fb09ef26a934c718e3ff74eab76d52244abccb8fd80b55"
+PUBLIC_APP_HOST="public.staging.auto-drive.autonomys.xyz"
+PUBLIC_CERT_NAMES="public.staging.auto-drive.autonomys.xyz s3.staging.auto-drive.autonomys.xyz"
+PUBLIC_SERVICES="hasura=6565 backend-download-api=3000 backend-download-worker=3030"
+SERVICES_MESH_ADDRESS="10.77.0.10"
 ERRORS=0
 PASS=0
 
@@ -151,8 +163,13 @@ if [[ $ROLE == files-gateway ]]; then
   check "UFW node P2P rules" \
     "sudo ufw status | grep -cE '^(30333|30433)/tcp +ALLOW .*# role-port'" "2"
 fi
-check "80/443 closed" \
-  "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
+if [[ $ROLE == public ]]; then
+  check "UFW opens 80 and 443" \
+    "sudo ufw status | grep -cE '^(80|443)/tcp +ALLOW +Anywhere +# role-port'" "2"
+else
+  check "80/443 closed" \
+    "sudo ufw status | awk '{print \$1}' | grep -qE '(^|,)(80|443)(,|/)' && echo open || echo closed" "closed"
+fi
 
 echo ""
 echo "[Services]"
@@ -345,9 +362,90 @@ services_checks() {
     "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
 }
 
+# by compose service name, in the backend project
+backend_container() {
+  echo "\$(sudo docker ps -a -q --filter label=com.docker.compose.project=$BACKEND_PROJECT --filter label=com.docker.compose.service=$1)"
+}
+
+public_checks() {
+  local service port c
+  echo ""
+  echo "[Backend deploy]"
+  check "Compose files and .env in place" \
+    "cd $BACKEND_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.log-cap.yml .env | paste -sd ' ' -" \
+    "docker-compose.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu .env 600 ubuntu"
+  check "Migrations ran with the deployed backend image" "cat $BACKEND_DIR/migrated-image" "$BACKEND_IMAGE"
+  check "Hasura's assets copied from that image" \
+    "c=$(backend_container hasura-assets); sudo docker inspect -f '{{.Config.Image}} {{.State.Status}} {{.State.ExitCode}}' \$c" \
+    "$BACKEND_IMAGE exited 0"
+  for entry in $PUBLIC_SERVICES; do
+    service="${entry%%=*}"
+    port="${entry#*=}"
+    c="$(backend_container "$service")"
+    check "$service healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $c" "healthy"
+    check "$service image" "sudo docker inspect -f '{{.Config.Image}}' $c" \
+      "$([[ $service == hasura ]] && echo "$HASURA_IMAGE" || echo "$BACKEND_IMAGE")"
+    # the running container's config hash is the files': no change is waiting on a restart
+    check "$service matches the compose files" \
+      "cd $BACKEND_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
+      "match"
+    check "$service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
+    check "$service's local log copy capped" \
+      "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $c" \
+      "10m 3"
+    check "$service logs ship through the loki driver" \
+      "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}}' $c" \
+      "loki $LOKI_URL"
+    check "$service on loopback only" \
+      "sudo ss -Htln 'sport = :$port' | awk '{print \$4}' | sort -u | paste -sd ' ' -" "127.0.0.1:$port"
+  done
+  for service in backend-download-api backend-download-worker; do
+    check "$service file cache in its named volume" \
+      "sudo docker inspect -f '{{range .Mounts}}{{if eq .Destination \"/usr/src/app/apps/backend/.cache\"}}{{.Type}} {{.Name}}{{end}}{{end}}' $(backend_container "$service")" \
+      "volume ${BACKEND_PROJECT}_files_cache"
+  done
+  check "Hasura metadata consistent" \
+    "curl -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:6565/healthz?strict=true'" "200"
+  check "Download API answers" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health" "204"
+  check "Postgres and RabbitMQ reachable over the mesh" \
+    "timeout 5 bash -c 'echo > /dev/tcp/$SERVICES_MESH_ADDRESS/5432' && timeout 5 bash -c 'echo > /dev/tcp/$SERVICES_MESH_ADDRESS/5672' && echo reachable" \
+    "reachable"
+  check "Containers reach Postgres over the mesh" \
+    "sudo docker exec $(backend_container backend-download-api) node -e \"setTimeout(() => process.exit(1), 5000); require('net').connect(5432, '$SERVICES_MESH_ADDRESS').on('connect', () => { console.log('reachable'); process.exit(0) }).on('error', () => process.exit(1))\"" \
+    "reachable"
+  check "No loki driver push errors in the last hour" \
+    "sudo journalctl -u docker --since '-1h' --no-pager | grep -ci 'error sending batch' || true" "0"
+
+  echo ""
+  echo "[Ingress]"
+  check "nginx running" "systemctl is-active nginx" "active"
+  check "nginx enabled" "systemctl is-enabled nginx" "enabled"
+  check "nginx configuration valid" "sudo nginx -t -q 2>&1 | grep -c emerg || true" "0"
+  check "Only the role's site enabled" "ls /etc/nginx/sites-enabled | paste -sd ' ' -" "auto-drive"
+  check "Certificate covers the site's names" \
+    "sudo openssl x509 -in /etc/letsencrypt/live/$PUBLIC_APP_HOST/cert.pem -noout -ext subjectAltName | grep -o 'DNS:[^,]*' | cut -d: -f2 | sort | paste -sd ' ' -" \
+    "$(tr ' ' '\n' <<< "$PUBLIC_CERT_NAMES" | sort | paste -sd ' ' -)"
+  check "Certificate from Let's Encrypt, not its staging CA" \
+    "sudo openssl x509 -in /etc/letsencrypt/live/$PUBLIC_APP_HOST/cert.pem -noout -issuer | grep -q STAGING && echo staging || echo production" \
+    "production"
+  check "Certificate valid for 14 days more" \
+    "sudo openssl x509 -in /etc/letsencrypt/live/$PUBLIC_APP_HOST/cert.pem -noout -checkend 1209600 >/dev/null && echo valid" "valid"
+  check "Renewals reload nginx" \
+    "sudo grep -c '^renew_hook = systemctl reload nginx' /etc/letsencrypt/renewal/$PUBLIC_APP_HOST.conf" "1"
+  check "Renewal timer active" "systemctl is-active certbot.timer" "active"
+  check "Download API through nginx" \
+    "curl -sk -o /dev/null -w '%{http_code}' --resolve $PUBLIC_APP_HOST:443:127.0.0.1 https://$PUBLIC_APP_HOST/api/health" "204"
+  check "Hasura through nginx" \
+    "curl -sk -o /dev/null -w '%{http_code}' --resolve $PUBLIC_APP_HOST:443:127.0.0.1 https://$PUBLIC_APP_HOST/hasura/healthz" "200"
+  check "HTTP redirects to HTTPS" \
+    "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --resolve $PUBLIC_APP_HOST:80:127.0.0.1 http://$PUBLIC_APP_HOST/api/health" \
+    "301 https://$PUBLIC_APP_HOST/api/health"
+}
+
 case "$ROLE" in
   files-gateway) files_gateway_checks ;;
   services) services_checks ;;
+  public) public_checks ;;
 esac
 
 echo ""

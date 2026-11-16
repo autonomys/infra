@@ -1,3 +1,4 @@
 gateway_host_ipv4  = ""
 services_host_ipv4 = ""
+public_host_ipv4   = ""
 mesh_public_keys   = {}

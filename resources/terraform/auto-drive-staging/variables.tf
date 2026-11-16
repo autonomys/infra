@@ -8,6 +8,11 @@ variable "services_host_ipv4" {
   type        = string
 }
 
+variable "public_host_ipv4" {
+  description = "Public IPv4 of the public backend host, which Terraform connects to over SSH"
+  type        = string
+}
+
 variable "postgres_password" {
   description = "Password of the services host's postgres account, from services.auto.tfvars"
   type        = string
@@ -22,6 +27,47 @@ variable "rabbitmq_username" {
 variable "rabbitmq_password" {
   description = "Password of rabbitmq_username, from services.auto.tfvars"
   type        = string
+  sensitive   = true
+}
+
+variable "hasura_admin_secret" {
+  description = "Hasura's admin secret on the backend hosts, from backend.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
+variable "hasura_jwt_public_key" {
+  description = "PEM public key of the RS256 pair auth signs its tokens with, which Hasura verifies them against, from backend.auto.tfvars"
+  type        = string
+}
+
+variable "auth_service_api_key" {
+  description = "Key the backend presents to the auth service, which auth knows as API_SECRET, from backend.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
+variable "files_gateway_token" {
+  description = "The files gateway's file retriever API secret, from gateway.auto.tfvars. The backends present it as FILES_GATEWAY_TOKEN."
+  type        = string
+  sensitive   = true
+}
+
+variable "victoria_username" {
+  description = "Account the backend pushes its metrics to VictoriaMetrics with, from backend.auto.tfvars"
+  type        = string
+}
+
+variable "victoria_password" {
+  description = "Password of victoria_username, from backend.auto.tfvars"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_webhook_url" {
+  description = "Slack incoming webhook for tasks that exhaust their retries, from backend.auto.tfvars. Empty leaves alerting off and the error queues unconsumed."
+  type        = string
+  default     = ""
   sensitive   = true
 }
 
