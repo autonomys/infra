@@ -518,7 +518,8 @@ port, that the database is reachable, and that the signing key is the private
 half of `hasura_jwt_public_key`, since a mismatched pair starts cleanly and
 then has every token refused. It runs the migrations next, so a migration that
 fails leaves the running auth as it was, then starts auth and fails the apply
-unless it turns healthy within 300 seconds and stays healthy for 30 more.
+unless it turns healthy within 300 seconds and, for 30 more, keeps answering
+its health route without restarting.
 
 Auth needs no sign-in provider's credentials: for Google, Discord and GitHub it
 takes the provider's own token from the caller and asks the provider whose it
@@ -526,16 +527,21 @@ is. Those providers' client IDs and secrets belong to a frontend.
 
 ### Who can use staging
 
-Staging is for staff. Auth onboards anyone who presents a valid provider token,
-and onboarding is what gives a user an organization, API keys and an upload
-allowance. So nginx refuses the onboarding route (`public_onboarding = false`),
-and it answers only on auth's own port, which needs SSH access to the host:
+Onboarding is for staff. Auth onboards anyone who presents a valid provider
+token, and onboarding is what gives a user an organization, API keys and an
+upload allowance. So nginx refuses the onboarding route
+(`public_onboarding = false`), and it answers only on auth's own port, which
+needs SSH access to the host:
 
 ```bash
 ssh -L 3040:127.0.0.1:3040 auto-drive-staging-private
 curl -X POST http://127.0.0.1:3040/users/@me/onboard \
   -H "Authorization: Bearer <a GitHub token of yours>" -H "X-Auth-Provider: github"
 ```
+
+That is all the rule keeps to staff. Anyone with a provider account can still
+sign in: auth gives an account that is not onboarded a session. It has no
+organization, so it gets no API key and no upload allowance.
 
 Everything else is served at the auth name, so an onboarded user creates API
 keys and signs in as on production. The route that makes a user an admin needs
@@ -837,8 +843,9 @@ Hasura's metadata is consistent, that Postgres and RabbitMQ are reachable over
 the mesh from the host and from a container, nginx, the certificate's names,
 issuer, expiry and renewal, and that the site answers through nginx and
 redirects HTTP to HTTPS. On the private backend it also checks
-that 80 and 443 are open to exactly the ingress ranges, that one publish worker
-runs, that the workers hold the signing seeds and the API does not (by name
+that 80 and 443 are open to exactly the ingress ranges, that those are the
+ranges Cloudflare publishes today, that one publish worker runs, that the
+workers hold the signing seeds and the API does not (by name
 only), and auth: its files, its migrations, its health, image, log driver and
 loopback listener, that it answers through nginx, and that nginx refuses
 onboarding.
@@ -920,10 +927,11 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
 - To change the publish worker's accounts, change `publish_private_keys` in
   `private.auto.tfvars` and apply: the two workers are recreated and the API is
   not.
-- Cloudflare publishes its ranges at https://www.cloudflare.com/ips-v4. When
-  they change, update `local.cloudflare_ipv4` in `main.tf` and
-  `PRIVATE_INGRESS_RANGES` in `validate.sh` together; the apply re-runs the
-  private host's bootstrap, and with it its mesh and deploys.
+- Cloudflare publishes its ranges at https://www.cloudflare.com/ips-v4, and
+  `validate.sh private` fails when they differ from its copy. When they change,
+  update `local.cloudflare_ipv4` in `main.tf` and `PRIVATE_INGRESS_RANGES` in
+  `validate.sh` together; the apply re-runs the private host's bootstrap, and
+  with it its mesh and deploys.
 - Changing a backend host's names needs a new certificate: delete the old one
   with `sudo certbot delete --cert-name <old app name>` on the host, then apply.
 
