@@ -195,7 +195,7 @@ variable "dag_indexer" {
   description = <<-EOT
     The DAG indexer, the SubQuery node that writes the dag-indexer schema the file retriever reads, with nightly backups of the database, or null to run neither.
     image is an auto-files-gateway DAG indexer image, which carries the mapping, schema.graphql and /app/project.<network_id>.yaml. backup_image is the Postgres client the backups and the deploy's checks use.
-    accept_schema_sha256 lets one deploy start an image whose schema.graphql differs from the one the schema was created from, once the schema's tables are brought up to date by hand. accept_rewind_to lets one deploy start the indexer behind the last backup's progress, down to that height, after a deliberate rewind. Remove each after its apply.
+    accept_schema_sha256 lets one deploy start an image whose schema.graphql differs from the one the schema was created from, or a schema with none recorded, once the schema's tables are checked or brought up to date by hand. accept_rewind_to lets one deploy start the indexer behind the last backup's progress, down to that height, after a deliberate rewind. Remove each after its apply.
   EOT
   type = object({
     image                = string
@@ -225,9 +225,14 @@ variable "dag_indexer" {
 }
 
 variable "database_start_empty" {
-  description = "Lets one deploy past a gateway database that is behind the last backup's progress, by removing the progress floor, so the indexes carry on from whatever the database holds: an older dump restored on purpose resumes from there, and an empty database starts over. Only takes effect with dag_indexer, and only while the database is behind. Remove it after that apply."
-  type        = bool
-  default     = false
+  description = "Lets one deploy past a gateway database that is behind the last backup's progress, by removing the progress floor, so the indexes carry on from whatever the database holds: an older dump restored on purpose resumes from there, and an empty database starts over. Set it to the floor's name, which the deploy's refusal gives, such as gateway-20261116T023000Z. It removes only that floor, and only with dag_indexer while the database is behind it, so once a later backup writes a new floor, a value left set does nothing. Remove it after that apply."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^((gateway|rewound)-[0-9]{8}T[0-9]{6}Z)?$", var.database_start_empty))
+    error_message = "database_start_empty must be empty or the name of a progress floor, such as gateway-20261116T023000Z."
+  }
 }
 
 variable "cap_local_logs" {

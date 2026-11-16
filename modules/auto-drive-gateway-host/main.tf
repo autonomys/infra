@@ -200,7 +200,7 @@ resource "null_resource" "deploy" {
         PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \
         BACKUP_DIR=${local.backup_dir} \
-        START_EMPTY=${var.database_start_empty} \
+        START_EMPTY='${var.database_start_empty}' \
         ACCEPT_REWIND_TO=${local.accept_rewind_to} \
         ACCEPT_SCHEMA_SHA256=${local.accept_schema_sha256} \
         bash ${local.staging_dir}/auto-drive-gateway-deploy.sh

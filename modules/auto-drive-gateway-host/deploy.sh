@@ -15,7 +15,7 @@ PUBLIC_TCP_PORTS="${PUBLIC_TCP_PORTS:-}"
 PRIVATE_ADDRESSES="${PRIVATE_ADDRESSES:-}"
 # used only when the compose model has the DAG indexer
 BACKUP_DIR="${BACKUP_DIR:-}"
-export START_EMPTY="${START_EMPTY:-false}"
+export START_EMPTY="${START_EMPTY:-}"
 export ACCEPT_REWIND_TO="${ACCEPT_REWIND_TO:-}"
 export ACCEPT_SCHEMA_SHA256="${ACCEPT_SCHEMA_SHA256:-}"
 
@@ -149,7 +149,10 @@ print(command[command.index("-f") + 1])
     refuse "the DAG index started at block $started, and the image's $manifest starts at $image_start. The indexer refuses a start block above its progress and ignores a lower one, so keep an image whose manifest starts at $started."
   fi
   recorded="$(gateway_db "$STAGED_DIR" schema-hash)"
-  if [ "$recorded" != absent ] && [ -n "$recorded" ] && [ "$recorded" != "$image_schema" ] && [ "$ACCEPT_SCHEMA_SHA256" != "$image_schema" ]; then
+  if [ "$recorded" != absent ] && [ "$recorded" != "$image_schema" ] && [ "$ACCEPT_SCHEMA_SHA256" != "$image_schema" ]; then
+    if [ -z "$recorded" ]; then
+      refuse "the dag-indexer schema has no schema.graphql hash recorded, so which file its tables were created from is unknown. Check them against the image's schema.graphql, then set dag_indexer.accept_schema_sha256 = \"$image_schema\" for one apply."
+    fi
     refuse "the image's schema.graphql is $image_schema, and the dag-indexer schema was created from $recorded. The indexer never alters an existing schema's tables, so bring them up to date by hand first, then set dag_indexer.accept_schema_sha256 = \"$image_schema\" for one apply."
   fi
 fi
@@ -175,8 +178,13 @@ done
 rm -f "$STAGED_DIR"/*.yml "$STAGED_DIR"/*.env "$STAGED_DIR/.env" "$STAGED_DIR"/*.sh "$STAGED_DIR"/*.js
 
 # After every check, right before the indexer's start guard reads the floor
-if $dag_indexer && { [ "$START_EMPTY" = true ] || [ -n "$ACCEPT_REWIND_TO" ]; }; then
-  gateway_db "$DEPLOY_DIR" reset-floor
+# and the indexer looks for its schema
+if $dag_indexer; then
+  if [ -n "$START_EMPTY" ] || [ -n "$ACCEPT_REWIND_TO" ]; then
+    gateway_db "$DEPLOY_DIR" reset-floor
+  fi
+  # what the check above compares later images with
+  gateway_db "$DEPLOY_DIR" record-schema "$image_schema"
 fi
 
 echo "==> Starting ${services[*]}"
@@ -207,10 +215,6 @@ for service in "${long_running[@]}"; do
 done
 
 if $dag_indexer; then
-  # the check above compares later images with this; the indexer creates the
-  # schema on its first start
-  gateway_db "$DEPLOY_DIR" record-schema "$image_schema"
-
   echo "==> Scheduling the gateway database's nightly backup"
   cat > "$BACKUP_UNIT.service" <<EOF
 [Unit]
@@ -241,6 +245,20 @@ elif [ -e "$BACKUP_UNIT.timer" ]; then
   systemctl disable --now "$(basename "$BACKUP_UNIT").timer"
   rm -f "$BACKUP_UNIT.service" "$BACKUP_UNIT.timer"
   systemctl daemon-reload
+fi
+
+# `up` started this deploy's backup and doesn't wait for one-shots. Its own
+# container, as `compose ps` also lists `run` containers, such as a nightly one.
+if $dag_indexer; then
+  echo "==> Waiting for this deploy's backup"
+  project="$(python3 -c 'import json, sys; print(json.load(sys.stdin)["name"])' <<< "$model")"
+  backup="$(docker ps -aq --filter "label=com.docker.compose.project=$project" \
+    --filter label=com.docker.compose.service=gateway-db-backup --filter label=com.docker.compose.oneoff=False)"
+  if [ "$(timeout 3600 docker wait "$backup" || true)" != 0 ]; then
+    docker logs --tail 5 "$backup" >&2 || true
+    echo "gateway-db-backup failed or took over an hour, so this deploy has no backup" >&2
+    exit 1
+  fi
 fi
 
 docker image prune -af

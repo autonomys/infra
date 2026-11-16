@@ -141,10 +141,13 @@ unless:
   recorded on its first start. The indexer refuses a start block above its
   progress and ignores a lower one.
 - its `schema.graphql` is the one the schema was created from, whose hash the
-  deploy records as the schema's comment. The indexer never alters an existing
+  deploy records as the schema's comment. On a database without the schema,
+  the deploy creates it with the hash before the indexer starts, and the
+  indexer creates its tables in it. The indexer never alters an existing
   schema's tables: a new field makes it stop at its first write. Bring the
   tables up to date by hand first, then set `dag_indexer.accept_schema_sha256`
-  to the new file's hash for one apply.
+  to the new file's hash for one apply. A schema with no hash recorded is
+  refused the same way, as which file built its tables is unknown.
 
 A new image recreates the indexer, and the index resumes where it left off.
 `validate.sh` checks that the running bundle, `/app/dist/index.js`, is the
@@ -163,8 +166,9 @@ makes the same check, on both indexes, before it runs the migrations.
 
 With `dag_indexer`, the gateway host also backs up the services host's `gateway`
 database, which holds both indexes, over the mesh. `gateway-db-backup` runs
-`gateway-db.sh backup` in `dag_indexer.backup_image` on every deploy, and
-nightly from the `auto-drive-gateway-db-backup` systemd timer.
+`gateway-db.sh backup` in `dag_indexer.backup_image` on every deploy, which
+fails if its backup does, and nightly from the `auto-drive-gateway-db-backup`
+systemd timer.
 
 - Each dump is a `pg_dump -Fc` in `/var/backups/auto-drive-gateway`, readable by
   root only, beside a `.progress` file: the DAG index's `lastProcessedHeight`
@@ -172,14 +176,17 @@ nightly from the `auto-drive-gateway-db-backup` systemd timer.
   dump holds at least that much.
 - Both only ever rise. A dump behind the last good one's progress is kept as
   `.dump.suspect`, the run fails, and it doesn't count towards the seven dumps
-  kept, so a run of bad dumps can't push out the last good one.
-- The last good dump's progress is the floor, in `floor/progress-floor`. The
-  deploy and the start guard refuse a database behind it. Two settings let one
-  apply past it, and do nothing once the database has caught up; take them out
-  after that apply:
-  - `database_start_empty = true` removes the floor, so the indexes carry on
-    from whatever the database holds: an older dump restored on purpose resumes
-    from there, and an empty database starts over;
+  kept, so a run of bad dumps can't push out the last good one. Only the two
+  newest suspect dumps are kept.
+- The last good dump's progress is the floor, in `floor/progress-floor`, named
+  after that dump. The deploy and the start guard refuse a database behind it.
+  Two settings let one apply past it, and do nothing once the database has
+  caught up; take them out after that apply:
+  - `database_start_empty = "<floor>"`, with the floor's name from the deploy's
+    refusal, such as `gateway-20261116T023000Z`, removes that floor, so the
+    indexes carry on from whatever the database holds: an older dump restored on
+    purpose resumes from there, and an empty database starts over. Any later
+    floor has another name, so a value left set doesn't remove it;
   - `dag_indexer.accept_rewind_to = <height>`, after rewinding the DAG index by
     hand, lowers the floor's DAG height to that height.
 - Auto Drive's own database, on the same Postgres, isn't backed up.
@@ -220,8 +227,9 @@ before the gateway's deploy runs against it:
 5. To restore an older dump instead, such as when the newest is damaged, name
    it in the same command. The database is then behind the floor on both
    indexes, which `dag_indexer.accept_rewind_to` can't pass, as it only lowers
-   the DAG height. Set `database_start_empty = true` for the next apply: it
-   removes the floor, and the indexes resume from that dump.
+   the DAG height. For the next apply, set `database_start_empty` to the
+   floor's name, which the deploy's refusal gives: it removes the floor, and
+   the indexes resume from that dump.
 6. Plan and apply in full. The deploy finds the database at the floor, or past
    it with `database_start_empty`, the migrations find their records, the apps
    start again, and the index resumes where the dump left it. Take
@@ -976,9 +984,9 @@ are recreated too, with auth's migrations run again on its empty database, so
 every user and API key is gone. Only a new key does this: a bootstrap that
 re-runs over the live host keeps its key, and the databases with it. Without a
 restore, the deploy refuses the empty `gateway` database until
-`database_start_empty` is set for one apply, and the object mappings indexed
-before are gone as well, as the gateway's node maps only blocks it archives from
-then on. To map the chain again, set `create_object_mappings` to the first block
+`database_start_empty` names the floor for one apply, and the object mappings
+indexed before are gone as well, as the gateway's node maps only blocks it
+archives from then on. To map the chain again, set `create_object_mappings` to the first block
 to map and apply, then set it back to `yes` once the indexer logs mappings for
 new blocks. Re-archiving from early blocks takes hours.
 
