@@ -438,7 +438,7 @@ files_gateway_checks() {
 }
 
 dag_indexer_checks() {
-  local dag_first="$1" dag_second="$2" importing="$3" c target health
+  local dag_first="$1" dag_second="$2" importing="$3" c target health caught_up
   # stopped or restarting too, so its state shows
   c="\$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=dag-indexer)"
   echo ""
@@ -465,18 +465,31 @@ dag_indexer_checks() {
     "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; print(json.load(sys.stdin).get(\"genesisHash\"))'" \
     "$CHRONOS_GENESIS"
   target="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; m = json.load(sys.stdin); print(m[\"targetHeight\"], m[\"bestHeight\"])'" 2>/dev/null || true)"
-  if [[ -n "$target" ]] && (( ${target#* } - ${target% *} <= DAG_LAG_MAX )); then
+  # the host's answers reach arithmetic only as plain numbers, since bash runs a
+  # command substitution it finds in an array subscript there
+  if [[ "$target" =~ ^[0-9]+\ [0-9]+$ ]] && (( ${target#* } - ${target% *} <= DAG_LAG_MAX )); then
     report "Target within the finalized head's lag of the best block" "within $DAG_LAG_MAX" "within $DAG_LAG_MAX"
   else
     report "Target within the finalized head's lag of the best block" "target and best: ${target:-unknown}" "within $DAG_LAG_MAX"
   fi
-  health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
-  report "dag-indexer's endpoint healthy (/health)" "$health" "200"
-  if [[ "$health" != 200 && "$importing" == false ]]; then
-    echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
+  # caught up means at the target, the finalized head, which moves only when the
+  # node archives a segment, about once a day on Chronos
+  caught_up=false
+  if [[ "$target" =~ ^[0-9]+\ [0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second >= ${target% *} - 5 )); then
+    caught_up=true
   fi
-  # caught up means at the target, which moves a segment at a time
-  if [[ -n "$dag_first" && -n "$dag_second" ]] && { (( dag_second > dag_first )) || [[ -n "$target" && "$dag_second" -ge $(( ${target% *} - 5 )) ]]; }; then
+  health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -w ' %{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
+  # SubQuery reports an indexer with no block to index for a while as unhealthy,
+  # which at the target is most of the time between segments
+  if $caught_up && [[ "$health" == *'"Indexer is not healthy"'*' 500' ]]; then
+    pass "dag-indexer idle at its target, which /health reports as not healthy"
+  else
+    report "dag-indexer's endpoint healthy (/health)" "${health##* }" "200"
+    if [[ "${health##* }" != 200 && "$importing" == false ]]; then
+      echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
+    fi
+  fi
+  if [[ "$dag_first" =~ ^[0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && { (( dag_second > dag_first )) || $caught_up; }; then
     report "DAG index advancing or caught up" "yes" "yes"
   else
     report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target% *}" "yes"

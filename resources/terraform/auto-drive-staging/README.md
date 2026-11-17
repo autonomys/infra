@@ -154,7 +154,9 @@ unless:
 A new image recreates the indexer, and the index resumes where it left off.
 `validate.sh` checks that the running bundle, `/app/dist/index.js`, is the
 pinned mapping. The index follows the chain's finalized head, which on Chronos
-trails the best block by five segments, about six days.
+trails the best block by five segments, about six days. The node moves it only
+when it archives a segment, about once a day, so the index mostly waits at it,
+and SubQuery's `/health` reports a waiting indexer as not healthy.
 
 On an empty or missing schema the indexer starts over from its start block,
 which takes a day or two on Chronos. So `dag-indexer-start-guard.js` runs before
