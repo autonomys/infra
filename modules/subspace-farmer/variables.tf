@@ -51,9 +51,8 @@ variable "images" {
 }
 
 variable "sync" {
-  description = "The node's --sync: snap, the node's default, or full. Snap sync needs reachable farmers on the chain to serve its segment headers; full sync imports every block from genesis. Either way the node keeps its default pruning."
+  description = "The node's --sync, snap or full, which each caller chooses. Snap sync needs reachable farmers on the chain to serve its segment headers, and on Chronos it found too few (see the staging README), so Chronos takes full. Full sync imports every block from genesis. Either way the node keeps its default pruning."
   type        = string
-  default     = "snap"
 
   validation {
     condition     = contains(["snap", "full"], var.sync)

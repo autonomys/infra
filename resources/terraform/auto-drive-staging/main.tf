@@ -379,6 +379,7 @@ module "auth" {
 # fund the account the private backend's publish worker signs with.
 locals {
   farmer = {
+    chain = "chronos"
     # the newest release: mainnet releases run Chronos too, as the files
     # gateway's node does
     images = {
@@ -399,8 +400,24 @@ locals {
   }
 }
 
-module "gateway_farmer" {
+module "farmer" {
   source = "../../../modules/subspace-farmer"
+  # keyed as in local.mesh_hosts; each farmer's deploy follows the deploy of
+  # the role that owns its host, so their image prunes and pulls don't overlap
+  for_each = {
+    files-gateway = {
+      ipv4         = var.gateway_host_ipv4
+      bootstrap_id = module.files_gateway.bootstrap_id
+      staging_dir  = module.files_gateway.staging_dir
+      deploy_id    = module.files_gateway.deploy_id
+    }
+    public = {
+      ipv4         = var.public_host_ipv4
+      bootstrap_id = module.public.bootstrap_id
+      staging_dir  = module.public.staging_dir
+      deploy_id    = module.public.deploy_id
+    }
+  }
 
   deployer = {
     ssh_user           = "ubuntu"
@@ -409,14 +426,13 @@ module "gateway_farmer" {
   }
 
   host = {
-    ipv4         = var.gateway_host_ipv4
-    bootstrap_id = module.files_gateway.bootstrap_id
-    staging_dir  = module.files_gateway.staging_dir
+    ipv4         = each.value.ipv4
+    bootstrap_id = each.value.bootstrap_id
+    staging_dir  = each.value.staging_dir
   }
-  # so the two deploys' image prunes and pulls don't overlap
-  wait_for = [module.files_gateway.deploy_id]
+  wait_for = [each.value.deploy_id]
 
-  chain          = "chronos"
+  chain          = local.farmer.chain
   images         = local.farmer.images
   sync           = local.farmer.sync
   farm_size      = local.farmer.farm_size
@@ -424,27 +440,12 @@ module "gateway_farmer" {
   ports          = local.farmer.ports
 }
 
-module "public_farmer" {
-  source = "../../../modules/subspace-farmer"
+moved {
+  from = module.gateway_farmer
+  to   = module.farmer["files-gateway"]
+}
 
-  deployer = {
-    ssh_user           = "ubuntu"
-    ssh_agent_identity = var.ssh_agent_identity
-    path_to_scripts    = "../../../scripts"
-  }
-
-  host = {
-    ipv4         = var.public_host_ipv4
-    bootstrap_id = module.public.bootstrap_id
-    staging_dir  = module.public.staging_dir
-  }
-  # so the two deploys' image prunes and pulls don't overlap
-  wait_for = [module.public.deploy_id]
-
-  chain          = "chronos"
-  images         = local.farmer.images
-  sync           = local.farmer.sync
-  farm_size      = local.farmer.farm_size
-  reward_address = local.farmer.reward_address
-  ports          = local.farmer.ports
+moved {
+  from = module.public_farmer
+  to   = module.farmer["public"]
 }

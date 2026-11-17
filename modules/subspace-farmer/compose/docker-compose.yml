@@ -49,12 +49,15 @@ services:
         "--farmer"
       ]
     # The image's own test, with the timings of the farming docs' compose file
-    # and the gateway's node. The image's defaults turn a node unhealthy after
-    # 90s without an answer, which stops a deploy and leaves the farmer down.
+    # and the gateway's node: the image's defaults turn a node unhealthy after
+    # 90s without an answer. The start period probes every 5s, so the farmer
+    # starts as soon as the node answers.
     healthcheck:
       timeout: 5s
       interval: 30s
       retries: 60
+      start_period: 5m
+      start_interval: 5s
     logging: *logging
 
   farmer:
