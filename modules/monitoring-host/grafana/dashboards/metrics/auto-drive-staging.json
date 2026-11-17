@@ -694,7 +694,7 @@
       "id": 9,
       "type": "stat",
       "title": "Silent services",
-      "description": "Of the archive node, the two farmers' nodes and the DAG indexer, which print a status line every 5 to 15 seconds, how many have logged nothing for 5 minutes.",
+      "description": "Of the archive node, the two farmers' nodes and the DAG indexer, which print a status line every 5 to 15 seconds, how many have printed none for 5 minutes. Only the status lines count, so a service stuck in a restart loop reads as silent.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -713,7 +713,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "(4 - count(sum by (host, compose_project, compose_service) (count_over_time({host=~\"$gw|$pub\", compose_project=~\"file-retriever|subspace-farmer\", compose_service=~\"subspace-node|node|dag-indexer\"} [5m])) > 0)) or vector(4)",
+          "expr": "(4 - count(sum by (host, compose_project, compose_service) (count_over_time({host=~\"$gw|$pub\", compose_project=~\"file-retriever|subspace-farmer\", compose_service=~\"subspace-node|node|dag-indexer\"} |~ `best: #|Host Status:` [5m])) > 0)) or vector(4)",
           "queryType": "instant"
         }
       ],
@@ -994,7 +994,7 @@
       "id": 13,
       "type": "stat",
       "title": "DAG behind",
-      "description": "Blocks between the DAG index and its target, the node's finalized head, which on Chronos trails the best block by about six days. Above 5 it is catching up. No data means the indexer has printed no progress line for 5 minutes.",
+      "description": "Blocks between the DAG index and its target, the node's finalized head, which on Chronos trails the best block by about six days. Above 5 it is catching up, and 0 while it waits at its target. No data means the indexer has printed no status line for 5 minutes.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -1013,7 +1013,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "(max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Target height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m])) - max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Current height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m]))) or (vector(0) - 1)",
+          "expr": "(max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Target height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m])) - max(last_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= \"INDEXING:\" | regexp `Current height: (?P<v>[0-9,]+)` | label_format v=`{{ .v | replace \",\" \"\" }}` | unwrap v [5m]))) or (vector(0) and on() (sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"dag-indexer\"} |= `Host Status:` [5m])) > 0)) or (vector(0) - 1)",
           "queryType": "instant"
         }
       ],
@@ -2206,7 +2206,7 @@
       "id": 20,
       "type": "stat",
       "title": "DAG index height",
-      "description": "The last height the DAG indexer reported: as it works through a finality step, and when it starts. Between steps it is idle and reports nothing, so this holds where its last run ended.",
+      "description": "The last height the DAG indexer reported: as it works through a finality step, and when it starts. Between steps it is idle and reports no height, so this holds where its last run ended.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -2675,7 +2675,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"gateway-db-backup\"} |= \"is behind the last backup\" [26h])) or (vector(0) and on() (sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"gateway-db-backup\"} [26h])) > 0)) or (vector(0) - 1)",
+          "expr": "sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"gateway-db-backup\"} |~ `^gateway-[0-9TZ]+ is behind the last backup` [26h])) or (vector(0) and on() (sum(count_over_time({host=\"$gw\", compose_project=\"file-retriever\", compose_service=\"gateway-db-backup\"} [26h])) > 0)) or (vector(0) - 1)",
           "queryType": "instant"
         }
       ],
