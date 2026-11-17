@@ -345,7 +345,7 @@ sync, on a BIOS box:
 
 ```bash
 sudo grub-install --target=i386-pc /dev/sdX
-sudo dpkg-reconfigure grub-pc    # keep both disks selected
+sudo dpkg-reconfigure grub-pc    # select both disks
 ```
 
 smartctl only sees the disks that were there when it started, so restart it:
