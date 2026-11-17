@@ -77,15 +77,9 @@ resource "null_resource" "setup_monitoring_host" {
     timeout        = "300s"
   }
 
-  # There's no cloud-init to wait on, so pause the background apt timers and wait
-  # out any run in progress: they hold locks apt-get won't wait for. The timers
-  # are started again after the bootstrap.
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer
-      sudo systemd-run --quiet --property=After=apt-daily.service --property=After=apt-daily-upgrade.service --wait /bin/true
-      sudo apt update -y
       sudo mkdir -p ${local.home}/subspace/
       sudo chown -R ${var.deployer.ssh_user}:${var.deployer.ssh_user} ${local.home}/subspace/ && sudo chmod -R 750 ${local.home}/subspace/
       EOT
@@ -102,16 +96,22 @@ resource "null_resource" "setup_monitoring_host" {
     destination = "${local.home}/subspace/monitoring-host-bootstrap.sh"
   }
 
+  # There's no cloud-init to wait on, so pause the background apt timers and wait
+  # out any run in progress: they hold locks apt-get won't wait for. The trap
+  # starts them again however this script ends.
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-      sudo bash -e ${local.home}/subspace/installer.sh &&
-        sudo MONITORING_USER=${var.deployer.ssh_user} \
-          MONITORING_DATA_DIR=${local.data_dir} \
-          bash ${local.home}/subspace/monitoring-host-bootstrap.sh
-      status=$?
-      sudo systemctl start apt-daily.timer apt-daily-upgrade.timer
-      exit $status
+      trap 'sudo systemctl start apt-daily.timer apt-daily-upgrade.timer' EXIT
+      trap 'exit 1' HUP INT TERM
+      set -e
+      sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer
+      sudo systemd-run --quiet --property=After=apt-daily.service --property=After=apt-daily-upgrade.service --wait /bin/true
+      sudo apt update -y
+      sudo bash -e ${local.home}/subspace/installer.sh
+      sudo MONITORING_USER=${var.deployer.ssh_user} \
+        MONITORING_DATA_DIR=${local.data_dir} \
+        bash ${local.home}/subspace/monitoring-host-bootstrap.sh
       EOT
     ]
   }

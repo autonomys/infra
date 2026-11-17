@@ -45,9 +45,14 @@ if [ ! -d /sys/firmware/efi ]; then
     done
     boot_disks+=("$stable")
   done
-  if [ "${#boot_disks[@]}" -lt 2 ]; then
-    echo "Expected /boot on RAID 1 across two disks, found ${#boot_disks[@]}" >&2
+  # While an array is degraded or rebuilding, GRUB goes to the members in sync
+  # alone, which also drops a dead disk from install_devices
+  if [ "${#boot_disks[@]}" -eq 0 ]; then
+    echo "Expected /boot on RAID 1, found no members in sync" >&2
     exit 1
+  fi
+  if [ "${#boot_disks[@]}" -lt 2 ]; then
+    echo "WARNING: only ${#boot_disks[@]} of /boot's RAID members in sync, installing GRUB to it alone" >&2
   fi
 
   wanted="$(printf '%s\n' "${boot_disks[@]}" | sort | paste -sd, - | sed 's/,/, /g')"
@@ -99,16 +104,20 @@ ufw --force enable
 
 # safe only because Terraform has already authenticated as the deploy user by key
 echo "==> Hardening SSH"
-cat > /etc/ssh/sshd_config.d/99-hardening.conf <<'SSHD'
+# sshd keeps the first value it reads for each directive and loads drop-ins in
+# name order, so this one has to sort first, ahead of files such as cloud-init's
+# 50-cloud-init.conf. Bootstraps before that wrote it as 99-hardening.conf.
+rm -f /etc/ssh/sshd_config.d/99-hardening.conf
+cat > /etc/ssh/sshd_config.d/00-hardening.conf <<'SSHD'
 PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 SSHD
-chmod 0644 /etc/ssh/sshd_config.d/99-hardening.conf
+chmod 0644 /etc/ssh/sshd_config.d/00-hardening.conf
 
-# sshd ignores the drop-in unless sshd_config includes it, and takes the first
-# occurrence of each directive, so the Include has to come first
+# sshd ignores the drop-ins unless sshd_config includes them, and the Include
+# has to come before any directive sshd_config sets itself
 if ! grep -qE '^\s*Include\s+/etc/ssh/sshd_config\.d/\*\.conf' /etc/ssh/sshd_config; then
   echo "==> Adding missing sshd_config.d Include directive"
   sed -i '1i Include /etc/ssh/sshd_config.d/*.conf' /etc/ssh/sshd_config
@@ -117,7 +126,7 @@ fi
 sshd -t
 systemctl restart ssh 2>/dev/null || systemctl restart sshd
 
-for setting in permitrootlogin:no passwordauthentication:no; do
+for setting in permitrootlogin:no passwordauthentication:no kbdinteractiveauthentication:no pubkeyauthentication:yes; do
   key="${setting%%:*}"
   want="${setting##*:}"
   got="$(sshd -T | awk -v k="$key" '$1 == k {print $2}')"
