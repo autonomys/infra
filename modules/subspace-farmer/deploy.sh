@@ -87,7 +87,11 @@ fail() {
 }
 
 echo "==> Starting the node and the farmer"
-compose_in "$DEPLOY_DIR" up -d || fail "docker compose up failed"
+# Compose starts the farmer once the node is healthy and has no limit of its
+# own on that wait: a node that dies before its first health probe on every
+# start keeps it waiting forever
+(cd "$DEPLOY_DIR" && timeout 300 docker compose up -d --remove-orphans) \
+  || fail "docker compose up failed, or the node wasn't healthy within 300s"
 
 # not running within 300s, or restarted within the 30s after, fails the apply
 # before old images are pruned

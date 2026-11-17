@@ -601,8 +601,9 @@ the mesh's `mesh-peer` rules. So adding, moving or removing the farmers touches
 neither host's bootstrap. Docker-published ports bypass UFW anyway: before it
 installs anything, the deploy runs `scripts/compose-port-guard.py` on its compose
 model with those three as the only public ports. It then starts the node, and the
-farmer once the node is healthy, and fails the apply unless both are running
-within 300 seconds and neither restarts in the 30 seconds after. A failure
+farmer once the node is healthy, and fails the apply unless the node is healthy
+within 300 seconds, both are then running, and neither restarts in the 30
+seconds after. A failure
 prints both containers' restart counts and the Loki query for their errors:
 the loki driver's local copy, which `docker logs` reads, holds only a
 container's current run, so the error a restarted container exited with is
@@ -632,12 +633,13 @@ everything else on the host. 10 GiB holds about ten sectors.
 Everything the role puts on a host is its own: `~/deploy/subspace-farmer/`, the
 compose project and its volumes, and the `farmer-port` rules. To move the
 farmers to another Terraform project, deploy the same module there with the same
-compose project. Then remove both blocks from `main.tf` and the farmer checks and
-ports from `validate.sh`, and apply here. That only drops their deploys from this
+compose project. Then remove the `farmer` block and its `moved` blocks from
+`main.tf` and the farmer checks and ports from `validate.sh`, and apply here. That only drops their deploys from this
 state, so they keep running, and the other project's first deploy keeps their
 chain data and farms.
 
-To retire them, remove the blocks and apply, then on each host:
+To retire them, remove the same from `main.tf` and `validate.sh` and apply, then
+on each host:
 
 ```bash
 cd ~/deploy/subspace-farmer && docker compose down -v && cd
@@ -1057,12 +1059,13 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   with it its mesh and deploys.
 - Changing a backend host's names needs a new certificate: delete the old one
   with `sudo certbot delete --cert-name <old app name>` on the host, then apply.
-- The farmers' images, sync mode, farm size, reward address and ports are in
-  `local.farmer` in `main.tf`, which both hosts share. A new release moves both
-  images together, to the newest of the `mainnet-` and `chronos-` tags: mainnet
-  releases run Chronos too. A change to the node's image or settings recreates the node, and the
-  farmer with it. The farm size and the reward address recreate only the farmer.
-  The ports recreate both and swap the UFW rules.
+- The farmers' chain, images, sync mode, farm size, reward address and ports are
+  in `local.farmer` in `main.tf`, which both hosts share. A new release moves
+  both images together, to the newest of the `mainnet-` and `chronos-` tags:
+  mainnet releases run Chronos too. A change to the node's image or settings
+  recreates the node, and the farmer with it. The farm size and the reward
+  address recreate only the farmer. The ports recreate both and swap the UFW
+  rules.
 
 ## Rules for these hosts
 

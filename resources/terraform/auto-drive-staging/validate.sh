@@ -101,7 +101,10 @@ FARMER_NODE_PORT=30343
 FARMER_NODE_DSN_PORT=30443
 FARMER_PORT=30543
 FARM_SIZE="1GiB"
-FARM_BYTES=1073741824
+case "$FARM_SIZE" in
+  *GiB) FARM_BYTES=$(( ${FARM_SIZE%GiB} << 30 )) ;;
+  *TiB) FARM_BYTES=$(( ${FARM_SIZE%TiB} << 40 )) ;;
+esac
 REWARD_ADDRESS="suexrxoBh96UgcCyKXVMTEUhR8LtJozJssVT8Wrzs16bjBSn6"
 # what a backend role's checks look at
 case "$ROLE" in
@@ -165,8 +168,10 @@ check() {
 
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
 RPC="curl -s -H 'Content-Type: application/json' http://127.0.0.1:9944"
-# the running container of a gateway service, looked up on the host
-container() { echo "\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=$1)"; }
+# a service's container, running or not, in the gateway's project or the one given
+container() { echo "\$(sudo docker ps -a -q --filter label=com.docker.compose.project=${2:-$COMPOSE_PROJECT} --filter label=com.docker.compose.service=$1)"; }
+# the current block in a system_syncState answer
+current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
 PG="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=postgres)"
 RMQ="\$(sudo docker ps -q --filter label=com.docker.compose.project=$SERVICES_PROJECT --filter label=com.docker.compose.service=rabbitmq)"
 PSQL="sudo docker exec $PG psql -X -At -U postgres -d postgres -c"
@@ -403,17 +408,18 @@ files_gateway_checks() {
   echo ""
   echo "[Sync progress]"
   # not a pass/fail: two samples a minute apart show whether the node and the
-  # DAG index are moving
+  # DAG index are moving; the farmer's checks get theirs from the same window
   SYNC_STATE="$RPC -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_syncState\"}'"
   DAG_PROGRESS="$GATEWAY_DB meta lastProcessedHeight"
   first="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
   dag_first="$(ssh -o ConnectTimeout=5 "$HOST" "$DAG_PROGRESS" 2>/dev/null || true)"
+  farmer_first="$(farmer_sample)"
   echo "  now:       $first, DAG index at ${dag_first:-none}"
   sleep 60
   second="$(ssh -o ConnectTimeout=5 "$HOST" "$SYNC_STATE" 2>/dev/null || true)"
   dag_second="$(ssh -o ConnectTimeout=5 "$HOST" "$DAG_PROGRESS" 2>/dev/null || true)"
+  farmer_second="$(farmer_sample)"
   echo "  +60s:      $second, DAG index at ${dag_second:-none}"
-  current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
   importing=false
   if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
     importing=true
@@ -732,9 +738,6 @@ private_checks() {
 }
 
 # by compose service name, in the farmer project
-farmer_container() {
-  echo "\$(sudo docker ps -a -q --filter label=com.docker.compose.project=$FARMER_PROJECT --filter label=com.docker.compose.service=$1)"
-}
 
 # whether a container's args hold a JSON fragment, without printing them: the
 # farmer's hold the host's address
@@ -743,20 +746,29 @@ has_args() {
 }
 
 farmer_rpc() {
-  echo "sudo docker exec $(farmer_container node) curl -s -m 5 -H 'Content-Type: application/json' -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"$1\"}' http://localhost:9944"
+  echo "sudo docker exec $(container node "$FARMER_PROJECT") curl -s -m 5 -H 'Content-Type: application/json' -d '{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"$1\"}' http://localhost:9944"
 }
 
+# One sample of the farmer: each container's restart count, or none while it
+# doesn't exist, on the first line, then the node's sync state
+farmer_sample() {
+  ssh -o ConnectTimeout=5 "$HOST" "for c in \"$(container node "$FARMER_PROJECT")\" \"$(container farmer "$FARMER_PROJECT")\"; do sudo docker inspect -f '{{.RestartCount}}' \"\$c\" 2>/dev/null || echo none; done | paste -sd ' ' -; $(farmer_rpc system_syncState)" 2>/dev/null || true
+}
+
+# Takes the two samples of the farmer when the caller already has them, as the
+# gateway's checks do, and otherwise takes them a minute apart itself
 farmer_checks() {
-  local node farmer service c port ports_re sync_state restarts first second r1 r2 n1 f1 n2 f2
-  node="$(farmer_container node)"
-  farmer="$(farmer_container farmer)"
+  local node farmer service c port ports_re first second n1 f1 n2 f2
+  local farmer_first="${1:-}" farmer_second="${2:-}"
+  node="$(container node "$FARMER_PROJECT")"
+  farmer="$(container farmer "$FARMER_PROJECT")"
   echo ""
   echo "[Farmer]"
   check "Compose file and .env in place" \
     "cd $FARMER_DIR && stat -c '%n %a %U' docker-compose.yml .env | paste -sd ' ' -" \
     "docker-compose.yml 644 ubuntu .env 600 ubuntu"
   for service in node farmer; do
-    c="$(farmer_container "$service")"
+    c="$(container "$service" "$FARMER_PROJECT")"
     # the running container's config hash is the file's: no change is waiting on a restart
     check "Farmer's $service matches the compose file" \
       "cd $FARMER_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
@@ -814,21 +826,20 @@ farmer_checks() {
 
   echo ""
   echo "[Farmer node sync]"
-  # Two samples a minute apart. A container that restarted in between exited
-  # with an error that only Loki has: `docker logs` reads the loki driver's
-  # local copy, which holds just the current run.
-  sync_state="$(farmer_rpc system_syncState)"
-  # each container's restart count, or none while it doesn't exist
-  restarts="for c in \"$node\" \"$farmer\"; do sudo docker inspect -f '{{.RestartCount}}' \"\$c\" 2>/dev/null || echo none; done | paste -sd ' ' -"
-  r1="$(ssh -o ConnectTimeout=5 "$HOST" "$restarts" 2>/dev/null || true)"
-  first="$(ssh -o ConnectTimeout=5 "$HOST" "$sync_state" 2>/dev/null || true)"
+  # A container that restarted between the samples exited with an error that
+  # only Loki has: `docker logs` reads the loki driver's local copy, which holds
+  # just the current run.
+  if [[ $# -lt 2 ]]; then
+    farmer_first="$(farmer_sample)"
+    sleep 60
+    farmer_second="$(farmer_sample)"
+  fi
+  read -r n1 f1 <<< "$(sed -n 1p <<< "$farmer_first")"
+  read -r n2 f2 <<< "$(sed -n 1p <<< "$farmer_second")"
+  first="$(sed -n 2p <<< "$farmer_first")"
+  second="$(sed -n 2p <<< "$farmer_second")"
   echo "  now:       ${first:-no answer}"
-  sleep 60
-  second="$(ssh -o ConnectTimeout=5 "$HOST" "$sync_state" 2>/dev/null || true)"
-  r2="$(ssh -o ConnectTimeout=5 "$HOST" "$restarts" 2>/dev/null || true)"
   echo "  +60s:      ${second:-no answer}"
-  read -r n1 f1 <<< "$r1"
-  read -r n2 f2 <<< "$r2"
   steady() {
     if [[ -z "$3" || "$3" == none ]]; then
       report "$1" "no container" "steady"
@@ -840,7 +851,6 @@ farmer_checks() {
   }
   steady "Farmer's node not restarting" node "$n1" "$n2"
   steady "Farmer not restarting" farmer "$f1" "$f2"
-  current() { grep -o '"currentBlock":[0-9]*' <<< "$1" | cut -d: -f2; }
   if [[ -n "$(current "$first")" && -n "$(current "$second")" && "$(current "$second")" -gt "$(current "$first")" ]]; then
     report "Farmer's node importing blocks" "advancing" "advancing"
   else
@@ -851,7 +861,7 @@ farmer_checks() {
 case "$ROLE" in
   files-gateway)
     files_gateway_checks
-    farmer_checks
+    farmer_checks "$farmer_first" "$farmer_second"
     ;;
   services) services_checks ;;
   public)
