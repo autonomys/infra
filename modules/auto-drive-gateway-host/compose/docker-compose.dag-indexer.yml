@@ -1,0 +1,73 @@
+# The DAG indexer, the SubQuery node that fills the services host's `gateway`
+# database's dag-indexer schema, which the file retriever looks every download
+# up in, and that database's backups. The .env's COMPOSE_FILE includes this file
+# when the role is given dag_indexer.
+#
+# The indexer's image carries the mapping, schema.graphql and one manifest per
+# network; the node's RPC is given here. A start guard runs before the indexer
+# itself, and gateway-db.sh has the backups and the progress floor both rely on.
+# The schema name is fixed here and in both scripts. The local log copies are
+# capped whatever cap_local_logs says, as nothing that predates the cap runs
+# here.
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: ${LOKI_URL:?}
+    max-size: 10m
+    max-file: '3'
+
+services:
+  dag-indexer:
+    image: ${DAG_INDEXER_DOCKER_TAG:?}
+    labels:
+      auto-drive.database-id: ${DATABASE_ID:-}
+      auto-drive.start-guard: ${DAG_INDEXER_START_GUARD_ID:?}
+    ports:
+      - '127.0.0.1:30001:3000'
+    volumes:
+      - ${BACKUP_DIR:?}/floor:/backups/floor:ro
+      - ./dag-indexer-start-guard.js:/usr/local/lib/dag-indexer-start-guard.js:ro
+    working_dir: /app
+    env_file: gateway-db.env
+    entrypoint:
+      - /sbin/tini
+      - --
+      - sh
+      - -c
+      - node /usr/local/lib/dag-indexer-start-guard.js && exec /bin/run "$$@"
+      - dag-indexer
+    command: >
+      -f /app/project.${NETWORK_ID:?}.yaml
+      --network-endpoint=ws://subspace-node:9944/ws
+      --db-schema=dag-indexer
+      --workers=1
+      --unsafe
+      --batch-size=125
+      --scale-batch-size
+      --unfinalized-blocks=true
+      --disable-historical=false
+      --finalized-depth=100
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/ready']
+      interval: 3s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      subspace-node:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+  gateway-db-backup:
+    image: ${GATEWAY_DB_BACKUP_DOCKER_TAG:?}
+    labels:
+      auto-drive.gateway-db-script: ${GATEWAY_DB_SCRIPT_ID:?}
+    env_file: gateway-db.env
+    volumes:
+      - ${BACKUP_DIR:?}:/backups
+      - ./gateway-db.sh:/usr/local/lib/gateway-db.sh:ro
+    entrypoint: [bash, /usr/local/lib/gateway-db.sh]
+    command: [backup]
+    restart: 'no'
+    logging: *logging

@@ -15,6 +15,11 @@ output "file_retriever_url" {
   value       = var.mesh == null ? null : "http://${var.mesh.address}:8090"
 }
 
+output "backup_dir" {
+  description = "Where the gateway host keeps the gateway database's dumps and their progress floor, or null without dag_indexer"
+  value       = var.dag_indexer == null ? null : local.backup_dir
+}
+
 output "object_mapping_url" {
   description = "Where the other mesh members reach the object-mapping indexer's WebSocket (OBJECT_MAPPING_ARCHIVER_URL), or null without a mesh"
   value       = var.mesh == null ? null : "ws://${var.mesh.address}:3000/ws"

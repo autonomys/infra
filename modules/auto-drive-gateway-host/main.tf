@@ -3,14 +3,27 @@ locals {
   staged_dir  = "${local.staging_dir}/auto-drive-gateway"
   deploy_dir  = "/home/${var.deployer.ssh_user}/deploy/auto-drive-gateway"
 
-  # every .yml in compose/ is uploaded and installed, and only those count
-  # towards the trigger; COMPOSE_FILE picks the ones in use
+  # every file in compose/ is uploaded and installed, and counts towards the
+  # trigger; COMPOSE_FILE picks the compose files in use
   compose_dir = "${path.module}/compose"
   compose_files = concat(
     ["docker-compose.yml"],
     var.mesh == null ? [] : ["docker-compose.mesh.yml"],
     var.cap_local_logs ? ["docker-compose.log-cap.yml"] : [],
+    var.dag_indexer == null ? [] : ["docker-compose.dag-indexer.yml"],
   )
+
+  backup_dir = "/var/backups/auto-drive-gateway"
+  dag_indexer_env = var.dag_indexer == null ? {} : {
+    DAG_INDEXER_DOCKER_TAG       = var.dag_indexer.image
+    GATEWAY_DB_BACKUP_DOCKER_TAG = var.dag_indexer.backup_image
+    DAG_INDEXER_START_GUARD_ID   = filesha1("${local.compose_dir}/dag-indexer-start-guard.js")
+    GATEWAY_DB_SCRIPT_ID         = filesha1("${local.compose_dir}/gateway-db.sh")
+    BACKUP_DIR                   = local.backup_dir
+  }
+  # for one deploy each; see the variables
+  accept_rewind_to     = var.dag_indexer == null ? "" : (var.dag_indexer.accept_rewind_to == null ? "" : tostring(var.dag_indexer.accept_rewind_to))
+  accept_schema_sha256 = var.dag_indexer == null ? "" : var.dag_indexer.accept_schema_sha256
 
   # Compose reads this from the deploy directory, so `docker compose` run there
   # by hand sees the same project, files and values as the deploy
@@ -41,7 +54,7 @@ locals {
     VICTORIA_ENDPOINT                 = var.metrics == null ? "" : var.metrics.endpoint
     VICTORIA_USERNAME                 = var.metrics == null ? "" : var.metrics.username
     LOKI_URL                          = var.loki_url
-  }, var.mesh == null ? {} : { MESH_ADDRESS = var.mesh.address })
+  }, var.mesh == null ? {} : { MESH_ADDRESS = var.mesh.address }, local.dag_indexer_env)
   # single-quoted, so Compose takes each value literally instead of expanding a
   # $ in it; the precondition below keeps quotes and line breaks out of them
   env_file = join("", [for k in keys(local.env) : "${k}='${local.env[k]}'\n"])
@@ -53,6 +66,14 @@ locals {
       DATABASE_URL      = local.database_url
       API_SECRET        = var.api_secret
       VICTORIA_PASSWORD = var.metrics_password
+    }
+    # the DAG indexer's and the backups', in the names the indexer reads
+    "gateway-db.env" = {
+      DB_HOST     = var.database.host
+      DB_PORT     = var.database.port
+      DB_DATABASE = var.database.name
+      DB_USER     = var.database.user
+      DB_PASS     = var.database_password
     }
   }
   secret_files = { for f, vars in local.secrets : f => join("", [for k in keys(vars) : "${k}='${vars[k]}'\n"]) }
@@ -89,13 +110,14 @@ resource "null_resource" "deploy" {
     bootstrap_id     = module.host.bootstrap_id
     ipv4             = var.host.ipv4
     ssh_user         = var.deployer.ssh_user
-    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*.yml")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
+    compose_hash     = sha1(join("", [for f in sort(fileset(local.compose_dir, "*")) : "${f}:${filesha1("${local.compose_dir}/${f}")}\n"]))
     env_hash         = md5(local.env_file)
     secrets_hash     = nonsensitive(sha256(join("", [for f in sort(keys(local.secret_files)) : local.secret_files[f]])))
     public_tcp_ports = join(" ", var.public_tcp_ports)
     mesh_address     = var.mesh == null ? "" : var.mesh.address
     deploy_hash      = filemd5("${path.module}/deploy.sh")
     port_guard_hash  = filemd5("${var.deployer.path_to_scripts}/compose-port-guard.py")
+    overrides        = "start_empty=${var.database_start_empty} accept_rewind_to=${local.accept_rewind_to} accept_schema_sha256=${local.accept_schema_sha256}"
   }
 
   lifecycle {
@@ -163,6 +185,11 @@ resource "null_resource" "deploy" {
     destination = "${local.staged_dir}/file-retriever.env"
   }
 
+  provisioner "file" {
+    content     = local.secret_files["gateway-db.env"]
+    destination = "${local.staged_dir}/gateway-db.env"
+  }
+
   provisioner "remote-exec" {
     inline = [
       <<-EOT
@@ -172,6 +199,10 @@ resource "null_resource" "deploy" {
         PUBLIC_TCP_PORTS='${join(" ", var.public_tcp_ports)}' \
         PRIVATE_ADDRESSES='${var.mesh == null ? "" : var.mesh.address}' \
         PORT_GUARD=${local.staging_dir}/compose-port-guard.py \
+        BACKUP_DIR=${local.backup_dir} \
+        START_EMPTY='${var.database_start_empty}' \
+        ACCEPT_REWIND_TO=${local.accept_rewind_to} \
+        ACCEPT_SCHEMA_SHA256=${local.accept_schema_sha256} \
         bash ${local.staging_dir}/auto-drive-gateway-deploy.sh
       EOT
     ]
