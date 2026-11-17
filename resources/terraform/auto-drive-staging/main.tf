@@ -373,3 +373,79 @@ module "auth" {
     cors_allowed_origins = "*"
   }
 }
+
+# Chronos farmers on the files gateway and the public backend, each with a
+# pruned node of its own, beside what those hosts already run. Their rewards
+# fund the account the private backend's publish worker signs with.
+locals {
+  farmer = {
+    chain = "chronos"
+    # the newest release: mainnet releases run Chronos too, as the files
+    # gateway's node does
+    images = {
+      node   = "ghcr.io/autonomys/node:mainnet-2026-oct-22@sha256:76cf36d40ecbc382edd072567f3a7b2c631530fd81027f29095877ad3509a24f"
+      farmer = "ghcr.io/autonomys/farmer:mainnet-2026-oct-22@sha256:d140be610587c679a031b69df033be95adb777e425720e7ccefe34a686eff543"
+    }
+    # Snap sync failed on Chronos when this was built: it found too few
+    # reachable farmers to serve its segment headers
+    sync           = "full"
+    farm_size      = "1GiB"
+    reward_address = "suexrxoBh96UgcCyKXVMTEUhR8LtJozJssVT8Wrzs16bjBSn6"
+    # the same on both hosts, clear of the defaults the files gateway's node uses
+    ports = {
+      node     = 30343
+      node_dsn = 30443
+      farmer   = 30543
+    }
+  }
+}
+
+module "farmer" {
+  source = "../../../modules/subspace-farmer"
+  # keyed as in local.mesh_hosts; each farmer's deploy follows the deploy of
+  # the role that owns its host, so their image prunes and pulls don't overlap
+  for_each = {
+    files-gateway = {
+      ipv4         = var.gateway_host_ipv4
+      bootstrap_id = module.files_gateway.bootstrap_id
+      staging_dir  = module.files_gateway.staging_dir
+      deploy_id    = module.files_gateway.deploy_id
+    }
+    public = {
+      ipv4         = var.public_host_ipv4
+      bootstrap_id = module.public.bootstrap_id
+      staging_dir  = module.public.staging_dir
+      deploy_id    = module.public.deploy_id
+    }
+  }
+
+  deployer = {
+    ssh_user           = "ubuntu"
+    ssh_agent_identity = var.ssh_agent_identity
+    path_to_scripts    = "../../../scripts"
+  }
+
+  host = {
+    ipv4         = each.value.ipv4
+    bootstrap_id = each.value.bootstrap_id
+    staging_dir  = each.value.staging_dir
+  }
+  wait_for = [each.value.deploy_id]
+
+  chain          = local.farmer.chain
+  images         = local.farmer.images
+  sync           = local.farmer.sync
+  farm_size      = local.farmer.farm_size
+  reward_address = local.farmer.reward_address
+  ports          = local.farmer.ports
+}
+
+moved {
+  from = module.gateway_farmer
+  to   = module.farmer["files-gateway"]
+}
+
+moved {
+  from = module.public_farmer
+  to   = module.farmer["public"]
+}

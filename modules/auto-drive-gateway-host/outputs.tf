@@ -24,3 +24,18 @@ output "object_mapping_url" {
   description = "Where the other mesh members reach the object-mapping indexer's WebSocket (OBJECT_MAPPING_ARCHIVER_URL), or null without a mesh"
   value       = var.mesh == null ? null : "ws://${var.mesh.address}:3000/ws"
 }
+
+output "deploy_id" {
+  description = "Changes whenever this host's deploy runs; another role on this host orders its own deploy after it, so their image pulls and prunes don't overlap"
+  value       = null_resource.deploy.id
+}
+
+output "bootstrap_id" {
+  description = "Changes whenever the host is bootstrapped again, for another role on this host to be set up again with it"
+  value       = module.host.bootstrap_id
+}
+
+output "staging_dir" {
+  description = "Directory on the host that the bootstrap creates for roles to upload files to"
+  value       = module.host.staging_dir
+}
