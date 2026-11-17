@@ -1,0 +1,20 @@
+# Rendered by Terraform with the metrics write credentials and installed as a secret.
+# Values are JSON-quoted, which YAML reads as double-quoted strings. Each name
+# labels vmauth's own metrics, so usernames stay out of them.
+
+users:
+  # Auto Drive's services, InfluxDB line protocol
+  - name: "metrics-writer"
+    username: ${jsonencode(writer.username)}
+    password: ${jsonencode(writer.password)}
+    url_map:
+      - src_paths: ["/write"]
+        url_prefix: "http://victoriametrics:8428"
+
+  # The host agents' vmagent, Prometheus remote write
+  - name: "fleet"
+    username: ${jsonencode(fleet.username)}
+    password: ${jsonencode(fleet.password)}
+    url_map:
+      - src_paths: ["/api/v1/write"]
+        url_prefix: "http://victoriametrics:8428"

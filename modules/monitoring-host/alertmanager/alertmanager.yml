@@ -1,0 +1,54 @@
+# The Slack webhook is a secret, read from a file that Terraform writes on the box.
+
+route:
+  receiver: slack
+  # One message per server, so a failed disk that trips several rules arrives once
+  group_by: [host]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 24h
+  routes:
+    # Always firing. If Uptime Kuma stops hearing it, alerting itself is down.
+    - receiver: watchdog
+      matchers: ['alertname="Watchdog"']
+      group_wait: 0s
+      group_interval: 1m
+      # Alertmanager repeats only once more than repeat_interval has passed, which
+      # a 1m repeat misses by moments at each 1m flush, halving the rate
+      repeat_interval: 30s
+    - receiver: slack
+      matchers: ['severity="critical"']
+      repeat_interval: 4h
+
+inhibit_rules:
+  - source_matchers: ['alertname="SmartFailed"']
+    target_matchers: ['alertname="DiskWearHigh"']
+    equal: [host, device]
+  - source_matchers: ['alertname="RaidMemberFailed"']
+    target_matchers: ['alertname="RaidDegraded"']
+    equal: [host, device]
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: [alertname, host, mountpoint]
+
+receivers:
+  - name: slack
+    slack_configs:
+      - api_url_file: /run/secrets/alertmanager_slack_webhook_url
+        send_resolved: true
+        # The default links to Alertmanager's own UI, which has no public route
+        title_link: ""
+        title: >-
+          {{ if eq .Status "firing" }}:red_circle:{{ else }}:large_green_circle:{{ end }}
+          {{ .CommonLabels.host }}: {{ range .Alerts }}{{ .Labels.alertname }} {{ end }}
+        text: |-
+          {{ range .Alerts }}*{{ .Labels.alertname }}* ({{ .Labels.severity }}{{ if eq .Status "resolved" }}, resolved{{ end }})
+          {{ .Annotations.summary }}
+          {{ end }}
+
+  # Uptime Kuma 1.x only accepts GET on its push route, so the relay turns
+  # Alertmanager's POST into one
+  - name: watchdog
+    webhook_configs:
+      - url: http://watchdog-relay:8080/
+        send_resolved: false

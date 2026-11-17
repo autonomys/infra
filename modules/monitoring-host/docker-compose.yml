@@ -1,0 +1,247 @@
+# Installed on the host as ~/monitoring/docker-compose.yml by
+# null_resource.deploy_monitoring_stack. Values in ${...} come from the .env
+# Terraform writes next to it.
+
+x-logging: &local-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  traefik:
+    image: traefik:v3.7.19
+    container_name: traefik
+    restart: unless-stopped
+    # Host networking puts 80 and 443 behind UFW's Cloudflare-only rules. Ports
+    # Docker publishes bypass UFW, so nothing else here publishes beyond 127.0.0.1.
+    network_mode: host
+    command:
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      - --log.level=INFO
+      - --accesslog=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      # HTTP-01 through the Cloudflare proxy, so the box holds no DNS API token.
+      # The challenge router outranks the redirect to websecure.
+      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/data/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --entrypoints.metrics.address=127.0.0.1:8082
+      - --metrics.prometheus=true
+      - --metrics.prometheus.entryPoint=metrics
+    volumes:
+      - ./traefik:/etc/traefik/dynamic:ro
+      - ${DATA_DIR}/traefik:/data
+    logging: *local-logging
+
+  loki:
+    image: grafana/loki:3.6.21
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config.yml
+    labels:
+      monitoring.config-sha: ${LOKI_CONFIG_SHA}
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - ${DATA_DIR}/loki:/loki
+    logging: *local-logging
+
+  grafana:
+    image: grafana/grafana:13.2.6
+    container_name: grafana
+    restart: unless-stopped
+    labels:
+      monitoring.config-sha: ${GRAFANA_CONFIG_SHA}
+    environment:
+      GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN}
+      GF_SERVER_ROOT_URL: https://${GRAFANA_DOMAIN}/
+      # Only applied when Grafana creates its database. The deploy resets the
+      # password from the same file on every run.
+      GF_SECURITY_ADMIN_USER__FILE: /run/secrets/grafana_admin_user
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Keeps the version off /api/health for anyone not logged in. The login
+      # page still shows it.
+      GF_AUTH_ANONYMOUS_HIDE_VERSION: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      # Both would serve dashboards, and the logs in them, without a login
+      GF_SNAPSHOTS_ENABLED: "false"
+      GF_PUBLIC_DASHBOARDS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - ${DATA_DIR}/grafana:/var/lib/grafana
+    secrets:
+      - grafana_admin_user
+      - grafana_admin_password
+    logging: *local-logging
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.155.0
+    container_name: victoriametrics
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=90d
+      - -httpListenAddr=:8428
+      - -maxInsertRequestSize=16MB
+    ports:
+      - "127.0.0.1:8428:8428"
+    volumes:
+      - ${DATA_DIR}/victoriametrics:/storage
+    logging: *local-logging
+
+  # vmagent and the exporters use the host network: node_exporter for the host's
+  # own view, and vmagent to reach every service's metrics on 127.0.0.1.
+  vmagent:
+    image: victoriametrics/vmagent:v1.155.0
+    container_name: vmagent
+    restart: unless-stopped
+    network_mode: host
+    labels:
+      monitoring.config-sha: ${VMAGENT_CONFIG_SHA}
+    environment:
+      # scrape.yml takes each target's instance label from it
+      MONITORING_HOSTNAME: ${MONITORING_HOSTNAME}
+    command:
+      - -httpListenAddr=127.0.0.1:8429
+      - -promscrape.config=/etc/vmagent/scrape.yml
+      - -remoteWrite.url=http://127.0.0.1:8428/api/v1/write
+      - -remoteWrite.tmpDataPath=/vmagentdata
+      - -remoteWrite.maxDiskUsagePerURL=1GB
+      - -remoteWrite.label=host=${MONITORING_HOSTNAME}
+    volumes:
+      - ./vmagent:/etc/vmagent:ro
+      - ${DATA_DIR}/vmagent:/vmagentdata
+    logging: *local-logging
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=127.0.0.1:9100
+      - --collector.textfile.directory=/host/var/lib/node_exporter/textfile
+    volumes:
+      - /:/host:ro,rslave
+    logging: *local-logging
+
+  smartctl-exporter:
+    image: prometheuscommunity/smartctl-exporter:v0.15.0
+    container_name: smartctl-exporter
+    restart: unless-stopped
+    network_mode: host
+    # smartctl needs raw access to the disks. It only sees the ones there when
+    # it starts, so it is restarted after a disk is replaced (see the README).
+    privileged: true
+    user: root
+    command:
+      - --web.listen-address=127.0.0.1:9633
+    logging: *local-logging
+
+  vmalert:
+    image: victoriametrics/vmalert:v1.155.0
+    container_name: vmalert
+    restart: unless-stopped
+    labels:
+      monitoring.config-sha: ${VMALERT_RULES_SHA}
+    command:
+      - -httpListenAddr=:8880
+      - -rule=/etc/vmalert/rules/*.yml
+      - -evaluationInterval=30s
+      - -datasource.url=http://victoriametrics:8428
+      # Alert state is written to and restored from VictoriaMetrics, so a
+      # restart doesn't reset how long an alert has been pending
+      - -remoteWrite.url=http://victoriametrics:8428
+      - -remoteRead.url=http://victoriametrics:8428
+      - -notifier.url=http://alertmanager:9093
+    ports:
+      - "127.0.0.1:8880:8880"
+    volumes:
+      - ./vmalert/rules:/etc/vmalert/rules:ro
+    logging: *local-logging
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.2
+    container_name: alertmanager
+    restart: unless-stopped
+    labels:
+      monitoring.config-sha: ${ALERTMANAGER_CONFIG_SHA}
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.listen-address=:9093
+      - --cluster.listen-address=
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - ${DATA_DIR}/alertmanager:/alertmanager
+    secrets:
+      - alertmanager_slack_webhook_url
+    logging: *local-logging
+
+  # Checks each metrics write credential and passes only that credential's write
+  # path on to VictoriaMetrics. Traefik routes POST /write and /api/v1/write on
+  # vmetrics.subspace.network here.
+  vmauth:
+    image: victoriametrics/vmauth:v1.155.0
+    container_name: vmauth
+    restart: unless-stopped
+    command:
+      - -httpListenAddr=:8427
+      - -auth.config=/run/secrets/vmauth_auth
+      # Picks up changed credentials without a restart
+      - -configCheckInterval=30s
+    ports:
+      - "127.0.0.1:8427:8427"
+    secrets:
+      - vmauth_auth
+    logging: *local-logging
+
+  watchdog-relay:
+    image: python:3.13.18-alpine3.24
+    container_name: watchdog-relay
+    restart: unless-stopped
+    user: nobody
+    labels:
+      monitoring.config-sha: ${WATCHDOG_RELAY_SHA}
+    command: ["python", "-u", "/relay/relay.py"]
+    volumes:
+      - ./watchdog-relay:/relay:ro
+    secrets:
+      - watchdog_push_url
+    logging: *local-logging
+
+secrets:
+  grafana_admin_user:
+    file: ./secrets/grafana_admin_user
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password
+  alertmanager_slack_webhook_url:
+    file: ./secrets/alertmanager_slack_webhook_url
+  watchdog_push_url:
+    file: ./secrets/watchdog_push_url
+  vmauth_auth:
+    file: ./secrets/vmauth_auth.yml

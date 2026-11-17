@@ -1,0 +1,16 @@
+servers = {
+  "auto-drive-files-gateway-chronos" = {
+    ipv4     = ""
+    host_key = ""
+  }
+  "auto-drive-staging-services" = {
+    ipv4     = ""
+    host_key = ""
+  }
+  "auto-drive-staging-public" = {
+    ipv4     = ""
+    host_key = ""
+  }
+}
+vmetrics_fleet_username = ""
+vmetrics_fleet_password = ""

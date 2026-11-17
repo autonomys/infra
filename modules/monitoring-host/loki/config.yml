@@ -1,0 +1,60 @@
+# Single-binary Loki for the fleet's container logs. Traefik only routes the push
+# path and /ready to it, so nothing outside the box can query it.
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+  log_level: info
+  # Query results reach the query frontend over gRPC, and the 4 MB default is
+  # smaller than 1000 lines of the Auto Drive backends' logs. A larger result
+  # isn't rejected; the query hangs until Grafana times out. 100 MB matches the
+  # gRPC clients' own default.
+  grpc_server_max_recv_msg_size: 104857600
+  grpc_server_max_send_msg_size: 104857600
+
+# Pushes need no credentials, and by default Loki decompresses up to 5 GB of a
+# push before rejecting it. The fleet's log drivers send batches of about 1 MB.
+distributor:
+  max_recv_msg_size: 16777216
+  max_decompressed_size: 16777216
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+
+schema_config:
+  configs:
+    - from: "2026-11-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  retention_period: 720h
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  # The whole fleet shares the one tenant
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 32
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem
+
+analytics:
+  reporting_enabled: false

@@ -1,0 +1,126 @@
+# Disk and RAID health for every server that ships metrics here. Each series
+# carries host=<server>, added by the vmagent that collected it.
+# node_disks_expected and node_bootloader_grub_present come from textfiles: the
+# monitoring host's deploy writes the first for itself, and the host agent
+# writes both on the other servers.
+
+groups:
+  - name: disks
+    rules:
+      - alert: RaidDegraded
+        expr: node_md_disks_required - ignoring(state) node_md_disks{state="active"} > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} is running with {{ $value }} member(s) missing"
+
+      - alert: RaidMemberFailed
+        expr: node_md_disks{state="failed"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} has {{ $value }} failed member(s)"
+
+      # One value per server on each side, so a server whose series briefly exist
+      # twice, as when their labels change, can't make the match ambiguous
+      - alert: DiskMissing
+        expr: max by (host) (smartctl_devices) < on(host) max by (host) (node_disks_expected)
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "smartctl sees {{ $value }} disk(s), fewer than this server should have"
+
+      # On these Samsung NVMe disks the firmware also sets critical warning 0x04
+      # once wear passes 100%, so this fires for worn-out disks too
+      - alert: SmartFailed
+        expr: smartctl_device_smart_status == 0 or smartctl_device_critical_warning > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} fails its SMART health check"
+
+      # NVMe reports wear used; SATA SSDs report life remaining as an attribute
+      - alert: DiskWearHigh
+        expr: >-
+          smartctl_device_percentage_used >= 90
+          or smartctl_device_attribute{attribute_name=~"Percent_Lifetime_Remain|Wear_Leveling_Count|Media_Wearout_Indicator", attribute_value_type="value"} <= 10
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} is near the end of its rated life"
+
+      - alert: SpareBlocksUsed
+        expr: smartctl_device_available_spare < 100
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} has started using spare blocks ({{ $value }}% left)"
+
+      # A rise over the count a day earlier, not a level: some disks carry old
+      # errors from before their last install. Not increase(), which also counts a
+      # disk's first small reading and a falling count as a rise; the cost is that
+      # a rise during a series' first day goes unseen.
+      - alert: MediaErrorsRising
+        expr: >-
+          (smartctl_device_media_errors - smartctl_device_media_errors offset 24h) > 0
+          or (smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"}
+            - smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"} offset 24h) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.device }} logged new media or uncorrectable errors in the last 24 hours"
+
+      - alert: FilesystemNearlyFull
+        expr: node_filesystem_avail_bytes{fstype=~"ext[234]|xfs|btrfs|zfs"} / node_filesystem_size_bytes < 0.10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free"
+
+      - alert: FilesystemNearlyFull
+        expr: node_filesystem_avail_bytes{fstype=~"ext[234]|xfs|btrfs|zfs"} / node_filesystem_size_bytes < 0.03
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free"
+
+      # Reported only by servers that boot through legacy BIOS, for the disks /boot
+      # lives on
+      - alert: BootloaderMissing
+        expr: node_bootloader_grub_present == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.device }} has no GRUB boot code, so the server can't boot from it if the other disk fails"
+
+      # The check rewrites its file every 6 hours
+      - alert: BootloaderCheckStale
+        expr: time() - node_textfile_mtime_seconds{file=~".*bootloader[.]prom"} > 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "The bootloader check last ran {{ $value | humanizeDuration }} ago"
+
+      # Each server's latest scrape across its targets, so a target that goes away
+      # alone doesn't make the server look silent. Once the server stops sending,
+      # the record carries its last value forward, so ServerSilent keeps firing until
+      # the server is back or its record is deleted (see the monitoring README)
+      # rather than resolving once the last scrape leaves a lookback window.
+      - record: host:last_scrape_timestamp:max
+        expr: max by (host) (timestamp(up)) or last_over_time(host:last_scrape_timestamp:max[7d])
+
+      - alert: ServerSilent
+        expr: time() - host:last_scrape_timestamp:max > 900
+        labels:
+          severity: warning
+        annotations:
+          summary: "No metrics from {{ $labels.host }} for {{ $value | humanizeDuration }}"

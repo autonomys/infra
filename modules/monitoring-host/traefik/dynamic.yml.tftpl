@@ -1,0 +1,54 @@
+http:
+  routers:
+    # Same paths the Cloudflare rule in front lets through, so Loki stays
+    # unreadable for anyone who reaches the origin directly
+    loki:
+      rule: "Host(`${loki_domain}`) && ((Method(`POST`) && Path(`/loki/api/v1/push`)) || (Method(`GET`) && Path(`/ready`)))"
+      entryPoints:
+        - websecure
+      service: loki
+      tls:
+        certResolver: le
+
+    # Grafana serves /metrics without a login, and it names the exact version
+    grafana:
+      rule: "Host(`${grafana_domain}`) && !PathPrefix(`/metrics`)"
+      entryPoints:
+        - websecure
+      service: grafana
+      tls:
+        certResolver: le
+
+    # Writes only, InfluxDB line protocol and Prometheus remote write; reads stay
+    # on the box, where Grafana queries VictoriaMetrics
+    vmetrics:
+      rule: "Host(`${vmetrics_domain}`) && Method(`POST`) && (Path(`/write`) || Path(`/api/v1/write`))"
+      entryPoints:
+        - websecure
+      service: vmauth
+      tls:
+        certResolver: le
+
+  services:
+    loki:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3100"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3000"
+
+    vmauth:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8427"
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      # Refuse handshakes for any other name, so scanning the origin's IP doesn't
+      # reveal which hostnames it serves
+      sniStrict: true

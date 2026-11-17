@@ -1,0 +1,118 @@
+# The host agent: vmagent, node_exporter, smartctl_exporter, and a script that
+# writes node_exporter's textfiles. Values come from the .env Terraform writes
+# beside this file. The write credential is only in credentials/, which vmagent
+# reads. Everything runs in the host network and listens on 127.0.0.1 only.
+
+x-logging: &logging
+  driver: loki
+  options:
+    loki-url: ${LOKI_URL:?}
+    # a slow or unreachable Loki must never block the agent
+    mode: non-blocking
+    max-buffer-size: 4m
+    # the driver's local copy for `docker logs`, capped as on the rest of the fleet
+    max-size: 10m
+    max-file: "3"
+
+services:
+  vmagent:
+    image: ${VMAGENT_IMAGE:?}
+    restart: unless-stopped
+    network_mode: host
+    # Compose doesn't see a bind-mounted file change, so the scrape config's hash
+    # recreates vmagent when the config changes
+    labels:
+      host-agent.scrape-config: "${SCRAPE_CONFIG_HASH:?}"
+    command:
+      # not 8429, which the node template's own vmagent publishes on some servers
+      - -httpListenAddr=127.0.0.1:8430
+      - -promscrape.config=/etc/vmagent/scrape.yml
+      - -remoteWrite.url=${VMETRICS_URL:?}
+      - -remoteWrite.basicAuth.usernameFile=/credentials/vmetrics-username
+      - -remoteWrite.basicAuth.passwordFile=/credentials/vmetrics-password
+      - -remoteWrite.tmpDataPath=/vmagent-data
+      - -remoteWrite.maxDiskUsagePerURL=1GB
+      - -remoteWrite.label=host=${SERVER_NAME:?}
+    volumes:
+      - ./scrape.yml:/etc/vmagent/scrape.yml:ro
+      # a directory, so a rotated credential reaches vmagent, which re-reads the
+      # files every second
+      - ./credentials:/credentials:ro
+      - vmagent-data:/vmagent-data
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8430/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  node-exporter:
+    image: ${NODE_EXPORTER_IMAGE:?}
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=127.0.0.1:9100
+      - --collector.textfile.directory=/textfiles
+    volumes:
+      - /:/host:ro,rslave
+      - textfiles:/textfiles:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:9100/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  smartctl-exporter:
+    image: ${SMARTCTL_EXPORTER_IMAGE:?}
+    restart: unless-stopped
+    network_mode: host
+    # smartctl needs raw access to the disks. It only sees the ones there when
+    # it starts, so it is restarted after a disk is replaced (see the README).
+    privileged: true
+    user: root
+    command:
+      - --web.listen-address=127.0.0.1:9633
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:9633/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  # Reads each boot disk's first sector through the host's /dev, and the host's
+  # mounts and firmware type, which need its process namespace, raw device
+  # access and an unmasked /sys
+  textfiles:
+    image: ${PYTHON_IMAGE:?}
+    restart: unless-stopped
+    privileged: true
+    pid: host
+    network_mode: none
+    read_only: true
+    labels:
+      host-agent.textfiles-script: "${TEXTFILES_HASH:?}"
+    environment:
+      EXPECTED_DISKS: ${EXPECTED_DISKS:?}
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python", "-u", "/textfiles.py"]
+    volumes:
+      - ./textfiles.py:/textfiles.py:ro
+      - textfiles:/textfiles
+    healthcheck:
+      # the script rewrites its files every 6 hours
+      test: ["CMD", "python", "-c", "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/textfiles/bootloader.prom') > 7 * 3600)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *logging
+
+volumes:
+  vmagent-data:
+  textfiles:

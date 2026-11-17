@@ -1,0 +1,24 @@
+apiVersion: 1
+
+# Each directory under grafana/dashboards in the module is one folder. Changes made
+# in the UI can't be saved over these; export the JSON into the repo instead.
+providers:
+  - name: logs
+    folder: Logs
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards/logs
+
+  # The repo's dashboards/metrics, plus dashboards fetched from grafana.com at
+  # pinned revisions during the deploy (see main.tf)
+  - name: metrics
+    folder: Metrics
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards/metrics

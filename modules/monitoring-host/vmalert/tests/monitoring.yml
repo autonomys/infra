@@ -1,0 +1,103 @@
+rule_files:
+  - ../rules/monitoring.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: the watchdog always fires
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 1m
+        groupname: monitoring
+        alertname: Watchdog
+        exp_alerts:
+          - exp_labels: {severity: none}
+            exp_annotations:
+              summary: "Heartbeat for Uptime Kuma"
+
+  - name: a scrape target stops answering
+    interval: 1m
+    input_series:
+      - series: 'up{host="h1", job="loki"}'
+        values: "1x5 0x10"
+    alert_rule_test:
+      - eval_time: 12m
+        groupname: monitoring
+        alertname: ScrapeTargetDown
+        exp_alerts:
+          - exp_labels: {host: h1, job: loki, severity: warning}
+            exp_annotations:
+              summary: "loki isn't answering metric scrapes"
+
+  - name: Loki stops receiving lines
+    interval: 1m
+    input_series:
+      - series: 'loki_distributor_lines_received_total{host="h1", tenant="fake"}'
+        values: "0+100x10 1000x40"
+    alert_rule_test:
+      - eval_time: 20m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts: []
+      - eval_time: 45m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "Loki has received no log lines for 15 minutes"
+
+  # Loki only creates the counter on its first accepted line, so after a restart
+  # with nothing arriving there is no series at all
+  - name: Loki receives nothing after a restart
+    interval: 1m
+    input_series:
+      - series: 'up{host="h1", job="loki"}'
+        values: "1x40"
+    alert_rule_test:
+      - eval_time: 30m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "Loki has received no log lines for 15 minutes"
+
+  - name: Loki's counter disappears at a restart and doesn't come back
+    interval: 1m
+    input_series:
+      - series: 'up{host="h1", job="loki"}'
+        values: "1x70"
+      - series: 'loki_distributor_lines_received_total{host="h1", job="loki"}'
+        values: "0+10x10"
+    alert_rule_test:
+      - eval_time: 15m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts: []
+      - eval_time: 60m
+        groupname: monitoring
+        alertname: LokiNotReceivingLogs
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "Loki has received no log lines for 15 minutes"
+
+  # vmalert-tool's clock starts at 2000-01-01 (946684800); one certificate
+  # expires 10 days later, the other 60
+  - name: a certificate close to expiry
+    interval: 5m
+    input_series:
+      - series: 'traefik_tls_certs_not_after{host="h1", cn="soon.example"}'
+        values: "947548800x30"
+      - series: 'traefik_tls_certs_not_after{host="h1", cn="later.example"}'
+        values: "952869600x30"
+    alert_rule_test:
+      - eval_time: 2h
+        groupname: monitoring
+        alertname: CertificateExpiringSoon
+        exp_alerts:
+          - exp_labels: {host: h1, cn: soon.example, severity: warning}
+            exp_annotations:
+              summary: "The certificate for soon.example expires in 9.917 days; Let's Encrypt renewals may be failing"

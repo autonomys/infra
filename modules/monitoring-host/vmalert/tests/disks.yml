@@ -1,0 +1,308 @@
+rule_files:
+  - ../rules/disks.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: a RAID array losing a member
+    interval: 1m
+    input_series:
+      - series: 'node_md_disks_required{host="h1", device="md2"}'
+        values: "2x30"
+      - series: 'node_md_disks{host="h1", device="md2", state="active"}'
+        values: "2x9 1x20"
+      - series: 'node_md_disks{host="h1", device="md2", state="failed"}'
+        values: "0x9 1x20"
+    alert_rule_test:
+      - eval_time: 12m
+        groupname: disks
+        alertname: RaidDegraded
+        exp_alerts: []
+      - eval_time: 16m
+        groupname: disks
+        alertname: RaidDegraded
+        exp_alerts:
+          - exp_labels: {host: h1, device: md2, severity: critical}
+            exp_annotations:
+              summary: "md2 is running with 1 member(s) missing"
+      - eval_time: 12m
+        groupname: disks
+        alertname: RaidMemberFailed
+        exp_alerts:
+          - exp_labels: {host: h1, device: md2, state: failed, severity: critical}
+            exp_annotations:
+              summary: "md2 has 1 failed member(s)"
+
+  - name: a disk dropping off the bus
+    interval: 1m
+    input_series:
+      - series: 'smartctl_devices{host="h1", job="smartctl"}'
+        values: "2x5 1x20"
+      - series: 'node_disks_expected{host="h1", job="node"}'
+        values: "2x25"
+    alert_rule_test:
+      - eval_time: 10m
+        groupname: disks
+        alertname: DiskMissing
+        exp_alerts: []
+      - eval_time: 20m
+        groupname: disks
+        alertname: DiskMissing
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "smartctl sees 1 disk(s), fewer than this server should have"
+
+  - name: a missing disk while a server's series exist twice
+    interval: 1m
+    input_series:
+      - series: 'smartctl_devices{host="h1", job="smartctl", instance="127.0.0.1:9633"}'
+        values: "1x20"
+      - series: 'smartctl_devices{host="h1", job="smartctl", instance="h1"}'
+        values: "1x20"
+      - series: 'node_disks_expected{host="h1", job="node", instance="127.0.0.1:9100"}'
+        values: "2x20"
+      - series: 'node_disks_expected{host="h1", job="node", instance="h1"}'
+        values: "2x20"
+    alert_rule_test:
+      - eval_time: 15m
+        groupname: disks
+        alertname: DiskMissing
+        exp_alerts:
+          - exp_labels: {host: h1, severity: critical}
+            exp_annotations:
+              summary: "smartctl sees 1 disk(s), fewer than this server should have"
+
+  - name: SMART failure and wear
+    interval: 1m
+    input_series:
+      - series: 'smartctl_device_smart_status{host="h1", device="nvme0"}'
+        values: "1x5 0x20"
+      - series: 'smartctl_device_percentage_used{host="h1", device="nvme1"}'
+        values: "95x90"
+      - series: 'smartctl_device_attribute{host="h1", device="sda", attribute_name="Percent_Lifetime_Remain", attribute_value_type="value"}'
+        values: "8x90"
+      - series: 'smartctl_device_attribute{host="h1", device="sdb", attribute_name="Wear_Leveling_Count", attribute_value_type="value"}'
+        values: "99x90"
+    alert_rule_test:
+      - eval_time: 20m
+        groupname: disks
+        alertname: SmartFailed
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme0, severity: critical}
+            exp_annotations:
+              summary: "nvme0 fails its SMART health check"
+      - eval_time: 70m
+        groupname: disks
+        alertname: DiskWearHigh
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme1, severity: warning}
+            exp_annotations:
+              summary: "nvme1 is near the end of its rated life"
+          - exp_labels: {host: h1, device: sda, attribute_name: Percent_Lifetime_Remain, attribute_value_type: value, severity: warning}
+            exp_annotations:
+              summary: "sda is near the end of its rated life"
+
+  - name: media errors alert on a rise, not on old errors
+    interval: 1h
+    input_series:
+      - series: 'smartctl_device_media_errors{host="h1", device="nvme0"}'
+        values: "73x30"
+      - series: 'smartctl_device_media_errors{host="h1", device="nvme1"}'
+        values: "0x25 2x5"
+    alert_rule_test:
+      - eval_time: 28h
+        groupname: disks
+        alertname: MediaErrorsRising
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme1, severity: warning}
+            exp_annotations:
+              summary: "nvme1 logged new media or uncorrectable errors in the last 24 hours"
+
+  # Each of these is old or falling counts, never a new error
+  - name: media errors already present when a disk first reports
+    interval: 1h
+    input_series:
+      - series: 'smartctl_device_media_errors{host="h2", device="nvme0"}'
+        values: "5x30"
+      - series: 'smartctl_device_attribute{host="h2", device="sda", attribute_name="Current_Pending_Sector", attribute_value_type="raw"}'
+        values: "8x30"
+    alert_rule_test:
+      - eval_time: 12h
+        groupname: disks
+        alertname: MediaErrorsRising
+        exp_alerts: []
+
+  - name: media errors carried over when a disk's labels change
+    interval: 1h
+    input_series:
+      - series: 'smartctl_device_media_errors{host="h3", device="nvme0", instance="127.0.0.1:9633"}'
+        values: "5x10"
+      - series: 'smartctl_device_media_errors{host="h3", device="nvme0", instance="h3"}'
+        values: "_x10 5x20"
+    alert_rule_test:
+      - eval_time: 15h
+        groupname: disks
+        alertname: MediaErrorsRising
+        exp_alerts: []
+
+  - name: pending sectors falling as they are remapped
+    interval: 1h
+    input_series:
+      - series: 'smartctl_device_attribute{host="h4", device="sda", attribute_name="Current_Pending_Sector", attribute_value_type="raw"}'
+        values: "8x50 2x20"
+    alert_rule_test:
+      - eval_time: 55h
+        groupname: disks
+        alertname: MediaErrorsRising
+        exp_alerts: []
+
+  - name: a disk starting to use spare blocks
+    interval: 5m
+    input_series:
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme0"}'
+        values: "100x3 97x30"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme1"}'
+        values: "100x33"
+    alert_rule_test:
+      - eval_time: 1h
+        groupname: disks
+        alertname: SpareBlocksUsed
+        exp_alerts: []
+      - eval_time: 2h
+        groupname: disks
+        alertname: SpareBlocksUsed
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme0, severity: warning}
+            exp_annotations:
+              summary: "nvme0 has started using spare blocks (97% left)"
+
+  - name: a SATA disk's uncorrectable count rising
+    interval: 1h
+    input_series:
+      - series: 'smartctl_device_attribute{host="h5", device="sda", attribute_name="Reported_Uncorrect", attribute_value_type="raw"}'
+        values: "0x25 3x5"
+    alert_rule_test:
+      - eval_time: 28h
+        groupname: disks
+        alertname: MediaErrorsRising
+        exp_alerts:
+          - exp_labels: {host: h5, device: sda, attribute_name: Reported_Uncorrect, attribute_value_type: raw, severity: warning}
+            exp_annotations:
+              summary: "sda logged new media or uncorrectable errors in the last 24 hours"
+
+  - name: a filesystem almost full raises both severities
+    interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{host="h2", mountpoint="/data", fstype="xfs"}'
+        values: "2x40"
+      - series: 'node_filesystem_size_bytes{host="h2", mountpoint="/data", fstype="xfs"}'
+        values: "100x40"
+    alert_rule_test:
+      - eval_time: 30m
+        groupname: disks
+        alertname: FilesystemNearlyFull
+        exp_alerts:
+          - exp_labels: {host: h2, mountpoint: /data, fstype: xfs, severity: warning}
+            exp_annotations:
+              summary: "/data has 2% free"
+          - exp_labels: {host: h2, mountpoint: /data, fstype: xfs, severity: critical}
+            exp_annotations:
+              summary: "/data has 2% free"
+
+  - name: a filesystem filling up
+    interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{host="h1", mountpoint="/srv", fstype="ext4"}'
+        values: "20x10 5x30"
+      - series: 'node_filesystem_size_bytes{host="h1", mountpoint="/srv", fstype="ext4"}'
+        values: "100x40"
+      - series: 'node_filesystem_avail_bytes{host="h1", mountpoint="/run", fstype="tmpfs"}'
+        values: "0x40"
+      - series: 'node_filesystem_size_bytes{host="h1", mountpoint="/run", fstype="tmpfs"}'
+        values: "100x40"
+    alert_rule_test:
+      - eval_time: 30m
+        groupname: disks
+        alertname: FilesystemNearlyFull
+        exp_alerts:
+          - exp_labels: {host: h1, mountpoint: /srv, fstype: ext4, severity: warning}
+            exp_annotations:
+              summary: "/srv has 5% free"
+
+  - name: a server going quiet
+    interval: 1m
+    input_series:
+      - series: 'up{host="h1", job="node"}'
+        values: "1x10"
+      - series: 'up{host="h2", job="node"}'
+        values: "1x40"
+      # h2 also had a target that went away, which mustn't make h2 look silent
+      - series: 'up{host="h2", job="node", instance="127.0.0.1:9100"}'
+        values: "1x10"
+    alert_rule_test:
+      - eval_time: 30m
+        groupname: disks
+        alertname: ServerSilent
+        exp_alerts:
+          - exp_labels: {host: h1, severity: warning}
+            exp_annotations:
+              summary: "No metrics from h1 for 20m 0s"
+
+  - name: a server down for more than a day, then back
+    interval: 5m
+    input_series:
+      - series: 'up{host="h1", job="node"}'
+        values: "1x2 _x330 1x10"
+      - series: 'up{host="h2", job="node"}'
+        values: "1x350"
+    alert_rule_test:
+      - eval_time: 26h
+        groupname: disks
+        alertname: ServerSilent
+        exp_alerts:
+          - exp_labels: {host: h1, severity: warning}
+            exp_annotations:
+              summary: "No metrics from h1 for 1d 1h 50m 0s"
+      - eval_time: 28h40m
+        groupname: disks
+        alertname: ServerSilent
+        exp_alerts: []
+
+  - name: a boot disk without GRUB
+    interval: 1m
+    input_series:
+      - series: 'node_bootloader_grub_present{host="h1", device="nvme0n1"}'
+        values: "1x10"
+      - series: 'node_bootloader_grub_present{host="h1", device="nvme1n1"}'
+        values: "0x10"
+    alert_rule_test:
+      - eval_time: 5m
+        groupname: disks
+        alertname: BootloaderMissing
+        exp_alerts:
+          - exp_labels: {host: h1, device: nvme1n1, severity: critical}
+            exp_annotations:
+              summary: "nvme1n1 has no GRUB boot code, so the server can't boot from it if the other disk fails"
+
+  # vmalert-tool's clock starts at 2000-01-01 (946684800), when both files were
+  # last written; only the bootloader check's file counts
+  - name: the bootloader check stopping
+    interval: 5m
+    input_series:
+      - series: 'node_textfile_mtime_seconds{host="h1", file="/textfiles/bootloader.prom"}'
+        values: "946684800x330"
+      - series: 'node_textfile_mtime_seconds{host="h1", file="/textfiles/disks.prom"}'
+        values: "946684800x330"
+    alert_rule_test:
+      - eval_time: 20h
+        groupname: disks
+        alertname: BootloaderCheckStale
+        exp_alerts: []
+      - eval_time: 26h
+        groupname: disks
+        alertname: BootloaderCheckStale
+        exp_alerts:
+          - exp_labels: {host: h1, file: /textfiles/bootloader.prom, severity: warning}
+            exp_annotations:
+              summary: "The bootloader check last ran 1d 2h 0m 0s ago"
