@@ -77,7 +77,7 @@ data among them.
 Before starting anything, the deploy resolves the compose model and refuses to
 continue if a service would publish a port beyond `127.0.0.1` and the host's
 mesh address, other than the node's P2P ports 30333 and 30433. Ports Docker
-publishes bypass UFW. Both roles run the same check,
+publishes bypass UFW. Every role's deploy runs the same check,
 `scripts/compose-port-guard.py`.
 
 The node runs with `--chain chronos`, `--sync full`, `--blocks-pruning archive`,
@@ -217,23 +217,26 @@ before the gateway's deploy runs against it:
      -target=module.files_gateway.module.mesh -target=module.public.module.mesh
    ```
 
+   and apply that plan with `./resources/terraform/manage.sh auto-drive-staging apply`.
+
 4. Restore the newest dump, on the gateway host. It refuses a database that
    already holds either index:
 
    ```bash
    sudo ls /var/backups/auto-drive-gateway
-   cd ~/deploy/auto-drive-gateway && sudo docker compose run --rm --no-deps -T gateway-db-backup restore gateway-<newest>.dump
+   dump="$(sudo ls /var/backups/auto-drive-gateway | grep -E '^gateway-[0-9TZ]+\.dump$' | sort | tail -n 1)"
+   cd ~/deploy/auto-drive-gateway && sudo docker compose run --rm --no-deps -T gateway-db-backup restore "$dump"
    ```
 
    It runs as one transaction, so nothing is visible until it finishes, and a
    failed restore leaves the database empty to try again.
 
-5. To restore an older dump instead, such as when the newest is damaged, name
-   it in the same command. The database is then behind the floor on both
-   indexes, which `dag_indexer.accept_rewind_to` can't pass, as it only lowers
-   the DAG height. For the next apply, set `database_start_empty` to the
-   floor's name, which the deploy's refusal gives: it removes the floor, and
-   the indexes resume from that dump.
+5. To restore an older dump instead, such as when the newest is damaged, set
+   `dump` to its name before the restore. The database is then behind the
+   floor on both indexes, which `dag_indexer.accept_rewind_to` can't pass, as
+   it only lowers the DAG height. For the next apply, set
+   `database_start_empty` to the floor's name, which the deploy's refusal
+   gives: it removes the floor, and the indexes resume from that dump.
 6. Plan and apply in full. The deploy finds the database at the floor, or past
    it with `database_start_empty`, the migrations find their records, the apps
    start again, and the index resumes where the dump left it. Take
@@ -543,13 +546,16 @@ Onboarding is for staff. Auth onboards anyone who presents a valid provider
 token, and onboarding is what gives a user an organization, API keys and an
 upload allowance. So nginx refuses the onboarding route
 (`public_onboarding = false`), and it answers only on auth's own port, which
-needs SSH access to the host:
+needs SSH access to the host. With `GITHUB_TOKEN` holding a GitHub token of
+yours:
 
 ```bash
-ssh -L 3040:127.0.0.1:3040 auto-drive-staging-private
+ssh -f -N -L 3040:127.0.0.1:3040 auto-drive-staging-private
 curl -X POST http://127.0.0.1:3040/users/@me/onboard \
-  -H "Authorization: Bearer <a GitHub token of yours>" -H "X-Auth-Provider: github"
+  -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-Auth-Provider: github"
 ```
+
+The tunnel stays open in the background until its `ssh` is stopped.
 
 That is all the rule keeps to staff. Anyone with a provider account can still
 sign in: auth gives an account that is not onboarded a session. It has no
@@ -853,9 +859,10 @@ Prerequisites:
 ```
 
 The apply bootstraps each host, brings up its mesh interface, then deploys its
-role: on the gateway the node, which fails the apply if it is not running, or
-restarts, within 30 seconds of starting; on the services host Postgres and
-RabbitMQ, as in "The services role"; on the public backend the migrations, then
+role: on the gateway the node and the apps, failing the apply unless each is
+running within 300 seconds and none restarts in the 30 seconds after; on the
+services host Postgres and RabbitMQ, as in "The services role"; on the public
+backend the migrations, then
 nginx, its certificate and the services, as in "The public backend role"; on
 the private backend the same without the migrations, then auth; and on the
 gateway and the public backend, the farmer and its node. After the first
@@ -870,9 +877,11 @@ terraform -chdir=resources/terraform/auto-drive-staging plan -out=auto-drive-sta
   -target=module.public.module.mesh
 ```
 
-Then record the key, plan and apply in full. The private backend is the same,
-with `-target=module.private.module.mesh`; auth deploys with it in the full
-apply.
+Apply a plan like this one with
+`./resources/terraform/manage.sh auto-drive-staging apply`, which applies the
+plan file it writes. Then record the key, plan and apply in full. The private
+backend is the same, with `-target=module.private.module.mesh`; auth deploys
+with it in the full apply.
 
 The gateway's deploy runs its apps' migrations against the services host's
 Postgres over the mesh too, so a new gateway's first apply stops at its mesh the
@@ -891,24 +900,25 @@ full.
 ## Verifying
 
 ```bash
-./resources/terraform/auto-drive-staging/validate.sh files-gateway                      # SSH host "auto-drive-files-gateway-chronos"
-./resources/terraform/auto-drive-staging/validate.sh services                           # SSH host "auto-drive-staging-services"
-./resources/terraform/auto-drive-staging/validate.sh public                             # SSH host "auto-drive-staging-public"
-./resources/terraform/auto-drive-staging/validate.sh private                            # SSH host "auto-drive-staging-private"
-./resources/terraform/auto-drive-staging/validate.sh files-gateway ubuntu@<HOST_IPv4>
+./resources/terraform/auto-drive-staging/validate.sh files-gateway  # SSH host "auto-drive-files-gateway-chronos"
+./resources/terraform/auto-drive-staging/validate.sh services       # SSH host "auto-drive-staging-services"
+./resources/terraform/auto-drive-staging/validate.sh public         # SSH host "auto-drive-staging-public"
+./resources/terraform/auto-drive-staging/validate.sh private        # SSH host "auto-drive-staging-private"
 ```
 
-Every check only reads, and none prints a private key or a password. The
-services and backend hosts' compose hash checks have Compose read their env
-files, to hash them as the deploy does. It covers
-what `terraform plan` cannot see: RAID 1 on `/`, swap and `/boot` with both
-members active and in sync, GRUB boot code on both disks, SSH hardening, the
-firewall, that nothing but the role's ports listens beyond loopback and the mesh
-address, and the mesh: `wg0`'s address and
-port, that it has its key loaded, the key and config files' permissions, that
-the peers are exactly the other members and each answers a ping over the mesh,
-that UFW opens the mesh port to peers only, Docker's ordering after `wg0`, and
-the `DOCKER-USER` rule.
+Each role's SSH host is its hostname, as `~/.ssh/config` names it. Without such
+an entry, give the host as a second argument: `ubuntu@` and its address.
+
+Every check only reads, and none prints a private key or a password. Where a
+service has an env file, its compose hash check has Compose read it, to hash it
+as the deploy does. `validate.sh` covers what `terraform plan` cannot see:
+RAID 1 on `/`, swap and `/boot` with both members active and in sync, GRUB boot
+code on both disks, SSH hardening, the firewall, that nothing but the role's
+ports listens beyond loopback and the mesh address, and the mesh: `wg0`'s
+address and port, that it has its key loaded, the key and config files'
+permissions, that the peers are exactly the other members and each answers a
+ping over the mesh, that UFW opens the mesh port to peers only, Docker's
+ordering after `wg0`, and the `DOCKER-USER` rule.
 
 On the gateway it then checks that the running node matches the compose files,
 the node's image, flags, health, peers and log driver, that the apps run their
@@ -973,7 +983,7 @@ fail, which is expected. `cat /proc/mdstat` on the host shows progress.
 
 ### Confirming the node is syncing
 
-On the host:
+On the gateway host:
 
 ```bash
 curl -s -H 'Content-Type: application/json' \
@@ -1036,13 +1046,15 @@ Push failures show in the Docker daemon's journal as `error sending batch`, whic
   restart anything else that uses it after updating its settings.
 - To re-run a bootstrap without a change, plan with
   `-replace=module.<files_gateway, services, public or private>.module.host.null_resource.bootstrap`.
-  The host's mesh and deploy re-run with it, and auth's with the private host's.
+  The host's mesh and deploy re-run with it, auth's with the private host's,
+  and each farmer's with its host's.
 - To move the backend to a new image, first list what changed upstream since
-  the commit the compose file mirrors, and bring the compose file and the
-  module's nginx templates up to date with it:
+  the commit the compose file mirrors, up to the new commit in `NEW_COMMIT`
+  (`main` if unset), and bring the compose file and the module's nginx
+  templates up to date with it:
 
   ```bash
-  ./modules/auto-drive-backend-host/upstream-diff.sh <new commit>
+  ./modules/auto-drive-backend-host/upstream-diff.sh "$NEW_COMMIT"
   ```
 
   Then move the `# upstream:` line, and the backend image's tag (the same

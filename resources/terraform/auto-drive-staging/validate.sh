@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Verify that a live Auto Drive staging host matches its spec. Every check only
-# reads; none prints secrets or keys or touches service data. The services and
-# backend hosts' compose hash checks have Compose read their env files, to hash
-# them as the deploy does. The gateway's database checks run gateway-db.sh's
+# reads; none prints secrets or keys or touches service data. Where a service
+# has an env file, its compose hash check has Compose read it, to hash it as the
+# deploy does. The gateway's database checks run gateway-db.sh's
 # read-only commands in a one-off container of its backup service.
 # Usage: ./validate.sh <role> [ssh-host]
 #   role: files-gateway, services, public or private
