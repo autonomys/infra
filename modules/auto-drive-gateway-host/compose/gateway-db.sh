@@ -20,6 +20,7 @@ BACKUPS=/backups
 FLOOR_DIR="$BACKUPS/floor"
 FLOOR="$FLOOR_DIR/progress-floor"
 KEEP=7
+KEEP_SUSPECT=2
 SCHEMA="dag-indexer"
 
 export PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGDATABASE="$DB_DATABASE" PGUSER="$DB_USER" PGPASSWORD="$DB_PASS"
@@ -95,8 +96,9 @@ dumps() {
   find "$BACKUPS" -maxdepth 1 -name 'gateway-*.dump' -printf '%f\n' | sort
 }
 
+# $1 what is behind, $2 the floor
 refusal() {
-  echo "The gateway database's progress is behind the last backup's ($1). Restore the newest dump, $(dumps | tail -1), as the staging README's \"Restoring the gateway database\" describes. To carry on from what the database holds instead, such as an older dump restored on purpose, set database_start_empty for one apply: it removes the floor, so the indexes resume from that dump, or start over on an empty database." >&2
+  echo "The gateway database's progress is behind the last backup's ($1). Restore the newest dump, $(dumps | tail -1), as the staging README's \"Restoring the gateway database\" describes. To carry on from what the database holds instead, such as an older dump restored on purpose, set database_start_empty = \"$(field from "$2")\" for one apply: it removes this floor, so the indexes resume from that dump, or start over on an empty database." >&2
 }
 
 backup() {
@@ -115,7 +117,10 @@ backup() {
   if [ -n "$regress" ]; then
     mv "$BACKUPS/$name.dump" "$BACKUPS/$name.dump.suspect"
     mv "$BACKUPS/$name.progress" "$BACKUPS/$name.progress.suspect"
-    die "$name is behind the last backup's progress ($regress), so it is kept as $name.dump.suspect and doesn't count towards the $KEEP kept"
+    find "$BACKUPS" -maxdepth 1 -name 'gateway-*.dump.suspect' -printf '%f\n' | sort | head -n "-$KEEP_SUSPECT" | while read -r old; do
+      rm -f "$BACKUPS/$old" "$BACKUPS/${old%.dump.suspect}.progress.suspect"
+    done
+    die "$name is behind the last backup's progress ($regress), so it is kept as $name.dump.suspect, one of the $KEEP_SUSPECT newest set aside, and doesn't count towards the $KEEP kept"
   fi
   write_floor "$before" "$name"
   dumps | head -n "-$KEEP" | while read -r old; do
@@ -148,8 +153,8 @@ guard() {
     echo "The gateway database is at or above the last backup's progress"
     return
   fi
-  if [ "${START_EMPTY:-}" = true ]; then
-    echo "The gateway database is behind the last backup ($regress); database_start_empty is set, so the floor goes and the indexes carry on from what the database holds: from a restored older dump, or from the start if it's empty"
+  if [ -n "${START_EMPTY:-}" ] && [ "$START_EMPTY" = "$(field from "$floor")" ]; then
+    echo "The gateway database is behind the last backup ($regress); database_start_empty names this floor, so it goes and the indexes carry on from what the database holds: from a restored older dump, or from the start if it's empty"
     return
   fi
   if [ -n "${ACCEPT_REWIND_TO:-}" ]; then
@@ -159,23 +164,27 @@ guard() {
       return
     fi
   fi
-  refusal "$regress"
+  if [ -n "${START_EMPTY:-}" ]; then
+    echo "database_start_empty names $START_EMPTY, and the floor is $(field from "$floor"), so it is left in place." >&2
+  fi
+  refusal "$regress" "$floor"
   exit 1
 }
 
-# Lowers the floor only while the database is behind it, so an override left
-# set does nothing once the database has caught up
+# Changes the floor only while the database is behind it, and database_start_empty
+# only the floor it names, so an override left set does nothing once the
+# database has caught up and a later backup has written a new floor
 reset_floor() {
   local floor now
   floor="$(read_floor)"
   [ -n "$floor" ] || return 0
   now="$(progress)"
   [ -n "$(behind "$now" "$floor")" ] || return 0
-  if [ "${START_EMPTY:-}" = true ]; then
+  if [ -n "${START_EMPTY:-}" ] && [ "$START_EMPTY" = "$(field from "$floor")" ]; then
     rm -f "$FLOOR"
-    echo "Removed the progress floor, as database_start_empty asks: the indexes carry on from what the database holds"
+    echo "Removed the progress floor $START_EMPTY, as database_start_empty asks: the indexes carry on from what the database holds"
   elif [ -n "${ACCEPT_REWIND_TO:-}" ]; then
-    write_floor "$(rewound_floor "$floor")" accept_rewind_to
+    write_floor "$(rewound_floor "$floor")" "rewound-$(date -u +%Y%m%dT%H%M%SZ)"
     echo "Lowered the progress floor's DAG height to $ACCEPT_REWIND_TO, as accept_rewind_to asks"
   fi
 }
@@ -200,7 +209,8 @@ meta() {
   fi
 }
 
-# The sha256 recorded on the schema; "absent" before the indexer creates it
+# The sha256 recorded on the schema: "absent" when there is no schema, and
+# empty when it has none recorded
 schema_hash() {
   local present comment
   present="$(sql "SELECT to_regnamespace('\"$SCHEMA\"') IS NOT NULL")"
@@ -212,19 +222,23 @@ schema_hash() {
   sed -n 's/^schema.graphql sha256 \([0-9a-f]\{64\}\)$/\1/p' <<< "$comment"
 }
 
+# Run before the indexer starts. A missing schema is created here with the hash,
+# as the indexer takes an empty schema it finds as it would one it made, so the
+# schema never exists without it.
 record_schema() {
   local recorded
   [[ "$1" =~ ^[0-9a-f]{64}$ ]] || die "record-schema takes schema.graphql's sha256"
   recorded="$(schema_hash)"
   if [ "$recorded" = absent ]; then
-    echo "The $SCHEMA schema doesn't exist yet; the next deploy records schema.graphql's hash on it"
+    sql_write "CREATE SCHEMA \"$SCHEMA\"; COMMENT ON SCHEMA \"$SCHEMA\" IS 'schema.graphql sha256 $1'" > /dev/null
+    echo "Created the $SCHEMA schema, recording schema.graphql $1"
     return
   fi
   if [ "$recorded" = "$1" ]; then
     return
   fi
-  if [ -n "$recorded" ] && [ "${ACCEPT_SCHEMA_SHA256:-}" != "$1" ]; then
-    die "The $SCHEMA schema records schema.graphql $recorded, not $1"
+  if [ "${ACCEPT_SCHEMA_SHA256:-}" != "$1" ]; then
+    die "The $SCHEMA schema records schema.graphql ${recorded:-nothing}, not $1"
   fi
   sql_write "COMMENT ON SCHEMA \"$SCHEMA\" IS 'schema.graphql sha256 $1'" > /dev/null
   echo "Recorded schema.graphql $1 on the $SCHEMA schema"
