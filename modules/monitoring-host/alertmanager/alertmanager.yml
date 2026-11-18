@@ -22,7 +22,7 @@ route:
 
 inhibit_rules:
   - source_matchers: ['alertname="SmartFailed"']
-    target_matchers: ['alertname="DiskWearHigh"']
+    target_matchers: ['alertname="SpareBlocksLow"']
     equal: [host, device]
   - source_matchers: ['alertname="RaidMemberFailed"']
     target_matchers: ['alertname="RaidDegraded"']

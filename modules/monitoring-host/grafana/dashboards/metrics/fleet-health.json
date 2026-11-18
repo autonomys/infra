@@ -320,7 +320,7 @@
       "id": 5,
       "type": "stat",
       "title": "Disks failing SMART",
-      "description": "Failed overall health, or any NVMe critical warning bit, which these disks set once worn out",
+      "description": "Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -338,11 +338,25 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "count(max by (host, device) (smartctl_device_smart_status{host=~\"$host\"} == 0 or smartctl_device_critical_warning{host=~\"$host\"} > 0)) or vector(0)",
+          "expr": "count(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
-          "format": "time_series"
+          "format": "time_series",
+          "legendFormat": "Failed"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "B",
+          "expr": "count(max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) unless on(host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Worn out"
         }
       ],
       "options": {
@@ -355,7 +369,7 @@
         },
         "colorMode": "background",
         "graphMode": "none",
-        "textMode": "value",
+        "textMode": "value_and_name",
         "justifyMode": "center",
         "orientation": "auto",
         "showPercentChange": false
@@ -381,7 +395,56 @@
           "unit": "none",
           "decimals": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Worn out"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -1051,7 +1114,7 @@
       "id": 15,
       "type": "table",
       "title": "Storage",
-      "description": "One row per server: RAID arrays, disks and boot code. A blank cell means the server doesn't report that metric.",
+      "description": "One row per server: RAID arrays, disks and boot code. A blank cell means the server doesn't report that metric. SMART is the worst of the server's disks: Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1105,7 +1168,7 @@
             "uid": "victoriametrics"
           },
           "refId": "L",
-          "expr": "count by (host) (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"} == 0 or smartctl_device_critical_warning{host=~\"$host\"} > 0)) or max by (host) (smartctl_devices{host=~\"$host\"}) * 0",
+          "expr": "max by (host) ((max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0))",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1191,7 +1254,7 @@
               "Value #I": "Degraded arrays",
               "Value #J": "Disks",
               "Value #K": "Disks missing",
-              "Value #L": "Failing SMART",
+              "Value #L": "SMART",
               "Value #M": "Most worn disk",
               "Value #N": "Least spare",
               "Value #O": "Media errors",
@@ -1350,7 +1413,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Failing SMART"
+              "options": "SMART"
             },
             "properties": [
               {
@@ -1363,8 +1426,12 @@
                       "value": null
                     },
                     {
-                      "color": "red",
+                      "color": "orange",
                       "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 2
                     }
                   ]
                 }
@@ -1379,6 +1446,26 @@
               {
                 "id": "mappings",
                 "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Passed",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "Worn out",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  },
                   {
                     "type": "special",
                     "options": {
@@ -1419,7 +1506,7 @@
                     },
                     {
                       "color": "red",
-                      "value": 90
+                      "value": 100
                     }
                   ]
                 }
@@ -1470,7 +1557,7 @@
                     },
                     {
                       "color": "orange",
-                      "value": 10
+                      "value": 11
                     },
                     {
                       "color": "green",
@@ -1617,7 +1704,7 @@
       "id": 8,
       "type": "table",
       "title": "Disks",
-      "description": "One row per disk, as smartctl names it. Wear is the share of the disk's rated endurance used, and can pass 100%.",
+      "description": "One row per disk, as smartctl names it. Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault. Wear is the share of the disk's rated endurance used, and can pass 100%.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1647,7 +1734,7 @@
             "uid": "victoriametrics"
           },
           "refId": "B",
-          "expr": "max by (host, device) (smartctl_device_smart_status{host=~\"$host\"})",
+          "expr": "(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1854,12 +1941,16 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "red",
+                      "color": "green",
                       "value": null
                     },
                     {
-                      "color": "green",
+                      "color": "orange",
                       "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 2
                     }
                   ]
                 }
@@ -1878,14 +1969,19 @@
                     "type": "value",
                     "options": {
                       "0": {
-                        "text": "Failed",
-                        "color": "red",
+                        "text": "Passed",
+                        "color": "green",
                         "index": 0
                       },
                       "1": {
-                        "text": "Passed",
-                        "color": "green",
+                        "text": "Worn out",
+                        "color": "orange",
                         "index": 1
+                      },
+                      "2": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 2
                       }
                     }
                   },
@@ -1937,6 +2033,15 @@
                 "id": "mappings",
                 "value": [
                   {
+                    "type": "value",
+                    "options": {
+                      "4": {
+                        "color": "orange",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
                     "type": "special",
                     "options": {
                       "match": "null",
@@ -1976,7 +2081,7 @@
                     },
                     {
                       "color": "red",
-                      "value": 90
+                      "value": 100
                     }
                   ]
                 }
@@ -2027,7 +2132,7 @@
                     },
                     {
                       "color": "orange",
-                      "value": 10
+                      "value": 11
                     },
                     {
                       "color": "green",
@@ -2655,7 +2760,7 @@
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           }
