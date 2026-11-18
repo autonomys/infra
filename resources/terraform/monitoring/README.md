@@ -21,6 +21,7 @@ box over SSH through `modules/monitoring-host`.
 | Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to the relay |
 | vmauth | `victoriametrics/vmauth:v1.155.0` | `127.0.0.1:8427` | Checks the metrics write credentials and passes the write paths to VictoriaMetrics |
 | Watchdog relay | `python:3.13.18-alpine3.24` | compose network only | Turns each Watchdog notification into the GET that Uptime Kuma 1.x's push route needs |
+| blackbox_exporter | `prom/blackbox-exporter:v0.29.1` | `127.0.0.1:9115` (host network) | Probes public endpoints from outside for vmagent: Chronos' RPC names |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
 only), then Traefik. Grafana reads Loki, VictoriaMetrics and Alertmanager on the
@@ -97,6 +98,7 @@ servers (`resources/terraform/host-agents`).
 | `modules/monitoring-host/alertmanager/` | Alert routing |
 | `modules/monitoring-host/vmauth/` | Template for vmauth's credentials file |
 | `modules/monitoring-host/watchdog-relay/` | The Watchdog relay to Uptime Kuma |
+| `modules/monitoring-host/blackbox/` | blackbox_exporter's probe modules |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
 
@@ -141,7 +143,8 @@ upgrades Docker if a newer release is out, which restarts every container.
 | Grafana datasources and dashboards | `modules/monitoring-host/grafana/` |
 | Third-party dashboards (grafana.com ID, revision, SHA-256) | `grafana_com_dashboards` in `modules/monitoring-host/main.tf` |
 | Metrics retention, insert size cap | `victoriametrics` command in `docker-compose.yml` |
-| What the box scrapes | `modules/monitoring-host/vmagent/scrape.yml` |
+| What the box scrapes, and the public endpoints it probes | `modules/monitoring-host/vmagent/scrape.yml` |
+| How a probe judges an endpoint | `modules/monitoring-host/blackbox/blackbox.yml` |
 | Alert rules | `modules/monitoring-host/vmalert/rules/` |
 | Alert routing, grouping and repeats | `modules/monitoring-host/alertmanager/alertmanager.yml` |
 | Paths each write credential may reach | `modules/monitoring-host/vmauth/auth.yml.tftpl` |

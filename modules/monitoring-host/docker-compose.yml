@@ -160,6 +160,22 @@ services:
       - --web.listen-address=127.0.0.1:9633
     logging: *local-logging
 
+  # Probes public endpoints from outside, as their users reach them, for the
+  # targets vmagent's probe jobs pass it
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.29.1
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    network_mode: host
+    labels:
+      monitoring.config-sha: ${BLACKBOX_CONFIG_SHA}
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+      - --web.listen-address=127.0.0.1:9115
+    volumes:
+      - ./blackbox:/etc/blackbox:ro
+    logging: *local-logging
+
   vmalert:
     image: victoriametrics/vmalert:v1.155.0
     container_name: vmalert

@@ -153,7 +153,7 @@ vm_expect() {
 }
 echo ""
 echo "[Metrics and alerting]"
-for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager vmauth watchdog-relay; do
+for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager vmauth watchdog-relay blackbox-exporter; do
   check "$svc running" \
     "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "$svc:running"
 done
@@ -161,7 +161,9 @@ check "VictoriaMetrics healthy" "curl -fsS http://127.0.0.1:8428/health" "OK"
 check "vmalert healthy" "curl -fsS http://127.0.0.1:8880/health" "OK"
 check "Alertmanager ready" "curl -fsS http://127.0.0.1:9093/-/ready" "OK"
 check "vmauth healthy" "curl -fsS http://127.0.0.1:8427/health" "OK"
-check "All 10 scrape targets present" "$(vm_expect 'count(up{host="monitoring-loki"})' 'v == 10' ten-targets)" "ten-targets"
+check "blackbox_exporter healthy" "curl -fsS http://127.0.0.1:9115/-/healthy" "Healthy"
+check "All 14 scrape targets present" "$(vm_expect 'count(up{host="monitoring-loki"})' 'v == 14' fourteen-targets)" "fourteen-targets"
+check "All 4 RPC probes reporting" "$(vm_expect 'count(probe_success{job="rpc-probe"})' 'v == 4' four-probes)" "four-probes"
 check "Every scrape target up" "$(vm_expect 'count(up{host="monitoring-loki"} == 0) or vector(0)' 'v == 0' all-up)" "all-up"
 check "SMART data for both disks" "$(vm_expect 'smartctl_devices{host="monitoring-loki"}' 'v == 2' two-disks)" "two-disks"
 check "Expected disk count published" "$(vm_expect 'node_disks_expected{host="monitoring-loki"}' 'v == 2' expected-two)" "expected-two"
