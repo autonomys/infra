@@ -81,6 +81,8 @@ tests:
         values: "0x20"
       - series: 'smartctl_device_critical_warning{host="h1", device="nvme0"}'
         values: "4x20"
+      - series: 'smartctl_device_percentage_used{host="h1", device="nvme0"}'
+        values: "183x20"
       - series: 'smartctl_device_available_spare{host="h1", device="nvme0"}'
         values: "100x20"
       - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme0"}'
@@ -95,9 +97,38 @@ tests:
         values: "0x20"
       - series: 'smartctl_device_critical_warning{host="h1", device="nvme2"}'
         values: "4x5 5x20"
+      - series: 'smartctl_device_percentage_used{host="h1", device="nvme2"}'
+        values: "140x20"
+      # 0x04 from media or internal errors, far from worn out
+      - series: 'smartctl_device_smart_status{host="h1", device="nvme3"}'
+        values: "1x5 0x20"
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme3"}'
+        values: "0x5 4x20"
+      - series: 'smartctl_device_percentage_used{host="h1", device="nvme3"}'
+        values: "2x20"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme3"}'
+        values: "100x20"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme3"}'
+        values: "10x20"
       - series: 'smartctl_device_available_spare{host="h1", device="nvme2"}'
         values: "12x5 10x20"
       - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme2"}'
+        values: "10x20"
+      # worn, and spare blocks at the threshold with only 0x04 set
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme4"}'
+        values: "4x20"
+      - series: 'smartctl_device_percentage_used{host="h1", device="nvme4"}'
+        values: "120x20"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme4"}'
+        values: "11x5 10x20"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme4"}'
+        values: "10x20"
+      # spare blocks below the threshold without the firmware's 0x01
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme5"}'
+        values: "0x20"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme5"}'
+        values: "12x5 9x20"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme5"}'
         values: "10x20"
       # SATA disks have no critical warning
       - series: 'smartctl_device_smart_status{host="h1", device="sda"}'
@@ -119,6 +150,15 @@ tests:
           - exp_labels: {host: h1, device: nvme2, severity: critical}
             exp_annotations:
               summary: "nvme2 fails its SMART health check"
+          - exp_labels: {host: h1, device: nvme3, severity: critical}
+            exp_annotations:
+              summary: "nvme3 fails its SMART health check"
+          - exp_labels: {host: h1, device: nvme4, severity: critical}
+            exp_annotations:
+              summary: "nvme4 fails its SMART health check"
+          - exp_labels: {host: h1, device: nvme5, severity: critical}
+            exp_annotations:
+              summary: "nvme5 fails its SMART health check"
           - exp_labels: {host: h1, device: sda, severity: critical}
             exp_annotations:
               summary: "sda fails its SMART health check"

@@ -320,7 +320,7 @@
       "id": 5,
       "type": "stat",
       "title": "Disks failing SMART",
-      "description": "Failed is what the provider replaces a disk for: spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, or a SATA disk failing its health check. Worn out is a disk whose only warning is 0x04, which these NVMe disks set once wear passes 100% and which the provider doesn't count as a fault.",
+      "description": "Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -338,7 +338,7 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "count(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
+          "expr": "count(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -351,7 +351,7 @@
             "uid": "victoriametrics"
           },
           "refId": "B",
-          "expr": "count(max by (host, device) (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1) unless on(host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
+          "expr": "count(max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) unless on(host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"})) or vector(0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1114,7 +1114,7 @@
       "id": 15,
       "type": "table",
       "title": "Storage",
-      "description": "One row per server: RAID arrays, disks and boot code. A blank cell means the server doesn't report that metric. SMART is the worst of the server's disks: Failed is what the provider replaces a disk for: spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, or a SATA disk failing its health check. Worn out is a disk whose only warning is 0x04, which these NVMe disks set once wear passes 100% and which the provider doesn't count as a fault.",
+      "description": "One row per server: RAID arrays, disks and boot code. A blank cell means the server doesn't report that metric. SMART is the worst of the server's disks: Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1168,7 +1168,7 @@
             "uid": "victoriametrics"
           },
           "refId": "L",
-          "expr": "max by (host) ((max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0))",
+          "expr": "max by (host) ((max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0))",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1704,7 +1704,7 @@
       "id": 8,
       "type": "table",
       "title": "Disks",
-      "description": "One row per disk, as smartctl names it. Failed is what the provider replaces a disk for: spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, or a SATA disk failing its health check. Worn out is a disk whose only warning is 0x04, which these NVMe disks set once wear passes 100% and which the provider doesn't count as a fault. Wear is the share of the disk's rated endurance used, and can pass 100%.",
+      "description": "One row per disk, as smartctl names it. Failed means spare blocks at or below the disk's threshold, an NVMe critical warning other than 0x04, 0x04 unless the disk is at 100% wear or more with spare blocks above the threshold, or a SATA disk failing its health check. Worn out is a disk at 100% wear or more, with spare blocks above the threshold, whose only warning is 0x04, which these NVMe disks set at that point and which the provider doesn't count as a fault. Wear is the share of the disk's rated endurance used, and can pass 100%.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1734,7 +1734,7 @@
             "uid": "victoriametrics"
           },
           "refId": "B",
-          "expr": "(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0)",
+          "expr": "(max by (host, device) ((smartctl_device_smart_status{host=~\"$host\"} == 0 unless on(host, device) smartctl_device_critical_warning{host=~\"$host\"}) or smartctl_device_critical_warning{host=~\"$host\"} - (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2) * 4 > 0 or (floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 unless on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"})) or smartctl_device_available_spare{host=~\"$host\"} <= smartctl_device_available_spare_threshold{host=~\"$host\"}) * 0 + 2) or (max by (host, device) ((floor(smartctl_device_critical_warning{host=~\"$host\"} / 4) % 2 == 1 and on(host, device) (smartctl_device_percentage_used{host=~\"$host\"} >= 100 and on(host, device) smartctl_device_available_spare{host=~\"$host\"} > smartctl_device_available_spare_threshold{host=~\"$host\"}))) * 0 + 1) or (max by (host, device) (smartctl_device_smart_status{host=~\"$host\"}) * 0)",
           "editorMode": "code",
           "instant": true,
           "range": false,
