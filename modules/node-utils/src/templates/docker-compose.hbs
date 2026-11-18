@@ -1,37 +1,14 @@
 version: "3.7"
 
-volumes:
 {{#unless farmer_node}}
+volumes:
     node_data: {}
-{{/unless}}
-    vmagentdata: {}
 
+{{/unless}}
 networks:
     node:
 
 services:
-    vmagent:
-        container_name: vmagent
-        image: victoriametrics/vmagent:latest
-        depends_on:
-            - "node"
-        ports:
-            - 8429:8429
-        networks:
-            - node
-        volumes:
-            - vmagentdata:/vmagentdata
-            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-        logging:
-            driver: json-file
-            options:
-                max-size: "10m"
-                max-file: "3"
-        command:
-            - "--httpListenAddr=0.0.0.0:8429"
-            - "--promscrape.config=/etc/prometheus/prometheus.yml"
-            - "--remoteWrite.url=http://vmetrics.subspace.network:8428/api/v1/write"
-
 {{#if rpc_node}}
     # traefik reverse proxy with automatic tls management using let encrypt
     traefik:
@@ -194,7 +171,7 @@ services:
         {{#if domain_node}}
             - "30334:30334/tcp"
         {{/if}}
-            - "9615:9615"
+            - "127.0.0.1:9615:9615"
         logging:
             driver: loki
             options:
