@@ -11,6 +11,14 @@ servers = {
     ipv4     = ""
     host_key = ""
   }
+  "mainnet-operator-0" = {
+    ipv4     = ""
+    host_key = ""
+  }
+  "mainnet-operator-1" = {
+    ipv4     = ""
+    host_key = ""
+  }
 }
 vmetrics_fleet_username = ""
 vmetrics_fleet_password = ""
