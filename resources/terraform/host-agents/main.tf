@@ -34,6 +34,16 @@ locals {
       disks        = 2
       scrape_ports = {}
     }
+    "mainnet-operator-0" = {
+      ssh_user     = "ubuntu"
+      disks        = 2
+      scrape_ports = { "subspace-node" = 9615 }
+    }
+    "mainnet-operator-1" = {
+      ssh_user     = "ubuntu"
+      disks        = 2
+      scrape_ports = { "subspace-node" = 9615 }
+    }
   }
 }
 
