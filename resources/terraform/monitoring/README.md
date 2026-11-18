@@ -251,6 +251,14 @@ Metrics > Fleet health summarises every server that sends metrics: whether it
 reports, CPU, memory and filesystems, RAID arrays, each disk's SMART health and
 wear, boot code, firing alerts, and trends.
 
+Metrics > Auto Drive staging shows the Auto Drive staging stack on Chronos: its
+four hosts, the nodes, the DAG index, the gateway database's backups and the
+backend processes, from the host agents' metrics, the containers' logs and the
+metrics the backends send. A tile reads "No data" when its source is missing,
+and the panel under the tiles lists what the dashboard doesn't cover. Its
+Publish workers tile counts heartbeat samples, so it relies on VictoriaMetrics
+keeping every sample: change the tile before setting `-dedup.minScrapeInterval`.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts
