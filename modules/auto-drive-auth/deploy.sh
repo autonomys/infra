@@ -70,7 +70,8 @@ compose_in "$STAGED_DIR" pull --policy missing
 
 # The migrations first, from the uploaded files, so a failed run stops the
 # deploy before anything is replaced. `up` runs them again, with nothing left
-# to apply and auth not waiting on them.
+# to apply and auth not waiting on them, and the deploy checks that run once
+# auth is up.
 echo "==> Running auth-migrate"
 compose_in "$STAGED_DIR" run --rm --no-deps -T auth-migrate
 
@@ -114,6 +115,20 @@ for _ in 1 2 3 4 5 6; do
     exit 1
   fi
 done
+
+# up's own auth-migrate container, not one a `run` left
+project="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$container")"
+migrate="$(docker ps -aq --filter "label=com.docker.compose.project=$project" \
+  --filter label=com.docker.compose.service=auth-migrate --filter label=com.docker.compose.oneoff=False)"
+if [ -z "$migrate" ]; then
+  echo "up started no auth-migrate, so the deploy can't tell its run succeeded" >&2
+  exit 1
+fi
+if [ "$(timeout 300 docker wait "$migrate" || true)" != 0 ]; then
+  docker logs --tail 5 "$migrate" >&2 || true
+  echo "auth-migrate, run again by up, failed or ran past 300s" >&2
+  exit 1
+fi
 
 docker image prune -af
 

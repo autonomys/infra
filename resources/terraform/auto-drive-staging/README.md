@@ -153,10 +153,11 @@ unless:
 
 A new image recreates the indexer, and the index resumes where it left off.
 `validate.sh` checks that the running bundle, `/app/dist/index.js`, is the
-pinned mapping. The index follows the chain's finalized head, which on Chronos
-trails the best block by five segments, about six days. The node moves it only
-when it archives a segment, about once a day, so the index mostly waits at it,
-and SubQuery's `/health` reports a waiting indexer as not healthy.
+pinned mapping. The index follows the chain's finalized head, which trails the
+best block by five to six segments, about 90,000 to 117,000 blocks on Chronos,
+or more than a week at its recent pace. The node moves it only when it
+archives a segment, every day or two, so the index mostly waits at it, and
+SubQuery's `/health` reports a waiting indexer as not healthy.
 
 On an empty or missing schema the indexer starts over from its start block,
 which takes a day or two on Chronos. So `dag-indexer-start-guard.js` runs before
@@ -231,10 +232,11 @@ before the gateway's deploy runs against it:
    It runs as one transaction, so nothing is visible until it finishes, and a
    failed restore leaves the database empty to try again.
 
-5. To restore an older dump instead, such as when the newest is damaged, set
-   `dump` to its name before the restore. The database is then behind the
-   floor on both indexes, which `dag_indexer.accept_rewind_to` can't pass, as
-   it only lowers the DAG height. For the next apply, set
+5. To restore an older dump instead, such as when the newest is damaged, run
+   step 4 with its `dump=` line set to that dump's name instead, as in
+   `dump=gateway-<timestamp>.dump`. The database is then behind the floor on
+   both indexes, which `dag_indexer.accept_rewind_to` can't pass, as it only
+   lowers the DAG height. For the next apply, set
    `database_start_empty` to the floor's name, which the deploy's refusal
    gives: it removes the floor, and the indexes resume from that dump.
 6. Plan and apply in full. The deploy finds the database at the floor, or past
@@ -243,7 +245,7 @@ before the gateway's deploy runs against it:
    `database_start_empty` out after that apply.
 7. Mappings the node archived while the indexer app was stopped are lost.
    `validate.sh` counts indexed DAG nodes without a mapping once the index has
-   passed their blocks, which on Chronos is up to six days later. A gap needs
+   passed their blocks, which on Chronos is up to two weeks later. A gap needs
    the mapping backfill in "Recovery from total host loss".
 
 ### Not yet
@@ -534,7 +536,8 @@ half of `hasura_jwt_public_key`, since a mismatched pair starts cleanly and
 then has every token refused. It runs the migrations next, so a migration that
 fails leaves the running auth as it was, then starts auth and fails the apply
 unless it turns healthy within 300 seconds and, for 30 more, keeps answering
-its health route without restarting.
+its health route without restarting, or if the migrations' second run, which
+`up` starts, fails.
 
 Auth needs no sign-in provider's credentials: for Google, Discord and GitHub it
 takes the provider's own token from the caller and asks the provider whose it
@@ -550,12 +553,15 @@ needs SSH access to the host. With `GITHUB_TOKEN` holding a GitHub token of
 yours:
 
 ```bash
-ssh -f -N -L 3040:127.0.0.1:3040 auto-drive-staging-private
+ssh -f -o ExitOnForwardFailure=yes -L 127.0.0.1:3040:127.0.0.1:3040 \
+  auto-drive-staging-private sleep 10 &&
 curl -X POST http://127.0.0.1:3040/users/@me/onboard \
-  -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-Auth-Provider: github"
+  -H "Authorization: Bearer ${GITHUB_TOKEN:?set GITHUB_TOKEN to a GitHub token of yours}" \
+  -H "X-Auth-Provider: github"
 ```
 
-The tunnel stays open in the background until its `ssh` is stopped.
+If something else holds local port 3040, `ssh` stops and the token is never
+sent. The tunnel closes by itself once the request is done.
 
 That is all the rule keeps to staff. Anyone with a provider account can still
 sign in: auth gives an account that is not onboarded a session. It has no
@@ -859,13 +865,17 @@ Prerequisites:
 ```
 
 The apply bootstraps each host, brings up its mesh interface, then deploys its
-role: on the gateway the node and the apps, failing the apply unless each is
-running within 300 seconds and none restarts in the 30 seconds after; on the
-services host Postgres and RabbitMQ, as in "The services role"; on the public
-backend the migrations, then
-nginx, its certificate and the services, as in "The public backend role"; on
-the private backend the same without the migrations, then auth; and on the
-gateway and the public backend, the farmer and its node. After the first
+role: on the gateway the node and the apps; on the services host Postgres and
+RabbitMQ, as in "The services role"; on the public backend the migrations,
+then nginx, its certificate and the services, as in "The public backend
+role"; on the private backend the same without the migrations, then auth; and
+on the gateway and the public backend, the farmer and its node. The gateway's
+deploy fails the apply unless each service is running within 300 seconds and
+none restarts in the 30 seconds after, and auth's unless auth is healthy
+within 300 seconds and stays so for 30. Both also fail it when the migrations
+`up` runs again fail. With the DAG indexer on, the gateway's waits for the
+database backup it starts and fails the apply if the backup fails or runs past
+an hour, the step most likely to make a gateway apply slow. After the first
 apply on a rebuilt host, record its new mesh public key (see "Adding a host to
 the mesh").
 
@@ -921,14 +931,16 @@ ping over the mesh, that UFW opens the mesh port to peers only, Docker's
 ordering after `wg0`, and the `DOCKER-USER` rule.
 
 On the gateway it then checks that the running node matches the compose files,
-the node's image, flags, health, peers and log driver, that the apps run their
-pinned images, that their migrations finished cleanly, that their logs are capped,
-their listeners and their health endpoints, and samples the node's sync state a
-minute apart to show whether it is importing blocks. For the DAG indexer it
-checks the container, its image, manifest, endpoint, flags, health and listener,
-that its bundle is the pinned mapping and its manifest Chronos' from block 1,
-its connection to the chain and how far its target trails the best block, that
-the index started at block 1, records the image's `schema.graphql`, and is
+the node's image, flags, health, peers and log driver, that the apps match the
+compose files and run their pinned images, that their migrations finished
+cleanly, that their logs are capped, their listeners and their health
+endpoints, and samples the node's sync state a minute apart to show whether it
+is importing blocks. For the DAG indexer it checks the container, its image,
+manifest, endpoint, flags, health and listener, that its bundle is the pinned
+mapping and its manifest Chronos' from block 1, its connection to the chain,
+that the node's finalized head trails its best block by no more than six
+segments and the indexer's target is that head, that the index started at
+block 1, records the image's `schema.graphql`, and is
 advancing or caught up, and that every DAG node indexed after Chronos' launch
 seeding has its object mapping. The seeding, which ends at block 29,505, wrote
 each node into its remark as hex text, and the node maps the text, so none of

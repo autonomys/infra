@@ -9,9 +9,10 @@
 # listens on none. Each app's migrations run in a one-shot service, which the
 # deploy runs before `up`, since the images don't run them. The apps don't
 # depend on them: `up` runs them again, and a rerun that failed would leave an
-# app `up` had just replaced unstarted. Both apps are recreated when
-# DATABASE_ID says the database was recreated, since each opens one Postgres
-# connection and never opens another.
+# app `up` had just replaced unstarted. The deploy checks those reruns once
+# the apps are up instead. Both apps are recreated when DATABASE_ID says the
+# database was recreated, since each opens one Postgres connection and never
+# opens another.
 # upstream: 7c5093bd26c399e7e6f484cfc9e27b59f2ea04a2
 
 volumes:

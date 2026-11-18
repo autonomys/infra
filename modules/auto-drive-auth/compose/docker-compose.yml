@@ -18,7 +18,7 @@ services:
   # Applies auth's database migrations, a run with nothing new changing nothing.
   # The deploy runs it before `up`. auth doesn't depend on it: `up` runs it
   # again, and a rerun that failed would leave an auth `up` had just replaced
-  # unstarted.
+  # unstarted. The deploy checks that rerun once auth is up instead.
   auth-migrate:
     image: ${AUTH_IMAGE:?}
     restart: 'no'

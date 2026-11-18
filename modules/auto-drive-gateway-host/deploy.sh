@@ -159,8 +159,9 @@ fi
 
 # Migrations first, one at a time, from the uploaded files, so a failed one
 # stops the deploy before anything is replaced. `up` runs them again, with
-# nothing left to apply and no app waiting on them. The backup runs on `up`
-# only, after this deploy's changes.
+# nothing left to apply and no app waiting on them, and the deploy checks those
+# runs once the apps are up. The backup runs on `up` only, after this deploy's
+# changes.
 for one_shot in "${one_shots[@]}"; do
   [ -n "$one_shot" ] && [ "$one_shot" != gateway-db-backup ] || continue
   echo "==> Running $one_shot"
@@ -247,13 +248,30 @@ elif [ -e "$BACKUP_UNIT.timer" ]; then
   systemctl daemon-reload
 fi
 
-# `up` started this deploy's backup and doesn't wait for one-shots. Its own
-# container, as `compose ps` also lists `run` containers, such as a nightly one.
+# `up` ran the migrations again and started this deploy's backup, and doesn't
+# wait for one-shots. Each one's own container, as `compose ps` also lists `run`
+# containers, such as a nightly backup.
+project="$(python3 -c 'import json, sys; print(json.load(sys.stdin)["name"])' <<< "$model")"
+up_container() {
+  docker ps -aq --filter "label=com.docker.compose.project=$project" \
+    --filter "label=com.docker.compose.service=$1" --filter label=com.docker.compose.oneoff=False
+}
+for one_shot in "${one_shots[@]}"; do
+  [ -n "$one_shot" ] && [ "$one_shot" != gateway-db-backup ] || continue
+  migrate="$(up_container "$one_shot")"
+  if [ -z "$migrate" ]; then
+    echo "up started no $one_shot, so the deploy can't tell its run succeeded" >&2
+    exit 1
+  fi
+  if [ "$(timeout 300 docker wait "$migrate" || true)" != 0 ]; then
+    docker logs --tail 5 "$migrate" >&2 || true
+    echo "$one_shot, run again by up, failed or ran past 300s" >&2
+    exit 1
+  fi
+done
 if $dag_indexer; then
   echo "==> Waiting for this deploy's backup"
-  project="$(python3 -c 'import json, sys; print(json.load(sys.stdin)["name"])' <<< "$model")"
-  backup="$(docker ps -aq --filter "label=com.docker.compose.project=$project" \
-    --filter label=com.docker.compose.service=gateway-db-backup --filter label=com.docker.compose.oneoff=False)"
+  backup="$(up_container gateway-db-backup)"
   if [ "$(timeout 3600 docker wait "$backup" || true)" != 0 ]; then
     docker logs --tail 5 "$backup" >&2 || true
     echo "gateway-db-backup failed or took over an hour, so this deploy has no backup" >&2

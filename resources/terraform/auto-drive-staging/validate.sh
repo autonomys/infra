@@ -58,9 +58,10 @@ DAG_START_BLOCK="1"
 # a mapping; the seeding's last object is at block 29,505
 DAG_COVERAGE_FROM="29506"
 CHRONOS_GENESIS="0x91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
-# the chain's finalized head trails its best block by five segments, each 10,000
-# to 19,000 blocks on Chronos
-DAG_LAG_MAX=150000
+# the chain's finalized head trails its best block by five segments just after
+# the node archives one and nearly six just before the next, each up to about
+# 19,500 blocks on Chronos
+DAG_LAG_MAX=125000
 BACKUP_DIR="/var/backups/auto-drive-gateway"
 BACKUP_UNIT="auto-drive-gateway-db-backup"
 GATEWAY_MESH_ADDRESS="10.77.0.20"
@@ -389,6 +390,7 @@ files_gateway_checks() {
   echo "[Gateway apps]"
   for service in subspace-rpc-gateway object-mapping-app file-retriever; do
     check "$service running" "sudo docker inspect -f '{{.State.Status}}' $(container "$service")" "running"
+    check "$service matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" "$service" "$(container "$service")")" "match"
   done
   check "RPC gateway image" "sudo docker inspect -f '{{.Config.Image}}' $(container subspace-rpc-gateway)" "$GATEWAY_IMAGE"
   check "Object-mapping indexer image" "sudo docker inspect -f '{{.Config.Image}}' $(container object-mapping-app)" "$INDEXER_IMAGE"
@@ -438,7 +440,7 @@ files_gateway_checks() {
 }
 
 dag_indexer_checks() {
-  local dag_first="$1" dag_second="$2" importing="$3" c target health caught_up
+  local dag_first="$1" dag_second="$2" importing="$3" c heights_py heights finalized best target health caught_up
   # stopped or restarting too, so its state shows
   c="\$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=dag-indexer)"
   echo ""
@@ -464,18 +466,41 @@ dag_indexer_checks() {
   check "dag-indexer on Chronos (/meta genesisHash)" \
     "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; print(json.load(sys.stdin).get(\"genesisHash\"))'" \
     "$CHRONOS_GENESIS"
-  target="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; m = json.load(sys.stdin); print(m[\"targetHeight\"], m[\"bestHeight\"])'" 2>/dev/null || true)"
+  # The node's heights before the indexer's target, so a target the node moved
+  # on in between is still at or past the finalized head read here
+  read -r -d '' heights_py <<'PY' || true
+import json, urllib.request
+def get(url, body=None):
+    data = json.dumps(body).encode() if body else None
+    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    return json.load(urllib.request.urlopen(request, timeout=5))
+def rpc(method, *params):
+    return get("http://127.0.0.1:9944", {"id": 1, "jsonrpc": "2.0", "method": method, "params": list(params)})["result"]
+finalized = int(rpc("chain_getHeader", rpc("chain_getFinalizedHead"))["number"], 16)
+best = int(rpc("chain_getHeader")["number"], 16)
+print(finalized, best, get("http://127.0.0.1:30001/meta")["targetHeight"])
+PY
+  heights="$(ssh -o ConnectTimeout=5 "$HOST" python3 - <<< "$heights_py" 2>/dev/null || true)"
   # the host's answers reach arithmetic only as plain numbers, since bash runs a
   # command substitution it finds in an array subscript there
-  if [[ "$target" =~ ^[0-9]+\ [0-9]+$ ]] && (( ${target#* } - ${target% *} <= DAG_LAG_MAX )); then
-    report "Target within the finalized head's lag of the best block" "within $DAG_LAG_MAX" "within $DAG_LAG_MAX"
+  finalized="" best="" target=""
+  if [[ "$heights" =~ ^[0-9]+\ [0-9]+\ [0-9]+$ ]]; then
+    read -r finalized best target <<< "$heights"
+  fi
+  if [[ -n "$finalized" ]] && (( best - finalized <= DAG_LAG_MAX )); then
+    report "Node's finalized head within $DAG_LAG_MAX blocks of its best" "yes" "yes"
   else
-    report "Target within the finalized head's lag of the best block" "target and best: ${target:-unknown}" "within $DAG_LAG_MAX"
+    report "Node's finalized head within $DAG_LAG_MAX blocks of its best" "finalized and best: ${finalized:-unknown} ${best:-unknown}" "yes"
+  fi
+  if [[ -n "$target" ]] && (( target >= finalized )); then
+    report "Indexer's target is the node's finalized head" "yes" "yes"
+  else
+    report "Indexer's target is the node's finalized head" "target ${target:-unknown}, finalized ${finalized:-unknown}" "yes"
   fi
   # caught up means at the target, the finalized head, which moves only when the
-  # node archives a segment, about once a day on Chronos
+  # node archives a segment, every day or two on Chronos
   caught_up=false
-  if [[ "$target" =~ ^[0-9]+\ [0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second >= ${target% *} - 5 )); then
+  if [[ -n "$target" && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second >= target - 5 )); then
     caught_up=true
   fi
   health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -w ' %{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
@@ -489,10 +514,10 @@ dag_indexer_checks() {
       echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
     fi
   fi
-  if [[ "$dag_first" =~ ^[0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && { (( dag_second > dag_first )) || $caught_up; }; then
+  if $caught_up || { [[ "$dag_first" =~ ^[0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second > dag_first )); }; then
     report "DAG index advancing or caught up" "yes" "yes"
   else
-    report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target% *}" "yes"
+    report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target:-unknown}" "yes"
   fi
   check "Index started at block $DAG_START_BLOCK" "$GATEWAY_DB meta startHeight" "$DAG_START_BLOCK"
   check "Schema records the image's schema.graphql" \
