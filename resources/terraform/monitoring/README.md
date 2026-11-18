@@ -259,6 +259,16 @@ and the panel under the tiles lists what the dashboard doesn't cover. Its
 Publish workers tile counts heartbeat samples, so it relies on VictoriaMetrics
 keeping every sample: change the tile before setting `-dedup.minScrapeInterval`.
 
+Metrics > Auto Drive shows mainnet or Chronos (the Environment picker) from the
+metrics the backends and the files gateway send: API requests and errors by
+route, Postgres pool and event-loop load per backend process, upload and
+download bytes, gateway serving and DSN fetches, DAG indexer fallbacks, parked
+uploads and the USDC treasury. Every one of those metrics is an event or a
+periodic reading, not a counter, so the panels count or sum samples over a
+window and never use `rate()`. That relies on VictoriaMetrics keeping every
+sample too. A collapsed row at the bottom lists what needs Auto Drive changes
+before it can be shown.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts
