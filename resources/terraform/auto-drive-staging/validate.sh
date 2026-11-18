@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Verify that a live Auto Drive staging host matches its spec. Every check only
-# reads; none prints secrets or keys or touches service data. The services and
-# backend hosts' compose hash checks have Compose read their env files, to hash
-# them as the deploy does. The gateway's database checks run gateway-db.sh's
+# reads; none prints secrets or keys or touches service data. Where a service
+# has an env file, its compose hash check has Compose read it, to hash it as the
+# deploy does. The gateway's database checks run gateway-db.sh's
 # read-only commands in a one-off container of its backup service.
 # Usage: ./validate.sh <role> [ssh-host]
 #   role: files-gateway, services, public or private
@@ -58,9 +58,10 @@ DAG_START_BLOCK="1"
 # a mapping; the seeding's last object is at block 29,505
 DAG_COVERAGE_FROM="29506"
 CHRONOS_GENESIS="0x91912b429ce7bf2975440a0920b46a892fddeeaed6ccc11c93f2d57ad1bd69ab"
-# the chain's finalized head trails its best block by five segments, each 10,000
-# to 19,000 blocks on Chronos
-DAG_LAG_MAX=150000
+# the chain's finalized head trails its best block by five segments just after
+# the node archives one and nearly six just before the next, each up to about
+# 19,500 blocks on Chronos
+DAG_LAG_MAX=125000
 BACKUP_DIR="/var/backups/auto-drive-gateway"
 BACKUP_UNIT="auto-drive-gateway-db-backup"
 GATEWAY_MESH_ADDRESS="10.77.0.20"
@@ -164,6 +165,13 @@ check() {
   else
     report "$1" "$out" "$3" "${4:-exact}"
   fi
+}
+
+# usage: config_hash_cmd <dir> <service> <container>; prints match when the
+# container's config hash is the one Compose computes in dir. A compose run
+# that fails prints no hash, which must not match a missing container's.
+config_hash_cmd() {
+  echo "cd $1 && h=\$(sudo docker compose config --hash $2 | awk '{print \$2}') && [ -n \"\$h\" ] && [ \"\$h\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $3)\" ] && echo match || echo differs"
 }
 
 NODE="\$(sudo docker ps -q --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=subspace-node)"
@@ -353,9 +361,7 @@ files_gateway_checks() {
     "cd $GATEWAY_DIR && stat -c '%n %a %U' docker-compose.yml docker-compose.mesh.yml docker-compose.log-cap.yml docker-compose.dag-indexer.yml dag-indexer-start-guard.js gateway-db.sh .env file-retriever.env object-mapping-indexer.env gateway-db.env | paste -sd ' ' -" \
     "docker-compose.yml 644 ubuntu docker-compose.mesh.yml 644 ubuntu docker-compose.log-cap.yml 644 ubuntu docker-compose.dag-indexer.yml 644 ubuntu dag-indexer-start-guard.js 644 ubuntu gateway-db.sh 644 ubuntu .env 600 ubuntu file-retriever.env 600 ubuntu object-mapping-indexer.env 600 ubuntu gateway-db.env 600 ubuntu"
   # the running node's config hash is the files': no change is waiting on a restart
-  check "Node matches the compose files" \
-    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash subspace-node | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $NODE)\" ] && echo match || echo differs" \
-    "match"
+  check "Node matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" subspace-node "$NODE")" "match"
   check "Node container running" "sudo docker inspect -f '{{.State.Status}}' $NODE" "running"
   check "Node container healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $NODE" "healthy"
   check "Node image" "sudo docker inspect -f '{{.Config.Image}}' $NODE" "$NODE_IMAGE"
@@ -384,6 +390,7 @@ files_gateway_checks() {
   echo "[Gateway apps]"
   for service in subspace-rpc-gateway object-mapping-app file-retriever; do
     check "$service running" "sudo docker inspect -f '{{.State.Status}}' $(container "$service")" "running"
+    check "$service matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" "$service" "$(container "$service")")" "match"
   done
   check "RPC gateway image" "sudo docker inspect -f '{{.Config.Image}}' $(container subspace-rpc-gateway)" "$GATEWAY_IMAGE"
   check "Object-mapping indexer image" "sudo docker inspect -f '{{.Config.Image}}' $(container object-mapping-app)" "$INDEXER_IMAGE"
@@ -433,7 +440,7 @@ files_gateway_checks() {
 }
 
 dag_indexer_checks() {
-  local dag_first="$1" dag_second="$2" importing="$3" c target health
+  local dag_first="$1" dag_second="$2" importing="$3" c heights_py heights finalized best target indexer_best health caught_up
   # stopped or restarting too, so its state shows
   c="\$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=dag-indexer)"
   echo ""
@@ -443,9 +450,7 @@ dag_indexer_checks() {
   check "dag-indexer running" \
     "sudo docker inspect -f '{{.State.Status}}' $c" "running"
   check "dag-indexer healthy (/ready)" "sudo docker inspect -f '{{.State.Health.Status}}' $c" "healthy"
-  check "dag-indexer matches the compose files" \
-    "cd $GATEWAY_DIR && [ \"\$(sudo docker compose config --hash dag-indexer | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-    "match"
+  check "dag-indexer matches the compose files" "$(config_hash_cmd "$GATEWAY_DIR" dag-indexer "$c")" "match"
   check "dag-indexer image" "sudo docker inspect -f '{{.Config.Image}}' $c" "$DAG_INDEXER_IMAGE"
   check "dag-indexer manifest, endpoint and flags" "sudo docker inspect -f '{{json .Args}}' $c" \
     '"-f","/app/project.chronos.yaml","--network-endpoint=ws://subspace-node:9944/ws","--db-schema=dag-indexer","--workers=1","--unsafe","--batch-size=125","--scale-batch-size","--unfinalized-blocks=true","--disable-historical=false","--finalized-depth=100"' contains
@@ -461,22 +466,65 @@ dag_indexer_checks() {
   check "dag-indexer on Chronos (/meta genesisHash)" \
     "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; print(json.load(sys.stdin).get(\"genesisHash\"))'" \
     "$CHRONOS_GENESIS"
-  target="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; m = json.load(sys.stdin); print(m[\"targetHeight\"], m[\"bestHeight\"])'" 2>/dev/null || true)"
-  if [[ -n "$target" ]] && (( ${target#* } - ${target% *} <= DAG_LAG_MAX )); then
-    report "Target within the finalized head's lag of the best block" "within $DAG_LAG_MAX" "within $DAG_LAG_MAX"
+  # The node's heights before the indexer's, so a target the node moved on in
+  # between is still at or past the finalized head read here, and an indexer
+  # that gets the node's blocks is at or past its best
+  read -r -d '' heights_py <<'PY' || true
+import json, urllib.request
+def get(url, body=None):
+    data = json.dumps(body).encode() if body else None
+    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    return json.load(urllib.request.urlopen(request, timeout=5))
+def rpc(method, *params):
+    return get("http://127.0.0.1:9944", {"id": 1, "jsonrpc": "2.0", "method": method, "params": list(params)})["result"]
+finalized = int(rpc("chain_getHeader", rpc("chain_getFinalizedHead"))["number"], 16)
+best = int(rpc("chain_getHeader")["number"], 16)
+meta = get("http://127.0.0.1:30001/meta")
+print(finalized, best, meta["targetHeight"], meta["bestHeight"])
+PY
+  heights="$(ssh -o ConnectTimeout=5 "$HOST" python3 - <<< "$heights_py" 2>/dev/null || true)"
+  # the host's answers reach arithmetic only as plain numbers, since bash runs a
+  # command substitution it finds in an array subscript there
+  finalized="" best="" target="" indexer_best=""
+  if [[ "$heights" =~ ^[0-9]+\ [0-9]+\ [0-9]+\ [0-9]+$ ]]; then
+    read -r finalized best target indexer_best <<< "$heights"
+  fi
+  if [[ -n "$finalized" ]] && (( best - finalized <= DAG_LAG_MAX )); then
+    report "Node's finalized head within $DAG_LAG_MAX blocks of its best" "yes" "yes"
   else
-    report "Target within the finalized head's lag of the best block" "target and best: ${target:-unknown}" "within $DAG_LAG_MAX"
+    report "Node's finalized head within $DAG_LAG_MAX blocks of its best" "finalized and best: ${finalized:-unknown} ${best:-unknown}" "yes"
   fi
-  health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
-  report "dag-indexer's endpoint healthy (/health)" "$health" "200"
-  if [[ "$health" != 200 && "$importing" == false ]]; then
-    echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
+  if [[ -n "$target" ]] && (( target >= finalized )); then
+    report "Indexer's target is the node's finalized head" "yes" "yes"
+  else
+    report "Indexer's target is the node's finalized head" "target ${target:-unknown}, finalized ${finalized:-unknown}" "yes"
   fi
-  # caught up means at the target, which moves a segment at a time
-  if [[ -n "$dag_first" && -n "$dag_second" ]] && { (( dag_second > dag_first )) || [[ -n "$target" && "$dag_second" -ge $(( ${target% *} - 5 )) ]]; }; then
+  # caught up means at the target, the finalized head, which moves only when the
+  # node archives a segment, every day or two on Chronos
+  caught_up=false
+  if [[ -n "$target" && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second >= target - 5 )); then
+    caught_up=true
+  fi
+  health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -w ' %{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
+  # SubQuery reports an indexer with no block to index for a while as unhealthy,
+  # which at the target is most of the time between segments. It reports its
+  # endpoint as unhealthy first, after a minute with no new best block, which
+  # Chronos often goes without: with the indexer at the node's best block, that
+  # is the chain being quiet, not the connection failing.
+  if $caught_up && [[ "$health" == *'"Indexer is not healthy"'*' 500' ]]; then
+    pass "dag-indexer idle at its target, which /health reports as not healthy"
+  elif [[ "$health" == *'"Endpoint is not healthy"'*' 500' && -n "$indexer_best" ]] && (( indexer_best >= best )); then
+    pass "dag-indexer at the node's best block, which /health reports as the endpoint not healthy after a minute without a new one"
+  else
+    report "dag-indexer's endpoint healthy (/health)" "${health##* }" "200"
+    if [[ "${health##* }" != 200 && "$importing" == false ]]; then
+      echo "        the node isn't importing blocks, as while it re-archives, so /health fails until it does"
+    fi
+  fi
+  if $caught_up || { [[ "$dag_first" =~ ^[0-9]+$ && "$dag_second" =~ ^[0-9]+$ ]] && (( dag_second > dag_first )); }; then
     report "DAG index advancing or caught up" "yes" "yes"
   else
-    report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target% *}" "yes"
+    report "DAG index advancing or caught up" "at ${dag_second:-none} after ${dag_first:-none}, target ${target:-unknown}" "yes"
   fi
   check "Index started at block $DAG_START_BLOCK" "$GATEWAY_DB meta startHeight" "$DAG_START_BLOCK"
   check "Schema records the image's schema.graphql" \
@@ -519,12 +567,8 @@ services_checks() {
     "cd $SERVICES_DIR && stat -c '%n %a %U' docker-compose.yml rabbitmq.conf .env postgres.env rabbitmq.env | paste -sd ' ' -" \
     "docker-compose.yml 644 ubuntu rabbitmq.conf 644 ubuntu .env 600 ubuntu postgres.env 600 ubuntu rabbitmq.env 600 ubuntu"
   # each running container's config hash is the files': no change is waiting on a restart
-  check "Postgres matches the compose files" \
-    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash postgres | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $PG)\" ] && echo match || echo differs" \
-    "match"
-  check "RabbitMQ matches the compose files" \
-    "cd $SERVICES_DIR && [ \"\$(sudo docker compose config --hash rabbitmq | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $RMQ)\" ] && echo match || echo differs" \
-    "match"
+  check "Postgres matches the compose files" "$(config_hash_cmd "$SERVICES_DIR" postgres "$PG")" "match"
+  check "RabbitMQ matches the compose files" "$(config_hash_cmd "$SERVICES_DIR" rabbitmq "$RMQ")" "match"
   check "Postgres healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $PG" "healthy"
   check "Postgres image" "sudo docker inspect -f '{{.Config.Image}}' $PG" "$POSTGRES_IMAGE"
   check "Postgres restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $PG" "unless-stopped"
@@ -623,9 +667,7 @@ backend_checks() {
     check "$service image" "sudo docker inspect -f '{{.Config.Image}}' $c" \
       "$([[ $service == hasura ]] && echo "$HASURA_IMAGE" || echo "$BACKEND_IMAGE")"
     # the running container's config hash is the files': no change is waiting on a restart
-    check "$service matches the compose files" \
-      "cd $BACKEND_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-      "match"
+    check "$service matches the compose files" "$(config_hash_cmd "$BACKEND_DIR" "$service" "$c")" "match"
     check "$service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
     check "$service's local log copy capped" \
       "sudo docker inspect -f '{{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $c" \
@@ -717,9 +759,7 @@ private_checks() {
   check "Auth healthy" "sudo docker inspect -f '{{.State.Health.Status}}' $auth" "healthy"
   check "Auth image" "sudo docker inspect -f '{{.Config.Image}}' $auth" "$AUTH_IMAGE"
   # the running container's config hash is the files': no change is waiting on a restart
-  check "Auth matches the compose file" \
-    "cd $AUTH_DIR && [ \"\$(sudo docker compose config --hash auth | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $auth)\" ] && echo match || echo differs" \
-    "match"
+  check "Auth matches the compose file" "$(config_hash_cmd "$AUTH_DIR" auth "$auth")" "match"
   check "Auth restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $auth" "unless-stopped"
   check "Auth logs ship through the loki driver, capped" \
     "sudo docker inspect -f '{{.HostConfig.LogConfig.Type}} {{index .HostConfig.LogConfig.Config \"loki-url\"}} {{index .HostConfig.LogConfig.Config \"max-size\"}} {{index .HostConfig.LogConfig.Config \"max-file\"}}' $auth" \
@@ -770,9 +810,7 @@ farmer_checks() {
   for service in node farmer; do
     c="$(container "$service" "$FARMER_PROJECT")"
     # the running container's config hash is the file's: no change is waiting on a restart
-    check "Farmer's $service matches the compose file" \
-      "cd $FARMER_DIR && [ \"\$(sudo docker compose config --hash $service | awk '{print \$2}')\" = \"\$(sudo docker inspect -f '{{index .Config.Labels \"com.docker.compose.config-hash\"}}' $c)\" ] && echo match || echo differs" \
-      "match"
+    check "Farmer's $service matches the compose file" "$(config_hash_cmd "$FARMER_DIR" "$service" "$c")" "match"
     check "Farmer's $service running" "sudo docker inspect -f '{{.State.Status}}' $c" "running"
     check "Farmer's $service restarts unless stopped" "sudo docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' $c" "unless-stopped"
     check "Farmer's $service logs ship through the loki driver, capped" \
