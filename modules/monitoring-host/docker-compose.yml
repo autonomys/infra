@@ -103,6 +103,10 @@ services:
       - -retentionPeriod=90d
       - -httpListenAddr=:8428
       - -maxInsertRequestSize=16MB
+      # The Auto Drive dashboard reads the 10 s backend heartbeat through a
+      # [range:10s] subquery. The default 100k points stops that at about 11
+      # days of range; 1M covers the 90-day retention.
+      - -search.maxPointsSubqueryPerTimeseries=1000000
     ports:
       - "127.0.0.1:8428:8428"
     volumes:

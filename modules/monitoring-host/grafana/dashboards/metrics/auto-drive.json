@@ -453,7 +453,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Uploads parked as FAILED because their migration cannot succeed. Emitted only when it happens, so no samples shows as 0.",
+      "description": "Uploads parked as FAILED because their migration cannot succeed. Emitted only when it happens, so it shows 0 when the backends reported in the range and none was parked, and No data when no backend heartbeat arrived.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -473,8 +473,7 @@
               }
             ]
           },
-          "unit": "short",
-          "noValue": "0"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -510,7 +509,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(auto_drive_upload_migration_unrecoverable_count{chain=~\"(chain=)?$chain\"}[$__range]))",
+          "expr": "sum(sum_over_time(auto_drive_upload_migration_unrecoverable_count{chain=~\"(chain=)?$chain\"}[$__range]))\n  or sum(count_over_time(auto_drive_runtime_pg_pool_total{chain=~\"(chain=)?$chain\"}[$__range])) * 0",
           "legendFormat": "__auto",
           "range": false,
           "instant": true,
@@ -1145,7 +1144,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Pool clients checked out (total minus idle). The red line is PG_POOL_MAX at its default of 10. No host label: instances of the same process on different hosts merge into one series.",
+      "description": "Most pool clients checked out (total minus idle) at any 10 s heartbeat in the interval. The red line is PG_POOL_MAX at its default of 10. No host label: instances of the same process on different hosts merge into one series, so with several instances a 10 s step sees only the latest one's reading.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1229,7 +1228,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (process) (\n  auto_drive_runtime_pg_pool_total{chain=~\"(chain=)?$chain\", process=~\"$process\"}\n  - auto_drive_runtime_pg_pool_idle{chain=~\"(chain=)?$chain\", process=~\"$process\"}\n)",
+          "expr": "max by (process) (\n  max_over_time((\n    auto_drive_runtime_pg_pool_total{chain=~\"(chain=)?$chain\", process=~\"$process\"}\n    - auto_drive_runtime_pg_pool_idle{chain=~\"(chain=)?$chain\", process=~\"$process\"}\n  )[$__interval:10s])\n)",
           "legendFormat": "{{process}}",
           "range": true,
           "instant": false,
@@ -1776,7 +1775,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Bytes served per interval by the files-gateway, from the DSN gateway or its cache. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total.",
+      "description": "Bytes served per interval by the files-gateway, split by whether the file came from the DSN gateway. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total. The gateway marks only file downloads with their origin, so \"cache and other responses\" also counts metadata JSON and the health and node endpoints.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1868,7 +1867,7 @@
           },
           "editorMode": "code",
           "expr": "sum(sum_over_time(cache_bandwidth_bytes{chain=~\"(chain=)?$chain\"}[$__interval]))",
-          "legendFormat": "cache",
+          "legendFormat": "cache and other responses",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -1883,7 +1882,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Total bytes divided by total response time in each interval. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total.",
+      "description": "Total bytes divided by total response time in each interval. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total. The gateway marks only file downloads with their origin, so \"cache and other responses\" also counts metadata JSON and the health and node endpoints.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1976,7 +1975,7 @@
           },
           "editorMode": "code",
           "expr": "sum(sum_over_time(cache_bandwidth_bytes{chain=~\"(chain=)?$chain\"}[$__interval]))\n  / (sum(sum_over_time(cache_bandwidth_duration{chain=~\"(chain=)?$chain\"}[$__interval])) / 1000)",
-          "legendFormat": "cache",
+          "legendFormat": "cache and other responses",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -1991,7 +1990,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "p95 time from request to response finished. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total.",
+      "description": "p95 time from request to response finished. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total. The gateway marks only file downloads with their origin, so \"cache and other responses\" also counts metadata JSON and the health and node endpoints.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2045,7 +2044,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 65
       },
@@ -2084,7 +2083,7 @@
           },
           "editorMode": "code",
           "expr": "max(quantile_over_time(0.95, cache_bandwidth_duration{chain=~\"(chain=)?$chain\"}[$__interval]))",
-          "legendFormat": "cache",
+          "legendFormat": "cache and other responses",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -2092,102 +2091,6 @@
         }
       ],
       "title": "Response time p95 by origin",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Share of recorded responses served from the cache. Recorded only for responses with a Content-Length header; chunked responses are skipped, so treat this as a sample of throughput, not a total.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 4,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 65
-      },
-      "id": 28,
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "(sum(count_over_time(cache_bandwidth_bytes{chain=~\"(chain=)?$chain\"}[$__interval])) or vector(0))\n  / ((sum(count_over_time(cache_bandwidth_bytes{chain=~\"(chain=)?$chain\"}[$__interval])) or vector(0))\n   + (sum(count_over_time(gateway_bandwidth_bytes{chain=~\"(chain=)?$chain\"}[$__interval])) or vector(0)))",
-          "legendFormat": "cache hit share",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "title": "Cache hit share by responses",
       "type": "timeseries"
     },
     {
@@ -2208,7 +2111,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "DSN object fetches per interval by outcome. Empty if the live files-gateway predates the fetch metrics (gateway main, 2026-10-28).",
+      "description": "DSN object fetches per interval by outcome. Empty if the live files-gateway predates the fetch metrics (gateway main, 2026-10-28). Failure outcomes are shades of red.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2284,6 +2187,21 @@
                 "value": {
                   "fixedColor": "text",
                   "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/^(?!success$|dropped$).*/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "shades",
+                  "fixedColor": "red"
                 }
               }
             ]
@@ -2548,7 +2466,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Non-success fetches over the selected range. gateway is the index of the configured gateway URL.",
+      "description": "Fetches that ended in an error (not success, not dropped) over the selected range, the same set as Failed DSN fetches. gateway is the index of the configured gateway URL.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2609,7 +2527,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (gateway, outcome) (count_over_time(object_fetch_durationMs{chain=~\"(chain=)?$chain\", outcome!=\"success\"}[$__range]))",
+          "expr": "sum by (gateway, outcome) (count_over_time(object_fetch_durationMs{chain=~\"(chain=)?$chain\", outcome!=\"success\", outcome!=\"dropped\"}[$__range]))",
           "legendFormat": "__auto",
           "range": false,
           "instant": true,
@@ -3028,7 +2946,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Uploads set to FAILED because their migration cannot succeed. Any bar needs a look. Emitted only when it happens, so intervals without events show 0.",
+      "description": "Uploads set to FAILED because their migration cannot succeed. Any bar needs a look. Emitted only when it happens, so intervals with a backend heartbeat and no event show 0, and intervals without a heartbeat stay empty.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3110,7 +3028,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(auto_drive_upload_migration_unrecoverable_count{chain=~\"(chain=)?$chain\"}[$__interval])) or vector(0)",
+          "expr": "sum(sum_over_time(auto_drive_upload_migration_unrecoverable_count{chain=~\"(chain=)?$chain\"}[$__interval]))\n  or sum(count_over_time(auto_drive_runtime_pg_pool_total{chain=~\"(chain=)?$chain\"}[$__interval])) * 0",
           "legendFormat": "unrecoverable",
           "range": true,
           "instant": false,
@@ -3126,7 +3044,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Objects reported by users per interval. Intervals without reports show 0.",
+      "description": "Objects reported by users per interval. Intervals with a backend heartbeat and no report show 0, and intervals without a heartbeat stay empty.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3207,7 +3125,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(object_report_count{chain=~\"(chain=)?$chain\"}[$__interval])) or vector(0)",
+          "expr": "sum(sum_over_time(object_report_count{chain=~\"(chain=)?$chain\"}[$__interval]))\n  or sum(count_over_time(auto_drive_runtime_pg_pool_total{chain=~\"(chain=)?$chain\"}[$__interval])) * 0",
           "legendFormat": "reports",
           "range": true,
           "instant": false,
@@ -3573,7 +3491,7 @@
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "These panels stay empty until Auto Drive sends more. Nothing in infra can fill them.\n\n| Missing | Effect here | Smallest Auto Drive change |\n|---|---|---|\n| Request duration | No API latency panel | Add `duration_ms` to `auto_drive_api_request`, and record requests whose handler throws |\n| Upload, completion and migration timings | Upload performance is bytes only | Duration fields when an upload finalizes and when a migration task ends |\n| Publish-worker metrics | Publishing throughput and confirmation lag only from the queue and Postgres | Batch size, batch duration and confirmation lag from the publish worker |\n| Cache tier and latency in the backend download API | Backend download serving is invisible; only the gateway side shows | Tier label (memory, filesystem, DSN) and duration per download |\n| Host label | Instances of one process merge into one series | Add a hostname tag to every metric |\n| Parsed `METRIC_ENVIRONMENT_TAG` | Every query needs the `(chain=)?` regex | Parse the tag before sending |\n| Anonymous downloads | Download volume undercounts public traffic | Emit `auto_drive_interactions_size` for anonymous downloads too |\n\nQueue depth, active jobs, the publishing backlog and host load need a CloudWatch or PostgreSQL datasource; they are follow-ups in infra, not app changes.",
+            "content": "These panels stay empty until Auto Drive sends more. Nothing in infra can fill them.\n\n| Missing | Effect here | Smallest Auto Drive change |\n|---|---|---|\n| Request duration | No API latency panel | Add `duration_ms` to `auto_drive_api_request`, and record requests whose handler throws |\n| Upload, completion and migration timings | Upload performance is bytes only | Duration fields when an upload finalizes and when a migration task ends |\n| Publish-worker metrics | Publishing throughput and confirmation lag only from the queue and Postgres | Batch size, batch duration and confirmation lag from the publish worker |\n| Cache tier and latency in the backend download API | Backend download serving is invisible; only the gateway side shows | Tier label (memory, filesystem, DSN) and duration per download |\n| Host label | Instances of one process merge into one series | Add a hostname tag to every metric |\n| Parsed `METRIC_ENVIRONMENT_TAG` | Every query needs the `(chain=)?` regex | Parse the tag before sending |\n| Origin on every files-gateway response | No cache hit share, and the cache series also counts metadata, health and node responses | Set `x-file-origin` on every response, or track bandwidth on the file route only |\n| Anonymous downloads | Download volume undercounts public traffic | Emit `auto_drive_interactions_size` for anonymous downloads too |\n\nQueue depth, active jobs, the publishing backlog and host load need a CloudWatch or PostgreSQL datasource; they are follow-ups in infra, not app changes.",
             "mode": "markdown"
           },
           "title": "Known gaps",
@@ -3611,25 +3529,25 @@
           "text": "mainnet",
           "value": "mainnet"
         },
-        "description": "Matches chain=\"<value>\" and the backend's chain=\"chain=<value>\" form.",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(auto_drive_runtime_pg_pool_total, chain)",
+        "description": "Each chain value the backends' heartbeat reports, with the backend's chain=<value> form folded in. Staging is left out; it has its own dashboard. Matches chain=\"<value>\" and chain=\"chain=<value>\".",
         "includeAll": false,
         "label": "Environment",
         "multi": false,
         "name": "chain",
-        "options": [
-          {
-            "selected": true,
-            "text": "mainnet",
-            "value": "mainnet"
-          },
-          {
-            "selected": false,
-            "text": "chronos",
-            "value": "chronos"
-          }
-        ],
-        "query": "mainnet,chronos",
-        "type": "custom"
+        "options": [],
+        "query": {
+          "query": "label_values(auto_drive_runtime_pg_pool_total, chain)",
+          "refId": "VictoriaMetrics-chain-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "/^(?!(?:chain=)?staging$)(?:chain=)?(.+)$/",
+        "sort": 1,
+        "type": "query"
       },
       {
         "allValue": ".*",
