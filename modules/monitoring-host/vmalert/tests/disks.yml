@@ -73,35 +73,55 @@ tests:
             exp_annotations:
               summary: "smartctl sees 1 disk(s), fewer than this server should have"
 
-  - name: SMART failure and wear
+  - name: SMART failure, but not wear
     interval: 1m
     input_series:
+      # worn past 100%: the firmware's 0x04 and smartctl's FAILED, nothing else
       - series: 'smartctl_device_smart_status{host="h1", device="nvme0"}'
+        values: "0x20"
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme0"}'
+        values: "4x20"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme0"}'
+        values: "100x20"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme0"}'
+        values: "10x20"
+      # media gone read-only
+      - series: 'smartctl_device_smart_status{host="h1", device="nvme1"}'
         values: "1x5 0x20"
-      - series: 'smartctl_device_percentage_used{host="h1", device="nvme1"}'
-        values: "95x90"
-      - series: 'smartctl_device_attribute{host="h1", device="sda", attribute_name="Percent_Lifetime_Remain", attribute_value_type="value"}'
-        values: "8x90"
-      - series: 'smartctl_device_attribute{host="h1", device="sdb", attribute_name="Wear_Leveling_Count", attribute_value_type="value"}'
-        values: "99x90"
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme1"}'
+        values: "0x5 8x20"
+      # worn, and spare blocks down to the threshold, which also sets 0x01
+      - series: 'smartctl_device_smart_status{host="h1", device="nvme2"}'
+        values: "0x20"
+      - series: 'smartctl_device_critical_warning{host="h1", device="nvme2"}'
+        values: "4x5 5x20"
+      - series: 'smartctl_device_available_spare{host="h1", device="nvme2"}'
+        values: "12x5 10x20"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme2"}'
+        values: "10x20"
+      # SATA disks have no critical warning
+      - series: 'smartctl_device_smart_status{host="h1", device="sda"}'
+        values: "1x5 0x20"
+      - series: 'smartctl_device_smart_status{host="h1", device="sdb"}'
+        values: "1x25"
     alert_rule_test:
+      - eval_time: 5m
+        groupname: disks
+        alertname: SmartFailed
+        exp_alerts: []
       - eval_time: 20m
         groupname: disks
         alertname: SmartFailed
         exp_alerts:
-          - exp_labels: {host: h1, device: nvme0, severity: critical}
+          - exp_labels: {host: h1, device: nvme1, severity: critical}
             exp_annotations:
-              summary: "nvme0 fails its SMART health check"
-      - eval_time: 70m
-        groupname: disks
-        alertname: DiskWearHigh
-        exp_alerts:
-          - exp_labels: {host: h1, device: nvme1, severity: warning}
+              summary: "nvme1 fails its SMART health check"
+          - exp_labels: {host: h1, device: nvme2, severity: critical}
             exp_annotations:
-              summary: "nvme1 is near the end of its rated life"
-          - exp_labels: {host: h1, device: sda, attribute_name: Percent_Lifetime_Remain, attribute_value_type: value, severity: warning}
+              summary: "nvme2 fails its SMART health check"
+          - exp_labels: {host: h1, device: sda, severity: critical}
             exp_annotations:
-              summary: "sda is near the end of its rated life"
+              summary: "sda fails its SMART health check"
 
   - name: media errors alert on a rise, not on old errors
     interval: 1h
@@ -157,25 +177,29 @@ tests:
         alertname: MediaErrorsRising
         exp_alerts: []
 
-  - name: a disk starting to use spare blocks
+  - name: spare blocks nearing the replacement threshold
     interval: 5m
     input_series:
       - series: 'smartctl_device_available_spare{host="h1", device="nvme0"}'
-        values: "100x3 97x30"
+        values: "91x3 21x6 20x30"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme0"}'
+        values: "10x40"
       - series: 'smartctl_device_available_spare{host="h1", device="nvme1"}'
-        values: "100x33"
+        values: "91x40"
+      - series: 'smartctl_device_available_spare_threshold{host="h1", device="nvme1"}'
+        values: "10x40"
     alert_rule_test:
       - eval_time: 1h
         groupname: disks
-        alertname: SpareBlocksUsed
+        alertname: SpareBlocksLow
         exp_alerts: []
       - eval_time: 2h
         groupname: disks
-        alertname: SpareBlocksUsed
+        alertname: SpareBlocksLow
         exp_alerts:
           - exp_labels: {host: h1, device: nvme0, severity: warning}
             exp_annotations:
-              summary: "nvme0 has started using spare blocks (97% left)"
+              summary: "nvme0 has 20% of its spare blocks left, close to its replacement threshold"
 
   - name: a SATA disk's uncorrectable count rising
     interval: 1h

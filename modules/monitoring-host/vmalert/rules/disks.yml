@@ -33,34 +33,29 @@ groups:
         annotations:
           summary: "smartctl sees {{ $value }} disk(s), fewer than this server should have"
 
-      # On these Samsung NVMe disks the firmware also sets critical warning 0x04
-      # once wear passes 100%, so this fires for worn-out disks too
+      # The provider replaces a disk once it fails outright or its spare blocks
+      # reach the threshold, not for wear. These Samsung NVMe disks set critical
+      # warning 0x04 once wear passes 100%, and smartctl then reports them FAILED,
+      # so an NVMe disk counts only for its other warning bits. The overall result
+      # counts only for disks without a critical warning, such as SATA ones.
       - alert: SmartFailed
-        expr: smartctl_device_smart_status == 0 or smartctl_device_critical_warning > 0
+        expr: >-
+          (smartctl_device_smart_status == 0 unless on(host, device) smartctl_device_critical_warning)
+          or smartctl_device_critical_warning - (floor(smartctl_device_critical_warning / 4) % 2) * 4 > 0
+          or smartctl_device_available_spare <= smartctl_device_available_spare_threshold
         for: 10m
         labels:
           severity: critical
         annotations:
           summary: "{{ $labels.device }} fails its SMART health check"
 
-      # NVMe reports wear used; SATA SSDs report life remaining as an attribute
-      - alert: DiskWearHigh
-        expr: >-
-          smartctl_device_percentage_used >= 90
-          or smartctl_device_attribute{attribute_name=~"Percent_Lifetime_Remain|Wear_Leveling_Count|Media_Wearout_Indicator", attribute_value_type="value"} <= 10
+      - alert: SpareBlocksLow
+        expr: smartctl_device_available_spare <= smartctl_device_available_spare_threshold + 10
         for: 1h
         labels:
           severity: warning
         annotations:
-          summary: "{{ $labels.device }} is near the end of its rated life"
-
-      - alert: SpareBlocksUsed
-        expr: smartctl_device_available_spare < 100
-        for: 1h
-        labels:
-          severity: warning
-        annotations:
-          summary: "{{ $labels.device }} has started using spare blocks ({{ $value }}% left)"
+          summary: "{{ $labels.device }} has {{ $value }}% of its spare blocks left, close to its replacement threshold"
 
       # A rise over the count a day earlier, not a level: some disks carry old
       # errors from before their last install. Not increase(), which also counts a
