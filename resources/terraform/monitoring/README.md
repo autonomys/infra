@@ -262,6 +262,21 @@ and the panel under the tiles lists what the dashboard doesn't cover. Its
 Publish workers tile counts heartbeat samples, so it relies on VictoriaMetrics
 keeping every sample: change the tile before setting `-dedup.minScrapeInterval`.
 
+Metrics > Chronos shows the Chronos testnet as we run it: the consensus
+bootstrap, the two timekeepers, the RPC node, the Auto EVM bootstrap, RPC and
+operator nodes, and the farmers and archive node on the Auto Drive staging
+hosts. The nodes' metrics carry no block heights, and most Chronos nodes send
+none, so the chain figures come from the lines they print: each node's best
+and finalized block, peers and sync state, blocks claimed and rewards signed by
+our farmers, the bundle slots the operators win and the bundles they build, and
+the RPC proxies' responses. An operator skips a slot it has no transactions or
+receipts for, so Auto EVM makes no blocks while nobody uses it. The box probes the four public
+RPC names every minute with a JSON-RPC `system_health` call through Cloudflare,
+which passes only when the node answers 200, isn't syncing and has peers; Uptime
+Kuma checks the same names from elsewhere. Host figures cover the Chronos boxes
+with a host agent. The chain indexer and the chain alerter send no logs here;
+the panel under the tiles lists the rest of what the dashboard doesn't cover.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts

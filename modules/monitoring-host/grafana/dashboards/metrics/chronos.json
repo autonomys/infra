@@ -1,0 +1,4504 @@
+{
+  "uid": "chronos",
+  "title": "Chronos",
+  "description": "Health of the Chronos testnet as we run it: the consensus bootstrap, the two timekeepers, the RPC node, the Auto EVM bootstrap, RPC and operators, and the two farmers and the archive node on the Auto Drive staging hosts, plus probes of the public RPC names. Chain figures come from the nodes' logs, as their metrics carry no block heights; host figures cover the boxes with a host agent.",
+  "tags": [
+    "chronos",
+    "testnet",
+    "overview"
+  ],
+  "editable": true,
+  "schemaVersion": 41,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "timezone": "utc",
+  "graphTooltip": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "gw",
+        "type": "constant",
+        "query": "auto-drive-files-gateway-chronos",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "The files gateway host: the Auto Drive archive node and a farmer"
+      },
+      {
+        "name": "pub",
+        "type": "constant",
+        "query": "auto-drive-staging-public",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "The public backend host: a farmer"
+      },
+      {
+        "name": "tk",
+        "type": "constant",
+        "query": "timekeeper-[0-9]+-chronos|chronos-timekeeper-node-[0-9]+",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "A pattern matching the two timekeepers in Loki, under their hostname now or at their last boot"
+      },
+      {
+        "name": "agents",
+        "type": "constant",
+        "query": "auto-drive-files-gateway-chronos|auto-drive-staging-public|chronos-bootstrap-0|chronos-timekeeper-0|chronos-timekeeper-1",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "The Chronos hosts that run a host agent, as they appear in metrics"
+      },
+      {
+        "name": "evm",
+        "type": "constant",
+        "query": "chronos-domain-0-.+",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "A pattern matching the Auto EVM bootstrap, RPC and operator nodes"
+      },
+      {
+        "name": "ops",
+        "type": "constant",
+        "query": "chronos-domain-0-operator-node-[0-9]+",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "A pattern matching the two Auto EVM operators"
+      },
+      {
+        "name": "rpcs",
+        "type": "constant",
+        "query": "chronos-rpc-node-[0-9]+|chronos-domain-0-rpc-node-[0-9]+",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "A pattern matching the consensus and Auto EVM RPC nodes, which run Traefik"
+      },
+      {
+        "name": "chain",
+        "type": "constant",
+        "query": "chronos-.+|timekeeper-[0-9]+-chronos|auto-drive-files-gateway-chronos|auto-drive-staging-public",
+        "hide": 2,
+        "skipUrlSync": true,
+        "description": "A pattern matching every host running a Chronos node"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "Fleet health",
+      "type": "link",
+      "keepTime": true,
+      "url": "/d/fleet-health?var-host=auto-drive-files-gateway-chronos&var-host=auto-drive-staging-public&var-host=chronos-bootstrap-0&var-host=chronos-timekeeper-0&var-host=chronos-timekeeper-1"
+    },
+    {
+      "title": "Fleet logs",
+      "type": "link",
+      "keepTime": true,
+      "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=auto-drive-files-gateway-chronos&var-host=auto-drive-staging-public"
+    },
+    {
+      "title": "Auto Drive staging",
+      "type": "link",
+      "keepTime": true,
+      "url": "/d/auto-drive-staging"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Chain head",
+      "description": "The highest best block any of our Chronos nodes printed in the last 5 minutes.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "locale",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Blocks (10 min)",
+      "description": "Blocks the chain added in the last 10 minutes: how far the highest best block among our nodes rose. Chronos runs at about 45, a block every 13 seconds or so, slower than the 6-second target; below 20 is orange, and 0 means the chain has stalled, or every node has. A farmer must win a slot for a block, and only three farm Chronos: our two and Jim's.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "(max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m]))) - max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m] offset 10m)))) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 20
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Finality lag",
+      "description": "Blocks between the chain head and the highest finalized block. On Chronos the finalized head trails by around 100,000 blocks and moves forward a segment at a time. Shown, not judged: a lag that only grows means finality has stopped.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "(max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))) - max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `finalized #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m])))) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "locale",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Nodes reporting",
+      "description": "Of our 11 Chronos consensus nodes (bootstrap, two timekeepers, RPC, the Auto EVM bootstrap, RPC and two operators, the Auto Drive archive node and the two farmers' nodes), how many printed a status line in the last 5 minutes. The Chronos nodes table shows which.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (host, compose_project) (count_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" [5m]))) or vector(0)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 11
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Timekeepers",
+      "description": "Timekeepers whose node imported at least one block in the last 10 minutes. 2 is both. Without a timekeeper no proof of time is produced and the chain stops; this shows each is up and following the chain, not that it is producing proofs.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "count((max by (host) (max_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host) (min_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))) > 0) or vector(0)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-container=node"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Blocks: ours",
+      "description": "Blocks our two farmers' nodes claimed in the last hour. 0 means neither is winning blocks, and the chain relies on Jim's home farmer alone. A claimed block can still lose a fork, so this can run slightly above what lands on the chain.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 15,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed block at slot` [1h])) or (vector(0) and on() (sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} [5m])) > 0)) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=${gw}&var-host=${pub}&var-container=subspace-farmer-node-1"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Our share",
+      "description": "Of the blocks the chain added in the last hour, the share our two farmers' nodes claimed. The rest is Jim's home farmer. Near 100% means the chain depends on our two 1 GiB staging farmers alone. A claimed block can still lose a fork, so this is capped at 100%.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "((100 * sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed block at slot` [1h])) / (max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m]))) - max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m] offset 1h))))) <= 100) or (vector(100) and on() (100 * sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed block at slot` [1h])) / (max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m]))) - max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m] offset 1h))))) > 100) or (vector(0) and on() (max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m]))) - max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [5m] offset 1h))))) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percent",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Errors (15 min)",
+      "description": "Error lines from the Chronos nodes, the farmers, the DSN bootstrap node and the RPC proxies in the last 15 minutes. No data means none of them logged anything in 5 minutes.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node|farmer|dsn-bootstrap-node|traefik\"} |~ `\"level\":\\s*\"(?i:error|fatal|critical)\"|\\sERROR\\s|^\\w*Error:|panicked at` [15m])) or (vector(0) and on() (sum(count_over_time({host=~\"${chain:raw}\"} [5m])) > 0)) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Auto EVM blocks",
+      "description": "Domain blocks Auto EVM added in the last 10 minutes, from the domain nodes' status lines. Auto EVM only makes a block when an operator has transactions or receipts to bundle, so this stays at 0 for as long as nobody uses the domain. Shown, not judged: the Operators tile says whether the operators are taking part.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max(max by (host, node) (max_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host, node) (min_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-container=node"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Slots won (10 min)",
+      "description": "Bundle slots the two Auto EVM operators won in the last 10 minutes. An operator builds a bundle for a won slot only when it has transactions or receipts to include, and skips it otherwise. 0 means neither operator is taking part, so Auto EVM could not make a block. No data means the operators logged nothing in 5 minutes.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= `Claimed slot` [10m])) or (vector(0) and on() (sum(count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} [5m])) > 0)) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-container=node"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Operators",
+      "description": "Auto EVM operators that won at least one bundle slot in the last 30 minutes. 2 is both.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (host) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= `Claimed slot` [30m])) > 0) or vector(0)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-container=node"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Farmers' nodes",
+      "description": "Our farmers' nodes, on the files gateway and the public backend, that imported at least one block in the last 10 minutes. 2 is both.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "count((max by (host) (max_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host) (min_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))) > 0) or vector(0)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=${gw}&var-host=${pub}&var-container=subspace-farmer-node-1"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Public RPC",
+      "description": "Of the four public RPC names (rpc and rpc-0, auto-evm and auto-evm-0 under chronos.autonomys.xyz), how many passed the monitoring host's last probe: a JSON-RPC system_health call through Cloudflare that must answer 200, not syncing, with peers. 4 is all of them. No data means no probe has reported.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "A",
+          "expr": "count(probe_success{job=\"rpc-probe\"} == 1) or (vector(0) and on() count(probe_success{job=\"rpc-probe\"})) or vector(-1)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Farm warnings",
+      "description": "Lines from our farmers in the last hour saying a proof was skipped for the farming time limit, a proof failed, a solution could not be sent to the node, or a non-fatal farming error occurred. Each is a block or vote the farmer may have missed.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 15,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"farmer\"} |~ `Proving for solution skipped|Failed to prove|Non-fatal farming error|Failed to send solution` [1h])) or (vector(0) and on() (sum(count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"farmer\"} [1h])) > 0)) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=${gw}&var-host=${pub}&var-container=subspace-farmer-farmer-1"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Hosts reporting",
+      "description": "Chronos hosts whose host agent answered its last scrape: the files gateway, the public backend, the bootstrap and both timekeepers, so 5 is all of them. The AWS nodes have no host agent.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "A",
+          "expr": "count(count by (host) (up{job=\"node\", host=~\"${agents:raw}\"} == 1)) or vector(0)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 5
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Fleet health",
+              "url": "/d/fleet-health?var-host=auto-drive-files-gateway-chronos&var-host=auto-drive-staging-public&var-host=chronos-bootstrap-0&var-host=chronos-timekeeper-0&var-host=chronos-timekeeper-1"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Firing alerts",
+      "description": "Alerts firing for the Chronos hosts with a host agent: RAID, SMART, full disks, boot code, a silent server, a scrape target down. No data means the Watchdog alert, which always fires, is absent, so vmalert is not reporting.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 3,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "A",
+          "expr": "count(ALERTS{alertstate=\"firing\", alertname!=\"Watchdog\", host=~\"${agents:raw}\"}) or (vector(0) and on() (count(ALERTS{alertstate=\"firing\", alertname=\"Watchdog\"}) > 0)) or vector(-1)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Fleet health",
+              "url": "/d/fleet-health?var-host=auto-drive-files-gateway-chronos&var-host=auto-drive-staging-public&var-host=chronos-bootstrap-0&var-host=chronos-timekeeper-0&var-host=chronos-timekeeper-1"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Chain figures come from the nodes' logs:** most Chronos nodes send no metrics, and those that do report no block heights. **Not covered:** the chain indexer and the chain alerter (no logs reach Loki), proof-of-time production itself, the farmers' audits, Jim's home farmer and archive node, the Auto EVM explorer, and host health for the AWS nodes. Green above does not include them."
+      }
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Chronos nodes",
+      "description": "One row per consensus node we run, from the status line each prints every 5 seconds. Behind head is the gap to the highest best block among them. State is the node's last status line: syncing, synced, or fetching history, synced and downloading older blocks behind it. The archive node on the files gateway serves Auto Drive's DAG indexer. A missing row means the node printed nothing for 5 minutes: compare with the 11 the Nodes reporting tile expects.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 13
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `finalized #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))) - on() group_right max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `\\((?P<v>[0-9]+) peers\\)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (max_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host, node) (min_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}`, st=`{{ if contains \"Syncing\" __line__ }}2{{ else if contains \"Block history\" __line__ }}1{{ else }}0{{ end }}` | unwrap st [5m]))",
+          "queryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "host",
+                "node",
+                "Value #A",
+                "Value #B",
+                "Value #D",
+                "Value #E",
+                "Value #F",
+                "Value #G"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "renameByName": {
+              "host": "Server",
+              "node": "Node",
+              "instance": "Endpoint",
+              "Value #A": "Best",
+              "Value #B": "Finalized",
+              "Value #D": "Behind head",
+              "Value #E": "Peers",
+              "Value #F": "Imported (10 min)",
+              "Value #G": "State"
+            },
+            "indexByName": {
+              "host": 0,
+              "node": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "Value #F": 6,
+              "Value #G": 7
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Server"
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        },
+        "sortBy": []
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "unit": "locale",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Behind head"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 10
+                    },
+                    {
+                      "color": "red",
+                      "value": 100
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peers"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "green",
+                      "value": 3
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Imported (10 min)"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "synced",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "fetching history",
+                        "color": "blue",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "syncing",
+                        "color": "orange",
+                        "index": 2
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Server"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 280
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 19,
+      "type": "table",
+      "title": "Auto EVM nodes",
+      "description": "One row per Auto EVM domain node, from the domain status line each prints beside its consensus one. Their domain status lines read Block history in normal running, so State only flags syncing. Imported stays at 0 while nobody uses the domain, as Auto EVM only makes a block from a bundle. For the two operators: Slots won counts bundle slots each won, Bundles the ones it had transactions or receipts for (it skips empty ones), and Problems the slots it skipped because its domain chain lagged plus errors building or submitting a bundle or receipt.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `finalized #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `\\((?P<v>[0-9]+) peers\\)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (max_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host, node) (min_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host, node) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= \"Claimed slot\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` [1h]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}`, st=`{{ if contains \"Syncing\" __line__ }}2{{ else if contains \"Block history\" __line__ }}1{{ else }}0{{ end }}` | unwrap st [5m]))",
+          "queryType": "instant"
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host, node) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |~ `Skipping bundle production|Error at producing bundle|Error at submitting` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` [1h])) or (sum by (host, node) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= \"Claimed slot\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` [1h])) * 0)",
+          "queryType": "instant"
+        },
+        {
+          "refId": "H",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host, node) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= \"Producing bundle at slot\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` [1h])) or (sum by (host, node) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= \"Claimed slot\" | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` [1h])) * 0)",
+          "queryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "host",
+                "node",
+                "Value #A",
+                "Value #B",
+                "Value #C",
+                "Value #D",
+                "Value #F",
+                "Value #E",
+                "Value #H",
+                "Value #G"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "renameByName": {
+              "host": "Server",
+              "node": "Node",
+              "instance": "Endpoint",
+              "Value #A": "Best",
+              "Value #B": "Finalized",
+              "Value #C": "Peers",
+              "Value #D": "Imported (10 min)",
+              "Value #F": "State",
+              "Value #E": "Slots won (1 h)",
+              "Value #H": "Bundles (1 h)",
+              "Value #G": "Problems (1 h)"
+            },
+            "indexByName": {
+              "host": 0,
+              "node": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #F": 6,
+              "Value #E": 7,
+              "Value #H": 8,
+              "Value #G": 9
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Server"
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        },
+        "sortBy": []
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "unit": "locale",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peers"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "green",
+                      "value": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "synced",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "synced",
+                        "color": "green",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "syncing",
+                        "color": "orange",
+                        "index": 2
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Slots won (1 h)"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Problems (1 h)"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Server"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 280
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "Servers",
+      "description": "The Chronos hosts that run a host agent, as Fleet health shows them. Colours follow the alert rules' thresholds. The AWS nodes send no host metrics.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "A",
+          "expr": "time() - host:last_scrape_timestamp:max{host=~\"${agents:raw}\"}",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "B",
+          "expr": "count by (host) (up{host=~\"${agents:raw}\"} == 0) or count by (host) (up{host=~\"${agents:raw}\"}) * 0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "C",
+          "expr": "count by (host) (ALERTS{alertstate=\"firing\", host=~\"${agents:raw}\"}) or count by (host) (up{host=~\"${agents:raw}\"}) * 0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "D",
+          "expr": "time() - max by (host) (node_boot_time_seconds{host=~\"${agents:raw}\"})",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "E",
+          "expr": "100 * (1 - avg by (host) (rate(node_cpu_seconds_total{mode=\"idle\", host=~\"${agents:raw}\"}[5m])))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "F",
+          "expr": "max by (host) (node_load5{host=~\"${agents:raw}\"}) / count by (host) (node_cpu_seconds_total{mode=\"idle\", host=~\"${agents:raw}\"})",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "G",
+          "expr": "100 * (1 - max by (host) (node_memory_MemAvailable_bytes{host=~\"${agents:raw}\"}) / max by (host) (node_memory_MemTotal_bytes{host=~\"${agents:raw}\"}))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "refId": "H",
+          "expr": "100 * max by (host) (1 - node_filesystem_avail_bytes{fstype=~\"ext[234]|xfs|btrfs|zfs\", host=~\"${agents:raw}\"} / node_filesystem_size_bytes{fstype=~\"ext[234]|xfs|btrfs|zfs\", host=~\"${agents:raw}\"})",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "host",
+                "Value #A",
+                "Value #B",
+                "Value #C",
+                "Value #D",
+                "Value #E",
+                "Value #F",
+                "Value #G",
+                "Value #H"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "renameByName": {
+              "Value #A": "Last seen",
+              "Value #B": "Targets down",
+              "Value #C": "Firing alerts",
+              "Value #D": "Uptime",
+              "Value #E": "CPU",
+              "Value #F": "Load per core",
+              "Value #G": "Memory",
+              "Value #H": "Fullest filesystem",
+              "host": "Server"
+            },
+            "indexByName": {
+              "host": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "Value #F": 6,
+              "Value #G": 7,
+              "Value #H": 8
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Server"
+              }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        },
+        "sortBy": []
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 900
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Targets down"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Firing alerts"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uptime"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 95
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Load per core"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 85
+                    },
+                    {
+                      "color": "red",
+                      "value": 95
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Fullest filesystem"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 90
+                    },
+                    {
+                      "color": "red",
+                      "value": 97
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "",
+                        "color": "transparent",
+                        "index": 99
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Server"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 280
+              }
+            ]
+          }
+        ]
+      },
+      "links": [
+        {
+          "title": "Fleet health",
+          "url": "/d/fleet-health?var-host=${gw}&var-host=${svc}&var-host=${pub}&var-host=${priv}"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Chain",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 31,
+          "type": "timeseries",
+          "title": "Blocks per 10 minutes",
+          "description": "Blocks the chain added in the 10 minutes before each point, from the highest best block among our nodes, beside the blocks our two farmers' nodes claimed in the same window. The gap between the two is everyone else: Jim's home farmer.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 35,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "(max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [1m]))) - max(max by (host) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | unwrap v [1m] offset 10m))))",
+              "queryType": "range",
+              "legendFormat": "chain"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed block at slot` [10m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} claimed"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 32,
+          "type": "timeseries",
+          "title": "Blocks behind the head",
+          "description": "How far each node's best block trails the highest best block among our nodes. A node that stops importing climbs here; one that drops out leaves a gap.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 35,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))) - on() group_right max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} {{node}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 33,
+          "type": "timeseries",
+          "title": "Finality lag",
+          "description": "Blocks between the chain head and the highest finalized block. It saws up and down as finality moves a segment at a time; a line that only climbs means finality has stopped.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 43,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))) - max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `finalized #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m])))",
+              "queryType": "range",
+              "legendFormat": "lag"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "locale",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 34,
+          "type": "timeseries",
+          "title": "Peers",
+          "description": "Consensus peers each node reports in its status line.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 43,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `\\((?P<v>[0-9]+) peers\\)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} {{node}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 35,
+          "type": "timeseries",
+          "title": "DSN bootstrap peers",
+          "description": "Peers the DSN bootstrap node on the bootstrap server knows and actively uses, from the line it prints every 5 minutes. Farmers and nodes find the DSN through it.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 51,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max(last_over_time({host=\"chronos-bootstrap-node-0\", compose_service=\"dsn-bootstrap-node\"} |= \"known peers\" | regexp `/(?P<v>[0-9]+) known peers` | unwrap v [10m]))",
+              "queryType": "range",
+              "legendFormat": "known"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max(last_over_time({host=\"chronos-bootstrap-node-0\", compose_service=\"dsn-bootstrap-node\"} |= \"known peers\" | regexp `actively using (?P<v>[0-9]+)/` | unwrap v [10m]))",
+              "queryType": "range",
+              "legendFormat": "actively using"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Auto EVM",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 41,
+          "type": "timeseries",
+          "title": "Auto EVM blocks per 10 minutes",
+          "description": "Domain blocks each Auto EVM node imported in each 10-minute window. Auto EVM only makes a block when there are transactions or receipts to bundle.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 36,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max by (host, node) (max_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host, node) (min_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 42,
+          "type": "timeseries",
+          "title": "Slots won and bundles per 10 minutes",
+          "description": "Bundle slots each operator won in each 10-minute window, and the bundles it built for them. It builds one only when it has transactions or receipts, so bundles stay at 0 on a quiet domain.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 36,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= `Claimed slot` [10m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} slots won"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"${ops:raw}\", compose_service=\"node\"} |= `Producing bundle at slot` [10m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} bundles"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 43,
+          "type": "timeseries",
+          "title": "Auto EVM blocks behind the head",
+          "description": "How far each domain node's best block trails the highest among them.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 44,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max(max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))) - on() group_right max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 44,
+          "type": "timeseries",
+          "title": "Auto EVM peers",
+          "description": "Domain peers each Auto EVM node reports in its domain status line.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 44,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max by (host, node) (last_over_time({host=~\"${evm:raw}\", compose_service=\"node\"} |= \"best: #\" |= \"Domain:\" | regexp `\\((?P<v>[0-9]+) peers\\)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [1m]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "row",
+      "title": "Farmers",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 51,
+          "type": "timeseries",
+          "title": "Blocks and votes claimed",
+          "description": "Blocks and votes our farmers' nodes claimed, per hour.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 37,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed block at slot` [1h]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} blocks"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= `Claimed vote at slot` [1h]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} votes"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 52,
+          "type": "timeseries",
+          "title": "Rewards signed",
+          "description": "Reward hashes each farmer signed, per hour.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 37,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"farmer\"} |= `Successfully signed reward hash` [1h]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 53,
+          "type": "timeseries",
+          "title": "Farming warnings",
+          "description": "Skipped or failed proofs, solutions not sent, and non-fatal farming errors, per hour.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"farmer\"} |~ `Proving for solution skipped|Failed to prove|Non-fatal farming error|Failed to send solution` [1h]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 54,
+          "type": "timeseries",
+          "title": "Plotting progress",
+          "description": "The last progress each farmer printed while plotting or replotting a sector. Gaps are normal: a 1 GiB farm plots its few sectors quickly, then replots only as sectors expire.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max by (host) (last_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"farmer\"} |~ `(Re)?[Pp]lotting sector \\(` | regexp `sector \\((?P<v>[0-9.]+)% complete\\)` | unwrap v [$__auto]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0,
+              "max": 100
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "type": "row",
+      "title": "RPC",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 82,
+          "type": "table",
+          "title": "Public RPC endpoints",
+          "description": "The monitoring host's last probe of each public RPC name: a JSON-RPC system_health call through Cloudflare, every minute. Healthy needs a 200 answer, not syncing, with peers. The certificate is the one Cloudflare presents, not the node's own.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 38,
+            "w": 24,
+            "h": 6
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "label_replace(max by (instance) (probe_success{job=\"rpc-probe\"}), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "B",
+              "expr": "label_replace(max by (instance) (probe_http_status_code{job=\"rpc-probe\"}), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "C",
+              "expr": "label_replace(max by (instance) (probe_duration_seconds{job=\"rpc-probe\"}), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "D",
+              "expr": "label_replace(min by (instance) (probe_ssl_earliest_cert_expiry{job=\"rpc-probe\"} - time()), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "instance",
+                    "Value #A",
+                    "Value #B",
+                    "Value #C",
+                    "Value #D"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "renameByName": {
+                  "host": "Server",
+                  "node": "Node",
+                  "instance": "Endpoint",
+                  "Value #A": "Healthy",
+                  "Value #B": "HTTP status",
+                  "Value #C": "Response time",
+                  "Value #D": "Certificate expires in"
+                },
+                "indexByName": {
+                  "instance": 0,
+                  "Value #A": 1,
+                  "Value #B": 2,
+                  "Value #C": 3,
+                  "Value #D": 4
+                }
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "sort": [
+                  {
+                    "field": "Endpoint"
+                  }
+                ]
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false,
+              "reducer": [
+                "sum"
+              ]
+            },
+            "sortBy": []
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false
+              },
+              "unit": "none",
+              "decimals": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Healthy"
+                },
+                "properties": [
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "red",
+                          "value": null
+                        },
+                        {
+                          "color": "green",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "0": {
+                            "text": "no",
+                            "index": 0
+                          },
+                          "1": {
+                            "text": "yes",
+                            "index": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "null",
+                          "result": {
+                            "text": "",
+                            "color": "transparent",
+                            "index": 99
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "HTTP status"
+                },
+                "properties": [
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "red",
+                          "value": null
+                        },
+                        {
+                          "color": "green",
+                          "value": 200
+                        },
+                        {
+                          "color": "red",
+                          "value": 300
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "null",
+                          "result": {
+                            "text": "",
+                            "color": "transparent",
+                            "index": 99
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Response time"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 2
+                        },
+                        {
+                          "color": "red",
+                          "value": 5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "null",
+                          "result": {
+                            "text": "",
+                            "color": "transparent",
+                            "index": 99
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Certificate expires in"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "dtdurations"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "red",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 604800
+                        },
+                        {
+                          "color": "green",
+                          "value": 1209600
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "null",
+                          "result": {
+                            "text": "",
+                            "color": "transparent",
+                            "index": 99
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Endpoint"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 280
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": 83,
+          "type": "timeseries",
+          "title": "Public RPC probes passing",
+          "description": "Whether each public RPC name passed its probe, 1 or 0, minute by minute.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 44,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "label_replace(max by (instance) (probe_success{job=\"rpc-probe\"}), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 84,
+          "type": "timeseries",
+          "title": "Public RPC response time",
+          "description": "How long each probe took, through Cloudflare, from the monitoring host.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 44,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "label_replace(max by (instance) (probe_duration_seconds{job=\"rpc-probe\"}), \"instance\", \"$1\", \"instance\", \"https://([^/]+)/.*\")",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 2,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 81,
+          "type": "timeseries",
+          "title": "RPC proxy responses by status",
+          "description": "Responses the Traefik proxies in front of the consensus and Auto EVM RPC nodes logged, by status class. WebSocket upgrades are 1xx. This shows the nodes answering what reaches them, not whether the public names reach them.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 52,
+            "w": 24,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host, status) (count_over_time({host=~\"${rpcs:raw}\", compose_service=\"traefik\"} |= \"HTTP/\" | regexp `\" (?P<status>[1-5])[0-9][0-9] ` [$__auto]))",
+              "queryType": "range",
+              "legendFormat": "{{host}} {{status}}xx"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "type": "row",
+      "title": "Hosts",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 61,
+          "type": "timeseries",
+          "title": "Free space on /",
+          "description": "Free space on / of the Chronos hosts with a host agent. Their nodes keep their chain data in Docker volumes on /, so this falls as the chain grows, fastest where a node keeps every block.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 39,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "max by (host) (node_filesystem_avail_bytes{host=~\"${agents:raw}\", mountpoint=\"/\"})",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 62,
+          "type": "timeseries",
+          "title": "Growth of used space on /, per day",
+          "description": "How fast used space on / grows, from the last 6 hours, scaled to a day. Most of it is chain data, as every Chronos upload lands in every archive node.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 39,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "max by (host) (deriv(node_filesystem_avail_bytes{host=~\"${agents:raw}\", mountpoint=\"/\"}[6h])) * -86400",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "type": "row",
+      "title": "Errors",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 71,
+          "type": "logs",
+          "title": "Error lines",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "description": "Error lines from the Chronos nodes, farmers, DSN bootstrap node and RPC proxies.",
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 24,
+            "h": 12
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "{host=~\"${chain:raw}\", compose_service=~\"node|subspace-node|farmer|dsn-bootstrap-node|traefik\"} |~ `\"level\":\\s*\"(?i:error|fatal|critical)\"|\\sERROR\\s|^\\w*Error:|panicked at` | line_format \"[{{.host}} {{.compose_service}}] {{__line__}}\"",
+              "queryType": "range"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": false,
+            "wrapLogMessage": false,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "dedupStrategy": "none",
+            "sortOrder": "Descending"
+          }
+        }
+      ]
+    }
+  ]
+}
