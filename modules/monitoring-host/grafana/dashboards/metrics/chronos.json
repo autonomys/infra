@@ -2818,7 +2818,7 @@
       "links": [
         {
           "title": "Fleet health",
-          "url": "/d/fleet-health?var-host=${gw}&var-host=${svc}&var-host=${pub}&var-host=${priv}"
+          "url": "/d/fleet-health?var-host=auto-drive-files-gateway-chronos&var-host=auto-drive-staging-public&var-host=chronos-bootstrap-0&var-host=chronos-timekeeper-0&var-host=chronos-timekeeper-1"
         }
       ]
     },
