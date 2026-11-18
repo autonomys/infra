@@ -157,7 +157,10 @@ pinned mapping. The index follows the chain's finalized head, which trails the
 best block by five to six segments, about 90,000 to 117,000 blocks on Chronos,
 or more than a week at its recent pace. The node moves it only when it
 archives a segment, every day or two, so the index mostly waits at it, and
-SubQuery's `/health` reports a waiting indexer as not healthy.
+SubQuery's `/health` reports a waiting indexer as not healthy. It reports its
+endpoint as not healthy after a minute without a new block, which Chronos
+often goes without. `validate.sh` accepts the first at the target and the
+second while the indexer has the node's best block.
 
 On an empty or missing schema the indexer starts over from its start block,
 which takes a day or two on Chronos. So `dag-indexer-start-guard.js` runs before

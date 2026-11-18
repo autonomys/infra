@@ -440,7 +440,7 @@ files_gateway_checks() {
 }
 
 dag_indexer_checks() {
-  local dag_first="$1" dag_second="$2" importing="$3" c heights_py heights finalized best target health caught_up
+  local dag_first="$1" dag_second="$2" importing="$3" c heights_py heights finalized best target indexer_best health caught_up
   # stopped or restarting too, so its state shows
   c="\$(sudo docker ps -aq --filter label=com.docker.compose.project=$COMPOSE_PROJECT --filter label=com.docker.compose.service=dag-indexer)"
   echo ""
@@ -466,8 +466,9 @@ dag_indexer_checks() {
   check "dag-indexer on Chronos (/meta genesisHash)" \
     "curl -s -m 5 http://127.0.0.1:30001/meta | python3 -c 'import json, sys; print(json.load(sys.stdin).get(\"genesisHash\"))'" \
     "$CHRONOS_GENESIS"
-  # The node's heights before the indexer's target, so a target the node moved
-  # on in between is still at or past the finalized head read here
+  # The node's heights before the indexer's, so a target the node moved on in
+  # between is still at or past the finalized head read here, and an indexer
+  # that gets the node's blocks is at or past its best
   read -r -d '' heights_py <<'PY' || true
 import json, urllib.request
 def get(url, body=None):
@@ -478,14 +479,15 @@ def rpc(method, *params):
     return get("http://127.0.0.1:9944", {"id": 1, "jsonrpc": "2.0", "method": method, "params": list(params)})["result"]
 finalized = int(rpc("chain_getHeader", rpc("chain_getFinalizedHead"))["number"], 16)
 best = int(rpc("chain_getHeader")["number"], 16)
-print(finalized, best, get("http://127.0.0.1:30001/meta")["targetHeight"])
+meta = get("http://127.0.0.1:30001/meta")
+print(finalized, best, meta["targetHeight"], meta["bestHeight"])
 PY
   heights="$(ssh -o ConnectTimeout=5 "$HOST" python3 - <<< "$heights_py" 2>/dev/null || true)"
   # the host's answers reach arithmetic only as plain numbers, since bash runs a
   # command substitution it finds in an array subscript there
-  finalized="" best="" target=""
-  if [[ "$heights" =~ ^[0-9]+\ [0-9]+\ [0-9]+$ ]]; then
-    read -r finalized best target <<< "$heights"
+  finalized="" best="" target="" indexer_best=""
+  if [[ "$heights" =~ ^[0-9]+\ [0-9]+\ [0-9]+\ [0-9]+$ ]]; then
+    read -r finalized best target indexer_best <<< "$heights"
   fi
   if [[ -n "$finalized" ]] && (( best - finalized <= DAG_LAG_MAX )); then
     report "Node's finalized head within $DAG_LAG_MAX blocks of its best" "yes" "yes"
@@ -505,9 +507,14 @@ PY
   fi
   health="$(ssh -o ConnectTimeout=5 "$HOST" "curl -s -m 5 -w ' %{http_code}' http://127.0.0.1:30001/health" 2>/dev/null || true)"
   # SubQuery reports an indexer with no block to index for a while as unhealthy,
-  # which at the target is most of the time between segments
+  # which at the target is most of the time between segments. It reports its
+  # endpoint as unhealthy first, after a minute with no new best block, which
+  # Chronos often goes without: with the indexer at the node's best block, that
+  # is the chain being quiet, not the connection failing.
   if $caught_up && [[ "$health" == *'"Indexer is not healthy"'*' 500' ]]; then
     pass "dag-indexer idle at its target, which /health reports as not healthy"
+  elif [[ "$health" == *'"Endpoint is not healthy"'*' 500' && -n "$indexer_best" ]] && (( indexer_best >= best )); then
+    pass "dag-indexer at the node's best block, which /health reports as the endpoint not healthy after a minute without a new one"
   else
     report "dag-indexer's endpoint healthy (/health)" "${health##* }" "200"
     if [[ "${health##* }" != 200 && "$importing" == false ]]; then
