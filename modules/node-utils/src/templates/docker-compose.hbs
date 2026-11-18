@@ -171,7 +171,7 @@ services:
         {{#if domain_node}}
             - "30334:30334/tcp"
         {{/if}}
-            - "127.0.0.1:9615:9615"
+            - "9615:9615"
         logging:
             driver: loki
             options:
