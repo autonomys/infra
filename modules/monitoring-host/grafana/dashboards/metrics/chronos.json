@@ -279,11 +279,11 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Finality lag",
-      "description": "Blocks between the chain head and the highest finalized block. On Chronos the finalized head trails by around 100,000 blocks and moves forward a segment at a time. Shown, not judged: a lag that only grows means finality has stopped.",
+      "title": "Slot time",
+      "description": "Seconds per slot over the last 200 blocks, from the monitoring host's reads of the public RPC: about 1.04 while the fastest timekeeper leads, about 2.2 when one is out of step and the network falls back to a slower one. Above 1.3 for 30 minutes raises ChronosSlotsSlow. No data means the chain probe can't read the chain.",
       "datasource": {
-        "type": "loki",
-        "uid": "loki"
+        "type": "prometheus",
+        "uid": "victoriametrics"
       },
       "gridPos": {
         "x": 6,
@@ -293,14 +293,16 @@
       },
       "targets": [
         {
-          "refId": "A",
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "victoriametrics"
           },
+          "refId": "A",
+          "expr": "max(subspace_chain_slot_seconds{network=\"chronos\"}) or vector(-1)",
           "editorMode": "code",
-          "expr": "(max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m]))) - max(max by (host, node) (last_over_time({host=~\"${chain:raw}\", compose_service=~\"node|subspace-node\"} |= \"best: #\" != \"Domain:\" | regexp `finalized #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [5m])))) or (vector(0) - 1)",
-          "queryType": "instant"
+          "instant": true,
+          "range": false,
+          "format": "time_series"
         }
       ],
       "options": {
@@ -324,16 +326,20 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 1.3
               }
             ]
           },
           "color": {
             "mode": "thresholds"
           },
-          "unit": "locale",
-          "decimals": 0,
+          "unit": "s",
+          "decimals": 2,
           "mappings": [
             {
               "type": "value",
@@ -344,12 +350,6 @@
                   "index": 0
                 }
               }
-            }
-          ],
-          "links": [
-            {
-              "title": "Logs",
-              "url": "/d/fleet-logs?var-host=chronos-bootstrap-node-0&var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-rpc-node-0&var-host=chronos-domain-0-bootstrap-node-0&var-host=chronos-domain-0-rpc-node-0&var-host=chronos-domain-0-operator-node-0&var-host=chronos-domain-0-operator-node-1&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-host=${gw}&var-host=${pub}"
             }
           ]
         },
@@ -436,7 +436,7 @@
       "id": 5,
       "type": "stat",
       "title": "Timekeepers",
-      "description": "Timekeepers whose node imported at least one block in the last 10 minutes. 2 is both. Without a timekeeper no proof of time is produced and the chain stops; this shows each is up and following the chain, not that it is producing proofs.",
+      "description": "Timekeepers whose node imported at least one block in the last 10 minutes. 2 is both. Without a timekeeper no proof of time is produced and the chain stops; this shows each is up and following the chain. Slot time and PoT reorgs show whether they keep it at full speed.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -511,8 +511,8 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Blocks: ours",
-      "description": "Blocks our two farmers' nodes claimed in the last hour. 0 means neither is winning blocks, and the chain relies on Jim's home farmer alone. A claimed block can still lose a fork, so this can run slightly above what lands on the chain.",
+      "title": "PoT reorgs (1 h)",
+      "description": "Proof-of-time reorgs the busier timekeeper logged in the last hour. A couple a week is normal; 5 to 7 an hour means a timekeeper is out of step, and 3 raises ChronosTimekeeperOutOfStep, whose runbook restarts timekeeper 0's node. Every Chronos node logs the same reorgs, so this can't say which timekeeper it is. No data means the timekeepers logged nothing in 5 minutes.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -520,6 +520,94 @@
       "gridPos": {
         "x": 15,
         "y": 0,
+        "w": 3,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "max(sum by (host) (count_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} |= `Proof of time chain reorg happened` [1h]))) or (vector(0) and on() (sum(count_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} [5m])) > 0)) or (vector(0) - 1)",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "No data",
+                  "color": "#6e7781",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "links": [
+            {
+              "title": "Logs",
+              "url": "/d/fleet-logs?var-host=timekeeper-0-chronos&var-host=timekeeper-1-chronos&var-host=chronos-timekeeper-node-0&var-host=chronos-timekeeper-node-1&var-container=node"
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Blocks: ours",
+      "description": "Blocks our two farmers' nodes claimed in the last hour. 0 means neither is winning blocks, and the chain relies on Jim's home farmer alone. A claimed block can still lose a fork, so this can run slightly above what lands on the chain.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 3,
         "w": 3,
         "h": 3
       },
@@ -1001,82 +1089,6 @@
       }
     },
     {
-      "id": 12,
-      "type": "stat",
-      "title": "Farmers' nodes",
-      "description": "Our farmers' nodes, on the files gateway and the public backend, that imported at least one block in the last 10 minutes. 2 is both.",
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "gridPos": {
-        "x": 9,
-        "y": 3,
-        "w": 3,
-        "h": 3
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "editorMode": "code",
-          "expr": "count((max by (host) (max_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m])) - min by (host) (min_over_time({host=~\"$gw|$pub\", compose_project=\"subspace-farmer\", compose_service=\"node\"} |= \"best: #\" != \"Domain:\" | regexp `best: #(?P<v>[0-9]+)` | label_format node=`{{ if eq .compose_project \"file-retriever\" }}Archive node{{ else if eq .compose_project \"subspace-farmer\" }}Farmer's node{{ else if hasPrefix \"timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-timekeeper\" .host }}Timekeeper{{ else if hasPrefix \"chronos-domain-0-operator\" .host }}Auto EVM operator{{ else if hasPrefix \"chronos-domain-0-rpc\" .host }}Auto EVM RPC{{ else if hasPrefix \"chronos-domain-0-bootstrap\" .host }}Auto EVM bootstrap{{ else if hasPrefix \"chronos-rpc\" .host }}RPC{{ else if hasPrefix \"chronos-bootstrap\" .host }}Bootstrap{{ else }}{{ .compose_service }}{{ end }}` | unwrap v [10m]))) > 0) or vector(0)",
-          "queryType": "instant"
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "value",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "showPercentChange": false
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 1
-              },
-              {
-                "color": "green",
-                "value": 2
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "unit": "none",
-          "decimals": 0,
-          "links": [
-            {
-              "title": "Logs",
-              "url": "/d/fleet-logs?var-host=${gw}&var-host=${pub}&var-container=subspace-farmer-node-1"
-            }
-          ]
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 13,
       "type": "stat",
       "title": "Public RPC",
@@ -1420,7 +1432,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Chain figures come from the nodes' logs:** most Chronos nodes send no metrics, and those that do report no block heights. **Not covered:** the chain indexer and the chain alerter (no logs reach Loki), proof-of-time production itself, the farmers' audits, Jim's home farmer and archive node, the Auto EVM explorer, and host health for the AWS nodes. Green above does not include them."
+        "content": "**Chain figures come from the nodes' logs:** most Chronos nodes send no metrics, and those that do report no block heights. **Not covered:** the chain indexer and the chain alerter (no logs reach Loki), which timekeeper is out of step (the reorgs show that one is), the farmers' audits, Jim's home farmer and archive node, the Auto EVM explorer, and host health for the AWS nodes. Green above does not include them."
       }
     },
     {
@@ -2823,13 +2835,314 @@
       ]
     },
     {
+      "id": 90,
+      "type": "row",
+      "title": "Proof of time",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 91,
+          "type": "timeseries",
+          "title": "Slot time",
+          "description": "Seconds per slot over the last 200 blocks, read from the public RPC every minute. The blue line is 1.04, the pace while the fastest timekeeper leads; the red one is 1.3, which held for 30 minutes raises ChronosSlotsSlow. About 2.2 means a timekeeper is out of step.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 35,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "max(subspace_chain_slot_seconds{network=\"chronos\"})",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "slot time"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 2,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false,
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "blue",
+                    "value": 1.04
+                  },
+                  {
+                    "color": "red",
+                    "value": 1.3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 92,
+          "type": "timeseries",
+          "title": "Block time",
+          "description": "Seconds per block over the same 200 blocks: about 6 in step, about 13 while a timekeeper is out of step.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 35,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "A",
+              "expr": "max(subspace_chain_block_seconds{network=\"chronos\"})",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "block time"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 1,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 93,
+          "type": "timeseries",
+          "title": "PoT reorgs per hour",
+          "description": "Proof-of-time reorgs each timekeeper logged in the hour before each point. The red line is 3, which raises ChronosTimekeeperOutOfStep. Every Chronos node logs the same reorgs, so the two lines move together whichever timekeeper is out of step.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 43,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "sum by (host) (count_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} |= `Proof of time chain reorg happened` [1h]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false,
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 94,
+          "type": "timeseries",
+          "title": "PoT reorg jumps",
+          "description": "How many slots each proof-of-time reorg went back, from_next_slot minus to_next_slot, as each timekeeper logged it. 270 to 410 is typical while a timekeeper is out of step; the legend's Last is the latest.",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 43,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "max by (host) (max_over_time({host=~\"${tk:raw}\", compose_service=\"node\"} |= `Proof of time chain reorg happened` | regexp `from_next_slot=(?P<from>[0-9]+) to_next_slot=(?P<to>[0-9]+)` | label_format jump=`{{ sub .from .to }}` | unwrap jump [$__auto]))",
+              "queryType": "range",
+              "legendFormat": "{{host}}"
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "locale",
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "points",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "always",
+                "spanNulls": false,
+                "pointSize": 6
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "min": 0
+            },
+            "overrides": []
+          }
+        }
+      ]
+    },
+    {
       "id": 30,
       "type": "row",
       "title": "Chain",
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 35,
         "w": 24,
         "h": 1
       },
@@ -2845,7 +3158,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 35,
+            "y": 36,
             "w": 12,
             "h": 8
           },
@@ -2919,7 +3232,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 35,
+            "y": 36,
             "w": 12,
             "h": 8
           },
@@ -2982,7 +3295,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 43,
+            "y": 44,
             "w": 12,
             "h": 8
           },
@@ -3045,7 +3358,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 43,
+            "y": 44,
             "w": 12,
             "h": 8
           },
@@ -3108,7 +3421,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 51,
+            "y": 52,
             "w": 12,
             "h": 8
           },
@@ -3180,7 +3493,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 35,
+        "y": 36,
         "w": 24,
         "h": 1
       },
@@ -3196,7 +3509,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 36,
+            "y": 37,
             "w": 12,
             "h": 8
           },
@@ -3259,7 +3572,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 36,
+            "y": 37,
             "w": 12,
             "h": 8
           },
@@ -3333,7 +3646,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 44,
+            "y": 45,
             "w": 12,
             "h": 8
           },
@@ -3396,7 +3709,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 44,
+            "y": 45,
             "w": 12,
             "h": 8
           },
@@ -3457,7 +3770,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 36,
+        "y": 37,
         "w": 24,
         "h": 1
       },
@@ -3473,7 +3786,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 37,
+            "y": 38,
             "w": 12,
             "h": 8
           },
@@ -3547,7 +3860,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 37,
+            "y": 38,
             "w": 12,
             "h": 8
           },
@@ -3610,7 +3923,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 45,
+            "y": 46,
             "w": 12,
             "h": 8
           },
@@ -3673,7 +3986,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 45,
+            "y": 46,
             "w": 12,
             "h": 8
           },
@@ -3735,7 +4048,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 37,
+        "y": 38,
         "w": 24,
         "h": 1
       },
@@ -3751,7 +4064,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 38,
+            "y": 39,
             "w": 24,
             "h": 6
           },
@@ -4128,7 +4441,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 44,
+            "y": 45,
             "w": 12,
             "h": 8
           },
@@ -4192,7 +4505,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 44,
+            "y": 45,
             "w": 12,
             "h": 8
           },
@@ -4255,7 +4568,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 52,
+            "y": 53,
             "w": 24,
             "h": 8
           },
@@ -4316,7 +4629,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 38,
+        "y": 39,
         "w": 24,
         "h": 1
       },
@@ -4332,7 +4645,7 @@
           },
           "gridPos": {
             "x": 0,
-            "y": 39,
+            "y": 40,
             "w": 12,
             "h": 8
           },
@@ -4395,7 +4708,7 @@
           },
           "gridPos": {
             "x": 12,
-            "y": 39,
+            "y": 40,
             "w": 12,
             "h": 8
           },
@@ -4455,7 +4768,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 40,
         "w": 24,
         "h": 1
       },
@@ -4471,7 +4784,7 @@
           "description": "Error lines from the Chronos nodes, farmers, DSN bootstrap node and RPC proxies.",
           "gridPos": {
             "x": 0,
-            "y": 40,
+            "y": 41,
             "w": 24,
             "h": 12
           },
