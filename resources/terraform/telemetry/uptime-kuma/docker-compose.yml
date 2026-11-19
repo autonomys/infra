@@ -5,9 +5,6 @@ version: '3.3'
 
 services:
   uptime-kuma:
-    # A new version can migrate the database in place on first start, and no
-    # earlier version can open it afterwards. Stop the container and back up
-    # uptime-kuma-data before changing this tag.
     image: louislam/uptime-kuma:2.5.12
     container_name: uptime-kuma
     volumes:
