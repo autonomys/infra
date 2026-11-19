@@ -1,0 +1,35 @@
+rule_files:
+  - ../rules/chronos.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: slots slow for half an hour
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_slot_seconds{network="chronos", host="monitoring-loki"}'
+        values: "1.04x10 2.2x45"
+    alert_rule_test:
+      - eval_time: 35m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts: []
+      - eval_time: 50m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts:
+          - exp_labels: {network: chronos, host: chronos, severity: warning}
+            exp_annotations:
+              summary: "Chronos slots take 2.20 s, against about 1.04 s in step; a timekeeper may be out of step or offline"
+              runbook: "If the Chronos dashboard counts 3 or more proof-of-time reorgs an hour, a timekeeper is out of step: ssh to chronos-timekeeper-node-0 and run `sudo docker restart node`, then chronos-timekeeper-node-1 if reorgs carry on. Slot time should be back to about 1.04 s within 5 minutes."
+
+  - name: a short slowdown and a near miss stay quiet
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_slot_seconds{network="chronos", host="monitoring-loki"}'
+        values: "1.04x10 2.2x20 1.25x40"
+    alert_rule_test:
+      - eval_time: 70m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts: []

@@ -51,6 +51,7 @@ services:
       - "127.0.0.1:3100:3100"
     volumes:
       - ./loki/config.yml:/etc/loki/config.yml:ro
+      - ./loki-rules:/etc/loki/rules:ro
       - ${DATA_DIR}/loki:/loki
     logging: *local-logging
 
@@ -174,6 +175,23 @@ services:
       - --web.listen-address=127.0.0.1:9115
     volumes:
       - ./blackbox:/etc/blackbox:ro
+    logging: *local-logging
+
+  # Reads each chain's slot and block times over its public RPC for vmagent
+  chain-probe:
+    image: python:3.13.18-alpine3.24
+    container_name: chain-probe
+    restart: unless-stopped
+    user: nobody
+    labels:
+      monitoring.config-sha: ${CHAIN_PROBE_SHA}
+    environment:
+      CHAIN_PROBE_TARGETS: chronos=https://rpc.chronos.autonomys.xyz/ws
+    command: ["python", "-u", "/probe/chain_probe.py"]
+    ports:
+      - "127.0.0.1:9180:9180"
+    volumes:
+      - ./chain-probe:/probe:ro
     logging: *local-logging
 
   vmalert:

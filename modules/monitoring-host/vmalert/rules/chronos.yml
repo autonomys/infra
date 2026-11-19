@@ -1,0 +1,18 @@
+# The Chronos testnet, from the chain probe's reads of its public RPC. The
+# timekeeper alert that needs log lines is Loki's, in loki-rules/.
+
+groups:
+  - name: chronos
+    rules:
+      # Proof of time sets the slot length: about 1.04 s while the fastest
+      # timekeeper leads, about 2.2 s when the network has fallen back to a slower
+      # one. It also rises when timekeepers are offline.
+      - alert: ChronosSlotsSlow
+        expr: max by (network) (subspace_chain_slot_seconds{network="chronos"}) > 1.3
+        for: 30m
+        labels:
+          severity: warning
+          host: chronos
+        annotations:
+          summary: "Chronos slots take {{ printf \"%.2f\" $value }} s, against about 1.04 s in step; a timekeeper may be out of step or offline"
+          runbook: "If the Chronos dashboard counts 3 or more proof-of-time reorgs an hour, a timekeeper is out of step: ssh to chronos-timekeeper-node-0 and run `sudo docker restart node`, then chronos-timekeeper-node-1 if reorgs carry on. Slot time should be back to about 1.04 s within 5 minutes."

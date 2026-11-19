@@ -44,7 +44,8 @@ receivers:
         text: |-
           {{ range .Alerts }}*{{ .Labels.alertname }}* ({{ .Labels.severity }}{{ if eq .Status "resolved" }}, resolved{{ end }})
           {{ .Annotations.summary }}
-          {{ end }}
+          {{ if and .Annotations.runbook (eq .Status "firing") }}_Runbook:_ {{ .Annotations.runbook }}
+          {{ end }}{{ end }}
 
   # Uptime Kuma 1.x only accepts GET on its push route, so the relay turns
   # Alertmanager's POST into one

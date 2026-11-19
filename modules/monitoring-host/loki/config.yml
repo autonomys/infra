@@ -50,6 +50,16 @@ limits_config:
   ingestion_rate_mb: 16
   ingestion_burst_size_mb: 32
 
+# Alerts that need log lines rather than metrics, from loki-rules/ in the module,
+# sent to the same Alertmanager as vmalert's. Loki rereads the rules every minute.
+ruler:
+  alertmanager_url: http://alertmanager:9093
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /loki/ruler
+
 compactor:
   working_directory: /loki/compactor
   retention_enabled: true

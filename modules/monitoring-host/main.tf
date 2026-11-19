@@ -21,7 +21,7 @@ locals {
   })
 
   # Directories copied to the box as they are, then synced into place
-  config_dirs = ["grafana", "vmagent", "vmalert", "alertmanager", "watchdog-relay", "blackbox"]
+  config_dirs = ["grafana", "vmagent", "vmalert", "alertmanager", "watchdog-relay", "blackbox", "chain-probe", "loki-rules"]
   config_files = {
     for d in local.config_dirs : d => {
       for f in fileset("${path.module}/${d}", "**") : f => filesha256("${path.module}/${d}/${f}")
@@ -55,6 +55,7 @@ locals {
     ALERTMANAGER_CONFIG_SHA=${local.config_sha["alertmanager"]}
     WATCHDOG_RELAY_SHA=${local.config_sha["watchdog-relay"]}
     BLACKBOX_CONFIG_SHA=${local.config_sha["blackbox"]}
+    CHAIN_PROBE_SHA=${local.config_sha["chain-probe"]}
   EOT
 }
 
@@ -131,6 +132,8 @@ resource "null_resource" "deploy_monitoring_stack" {
     alertmanager_hash  = local.config_sha["alertmanager"]
     relay_hash         = local.config_sha["watchdog-relay"]
     blackbox_hash      = local.config_sha["blackbox"]
+    chain_probe_hash   = local.config_sha["chain-probe"]
+    loki_rules_hash    = local.config_sha["loki-rules"]
     dashboards_hash    = sha256(jsonencode(local.grafana_com_dashboards))
     grafana_admin_hash = sha256(jsonencode(var.grafana_admin))
     alerting_hash      = sha256(jsonencode(var.alerting))
@@ -209,6 +212,16 @@ resource "null_resource" "deploy_monitoring_stack" {
   provisioner "file" {
     source      = "${path.module}/blackbox/"
     destination = "${local.stack_dir}/.upload/blackbox"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/chain-probe/"
+    destination = "${local.stack_dir}/.upload/chain-probe"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/loki-rules/"
+    destination = "${local.stack_dir}/.upload/loki-rules"
   }
 
   provisioner "file" {
@@ -298,6 +311,7 @@ resource "null_resource" "deploy_monitoring_stack" {
       wait_ready alertmanager http://127.0.0.1:9093/-/ready
       wait_ready vmauth http://127.0.0.1:8427/health
       wait_ready blackbox-exporter http://127.0.0.1:9115/-/healthy
+      wait_ready chain-probe http://127.0.0.1:9180/metrics
 
       # grafana cli prints Grafana's whole startup log along with the result
       if ! out="$(sudo docker compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin < secrets/grafana_admin_password 2>&1)"; then
