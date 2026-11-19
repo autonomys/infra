@@ -105,7 +105,8 @@ services:
       - -maxInsertRequestSize=16MB
       # The Auto Drive dashboard reads the 10 s backend heartbeat through a
       # [range:10s] subquery. The default 100k points stops that at about 11
-      # days of range; 1M covers the 90-day retention.
+      # days of range; 1M reaches about 115 days, so the 90-day retention fits
+      # but longer time ranges still error on that panel.
       - -search.maxPointsSubqueryPerTimeseries=1000000
     ports:
       - "127.0.0.1:8428:8428"

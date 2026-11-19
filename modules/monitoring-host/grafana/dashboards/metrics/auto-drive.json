@@ -855,7 +855,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Top 15 routes by request count over the selected range. Paths are Express route patterns.",
+      "description": "Top 15 routes by request count over the selected range. Paths are Express route patterns without the router's mount prefix, so routers that share a pattern share a row: GET /:cid and GET /:cid/status cover both /objects and /downloads, and GET / covers /features and S3 ListBuckets. Known gaps lists the fix.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -936,7 +936,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Recorded 4xx and 5xx responses per route over the selected range. One sample per API or S3 request, recorded after the handler returns. Handlers that throw go to the error middleware unrecorded, so errors are undercounted. Needs VICTORIA_ACTIVE=true on the backend.",
+      "description": "Recorded 4xx and 5xx responses per route over the selected range. One sample per API or S3 request, recorded after the handler returns. Handlers that throw go to the error middleware unrecorded, so errors are undercounted. Needs VICTORIA_ACTIVE=true on the backend. Paths are Express route patterns without the router's mount prefix, so routers that share a pattern share a row: GET /:cid and GET /:cid/status cover both /objects and /downloads, and GET / covers /features and S3 ListBuckets. Known gaps lists the fix.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1144,7 +1144,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Most pool clients checked out (total minus idle) at any 10 s heartbeat in the interval. The red line is PG_POOL_MAX at its default of 10. No host label: instances of the same process on different hosts merge into one series, so with several instances a 10 s step sees only the latest one's reading.",
+      "description": "Most pool clients checked out (total minus idle) at the 10 s steps of a subquery over the interval. The red line is PG_POOL_MAX at its default of 10. No host label: instances of the same process on different hosts merge into one series, and each step reads only the sample written last. Instances keep a steady phase, so the same instance is read at every step and the others never show. The subquery errors on ranges longer than about 115 days. Known gaps lists the fix.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2574,7 +2574,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "DAG indexer misses served from the DSN. failed = downloads failing; chunk_list_incomplete = the indexer is dropping nodes. Only the files-gateway fallback branch that Auto Drive pins sends this metric.",
+      "description": "DAG indexer misses the gateway answered from the DSN, counted per lookup, not per download. failed = a rebuild failed, and the request with it; chunk_list_incomplete = the indexer is dropping nodes, and is usually followed by chunk_list_rebuilt or failed for the same file. Lookups served from already rebuilt chunk lists are in the next panel. Only the files-gateway fallback branch that Auto Drive pins sends this metric.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2657,21 +2657,6 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "/^chunk_list_cached$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
               "options": "/^chunk_list_rebuilt$/"
             },
             "properties": [
@@ -2703,7 +2688,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 91
       },
@@ -2728,7 +2713,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (outcome) (sum_over_time(dag_indexer_fallback_count{chain=~\"(chain=)?$chain\"}[$__interval]))",
+          "expr": "sum by (outcome) (sum_over_time(dag_indexer_fallback_count{chain=~\"(chain=)?$chain\", outcome!=\"chunk_list_cached\"}[$__interval]))",
           "legendFormat": "{{outcome}}",
           "range": true,
           "instant": false,
@@ -2737,6 +2722,101 @@
         }
       ],
       "title": "Fallbacks by outcome",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Lookups answered from the gateway's in-memory cache of chunk lists rebuilt from the DSN. They cost no DSN traffic, but each one is a request for a file the indexer is missing. Counted per lookup: the gateway looks the list up for every chunk or byte-range request, and again when it checks compression and copies the file to its file cache, so one download can add thousands.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 91
+      },
+      "id": 47,
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time(dag_indexer_fallback_count{chain=~\"(chain=)?$chain\", outcome=\"chunk_list_cached\"}[$__interval]))",
+          "legendFormat": "chunk_list_cached",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "title": "Rebuilt chunk lists served from cache",
       "type": "timeseries"
     },
     {
@@ -2798,8 +2878,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 91
       },
       "id": 36,
@@ -2892,8 +2972,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 91
       },
       "id": 37,
@@ -3491,7 +3571,7 @@
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "These panels stay empty until Auto Drive sends more. Nothing in infra can fill them.\n\n| Missing | Effect here | Smallest Auto Drive change |\n|---|---|---|\n| Request duration | No API latency panel | Add `duration_ms` to `auto_drive_api_request`, and record requests whose handler throws |\n| Upload, completion and migration timings | Upload performance is bytes only | Duration fields when an upload finalizes and when a migration task ends |\n| Publish-worker metrics | Publishing throughput and confirmation lag only from the queue and Postgres | Batch size, batch duration and confirmation lag from the publish worker |\n| Cache tier and latency in the backend download API | Backend download serving is invisible; only the gateway side shows | Tier label (memory, filesystem, DSN) and duration per download |\n| Host label | Instances of one process merge into one series | Add a hostname tag to every metric |\n| Parsed `METRIC_ENVIRONMENT_TAG` | Every query needs the `(chain=)?` regex | Parse the tag before sending |\n| Origin on every files-gateway response | No cache hit share, and the cache series also counts metadata, health and node responses | Set `x-file-origin` on every response, or track bandwidth on the file route only |\n| Anonymous downloads | Download volume undercounts public traffic | Emit `auto_drive_interactions_size` for anonymous downloads too |\n\nQueue depth, active jobs, the publishing backlog and host load need a CloudWatch or PostgreSQL datasource; they are follow-ups in infra, not app changes.",
+            "content": "These panels stay empty until Auto Drive sends more. Nothing in infra can fill them.\n\n| Missing | Effect here | Smallest Auto Drive change |\n|---|---|---|\n| Request duration | No API latency panel | Add `duration_ms` to `auto_drive_api_request`, and record requests whose handler throws |\n| Mount prefix on route paths | Busiest routes and the 4xx/5xx table merge `/objects/:cid` with `/downloads/:cid` (and their `/status` routes), and `/features` with S3 ListBuckets as `GET /` | Record `req.baseUrl + req.route.path` as `path` |\n| Upload, completion and migration timings | Upload performance is bytes only | Duration fields when an upload finalizes and when a migration task ends |\n| Publish-worker metrics | Publishing throughput and confirmation lag only from the queue and Postgres | Batch size, batch duration and confirmation lag from the publish worker |\n| Cache tier and latency in the backend download API | Backend download serving is invisible; only the gateway side shows | Tier label (memory, filesystem, DSN) and duration per download |\n| Host label | Instances of one process merge into one series | Add a hostname tag to every metric |\n| Pool clients in use per sample | Pool clients in use reads one instance per 10 s step through a subquery, and errors on ranges longer than about 115 days | Send `pg_pool_in_use` (total minus idle) in the runtime heartbeat |\n| Parsed `METRIC_ENVIRONMENT_TAG` | Every query needs the `(chain=)?` regex | Parse the tag before sending |\n| Origin on every files-gateway response | No cache hit share, and the cache series also counts metadata, health and node responses | Set `x-file-origin` on every response, or track bandwidth on the file route only |\n| Anonymous downloads | Download volume undercounts public traffic | Emit `auto_drive_interactions_size` for anonymous downloads too |\n\nQueue depth, active jobs, the publishing backlog and host load need a CloudWatch or PostgreSQL datasource; they are follow-ups in infra, not app changes.",
             "mode": "markdown"
           },
           "title": "Known gaps",

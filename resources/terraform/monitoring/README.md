@@ -271,10 +271,11 @@ periodic reading, not a counter, so the panels count or sum samples over a
 window and never use `rate()`. That relies on VictoriaMetrics keeping every
 sample too. Panels for events that are usually
 absent, such as parked uploads and user reports, show 0 only while the backend
-heartbeat is arriving, and No data otherwise. The pool-in-use panel reads every
-heartbeat through a subquery, which is why VictoriaMetrics runs with a raised
-`-search.maxPointsSubqueryPerTimeseries`. A collapsed row at the bottom lists
-what needs Auto Drive changes before it can be shown.
+heartbeat is arriving, and No data otherwise. The pool-in-use panel reads the
+heartbeat through a 10 s subquery, which is why VictoriaMetrics runs with a
+raised `-search.maxPointsSubqueryPerTimeseries`. Even so, that panel errors on
+ranges longer than about 115 days, such as Last 6 months. A collapsed row at the
+bottom lists what needs Auto Drive changes before it can be shown.
 
 ### Alerts
 
