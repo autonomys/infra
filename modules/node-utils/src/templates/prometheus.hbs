@@ -1,8 +1,0 @@
-scrape_configs:
-{{#each nodes}}
-    - job_name: '{{this.job_name}}'
-      scrape_interval: 5s
-      static_configs:
-        - targets: ['{{this.node}}:{{this.port}}']
-
-{{/each}}
