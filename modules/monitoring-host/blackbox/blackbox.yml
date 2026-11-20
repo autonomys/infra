@@ -1,0 +1,23 @@
+# blackbox_exporter's probe modules. The targets and the module each uses are
+# in vmagent/scrape.yml.
+
+modules:
+  # A JSON-RPC system_health call to a Subspace node's public RPC, through
+  # Cloudflare and the node's Traefik as any client's goes. It fails unless the
+  # node answers 200, isn't syncing and has peers.
+  jsonrpc_health:
+    prober: http
+    timeout: 10s
+    http:
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: '{"jsonrpc":"2.0","id":1,"method":"system_health","params":[]}'
+      valid_status_codes: [200]
+      fail_if_body_not_matches_regexp:
+        - '"isSyncing":false'
+      fail_if_body_matches_regexp:
+        - '"peers":0[,}]'
+      # the box reaches the internet over IPv4 only
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false

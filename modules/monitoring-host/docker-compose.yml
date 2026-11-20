@@ -51,6 +51,7 @@ services:
       - "127.0.0.1:3100:3100"
     volumes:
       - ./loki/config.yml:/etc/loki/config.yml:ro
+      - ./loki-rules:/etc/loki/rules:ro
       - ${DATA_DIR}/loki:/loki
     logging: *local-logging
 
@@ -163,6 +164,39 @@ services:
     user: root
     command:
       - --web.listen-address=127.0.0.1:9633
+    logging: *local-logging
+
+  # Probes public endpoints from outside, as their users reach them, for the
+  # targets vmagent's probe jobs pass it
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.29.1
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    network_mode: host
+    labels:
+      monitoring.config-sha: ${BLACKBOX_CONFIG_SHA}
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+      - --web.listen-address=127.0.0.1:9115
+    volumes:
+      - ./blackbox:/etc/blackbox:ro
+    logging: *local-logging
+
+  # Reads each chain's slot and block times over its public RPC for vmagent
+  chain-probe:
+    image: python:3.13.18-alpine3.24
+    container_name: chain-probe
+    restart: unless-stopped
+    user: nobody
+    labels:
+      monitoring.config-sha: ${CHAIN_PROBE_SHA}
+    environment:
+      CHAIN_PROBE_TARGETS: chronos=https://rpc.chronos.autonomys.xyz/ws
+    command: ["python", "-u", "/probe/chain_probe.py"]
+    ports:
+      - "127.0.0.1:9180:9180"
+    volumes:
+      - ./chain-probe:/probe:ro
     logging: *local-logging
 
   vmalert:

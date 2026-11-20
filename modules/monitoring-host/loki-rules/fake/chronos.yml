@@ -1,0 +1,23 @@
+# Evaluated by Loki's ruler. The directory is the tenant: with auth disabled Loki
+# keeps everything under the tenant "fake".
+#
+# When a timekeeper runs more than 10 slots ahead, the network drops its proofs
+# and falls back to a slower one, and every Chronos node, the timekeepers among
+# them, logs a proof-of-time reorg about every 50 blocks. In step there are a
+# couple a week. The lines can't tell which timekeeper is out of step: both
+# timekeepers log the same ones at the same moment.
+
+groups:
+  - name: chronos-proof-of-time
+    interval: 1m
+    rules:
+      - alert: ChronosTimekeeperOutOfStep
+        expr: >-
+          max(sum by (host) (count_over_time({host=~"timekeeper-[0-9]+-chronos|chronos-timekeeper-node-[0-9]+", compose_service="node"}
+          |= "Proof of time chain reorg happened" [1h]))) >= 3
+        labels:
+          severity: warning
+          network: chronos
+        annotations:
+          summary: "{{ $value }} proof-of-time reorgs on the Chronos timekeepers in the last hour: a timekeeper is out of step and slots take about twice as long"
+          runbook: "ssh to chronos-timekeeper-0 (hostname chronos-timekeeper-node-0) and run `sudo docker restart node`. A reorg comes about every 10 minutes while a timekeeper is out of step, so if none is logged in the next 15 minutes the restart worked; then chronos-timekeeper-1 the same way if one is. This alert clears once fewer than 3 reorgs are left in the last hour, about 40 minutes after the last."

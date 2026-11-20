@@ -68,3 +68,37 @@ scrape_configs:
       - targets: ["127.0.0.1:8082"]
         labels:
           instance: "%{MONITORING_HOSTNAME}"
+
+  # Slot and block times of each chain the chain probe reads; it reads once a
+  # minute, so scraping faster adds nothing
+  - job_name: chain-probe
+    scrape_interval: 60s
+    static_configs:
+      - targets: ["127.0.0.1:9180"]
+        labels:
+          instance: "%{MONITORING_HOSTNAME}"
+
+  # Chronos' public RPC names, probed through blackbox_exporter as any client
+  # reaches them. probe_success says whether each answered healthy; up only
+  # says the exporter answered.
+  - job_name: rpc-probe
+    scrape_interval: 60s
+    scrape_timeout: 15s
+    metrics_path: /probe
+    params:
+      module: [jsonrpc_health]
+    static_configs:
+      - targets:
+          - https://rpc.chronos.autonomys.xyz/ws
+          - https://rpc-0.chronos.autonomys.xyz/ws
+          - https://auto-evm.chronos.autonomys.xyz/ws
+          - https://auto-evm-0.chronos.autonomys.xyz/ws
+        labels:
+          network: chronos
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
