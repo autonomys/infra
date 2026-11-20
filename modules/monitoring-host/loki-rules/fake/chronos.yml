@@ -17,7 +17,7 @@ groups:
           |= "Proof of time chain reorg happened" [1h]))) >= 3
         labels:
           severity: warning
-          host: chronos
+          network: chronos
         annotations:
           summary: "{{ $value }} proof-of-time reorgs on the Chronos timekeepers in the last hour: a timekeeper is out of step and slots take about twice as long"
-          runbook: "ssh to chronos-timekeeper-node-0 and run `sudo docker restart node`. Within 5 minutes the Chronos dashboard's slot time should be back to about 1.04 s, and no more reorg lines should follow; this alert clears an hour after the last one. If another reorg is logged in the next 15 minutes, do the same on chronos-timekeeper-node-1."
+          runbook: "ssh to chronos-timekeeper-0 (hostname chronos-timekeeper-node-0) and run `sudo docker restart node`. A reorg comes about every 10 minutes while a timekeeper is out of step, so if none is logged in the next 15 minutes the restart worked; then chronos-timekeeper-1 the same way if one is. This alert clears once fewer than 3 reorgs are left in the last hour, about 40 minutes after the last."

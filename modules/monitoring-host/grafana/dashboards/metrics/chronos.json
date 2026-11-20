@@ -280,7 +280,7 @@
       "id": 3,
       "type": "stat",
       "title": "Slot time",
-      "description": "Seconds per slot over the last 200 blocks, from the monitoring host's reads of the public RPC: about 1.04 while the fastest timekeeper leads, about 2.2 when one is out of step and the network falls back to a slower one. Above 1.3 for 30 minutes raises ChronosSlotsSlow. No data means the chain probe can't read the chain.",
+      "description": "Seconds per slot over the last 5 minutes, from the monitoring host's reads of the public RPC: about 1.04 while the fastest timekeeper leads, about 2.2 when one is out of step and the network falls back to a slower one. It follows a restart within minutes. ChronosSlotsSlow uses the steadier 200-block figure in the Proof of time section, which takes 20 to 45 minutes. No data means the chain probe can't read the chain.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -298,7 +298,7 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "max(subspace_chain_slot_seconds{network=\"chronos\"}) or vector(-1)",
+          "expr": "max(1 / deriv(subspace_chain_best_slot{network=\"chronos\"}[5m])) or vector(-1)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1338,7 +1338,7 @@
       "id": 16,
       "type": "stat",
       "title": "Firing alerts",
-      "description": "Alerts firing for the Chronos hosts with a host agent: RAID, SMART, full disks, boot code, a silent server, a scrape target down. No data means the Watchdog alert, which always fires, is absent, so vmalert is not reporting.",
+      "description": "Alerts firing for Chronos itself (slow slots, a stalled chain, the chain probe failing, a timekeeper out of step) and for the Chronos hosts with a host agent (RAID, SMART, full disks, boot code, a silent server, a scrape target down). No data means the Watchdog alert, which always fires, is absent, so vmalert is not reporting.",
       "datasource": {
         "type": "prometheus",
         "uid": "victoriametrics"
@@ -1356,7 +1356,7 @@
             "uid": "victoriametrics"
           },
           "refId": "A",
-          "expr": "count(ALERTS{alertstate=\"firing\", alertname!=\"Watchdog\", host=~\"${agents:raw}\"}) or (vector(0) and on() (count(ALERTS{alertstate=\"firing\", alertname=\"Watchdog\"}) > 0)) or vector(-1)",
+          "expr": "count(ALERTS{alertstate=\"firing\", alertname!=\"Watchdog\", host=~\"${agents:raw}\"} or ALERTS{alertstate=\"firing\", network=\"chronos\"}) or (vector(0) and on() (count(ALERTS{alertstate=\"firing\", alertname=\"Watchdog\"}) > 0)) or vector(-1)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2850,7 +2850,7 @@
           "id": 91,
           "type": "timeseries",
           "title": "Slot time",
-          "description": "Seconds per slot over the last 200 blocks, read from the public RPC every minute. The blue line is 1.04, the pace while the fastest timekeeper leads; the red one is 1.3, which held for 30 minutes raises ChronosSlotsSlow. About 2.2 means a timekeeper is out of step.",
+          "description": "Seconds per slot, read from the public RPC every minute: over the last 5 minutes, which follows a change within minutes, and over the last 200 blocks, which ChronosSlotsSlow uses and which takes 20 to 45 minutes. The blue line is 1.04, the pace while the fastest timekeeper leads; the red one is 1.3. About 2.2 means a timekeeper is out of step.",
           "datasource": {
             "type": "prometheus",
             "uid": "victoriametrics"
@@ -2868,10 +2868,21 @@
                 "uid": "victoriametrics"
               },
               "refId": "A",
+              "expr": "max(1 / deriv(subspace_chain_best_slot{network=\"chronos\"}[5m]))",
+              "editorMode": "code",
+              "range": true,
+              "legendFormat": "last 5 minutes"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "victoriametrics"
+              },
+              "refId": "B",
               "expr": "max(subspace_chain_slot_seconds{network=\"chronos\"})",
               "editorMode": "code",
               "range": true,
-              "legendFormat": "slot time"
+              "legendFormat": "last 200 blocks (alert)"
             }
           ],
           "options": {

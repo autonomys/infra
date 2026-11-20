@@ -52,6 +52,8 @@ limits_config:
 
 # Alerts that need log lines rather than metrics, from loki-rules/ in the module,
 # sent to the same Alertmanager as vmalert's. Loki rereads the rules every minute.
+# Their ALERTS series go to VictoriaMetrics, as vmalert's do, so dashboards see
+# them.
 ruler:
   alertmanager_url: http://alertmanager:9093
   storage:
@@ -59,6 +61,13 @@ ruler:
     local:
       directory: /etc/loki/rules
   rule_path: /loki/ruler
+  wal:
+    dir: /loki/ruler-wal
+  remote_write:
+    enabled: true
+    clients:
+      victoriametrics:
+        url: http://victoriametrics:8428/api/v1/write
 
 compactor:
   working_directory: /loki/compactor

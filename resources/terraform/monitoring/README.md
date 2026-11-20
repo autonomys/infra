@@ -296,20 +296,32 @@ Uptime Kuma runs elsewhere, so it reports when this box or its alerting stops.
 A rule's `runbook` annotation, where it has one, follows the summary in Slack
 while the alert fires.
 
-Two alerts watch Chronos' proof of time, both posted under `chronos`. A
-timekeeper running more than 10 slots ahead has its proofs dropped, the network
-falls back to a slower one, and slots take about 2.2 s instead of about 1.04 s.
-It doesn't recover by itself; restarting the timekeeper's node does.
+The Chronos alerts are about the network, not a server: they carry
+`network="chronos"` and no `host`, so Fleet health doesn't count them, and
+Alertmanager posts them together under `chronos`. A timekeeper running more than
+10 slots ahead has its proofs dropped, the network falls back to a slower one,
+and slots take about 2.2 s instead of about 1.04 s. It doesn't recover by itself;
+restarting the timekeeper's node does.
 
-- ChronosSlotsSlow (vmalert): the chain probe's slot time above 1.3 s for 30
-  minutes. Offline timekeepers raise it too.
+- ChronosSlotsSlow (vmalert): the chain probe's slot time, over the last 200
+  blocks, above 1.3 s for 30 minutes. Offline timekeepers raise it too, as long
+  as some timekeeper keeps blocks coming.
 - ChronosTimekeeperOutOfStep (Loki): 3 or more proof-of-time reorgs an hour in a
   timekeeper's log. Every Chronos node logs the same reorgs, so it says that a
-  timekeeper is out of step, not which; it clears an hour after the last one.
+  timekeeper is out of step, not which. It clears once fewer than 3 are left in
+  the hour, about 40 minutes after the last.
+- ChronosChainStalled (vmalert, critical): the public RPC's best block hasn't
+  moved for 15 minutes, because the chain or the RPC node has stopped.
+- ChronosProbeFailing (vmalert): the chain probe hasn't read the chain for 15
+  minutes, so the two slot and block alerts can't fire.
 
-Both runbooks restart timekeeper 0's node first (`sudo docker restart node` on
-chronos-timekeeper-node-0), then timekeeper 1's if reorgs carry on. Nothing
-restarts a timekeeper automatically.
+The timekeeper runbooks restart timekeeper 0's node first (`sudo docker restart
+node` on chronos-timekeeper-0), then timekeeper 1's if another reorg is logged in
+the next 15 minutes. After a restart that works, the dashboard's 5-minute slot
+time is back near 1.04 s within minutes; the 200-block figure takes 20 to 45
+minutes to follow. Nothing restarts a timekeeper automatically. Loki writes its
+alerts' `ALERTS` series to VictoriaMetrics, as vmalert does, so dashboards count
+both.
 
 To send a test alert, which resolves itself after 5 minutes, run this on the box:
 
@@ -349,7 +361,8 @@ done
 ```
 
 The apply restarts vmalert with the new rules. Every series carries `host`, so a
-rule can group by server.
+rule can group by server. An alert about a network rather than a server drops
+`host` and carries `network` instead, as the Chronos rules do.
 
 Rules over log lines go in `modules/monitoring-host/loki-rules/fake/`, as
 Prometheus-style rule groups with LogQL expressions. vmalert-tool can't test
