@@ -259,6 +259,24 @@ and the panel under the tiles lists what the dashboard doesn't cover. Its
 Publish workers tile counts heartbeat samples, so it relies on VictoriaMetrics
 keeping every sample: change the tile before setting `-dedup.minScrapeInterval`.
 
+Metrics > Auto Drive shows one environment at a time from the metrics the
+backends and the files gateway send. The Environment picker lists each `chain`
+value the backends' heartbeat reports in the selected range, so a backend
+tagged with an unexpected value shows up there. Staging is left out because
+Auto Drive staging covers it. The dashboard covers API requests and errors by
+route, Postgres pool and event-loop load per backend process, upload and
+download bytes, gateway serving and DSN fetches, DAG indexer fallbacks, parked
+uploads and the USDC treasury. Every one of those metrics is an event or a
+periodic reading, not a counter, so the panels count or sum samples over a
+window and never use `rate()`. That relies on VictoriaMetrics keeping every
+sample too. Panels for events that are usually
+absent, such as parked uploads and user reports, show 0 only while the backend
+heartbeat is arriving, and No data otherwise. The pool-in-use panel reads the
+heartbeat through a 10 s subquery, which is why VictoriaMetrics runs with a
+raised `-search.maxPointsSubqueryPerTimeseries`. Even so, that panel errors on
+ranges longer than about 115 days, such as Last 6 months. A collapsed row at the
+bottom lists what needs Auto Drive changes before it can be shown.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts
