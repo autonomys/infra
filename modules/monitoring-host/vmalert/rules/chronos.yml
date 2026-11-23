@@ -1,0 +1,40 @@
+# The Chronos testnet, from the chain probe's reads of its public RPC. The
+# timekeeper alert that needs log lines is Loki's, in loki-rules/. These alerts
+# carry network="chronos" and no host, so Fleet health doesn't count Chronos as
+# a server; Alertmanager groups them by network instead.
+
+groups:
+  - name: chronos
+    rules:
+      # Proof of time sets the slot length: about 1.04 s while the fastest
+      # timekeeper leads, about 2.2 s when the network has fallen back to a slower
+      # one. It also rises when timekeepers are offline. The probe averages the
+      # last 200 blocks; max_over_time rides over a failed read, which would
+      # otherwise restart the 30 minutes.
+      - alert: ChronosSlotsSlow
+        expr: max by (network) (max_over_time(subspace_chain_slot_seconds{network="chronos"}[5m])) > 1.3
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Chronos slots take {{ printf \"%.2f\" $value }} s, against about 1.04 s in step; a timekeeper may be out of step or offline"
+          runbook: "If the Chronos dashboard counts 3 or more proof-of-time reorgs an hour, a timekeeper is out of step: ssh to chronos-timekeeper-0 (hostname chronos-timekeeper-node-0) and run `sudo docker restart node`, then chronos-timekeeper-1 if another reorg is logged in the next 15 minutes. The dashboard's slot time, over the last 5 minutes, recovers within minutes; this alert's 200-block figure takes 20 to 45 minutes to follow."
+
+      # While the chain is halted the probe reads the same best block every minute,
+      # so slot time holds its last value; a halt shows as the best block not moving
+      - alert: ChronosChainStalled
+        expr: max by (network) (changes(subspace_chain_best_block{network="chronos"}[10m])) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The best block on Chronos' public RPC hasn't moved for 15 minutes: the chain or the RPC node has stopped"
+          runbook: "On the Chronos dashboard, Blocks (10 min) and the Chronos nodes table show whether every node stopped or only the RPC node. A chain needs a timekeeper and a farmer to make blocks: check both timekeepers' nodes, then the farmers."
+
+      - alert: ChronosProbeFailing
+        expr: max by (network) (max_over_time(subspace_chain_probe_success{network="chronos"}[15m])) == 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "The chain probe hasn't read Chronos for 15 minutes, so ChronosSlotsSlow and ChronosChainStalled can't fire"
+          runbook: "`sudo docker logs chain-probe` on the monitoring host shows why each read failed: the RPC down, Cloudflare refusing the probe, or a block the probe can't decode."

@@ -3,7 +3,9 @@
 route:
   receiver: slack
   # One message per server, so a failed disk that trips several rules arrives once
-  group_by: [host]
+  # Alerts about a network rather than a server, such as Chronos', carry network
+  # and no host
+  group_by: [host, network]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 24h
@@ -40,11 +42,12 @@ receivers:
         title_link: ""
         title: >-
           {{ if eq .Status "firing" }}:red_circle:{{ else }}:large_green_circle:{{ end }}
-          {{ .CommonLabels.host }}: {{ range .Alerts }}{{ .Labels.alertname }} {{ end }}
+          {{ or .CommonLabels.host .CommonLabels.network }}: {{ range .Alerts }}{{ .Labels.alertname }} {{ end }}
         text: |-
           {{ range .Alerts }}*{{ .Labels.alertname }}* ({{ .Labels.severity }}{{ if eq .Status "resolved" }}, resolved{{ end }})
           {{ .Annotations.summary }}
-          {{ end }}
+          {{ if and .Annotations.runbook (eq .Status "firing") }}_Runbook:_ {{ .Annotations.runbook }}
+          {{ end }}{{ end }}
 
   # Uptime Kuma 1.x only accepts GET on its push route, so the relay turns
   # Alertmanager's POST into one

@@ -19,6 +19,18 @@ servers = {
     ipv4     = ""
     host_key = ""
   }
+  "chronos-bootstrap-0" = {
+    ipv4     = ""
+    host_key = ""
+  }
+  "chronos-timekeeper-0" = {
+    ipv4     = ""
+    host_key = ""
+  }
+  "chronos-timekeeper-1" = {
+    ipv4     = ""
+    host_key = ""
+  }
 }
 vmetrics_fleet_username = ""
 vmetrics_fleet_password = ""

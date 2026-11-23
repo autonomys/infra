@@ -153,7 +153,7 @@ vm_expect() {
 }
 echo ""
 echo "[Metrics and alerting]"
-for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager vmauth watchdog-relay; do
+for svc in victoriametrics vmagent node-exporter smartctl-exporter vmalert alertmanager vmauth watchdog-relay blackbox-exporter chain-probe; do
   check "$svc running" \
     "sudo docker compose -f $STACK_DIR/docker-compose.yml ps --format '{{.Service}}:{{.State}}'" "$svc:running"
 done
@@ -161,7 +161,11 @@ check "VictoriaMetrics healthy" "curl -fsS http://127.0.0.1:8428/health" "OK"
 check "vmalert healthy" "curl -fsS http://127.0.0.1:8880/health" "OK"
 check "Alertmanager ready" "curl -fsS http://127.0.0.1:9093/-/ready" "OK"
 check "vmauth healthy" "curl -fsS http://127.0.0.1:8427/health" "OK"
-check "All 10 scrape targets present" "$(vm_expect 'count(up{host="monitoring-loki"})' 'v == 10' ten-targets)" "ten-targets"
+check "blackbox_exporter healthy" "curl -fsS http://127.0.0.1:9115/-/healthy" "Healthy"
+check "All 15 scrape targets present" "$(vm_expect 'count(up{host="monitoring-loki"})' 'v == 15' fifteen-targets)" "fifteen-targets"
+check "All 4 RPC probes passing" "$(vm_expect 'count(probe_success{job="rpc-probe"} == 1)' 'v == 4' four-probes)" "four-probes"
+check "Chain probe reading Chronos" "$(vm_expect 'subspace_chain_probe_success{network="chronos"}' 'v == 1' reading)" "reading"
+check "Loki ruler loaded the Chronos rules" "curl -fsS http://127.0.0.1:3100/loki/api/v1/rules" "ChronosTimekeeperOutOfStep"
 check "Every scrape target up" "$(vm_expect 'count(up{host="monitoring-loki"} == 0) or vector(0)' 'v == 0' all-up)" "all-up"
 check "SMART data for both disks" "$(vm_expect 'smartctl_devices{host="monitoring-loki"}' 'v == 2' two-disks)" "two-disks"
 check "Expected disk count published" "$(vm_expect 'node_disks_expected{host="monitoring-loki"}' 'v == 2' expected-two)" "expected-two"

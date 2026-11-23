@@ -11,7 +11,7 @@ box over SSH through `modules/monitoring-host`.
 | Component | Image | Listens on | Role |
 |---|---|---|---|
 | Traefik | `traefik:v3.7.19` | `:80`, `:443` (host network) | TLS termination, Let's Encrypt, routing |
-| Loki | `grafana/loki:3.6.21` | `127.0.0.1:3100` | Fleet container logs, kept 30 days |
+| Loki | `grafana/loki:3.6.21` | `127.0.0.1:3100` | Fleet container logs, kept 30 days; evaluates the alert rules that need log lines |
 | Grafana | `grafana/grafana:13.2.6` | `127.0.0.1:3000` | Dashboards over logs and metrics; alert silences |
 | VictoriaMetrics | `victoriametrics/victoria-metrics:v1.155.0` | `127.0.0.1:8428` | Metrics, kept 90 days |
 | vmagent | `victoriametrics/vmagent:v1.155.0` | `127.0.0.1:8429` (host network) | Scrapes the box's own metrics into VictoriaMetrics |
@@ -21,6 +21,8 @@ box over SSH through `modules/monitoring-host`.
 | Alertmanager | `prom/alertmanager:v0.34.2` | `127.0.0.1:9093` | Sends alerts to Slack #alerts and the Watchdog heartbeat to the relay |
 | vmauth | `victoriametrics/vmauth:v1.155.0` | `127.0.0.1:8427` | Checks the metrics write credentials and passes the write paths to VictoriaMetrics |
 | Watchdog relay | `python:3.13.18-alpine3.24` | compose network only | Turns each Watchdog notification into the GET that Uptime Kuma 1.x's push route needs |
+| blackbox_exporter | `prom/blackbox-exporter:v0.29.1` | `127.0.0.1:9115` (host network) | Probes public endpoints from outside for vmagent: Chronos' RPC names |
+| Chain probe | `python:3.13.18-alpine3.24` | `127.0.0.1:9180` | Reads each chain's slot and block times over its public RPC once a minute: Chronos |
 
 Requests reach the box through the Cloudflare proxy, then UFW (Cloudflare ranges
 only), then Traefik. Grafana reads Loki, VictoriaMetrics and Alertmanager on the
@@ -97,6 +99,9 @@ servers (`resources/terraform/host-agents`).
 | `modules/monitoring-host/alertmanager/` | Alert routing |
 | `modules/monitoring-host/vmauth/` | Template for vmauth's credentials file |
 | `modules/monitoring-host/watchdog-relay/` | The Watchdog relay to Uptime Kuma |
+| `modules/monitoring-host/blackbox/` | blackbox_exporter's probe modules |
+| `modules/monitoring-host/chain-probe/` | The chain probe |
+| `modules/monitoring-host/loki-rules/` | Alert rules Loki evaluates over log lines, under the tenant directory `fake` |
 | `scripts/monitoring-host-bootstrap.sh` | Packages, GRUB, UFW, SSH, fail2ban, unattended upgrades, data directories |
 | `scripts/installer.sh` | Shared with the fleet: Docker, journald and kernel settings |
 
@@ -141,8 +146,9 @@ upgrades Docker if a newer release is out, which restarts every container.
 | Grafana datasources and dashboards | `modules/monitoring-host/grafana/` |
 | Third-party dashboards (grafana.com ID, revision, SHA-256) | `grafana_com_dashboards` in `modules/monitoring-host/main.tf` |
 | Metrics retention, insert size cap | `victoriametrics` command in `docker-compose.yml` |
-| What the box scrapes | `modules/monitoring-host/vmagent/scrape.yml` |
-| Alert rules | `modules/monitoring-host/vmalert/rules/` |
+| What the box scrapes, and the public endpoints it probes | `modules/monitoring-host/vmagent/scrape.yml` |
+| How a probe judges an endpoint | `modules/monitoring-host/blackbox/blackbox.yml` |
+| Alert rules | `modules/monitoring-host/vmalert/rules/`, and `loki-rules/fake/` for rules over log lines |
 | Alert routing, grouping and repeats | `modules/monitoring-host/alertmanager/alertmanager.yml` |
 | Paths each write credential may reach | `modules/monitoring-host/vmauth/auth.yml.tftpl` |
 
@@ -277,6 +283,23 @@ raised `-search.maxPointsSubqueryPerTimeseries`. Even so, that panel errors on
 ranges longer than about 115 days, such as Last 6 months. A collapsed row at the
 bottom lists what needs Auto Drive changes before it can be shown.
 
+Metrics > Chronos shows the Chronos testnet as we run it: the consensus
+bootstrap, the two timekeepers, the RPC node, the Auto EVM bootstrap, RPC and
+operator nodes, and the farmers and archive node on the Auto Drive staging
+hosts. The nodes' metrics carry no block heights, and most Chronos nodes send
+none, so the chain figures come from the lines they print: each node's best
+and finalized block, peers and sync state, blocks claimed and rewards signed by
+our farmers, the bundle slots the operators win and the bundles they build, the
+timekeepers' proof-of-time reorgs, and the RPC proxies' responses. An operator
+skips a slot it has no transactions or receipts for, so Auto EVM makes no blocks
+while nobody uses it. The chain probe adds the slot and block times, the first
+sign of a timekeeper out of step. The box probes the four public RPC names every
+minute with a JSON-RPC `system_health` call through Cloudflare, which passes
+only when the node answers 200, isn't syncing and has peers; Uptime Kuma checks
+the same names from elsewhere. Host figures cover the Chronos boxes with a host
+agent. The chain indexer and the chain alerter send no logs here;
+the panel under the tiles lists the rest of what the dashboard doesn't cover.
+
 ### Alerts
 
 Alertmanager posts to #alerts, one message per server, with critical alerts
@@ -287,6 +310,36 @@ Alertmanager datasource.
 The Watchdog alert always fires. Alertmanager sends it every minute to the relay,
 which pushes to an Uptime Kuma push monitor (heartbeat interval 180 s, 1 retry).
 Uptime Kuma runs elsewhere, so it reports when this box or its alerting stops.
+
+A rule's `runbook` annotation, where it has one, follows the summary in Slack
+while the alert fires.
+
+The Chronos alerts are about the network, not a server: they carry
+`network="chronos"` and no `host`, so Fleet health doesn't count them, and
+Alertmanager posts them together under `chronos`. A timekeeper running more than
+10 slots ahead has its proofs dropped, the network falls back to a slower one,
+and slots take about 2.2 s instead of about 1.04 s. It doesn't recover by itself;
+restarting the timekeeper's node does.
+
+- ChronosSlotsSlow (vmalert): the chain probe's slot time, over the last 200
+  blocks, above 1.3 s for 30 minutes. Offline timekeepers raise it too, as long
+  as some timekeeper keeps blocks coming.
+- ChronosTimekeeperOutOfStep (Loki): 3 or more proof-of-time reorgs an hour in a
+  timekeeper's log. Every Chronos node logs the same reorgs, so it says that a
+  timekeeper is out of step, not which. It clears once fewer than 3 are left in
+  the hour, about 40 minutes after the last.
+- ChronosChainStalled (vmalert, critical): the public RPC's best block hasn't
+  moved for 15 minutes, because the chain or the RPC node has stopped.
+- ChronosProbeFailing (vmalert): the chain probe hasn't read the chain for 15
+  minutes, so the two slot and block alerts can't fire.
+
+The timekeeper runbooks restart timekeeper 0's node first (`sudo docker restart
+node` on chronos-timekeeper-0), then timekeeper 1's if another reorg is logged in
+the next 15 minutes. After a restart that works, the dashboard's 5-minute slot
+time is back near 1.04 s within minutes; the 200-block figure takes 20 to 45
+minutes to follow. Nothing restarts a timekeeper automatically. Loki writes its
+alerts' `ALERTS` series to VictoriaMetrics, as vmalert does, so dashboards count
+both.
 
 To send a test alert, which resolves itself after 5 minutes, run this on the box:
 
@@ -326,7 +379,14 @@ done
 ```
 
 The apply restarts vmalert with the new rules. Every series carries `host`, so a
-rule can group by server.
+rule can group by server. An alert about a network rather than a server drops
+`host` and carries `network` instead, as the Chronos rules do.
+
+Rules over log lines go in `modules/monitoring-host/loki-rules/fake/`, as
+Prometheus-style rule groups with LogQL expressions. vmalert-tool can't test
+them, so run the expression against Loki's history on the box first, with
+`/loki/api/v1/query_range` on `127.0.0.1:3100`. Loki rereads the directory
+within a minute of the apply, without a restart.
 
 ### Updating a third-party dashboard
 

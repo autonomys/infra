@@ -44,6 +44,21 @@ locals {
       disks        = 2
       scrape_ports = { "subspace-node" = 9615 }
     }
+    "chronos-bootstrap-0" = {
+      ssh_user     = "root"
+      disks        = 2
+      scrape_ports = { "subspace-node" = 9615, "dsn-bootstrap-node" = 9616 }
+    }
+    "chronos-timekeeper-0" = {
+      ssh_user     = "ubuntu"
+      disks        = 2
+      scrape_ports = { "subspace-node" = 9615 }
+    }
+    "chronos-timekeeper-1" = {
+      ssh_user     = "ubuntu"
+      disks        = 2
+      scrape_ports = { "subspace-node" = 9615 }
+    }
   }
 }
 

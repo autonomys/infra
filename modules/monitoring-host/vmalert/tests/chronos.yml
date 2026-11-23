@@ -1,0 +1,99 @@
+rule_files:
+  - ../rules/chronos.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: slots slow for half an hour
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_slot_seconds{network="chronos", host="monitoring-loki"}'
+        values: "1.04x10 2.2x45"
+    alert_rule_test:
+      - eval_time: 35m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts: []
+      - eval_time: 50m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts:
+          - exp_labels: {network: chronos, severity: warning}
+            exp_annotations:
+              summary: "Chronos slots take 2.20 s, against about 1.04 s in step; a timekeeper may be out of step or offline"
+              runbook: "If the Chronos dashboard counts 3 or more proof-of-time reorgs an hour, a timekeeper is out of step: ssh to chronos-timekeeper-0 (hostname chronos-timekeeper-node-0) and run `sudo docker restart node`, then chronos-timekeeper-1 if another reorg is logged in the next 15 minutes. The dashboard's slot time, over the last 5 minutes, recovers within minutes; this alert's 200-block figure takes 20 to 45 minutes to follow."
+
+  - name: a failed read doesn't restart the half hour
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_slot_seconds{network="chronos", host="monitoring-loki"}'
+        values: "2.2x10 stale 2.2x40"
+    alert_rule_test:
+      - eval_time: 33m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts:
+          - exp_labels: {network: chronos, severity: warning}
+            exp_annotations:
+              summary: "Chronos slots take 2.20 s, against about 1.04 s in step; a timekeeper may be out of step or offline"
+              runbook: "If the Chronos dashboard counts 3 or more proof-of-time reorgs an hour, a timekeeper is out of step: ssh to chronos-timekeeper-0 (hostname chronos-timekeeper-node-0) and run `sudo docker restart node`, then chronos-timekeeper-1 if another reorg is logged in the next 15 minutes. The dashboard's slot time, over the last 5 minutes, recovers within minutes; this alert's 200-block figure takes 20 to 45 minutes to follow."
+
+  - name: a short slowdown and a near miss stay quiet
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_slot_seconds{network="chronos", host="monitoring-loki"}'
+        values: "1.04x10 2.2x20 1.25x40"
+    alert_rule_test:
+      - eval_time: 70m
+        groupname: chronos
+        alertname: ChronosSlotsSlow
+        exp_alerts: []
+
+  - name: the best block stops moving
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_best_block{network="chronos", host="monitoring-loki"}'
+        values: "100+10x10 200x30"
+    alert_rule_test:
+      - eval_time: 18m
+        groupname: chronos
+        alertname: ChronosChainStalled
+        exp_alerts: []
+      - eval_time: 27m
+        groupname: chronos
+        alertname: ChronosChainStalled
+        exp_alerts:
+          - exp_labels: {network: chronos, severity: critical}
+            exp_annotations:
+              summary: "The best block on Chronos' public RPC hasn't moved for 15 minutes: the chain or the RPC node has stopped"
+              runbook: "On the Chronos dashboard, Blocks (10 min) and the Chronos nodes table show whether every node stopped or only the RPC node. A chain needs a timekeeper and a farmer to make blocks: check both timekeepers' nodes, then the farmers."
+
+  - name: the probe stops reading the chain
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_probe_success{network="chronos", host="monitoring-loki"}'
+        values: "1x5 0x30"
+    alert_rule_test:
+      - eval_time: 18m
+        groupname: chronos
+        alertname: ChronosProbeFailing
+        exp_alerts: []
+      - eval_time: 22m
+        groupname: chronos
+        alertname: ChronosProbeFailing
+        exp_alerts:
+          - exp_labels: {network: chronos, severity: warning}
+            exp_annotations:
+              summary: "The chain probe hasn't read Chronos for 15 minutes, so ChronosSlotsSlow and ChronosChainStalled can't fire"
+              runbook: "`sudo docker logs chain-probe` on the monitoring host shows why each read failed: the RPC down, Cloudflare refusing the probe, or a block the probe can't decode."
+
+  - name: occasional failed reads stay quiet
+    interval: 1m
+    input_series:
+      - series: 'subspace_chain_probe_success{network="chronos", host="monitoring-loki"}'
+        values: "0x10 1 0x10"
+    alert_rule_test:
+      - eval_time: 21m
+        groupname: chronos
+        alertname: ChronosProbeFailing
+        exp_alerts: []
