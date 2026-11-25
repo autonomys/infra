@@ -1,2 +1,4 @@
+aws_access_key       = ""
+aws_secret_key       = ""
 ssh_agent_identity   = ""
 cloudflare_api_token = ""

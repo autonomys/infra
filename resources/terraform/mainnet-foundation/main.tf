@@ -3,9 +3,12 @@ module "mainnet_foundation" {
   path_to_scripts        = "../../../scripts"
   network_name           = "mainnet"
   ssh_user               = "ubuntu"
+  aws_region             = "us-west-1"
   cloudflare_api_token   = var.cloudflare_api_token
   cloudflare_account_id  = var.cloudflare_account_id
   cloudflare_domain_fqdn = "subspace.foundation"
+  aws_access_key         = var.aws_access_key
+  aws_secret_key         = var.aws_secret_key
   ssh_agent_identity     = var.ssh_agent_identity
   deployment_name        = "foundation"
 
