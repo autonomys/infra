@@ -580,7 +580,7 @@ for a feature flag in staff-only mode.
 
 ## The farmers
 
-The files gateway and the public backend each run a Chronos farmer with a 1 GiB
+The files gateway and the public backend each run a Chronos farmer with a 10 GiB
 farm, through a pruned node of its own, from `modules/subspace-farmer`. Like
 auth, the role takes a host another role has bootstrapped. Its
 `compose/docker-compose.yml` has two services, `node` and `farmer`. Terraform
@@ -639,11 +639,12 @@ to `snap` before a host's node starts from empty.
 
 ### Farm size
 
-The farmer refuses less than about 1021 MiB, one sector and its overhead, so
-`1GiB` is the smallest. A 1 GiB farm holds one sector and takes 1.07 GB on disk.
-Changing `local.farmer.farm_size` recreates the farmer only. It extends the farm
-in place and plots the new sectors at the lowest thread priority, behind
-everything else on the host. 10 GiB holds about ten sectors.
+A 10 GiB farm holds ten sectors and takes 10.7 GB on disk. The farmer refuses
+less than about 1021 MiB, one sector and its overhead, so `1GiB` is the
+smallest. Changing `local.farmer.farm_size` recreates the farmer only. A larger
+size extends the farm in place: the sectors already plotted stay, and the farmer
+plots the new ones at the lowest thread priority, behind everything else on the
+host. A smaller size truncates the farm and drops the sectors past its new end.
 
 ### Moving or retiring the farmers
 

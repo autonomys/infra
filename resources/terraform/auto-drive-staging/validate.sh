@@ -94,14 +94,14 @@ AUTH_PORT=3040
 SERVICES_MESH_ADDRESS="10.77.0.10"
 FARMER_DIR="$DEPLOY_DIR/subspace-farmer"
 FARMER_PROJECT="subspace-farmer"
-FARMER_NODE_IMAGE="ghcr.io/autonomys/node:mainnet-2026-oct-22@sha256:76cf36d40ecbc382edd072567f3a7b2c631530fd81027f29095877ad3509a24f"
-FARMER_IMAGE="ghcr.io/autonomys/farmer:mainnet-2026-oct-22@sha256:d140be610587c679a031b69df033be95adb777e425720e7ccefe34a686eff543"
+FARMER_NODE_IMAGE="ghcr.io/autonomys/node:chronos-2026-11-25@sha256:2de1ff724131c96e1e9c58e7c34fd93fa4c7e622a90d0ebb0648596cac602514"
+FARMER_IMAGE="ghcr.io/autonomys/farmer:chronos-2026-11-25@sha256:3337a64de13117d4d39d2ddfdb1602998a03d80ae92eaa9c8fb1660bf60df8ed"
 FARMER_SYNC="full"
 # the node's P2P and DSN ports, then the farmer's
 FARMER_NODE_PORT=30343
 FARMER_NODE_DSN_PORT=30443
 FARMER_PORT=30543
-FARM_SIZE="1GiB"
+FARM_SIZE="10GiB"
 case "$FARM_SIZE" in
   *GiB) FARM_BYTES=$(( ${FARM_SIZE%GiB} << 30 )) ;;
   *TiB) FARM_BYTES=$(( ${FARM_SIZE%TiB} << 40 )) ;;
