@@ -380,16 +380,16 @@ module "auth" {
 locals {
   farmer = {
     chain = "chronos"
-    # the newest release: mainnet releases run Chronos too, as the files
-    # gateway's node does
+    # the newest release of either family: mainnet releases run Chronos too, as
+    # the files gateway's node does
     images = {
-      node   = "ghcr.io/autonomys/node:mainnet-2026-oct-22@sha256:76cf36d40ecbc382edd072567f3a7b2c631530fd81027f29095877ad3509a24f"
-      farmer = "ghcr.io/autonomys/farmer:mainnet-2026-oct-22@sha256:d140be610587c679a031b69df033be95adb777e425720e7ccefe34a686eff543"
+      node   = "ghcr.io/autonomys/node:chronos-2026-11-25@sha256:2de1ff724131c96e1e9c58e7c34fd93fa4c7e622a90d0ebb0648596cac602514"
+      farmer = "ghcr.io/autonomys/farmer:chronos-2026-11-25@sha256:3337a64de13117d4d39d2ddfdb1602998a03d80ae92eaa9c8fb1660bf60df8ed"
     }
     # Snap sync failed on Chronos when this was built: it found too few
     # reachable farmers to serve its segment headers
     sync           = "full"
-    farm_size      = "1GiB"
+    farm_size      = "10GiB"
     reward_address = "suexrxoBh96UgcCyKXVMTEUhR8LtJozJssVT8Wrzs16bjBSn6"
     # the same on both hosts, clear of the defaults the files gateway's node uses
     ports = {
